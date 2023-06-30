@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# import roslib; roslib.load_manifest('stereo_slam')
+# import roslib; roslib.load_manifest('slamon')
 import rospy
 import pylab
 import math

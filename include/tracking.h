@@ -26,7 +26,7 @@
 #include "frame.h"
 #include "graph.h"
 #include "publisher.h"
-#include "stereo_slam/TimeTracking.h"
+#include "slamon/TimeTracking.h"
 
 namespace slam
 {
@@ -180,7 +180,7 @@ private:
 
   double secs_to_filter_; //!> Number of seconds that filter will be applied
 
-  stereo_slam::TimeTracking time_tracking_msg_; //! Message to publish time metrics 
+  slamon::TimeTracking time_tracking_msg_; //! Message to publish time metrics 
 
   // Topic sync
   typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,

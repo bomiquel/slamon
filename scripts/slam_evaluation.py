@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('stereo_slam')
+import roslib; roslib.load_manifest('slamon')
 import pylab
 import numpy as np
 from matplotlib import pyplot
@@ -290,7 +290,7 @@ if __name__ == "__main__":
   rows = []
   rows.append(['Viso2'] + [len(odom_errors)] + [odom_dist[-1]] + [odom_mae])
   rows.append(['ORB-SLAM'] + [len(orb_errors)] + [orb_dist[-1]] + [orb_mae])
-  rows.append(['Stereo-SLAM'] + [len(vertices_errors)] + [vertices_dist[-1]] + [vertices_mae])
+  rows.append(['SLAMON'] + [len(vertices_errors)] + [vertices_dist[-1]] + [vertices_mae])
 
   # Build the header for the output table
   header = [  "Input", "Data Points", "Traj. Distance (m)", "Trans. MAE (m)"]
@@ -302,13 +302,13 @@ if __name__ == "__main__":
   ax0.plot(gt_corrected[:,1], gt_corrected[:,2], gt_corrected[:,3], colors[0], linewidth=linewidth, label='Ground Truth')
   ax0.plot(odom_corrected[:,1], odom_corrected[:,2], odom_corrected[:,3], colors[1], linewidth=linewidth, label='Viso2')
   ax0.plot(orb_corrected[:,1], orb_corrected[:,2], orb_corrected[:,3], 'y', linewidth=linewidth, label='ORB-SLAM')
-  ax0.plot(vertices[:,1], vertices[:,2], vertices[:,3], colors[2], linewidth=linewidth, label='Stereo-SLAM', marker='o')
+  ax0.plot(vertices[:,1], vertices[:,2], vertices[:,3], colors[2], linewidth=linewidth, label='SLAMON', marker='o')
 
   # Plot graph (2D)
   ax1.plot(gt_corrected[:,1], gt_corrected[:,2], colors[0], linewidth=linewidth, label='Ground truth')
   ax1.plot(odom_corrected[:,1], odom_corrected[:,2], colors[1], linewidth=linewidth, label='Viso2')
   ax1.plot(orb_corrected[:,1], orb_corrected[:,2], 'y', linewidth=linewidth, label='ORB-SLAM')
-  ax1.plot(vertices[:,1], vertices[:,2], colors[2], linewidth=linewidth, label='Stereo-SLAM', marker='o')
+  ax1.plot(vertices[:,1], vertices[:,2], colors[2], linewidth=linewidth, label='SLAMON', marker='o')
 
   # Plot the graph edges
   f = open(args.graph_edges_file)
@@ -337,7 +337,7 @@ if __name__ == "__main__":
   ax3.legend(loc=2)
 
   ax4.plot(gt_corrected[:,1], gt_corrected[:,2], 'g', linewidth=linewidth, label='Ground truth')
-  ax4.plot(vertices[:,1], vertices[:,2], 'b', linewidth=linewidth, label='Stereo-SLAM')
+  ax4.plot(vertices[:,1], vertices[:,2], 'b', linewidth=linewidth, label='SLAMON')
   ax4.legend(loc=2)
 
 
@@ -346,7 +346,7 @@ if __name__ == "__main__":
   ax5 = fig5.gca()
   ax5.plot(odom_dist, odom_errors, colors[1], linewidth=linewidth, label='Viso2')
   ax5.plot(orb_dist, orb_errors, 'g', linewidth=linewidth, label='ORB-SLAM')
-  ax5.plot(vertices_dist, vertices_errors, colors[2], linewidth=linewidth, label='Stereo-SLAM')
+  ax5.plot(vertices_dist, vertices_errors, colors[2], linewidth=linewidth, label='SLAMON')
   ax5.grid(True)
   ax5.set_xlabel("Distance (m)")
   ax5.set_ylabel("Error (m)")

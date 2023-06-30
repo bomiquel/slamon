@@ -83,9 +83,9 @@
             <arg name = "base_link_frame_name"  value = "/$(arg robot_name)/base_link"/>
         </include>
 
-        <!-- Stereo-SLAM -->
-        <rosparam command="load" file="$(find stereo_slam)/config/stereo_slam_parameters.yaml"/>
-        <node pkg="stereo_slam" type="localization" name="stereo_slam" output="screen" if = "$(eval enable_decimate_x1 == true)">
+        <!-- SLAMON -->
+        <rosparam command="load" file="$(find slamon)/config/slamon_parameters.yaml"/>
+        <node pkg="slamon" type="localization" name="slamon" output="screen" if = "$(eval enable_decimate_x1 == true)">
             <remap from = "odom"                        to = "stereo_odometer/odometry"/>
             <remap from = "left_camera_info"            to = "/$(arg camera)/left/camera_info"/>
             <remap from = "right_camera_info"           to = "/$(arg camera)/right/camera_info"/>
@@ -93,7 +93,7 @@
             <remap from = "right_image_rect_color"      to = "/$(arg camera)/right/image_rect_color"/> 
             <param name = "map_frame_name"              value = "/$(arg robot_name)/map"/>
         </node>
-        <node pkg="stereo_slam" type="localization" name="stereo_slam" output="screen" if = "$(eval enable_decimate_x2 == true)">
+        <node pkg="slamon" type="localization" name="slamon" output="screen" if = "$(eval enable_decimate_x2 == true)">
             <remap from = "odom"                        to = "stereo_odometer/odometry"/>
             <remap from = "left_camera_info"            to = "/$(arg camera)/scaled_x2/left/camera_info"/>
             <remap from = "right_camera_info"           to = "/$(arg camera)/scaled_x2/right/camera_info"/>
@@ -101,7 +101,7 @@
             <remap from = "right_image_rect_color"      to = "/$(arg camera)/scaled_x2/right/image_rect_color"/> 
             <param name = "map_frame_name"              value = "/$(arg robot_name)/map"/>
         </node>
-        <node pkg="stereo_slam" type="localization" name="stereo_slam" output="screen" if = "$(eval enable_decimate_x4 == true)">
+        <node pkg="slamon" type="localization" name="slamon" output="screen" if = "$(eval enable_decimate_x4 == true)">
             <remap from = "odom"                        to = "stereo_odometer/odometry"/>
             <remap from = "left_camera_info"            to = "/$(arg camera)/scaled_x4/left/camera_info"/>
             <remap from = "right_camera_info"           to = "/$(arg camera)/scaled_x4/right/camera_info"/>

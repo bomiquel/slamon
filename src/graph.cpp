@@ -25,8 +25,8 @@ namespace slam
 
     // Advertise topics
     ros::NodeHandle nhp("~");
-    pub_graph_ = nhp.advertise<stereo_slam::GraphPoses>("graph_poses", 2);
-    pub_time_graph_ = nhp.advertise<stereo_slam::TimeGraph>("time_graph", 1);
+    pub_graph_ = nhp.advertise<slamon::GraphPoses>("graph_poses", 2);
+    pub_time_graph_ = nhp.advertise<slamon::TimeGraph>("time_graph", 1);
     pub_robot_pose_ = nhp.advertise<nav_msgs::Odometry>("graph_robot_odometry", 1);
     pub_camera_pose_ = nhp.advertise<nav_msgs::Odometry>("graph_camera_odometry", 1);
     pub_num_keyframes_ = nhp.advertise<std_msgs::Int32>("keyframes", 1);
@@ -735,7 +735,7 @@ namespace slam
       }
 
       // Publish
-      stereo_slam::GraphPoses graph_msg;
+      slamon::GraphPoses graph_msg;
       graph_msg.header.stamp = ros::Time::now();
       graph_msg.id = ids;
       graph_msg.x = x;

@@ -1,8 +1,8 @@
-stereo_slam:
+slamon:
   refine: false
   lc_min_inliers: 100
   distance_between_keyframes: 0.65
-  working_directory: /home/bomiquel/Documents/SRV/recerca/slam/single-slam/data/test/
+  working_directory: /home/bomiquel/Documents/SRV/recerca/slam/single-slam/data/slamon/
   lc_epipolar_thresh: 2.0
   lc_neighbors: 4
   lc_discard_window: 15

@@ -14,8 +14,8 @@ namespace slam
     pub_inliers_num_ = nhp.advertise<std_msgs::Int32>("loop_closing_inliers_num", 2, true);
     pub_inliers_img_ = nhp.advertise<sensor_msgs::Image>("loop_closing_inliers_img", 2, true);
     pub_matchings_percentage_ = nhp.advertise<std_msgs::Int32>("loop_closing_matches_percentage", 2, true);
-    pub_time_loop_closing_ = nhp.advertise<stereo_slam::TimeLoopClosing>("time_loop_closing", 1);
-    pub_sub_time_loop_closing_ = nhp.advertise<stereo_slam::SubTimeLoopClosing>("sub_time_loop_closing", 1);
+    pub_time_loop_closing_ = nhp.advertise<slamon::TimeLoopClosing>("time_loop_closing", 1);
+    pub_sub_time_loop_closing_ = nhp.advertise<slamon::SubTimeLoopClosing>("sub_time_loop_closing", 1);
   }
 
   void LoopClosing::run()

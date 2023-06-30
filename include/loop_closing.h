@@ -19,8 +19,8 @@
 #include "hash.h"
 #include "cluster.h"
 #include "graph.h"
-#include "stereo_slam/TimeLoopClosing.h"
-#include "stereo_slam/SubTimeLoopClosing.h"
+#include "slamon/TimeLoopClosing.h"
+#include "slamon/SubTimeLoopClosing.h"
 
 namespace slam
 {
@@ -185,9 +185,9 @@ private:
 
   ros::Publisher pub_inliers_img_, pub_inliers_num_; //!> Publishes the image with the loop closure inliers
 
-  stereo_slam::TimeLoopClosing time_loop_closing_msg_; //! Message to publish time metrics
+  slamon::TimeLoopClosing time_loop_closing_msg_; //! Message to publish time metrics
 
-  stereo_slam::SubTimeLoopClosing sub_time_loop_closing_msg_; //! Message to publish specific time metrics
+  slamon::SubTimeLoopClosing sub_time_loop_closing_msg_; //! Message to publish specific time metrics
 
   ros::Publisher pub_time_loop_closing_, pub_sub_time_loop_closing_; //!> Time loop closing thread publisher
 

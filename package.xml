@@ -1,12 +1,10 @@
 <package>
-  <name>stereo_slam</name>
+  <name>slamon</name>
   <version>0.0.1</version>
-  <description>Stereo Slam</description>
-  <author email="pl.negre@uib.cat">Pep Lluis Negre</author>
-  <maintainer email="pl.negre@uib.cat">Pep Lluis Negre</maintainer>
+  <description>SLAMON</description>
+  <author email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt Fiol</author>
+  <maintainer email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt Fiol</maintainer>
   <license>BSD</license>
-  <url type="website">https://github.com/srv/stereo_slam</url>
-  <url type="bugtracker">https://github.com/srv/stereo_slam/issues</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 

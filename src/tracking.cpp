@@ -19,7 +19,7 @@ namespace slam
     ros::NodeHandle nhp("~");
 
     pub_pose_ = nhp.advertise<nav_msgs::Odometry>("odometry", 1);
-    pub_time_tracking_ = nhp.advertise<stereo_slam::TimeTracking>("time_tracking", 1);
+    pub_time_tracking_ = nhp.advertise<slamon::TimeTracking>("time_tracking", 1);
 
     // Create directory to store the keyframes
     std::string keyframes_dir = params_.working_directory + "keyframes";

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules/")
 
-project(stereo_slam)
+project(slamon)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   nav_msgs

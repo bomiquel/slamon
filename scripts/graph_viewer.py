@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('stereo_slam')
+import roslib; roslib.load_manifest('slamon')
 import sys
 import pylab
 import math
@@ -92,7 +92,7 @@ def real_time_plot(gt_file, odom_file, graph_vertices_file):
     else:
       ax_odom = ax.plot(data[:,0], data[:,1], 'c', label='Visual Odometry')
 
-  # Load stereo slam vertices (file saved with node stereo_slam)
+  # Load stereo slam vertices (file saved with node slamon)
   if (graph_vertices_file != "" and os.path.exists(graph_vertices_file) and check_file_len(graph_vertices_file)):
 
     # Check if file is blocked
@@ -134,7 +134,7 @@ def draw_edges():
   # First, remove previous edges
   remove_edges()
 
-  # Load stereo slam edges (file saved with node stereo_slam)
+  # Load stereo slam edges (file saved with node slamon)
   if (graph_edges_file != "" and os.path.exists(graph_edges_file) and check_file_len(graph_edges_file)):
 
     # Check if file is blocked
@@ -302,7 +302,7 @@ if __name__ == "__main__":
     ax.set_zlabel("z (m)")
   else:
     ax = fig.gca()
-    img = imread("/home/bomiquel/SLAM_ws/src/stereo_slam/output/mosaic1.jpg")
+    img = imread("/home/bomiquel/SLAM_ws/src/slamon/output/mosaic1.jpg")
     ax.imshow(img, zorder=0, extent=[-13.5, 34.5, -17, 9])
     ax.set_axis_bgcolor('black')
 

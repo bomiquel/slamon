@@ -30,8 +30,8 @@
 
 #include "frame.h"
 #include "loop_closing.h"
-#include "stereo_slam/GraphPoses.h"
-#include "stereo_slam/TimeGraph.h"
+#include "slamon/GraphPoses.h"
+#include "slamon/TimeGraph.h"
 
 namespace slam
 {
@@ -284,7 +284,7 @@ private:
 
   ros::Publisher pub_num_keyframes_; //!> Publishes the number of keyframes
 
-  stereo_slam::TimeGraph time_graph_msg_; //! Message to publish time metrics 
+  slamon::TimeGraph time_graph_msg_; //! Message to publish time metrics 
 
   std::vector<Edge> edges_information_; // Edges information
 };
