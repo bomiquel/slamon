@@ -1,0 +1,124 @@
+<launch>
+
+    <!-- Robots parameters -->
+    <arg name = "robot_name"         default = "robot_0"/>
+
+    <!-- Image parameters -->
+    <arg name = "camera"             default = "/stereo_down"/>
+    <arg name = "resolution"         default = "full"/>
+    <arg name = "enable_decimate_x1" default = "false"/>
+    <arg name = "enable_decimate_x2" default = "false"/>
+    <arg name = "enable_decimate_x4" default = "true"/>
+
+    <!-- Bagfiles parameters -->
+    <param name="/use_sim_time"      value = "true"/>
+
+    <!-- Bagfiles -->
+
+    <!-- Portals Vells T0 -->
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-14-41-06_0.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-14-47-26_1.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-14-53-45_2.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-15-00-04_3.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-15-06-23_4.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-15-12-43_5.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/topics_2021-02-25-14-41-52_0.bag"/>
+
+    <!-- Portals Vells T2 -->
+    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/portals/2021_02_25/15_56_25_new_frame_id/images_2021-02-25-15-56-26_0.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/15_56_25_new_frame_id/images_2021-02-25-16-02-45_1.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/15_56_25_new_frame_id/images_2021-02-25-16-09-05_2.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/15_56_25_new_frame_id/images_2021-02-25-16-15-24_3.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/15_56_25_new_frame_id/images_2021-02-25-16-21-43_4.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/15_56_25_new_frame_id/images_2021-02-25-16-28-03_5.bag
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/15_56_25_new_frame_id/topics_2021-02-25-15-56-37_0.bag"/> -->
+
+    <!-- PLAY bagfile -->
+    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /stereo_down/left/camera_info /stereo_down/left/image_raw /stereo_down/right/camera_info /stereo_down/right/image_raw /turbot/navigator/altitude_raw" required="true" />
+
+    <!-- Static TF's -->
+    <node pkg="tf" type="static_transform_publisher" name="$(arg robot_name)_base_link_to_stereo_stick" args="0.4 0.0 0.8 0.0 0.0 0.0 /$(arg robot_name)/base_link /$(arg robot_name)/stereo_stick 30" />
+    <node pkg="tf" type="static_transform_publisher" name="$(arg robot_name)_stereo_stick_to_stereo_base" args="0.0 0.0 0.0 1.57 0.0 1.57 /$(arg robot_name)/stereo_stick /$(arg robot_name)/stereo_down/base 30" />
+    <node pkg="tf" type="static_transform_publisher" name="$(arg robot_name)_stereo_base_to_stereo" args="0.0 0.0 0.0 0.0 0.0 -1.57 /$(arg robot_name)/stereo_down/base /$(arg robot_name)/stereo_down 30" />
+    <node pkg="tf" type="static_transform_publisher" name="$(arg robot_name)_stereo_to_left" args="-0.06 0.0 0.0 0.0 0.0 0.0 /$(arg robot_name)/stereo_down /$(arg robot_name)/stereo_down/left_optical 30" />
+
+    <group ns = "$(arg robot_name)">
+
+        <!-- Initial pose and orientation parameters -->  
+        <!-- Portals Vells T0: -->
+        <arg name = "t_x" default = "74.5675"/> 
+        <arg name = "t_y" default = "19.919"/> 
+        <arg name = "t_z" default = "2.20875"/> 
+        <arg name = "q_x" default = "0.0210341"/>
+        <arg name = "q_y" default = "-0.0752682"/>
+        <arg name = "q_z" default = "0.565774"/>
+        <arg name = "q_w" default = "0.820848"/>
+
+        <!-- Portals Vells T2: -->
+        <!-- <arg name = "t_x" default = "96.4975005094146"/>
+        <arg name = "t_y" default = "27.4710660825391"/>
+        <arg name = "t_z" default = "2.46875"/>
+        <arg name = "q_x" default = "0.06924829184889"/>
+        <arg name = "q_y" default = "0.061946236427001"/>
+        <arg name = "q_z" default = "-0.993023205573187"/>
+        <arg name = "q_w" default = "0.072610268293763"/> -->
+
+        <!-- Viso2 -->
+        <rosparam command="load" file="$(find viso2_ros)/config/viso2_stereo_parameters_auto.yaml"/>
+        <include file = "$(find viso2_ros)/launch/stereo_odometer_auto2.launch">
+            <arg name = "resolution"            value = "$(arg resolution)" />
+            <arg name = "camera"                value = "$(arg camera)"/>
+            <arg name = "enable_decimate_x1"    value = "$(arg enable_decimate_x1)"/>
+            <arg name = "enable_decimate_x2"    value = "$(arg enable_decimate_x2)"/>
+            <arg name = "enable_decimate_x4"    value = "$(arg enable_decimate_x4)"/>
+            <arg name = "trans_x"               value = "$(arg t_x)"/> <!-- N -->
+            <arg name = "trans_y"               value = "$(arg t_y)"/> <!-- E -->
+            <arg name = "trans_z"               value = "$(arg t_z)"/> <!-- A -->
+            <arg name = "rot_x"                 value = "$(arg q_x)"/>
+            <arg name = "rot_y"                 value = "$(arg q_y)"/>
+            <arg name = "rot_z"                 value = "$(arg q_z)"/>
+            <arg name = "rot_w"                 value = "$(arg q_w)"/>
+            <arg name = "odom_frame_name"       value = "/$(arg robot_name)/odom"/>
+            <arg name = "sensor_frame_name"     value = "/$(arg robot_name)$(arg camera)/left_optical"/>
+            <arg name = "base_link_frame_name"  value = "/$(arg robot_name)/base_link"/>
+        </include>
+
+        <!-- Stereo-SLAM -->
+        <rosparam command="load" file="$(find stereo_slam)/config/stereo_slam_parameters_auto.yaml"/>
+        <node pkg="stereo_slam" type="localization" name="stereo_slam" output="screen" if = "$(eval enable_decimate_x1 == true)">
+            <remap from = "odom"                        to = "stereo_odometer/odometry"/>
+            <remap from = "left_camera_info"            to = "/$(arg camera)/left/camera_info"/>
+            <remap from = "right_camera_info"           to = "/$(arg camera)/right/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "/$(arg camera)/left/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "/$(arg camera)/right/image_rect_color"/> 
+            <param name = "map_frame_name"              value = "/$(arg robot_name)/map"/>
+        </node>
+        <node pkg="stereo_slam" type="localization" name="stereo_slam" output="screen" if = "$(eval enable_decimate_x2 == true)">
+            <remap from = "odom"                        to = "stereo_odometer/odometry"/>
+            <remap from = "left_camera_info"            to = "/$(arg camera)/scaled_x2/left/camera_info"/>
+            <remap from = "right_camera_info"           to = "/$(arg camera)/scaled_x2/right/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "/$(arg camera)/scaled_x2/left/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "/$(arg camera)/scaled_x2/right/image_rect_color"/> 
+            <param name = "map_frame_name"              value = "/$(arg robot_name)/map"/>
+        </node>
+        <node pkg="stereo_slam" type="localization" name="stereo_slam" output="screen" if = "$(eval enable_decimate_x4 == true)">
+            <remap from = "odom"                        to = "stereo_odometer/odometry"/>
+            <remap from = "left_camera_info"            to = "/$(arg camera)/scaled_x4/left/camera_info"/>
+            <remap from = "right_camera_info"           to = "/$(arg camera)/scaled_x4/right/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "/$(arg camera)/scaled_x4/left/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "/$(arg camera)/scaled_x4/right/image_rect_color"/> 
+            <param name = "map_frame_name"              value = "/$(arg robot_name)/map"/>
+        </node>
+
+        <!-- ROS profiler -->
+        <group ns = "stereo_slam">
+            <include file = "$(find cpu_monitor)/launch/cpu_monitor.launch">
+                <arg name = "save_to_csv" value = "true"/>
+                <arg name = "source_list" value = "[/$(arg robot_name)/stereo_slam, /$(arg robot_name)/stereo_odometer]"/>
+                <arg name = "csv_file"    value = "cpu_monitor.txt"/>
+            </include>
+        </group>
+
+    </group>
+
+</launch>

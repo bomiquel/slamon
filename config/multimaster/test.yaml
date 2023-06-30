@@ -1,0 +1,4 @@
+master_sync/sync_topics: [/stereo_odometer/info,
+                          /stereo_odometer/odometry,
+                          /stereo_slam/graph_poses,
+                          /stereo_slam/odometry]
