@@ -84,7 +84,7 @@
         </include>
 
         <!-- SLAMON -->
-        <rosparam command="load" file="$(find slamon)/config/slamon.yaml"/>
+        <rosparam command="load" file="$(find slamon)/config/slamon_parameters_auto.yaml"/>
         <node pkg="slamon" type="localization" name="slamon" output="screen" if = "$(eval enable_decimate_x1 == true)">
             <remap from = "odom"                        to = "stereo_odometer/odometry"/>
             <remap from = "left_camera_info"            to = "/$(arg camera)/left/camera_info"/>
