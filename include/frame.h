@@ -37,7 +37,7 @@ public:
 
   /** \brief Class constructor
    */
-  Frame(cv::Mat l_img, cv::Mat r_img, image_geometry::StereoCameraModel camera_model, double timestamp, std::string feature_detector);
+  Frame(cv::Mat l_img, cv::Mat r_img, image_geometry::StereoCameraModel camera_model, ros::Time timestamp, std::string feature_detector);
 
   /** \brief Get left image
    */
@@ -133,7 +133,7 @@ public:
 
   /** \brief Get frame timestamp
    */
-  inline double getTimestamp() const {return stamp_;}
+  inline ros::Time getTimestamp() const {return stamp_;}
 
   /** \brief Get frame pointcloud
    */
@@ -206,7 +206,7 @@ private:
 
   tf::Transform camera_pose_; //!> Camera world position for this frame
 
-  double stamp_; //!> Store the frame timestamp
+  ros::Time stamp_; //!> Store the frame timestamp
 
   PointCloudRGB::Ptr pointcloud_; //!> The pointcloud for this frame
 

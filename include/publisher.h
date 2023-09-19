@@ -54,10 +54,17 @@ protected:
    */
   void drawStereoMatches(const Frame frame);
 
+  /** \brief Publishes images
+   * \param The ROS publisher, the cv image and the ROS timestamp
+   */
+  void publishImage(ros::Publisher pub, cv::Mat image, ros::Time stamp);
+
 private:
 
   ros::Publisher pub_clustering_; //!> Publisher for the frame clustering
+
   ros::Publisher pub_stereo_matches_img_; //!> Publisher for the frame stereo matches
+
   ros::Publisher pub_stereo_matches_num_; //!> Publisher for the frame stereo matches
 
 };

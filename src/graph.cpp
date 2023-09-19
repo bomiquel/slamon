@@ -93,7 +93,7 @@ namespace slam
     saveFrame(frame);
 
     // Save the frame timestamp
-    frame_stamps_.push_back(frame.getTimestamp());
+    frame_stamps_.push_back(frame.getTimestamp().toSec());
 
     // Extract sift
     double t1 = ros::Time::now().toSec();

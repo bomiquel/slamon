@@ -11,7 +11,7 @@ namespace slam
   Frame::Frame(cv::Mat l_img,
                cv::Mat r_img,
                image_geometry::StereoCameraModel camera_model,
-               double timestamp, std::string feature_detector_selection) : pointcloud_(new PointCloudRGB)
+               ros::Time timestamp, std::string feature_detector_selection) : pointcloud_(new PointCloudRGB)
   {
     // Init
     id_ = -1;
