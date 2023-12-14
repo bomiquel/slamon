@@ -28,8 +28,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "frame.h"
-#include "loop_closing.h"
+#include "frame.hpp"
+#include "loop_closing.hpp"
 #include "slamon/GraphPoses.h"
 #include "slamon/TimeGraph.h"
 

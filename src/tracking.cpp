@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 
-#include "tracking.h"
-#include "tools.h"
+#include "tracking.hpp"
+#include "tools.hpp"
 
 namespace slam
 {

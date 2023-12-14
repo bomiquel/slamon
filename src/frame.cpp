@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 
-#include "frame.h"
-#include "tools.h"
+#include "frame.hpp"
+#include "tools.hpp"
 
 namespace slam
 {

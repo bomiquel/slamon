@@ -16,9 +16,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "hash.h"
-#include "cluster.h"
-#include "graph.h"
+#include "hash.hpp"
+#include "cluster.hpp"
+#include "graph.hpp"
 #include "slamon/TimeLoopClosing.h"
 #include "slamon/SubTimeLoopClosing.h"
 

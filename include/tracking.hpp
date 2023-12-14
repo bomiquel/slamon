@@ -23,9 +23,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "frame.h"
-#include "graph.h"
-#include "publisher.h"
+#include "frame.hpp"
+#include "graph.hpp"
+#include "publisher.hpp"
 #include "slamon/TimeTracking.h"
 
 namespace slam

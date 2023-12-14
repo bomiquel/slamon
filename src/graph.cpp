@@ -1,6 +1,6 @@
-#include "graph.h"
-#include "cluster.h"
-#include "tools.h"
+#include "graph.hpp"
+#include "cluster.hpp"
+#include "tools.hpp"
 
 namespace slam
 {

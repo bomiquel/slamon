@@ -15,8 +15,8 @@
 #include <opencv2/features2d.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "tracking.h"
-#include "frame.h"
+#include "tracking.hpp"
+#include "frame.hpp"
 
 namespace slam
 {

@@ -1,5 +1,5 @@
-#include "loop_closing.h"
-#include "tools.h"
+#include "loop_closing.hpp"
+#include "tools.hpp"
 
 namespace slam
 {

@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include "hash.h"
+#include "hash.hpp"
 #include <opencv2/core/eigen.hpp>
 
 
