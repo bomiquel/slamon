@@ -196,7 +196,7 @@ namespace slam
     tools::Tools::ratioMatching(c_cluster_.getOrb(), candidate.getOrb(), matching_th, matches_1);
 
     // Get the neighbor clusters if enough matching percentage
-    if (matches_1.size() > (int)(params_.lc_min_inliers / 2))
+    if (matches_1.size() > (params_.lc_min_inliers / 2))
     {
       // Init accumulated data
       std::vector<int> cluster_query_list;

@@ -256,7 +256,7 @@ namespace slam
           ros::Time(0),
           transform);
     }
-    catch (tf::TransformException ex)
+    catch (tf::TransformException &ex)
     {
       ROS_WARN("%s", ex.what());
       return false;
@@ -289,7 +289,7 @@ namespace slam
   bool Tracking::addFrameToMap()
   {
 
-    if (c_frame_.getLeftKp().size() > (int)(params_.lc_min_inliers / 2))
+    if (c_frame_.getLeftKp().size() > (long unsigned int)(params_.lc_min_inliers / 2))
     {
       c_frame_.regionClustering();
 
@@ -337,7 +337,7 @@ namespace slam
     std::vector<cv::DMatch> matches;
     tools::Tools::ratioMatching(query.getLeftDesc(), candidate.getLeftDesc(), 0.8, matches);
 
-    if (matches.size() >= params_.lc_min_inliers)
+    if (matches.size() >= (long unsigned int)params_.lc_min_inliers)
     {
       // Get the matched keypoints
       std::vector<cv::KeyPoint> query_kp_l = query.getLeftKp();
@@ -371,7 +371,7 @@ namespace slam
                          100, params_.lc_epipolar_thresh, 0.99, inliers, cv::SOLVEPNP_ITERATIVE);
 
       // Inliers threshold
-      if (inliers.size() < params_.lc_min_inliers)
+      if (inliers.size() < (long unsigned int)params_.lc_min_inliers)
       {
         return false;
       }
