@@ -319,7 +319,72 @@ namespace slam
         if (inliers.size() >= params_.lc_min_inliers)
         {
           tf::Transform estimated_transform = tools::Tools::buildTransformation(rvec, tvec);
+
+          std::string solvepnpransac_file = params_.working_directory + "solvepnpransac.txt";
+          std::fstream f_solve(solvepnpransac_file.c_str(), std::ios::out | std::ios::trunc);
+
+          if (first_time_)
+          {
+            cv::Mat camera_matrix = graph_->getCameraMatrix();
+            f_solve << "CAMERA MATRIX (double): " << std::endl;
+            f_solve << "rows (double): " << camera_matrix.rows << std::endl;
+            f_solve << "cols (double): " << camera_matrix.cols << std::endl;
+            for(int a = 0; a < camera_matrix.rows; a++)
+            {
+              for (int b = 0; b < camera_matrix.cols; b++)
+                f_solve << camera_matrix.at<double>(a, b) << " ";
+              f_solve << std::endl;
+            }
+            first_time_ = false;
+          }
+
+          f_solve << "--------------------------------------------" << std::endl;
+          f_solve << "RVEC (double): " << std::endl;
+          f_solve << "rows (double): " << rvec.rows << std::endl;
+          f_solve << "cols (double): " << rvec.cols << std::endl;
+          for(int a = 0; a < rvec.rows; a++)
+          {
+            for (int b = 0; b < rvec.cols; b++)
+              f_solve << rvec.at<double>(a, b) << " ";
+            f_solve << std::endl;
+          }
+          f_solve << std::endl;
+          f_solve << "TVEC (double): " << std::endl;
+          f_solve << "rows (double): " << tvec.rows << std::endl;
+          f_solve << "cols (double): " << tvec.cols << std::endl;
+          for(int a = 0; a < tvec.rows; a++)
+          {
+            for (int b = 0; b < tvec.cols; b++)
+              f_solve << tvec.at<double>(a, b) << " ";
+            f_solve << std::endl;
+          }
+          f_solve << std::endl;
+
+          f_solve << "estimated_transform: " << std::endl;
+          f_solve << "x: " << estimated_transform.getOrigin().getX() << std::endl;
+          f_solve << "y: " << estimated_transform.getOrigin().getY() << std::endl;
+          f_solve << "z: " << estimated_transform.getOrigin().getZ() << std::endl;
+          f_solve << "qx: " << estimated_transform.getRotation().getX() << std::endl;
+          f_solve << "qy: " << estimated_transform.getRotation().getY() << std::endl;
+          f_solve << "qz: " << estimated_transform.getRotation().getZ() << std::endl;
+          f_solve << "qw: " << estimated_transform.getRotation().getZ() << std::endl;
+          f_solve << std::endl;
+
           estimated_transform = estimated_transform.inverse();
+
+          f_solve << "estimated_transform after inverse: " << std::endl;
+          f_solve << "x: " << estimated_transform.getOrigin().getX() << std::endl;
+          f_solve << "y: " << estimated_transform.getOrigin().getY() << std::endl;
+          f_solve << "z: " << estimated_transform.getOrigin().getZ() << std::endl;
+          f_solve << "qx: " << estimated_transform.getRotation().getX() << std::endl;
+          f_solve << "qy: " << estimated_transform.getRotation().getY() << std::endl;
+          f_solve << "qz: " << estimated_transform.getRotation().getZ() << std::endl;
+          f_solve << "qw: " << estimated_transform.getRotation().getZ() << std::endl;
+          f_solve << std::endl;
+
+          f_solve << "inliers: " << inliers.size() << std::endl;
+
+          f_solve.close();
 
           // Get the inliers per cluster pair
           std::vector< std::vector<int> > cluster_pairs;
@@ -721,8 +786,8 @@ namespace slam
   void LoopClosing::finalize()
   {
     // Remove the temporal directory
-    if (boost::filesystem::is_directory(execution_dir_))
-      boost::filesystem::remove_all(execution_dir_);
+    // if (boost::filesystem::is_directory(execution_dir_))
+    //   boost::filesystem::remove_all(execution_dir_);
   }
 
 } //namespace slam

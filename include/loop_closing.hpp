@@ -147,6 +147,8 @@ protected:
 
 private:
 
+  bool first_time_ = true; 
+
   int cluster_id_; //!> Processed cluster counter
 
   Params params_; //!> Stores parameters.
