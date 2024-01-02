@@ -311,7 +311,7 @@ namespace slam
         cv::Mat rvec, tvec;
         cv::solvePnPRansac(matched_cand_3d_points, matched_query_kp_l,
             graph_->getCameraMatrix(), cv::Mat(), rvec, tvec,
-            false, 100, params_.lc_epipolar_thresh, 0.99, inliers, cv::SOLVEPNP_ITERATIVE);  
+            false, 100, params_.lc_epipolar_thresh, 0.99, inliers, cv::SOLVEPNP_P3P);  
 
         sub_time_loop_closing_msg_.motion_estimation = ros::Time::now().toSec() - t0;
 
@@ -319,75 +319,10 @@ namespace slam
         if (inliers.size() >= params_.lc_min_inliers)
         {
           tf::Transform estimated_transform = tools::Tools::buildTransformation(rvec, tvec);
-
-          std::string solvepnpransac_file = params_.working_directory + "solvepnpransac.txt";
-          std::fstream f_solve(solvepnpransac_file.c_str(), std::ios::out | std::ios::trunc);
-
-          if (first_time_)
-          {
-            cv::Mat camera_matrix = graph_->getCameraMatrix();
-            f_solve << "CAMERA MATRIX (double): " << std::endl;
-            f_solve << "rows (double): " << camera_matrix.rows << std::endl;
-            f_solve << "cols (double): " << camera_matrix.cols << std::endl;
-            for(int a = 0; a < camera_matrix.rows; a++)
-            {
-              for (int b = 0; b < camera_matrix.cols; b++)
-                f_solve << camera_matrix.at<double>(a, b) << " ";
-              f_solve << std::endl;
-            }
-            first_time_ = false;
-          }
-
-          f_solve << "--------------------------------------------" << std::endl;
-          f_solve << "RVEC (double): " << std::endl;
-          f_solve << "rows (double): " << rvec.rows << std::endl;
-          f_solve << "cols (double): " << rvec.cols << std::endl;
-          for(int a = 0; a < rvec.rows; a++)
-          {
-            for (int b = 0; b < rvec.cols; b++)
-              f_solve << rvec.at<double>(a, b) << " ";
-            f_solve << std::endl;
-          }
-          f_solve << std::endl;
-          f_solve << "TVEC (double): " << std::endl;
-          f_solve << "rows (double): " << tvec.rows << std::endl;
-          f_solve << "cols (double): " << tvec.cols << std::endl;
-          for(int a = 0; a < tvec.rows; a++)
-          {
-            for (int b = 0; b < tvec.cols; b++)
-              f_solve << tvec.at<double>(a, b) << " ";
-            f_solve << std::endl;
-          }
-          f_solve << std::endl;
-
-          f_solve << "estimated_transform: " << std::endl;
-          f_solve << "x: " << estimated_transform.getOrigin().getX() << std::endl;
-          f_solve << "y: " << estimated_transform.getOrigin().getY() << std::endl;
-          f_solve << "z: " << estimated_transform.getOrigin().getZ() << std::endl;
-          f_solve << "qx: " << estimated_transform.getRotation().getX() << std::endl;
-          f_solve << "qy: " << estimated_transform.getRotation().getY() << std::endl;
-          f_solve << "qz: " << estimated_transform.getRotation().getZ() << std::endl;
-          f_solve << "qw: " << estimated_transform.getRotation().getZ() << std::endl;
-          f_solve << std::endl;
-
           estimated_transform = estimated_transform.inverse();
 
-          f_solve << "estimated_transform after inverse: " << std::endl;
-          f_solve << "x: " << estimated_transform.getOrigin().getX() << std::endl;
-          f_solve << "y: " << estimated_transform.getOrigin().getY() << std::endl;
-          f_solve << "z: " << estimated_transform.getOrigin().getZ() << std::endl;
-          f_solve << "qx: " << estimated_transform.getRotation().getX() << std::endl;
-          f_solve << "qy: " << estimated_transform.getRotation().getY() << std::endl;
-          f_solve << "qz: " << estimated_transform.getRotation().getZ() << std::endl;
-          f_solve << "qw: " << estimated_transform.getRotation().getZ() << std::endl;
-          f_solve << std::endl;
-
-          f_solve << "inliers: " << inliers.size() << std::endl;
-
-          f_solve.close();
-
           // Get the inliers per cluster pair
-          std::vector< std::vector<int> > cluster_pairs;
+          std::vector<std::vector<int>> cluster_pairs;
           std::vector<int> inliers_per_pair;
           std::vector<int> cand_kfs;
           for (uint i=0; i<inliers.size(); i++)
@@ -435,7 +370,7 @@ namespace slam
           }
 
           // Add the corresponding edges
-          std::vector< std::vector<int> > definitive_cluster_pairs;
+          std::vector<std::vector<int>> definitive_cluster_pairs;
           std::vector<int> definitive_inliers_per_pair;
           bool some_edge_added = false;
           for (uint i=0; i<inliers_per_pair.size(); i++)
@@ -455,10 +390,94 @@ namespace slam
               }
               if (lc_found) continue;
 
+              Cluster cluster_aux = readCluster(cluster_pairs[i][1]);
+              tf::Transform candidate_frame_camera_pose = cluster_aux.getCameraPose();
+              tf::Transform query_frame_camera_pose = c_cluster_.getCameraPose();
+
+              std::string edge_information = params_.working_directory + "edge_information.txt";
+              std::fstream f_edge_information(edge_information.c_str(), std::ios::app | std::ios::out);
+
+              f_edge_information << "----------------------------------------------------" << std::endl;
+              f_edge_information << "[closeLoopWithCluster:] Query cluster id: " << c_cluster_.getId() << std::endl;
+              f_edge_information << "[closeLoopWithCluster:] Query keyframe id: " << c_cluster_.getFrameId() << std::endl;
+              f_edge_information << "[closeLoopWithCluster:] Candidate cluster id: " << cluster_pairs[i][1] << std::endl;
+              f_edge_information << "[closeLoopWithCluster:] Candidate keyframe id: " << cluster_aux.getFrameId() << std::endl;
+              f_edge_information << "[closeLoopWithCluster:] Inliers per pair: " << inliers_per_pair[i] << std::endl;
+
+              f_edge_information << "[closeLoopWithCluster:] query_frame_camera_pose: " << std::endl;
+              f_edge_information << "                                              x: " << query_frame_camera_pose.getOrigin().getX() << std::endl;
+              f_edge_information << "                                              y: " << query_frame_camera_pose.getOrigin().getY() << std::endl;
+              f_edge_information << "                                              z: " << query_frame_camera_pose.getOrigin().getZ() << std::endl;
+              f_edge_information << "                                             qx: " << query_frame_camera_pose.getRotation().getX() << std::endl;
+              f_edge_information << "                                             qy: " << query_frame_camera_pose.getRotation().getY() << std::endl;
+              f_edge_information << "                                             qz: " << query_frame_camera_pose.getRotation().getZ() << std::endl;
+              f_edge_information << "                                             qw: " << query_frame_camera_pose.getRotation().getW() << std::endl;
+
+              f_edge_information << "[closeLoopWithCluster:] candidate_frame_camera_pose: " << std::endl;
+              f_edge_information << "                                                  x: " << candidate_frame_camera_pose.getOrigin().getX() << std::endl;
+              f_edge_information << "                                                  y: " << candidate_frame_camera_pose.getOrigin().getY() << std::endl;
+              f_edge_information << "                                                  z: " << candidate_frame_camera_pose.getOrigin().getZ() << std::endl;
+              f_edge_information << "                                                 qx: " << candidate_frame_camera_pose.getRotation().getX() << std::endl;
+              f_edge_information << "                                                 qy: " << candidate_frame_camera_pose.getRotation().getY() << std::endl;
+              f_edge_information << "                                                 qz: " << candidate_frame_camera_pose.getRotation().getZ() << std::endl;
+              f_edge_information << "                                                 qw: " << candidate_frame_camera_pose.getRotation().getW() << std::endl;
+
+              f_edge_information << "RVEC (double): " << std::endl;
+              f_edge_information << "rows (double): " << rvec.rows << std::endl;
+              f_edge_information << "cols (double): " << rvec.cols << std::endl;
+              for(int a = 0; a < rvec.rows; a++)
+              {
+                for (int b = 0; b < rvec.cols; b++)
+                  f_edge_information << rvec.at<double>(a, b) << " ";
+                f_edge_information << std::endl;
+              }
+              f_edge_information << std::endl;
+              f_edge_information << "TVEC (double): " << std::endl;
+              f_edge_information << "rows (double): " << tvec.rows << std::endl;
+              f_edge_information << "cols (double): " << tvec.cols << std::endl;
+              for(int a = 0; a < tvec.rows; a++)
+              {
+                for (int b = 0; b < tvec.cols; b++)
+                  f_edge_information << tvec.at<double>(a, b) << " ";
+                f_edge_information << std::endl;
+              }
+              f_edge_information.close();
+
               // Compute correct transform between edges
               tf::Transform candidate_cluster_pose = graph_->getVertexPose(cluster_pairs[i][1]);
               tf::Transform frame_cluster_pose_relative_to_camera = graph_->getVertexPoseRelativeToCamera(cluster_pairs[i][0]);
               tf::Transform edge_1 = candidate_cluster_pose.inverse() * estimated_transform * frame_cluster_pose_relative_to_camera;
+
+              f_edge_information.open(edge_information.c_str(), std::ios::app | std::ios::out);
+
+              f_edge_information << "[closeLoopWithCluster:] candidate_cluster_pose: " << std::endl;
+              f_edge_information << "                                             x: " << candidate_cluster_pose.getOrigin().getX() << std::endl;
+              f_edge_information << "                                             y: " << candidate_cluster_pose.getOrigin().getY() << std::endl;
+              f_edge_information << "                                             z: " << candidate_cluster_pose.getOrigin().getZ() << std::endl;
+              f_edge_information << "                                            qx: " << candidate_cluster_pose.getRotation().getX() << std::endl;
+              f_edge_information << "                                            qy: " << candidate_cluster_pose.getRotation().getY() << std::endl;
+              f_edge_information << "                                            qz: " << candidate_cluster_pose.getRotation().getZ() << std::endl;
+              f_edge_information << "                                            qw: " << candidate_cluster_pose.getRotation().getW() << std::endl;
+
+              f_edge_information << "[closeLoopWithCluster:] frame_cluster_pose_relative_to_camera: " << std::endl;
+              f_edge_information << "                                                            x: " << frame_cluster_pose_relative_to_camera.getOrigin().getX() << std::endl;
+              f_edge_information << "                                                            y: " << frame_cluster_pose_relative_to_camera.getOrigin().getY() << std::endl;
+              f_edge_information << "                                                           z: " << frame_cluster_pose_relative_to_camera.getOrigin().getZ() << std::endl;
+              f_edge_information << "                                                          qx: " << frame_cluster_pose_relative_to_camera.getRotation().getX() << std::endl;
+              f_edge_information << "                                                          qy: " << frame_cluster_pose_relative_to_camera.getRotation().getY() << std::endl;
+              f_edge_information << "                                                          qz: " << frame_cluster_pose_relative_to_camera.getRotation().getZ() << std::endl;
+              f_edge_information << "                                                          qw: " << frame_cluster_pose_relative_to_camera.getRotation().getW() << std::endl;
+
+              f_edge_information << "[closeLoopWithCluster:] edge_1: " << std::endl;
+              f_edge_information << "                             x: " << edge_1.getOrigin().getX() << std::endl;
+              f_edge_information << "                             y: " << edge_1.getOrigin().getY() << std::endl;
+              f_edge_information << "                            z: " << edge_1.getOrigin().getZ() << std::endl;
+              f_edge_information << "                           qx: " << edge_1.getRotation().getX() << std::endl;
+              f_edge_information << "                           qy: " << edge_1.getRotation().getY() << std::endl;
+              f_edge_information << "                           qz: " << edge_1.getRotation().getZ() << std::endl;
+              f_edge_information << "                           qw: " << edge_1.getRotation().getW() << std::endl;
+
+              f_edge_information.close();
 
               // Estimate the covariance
               cv::Mat J;
@@ -615,8 +634,8 @@ namespace slam
     fs["points"] >> points;
     cv::FileNode kp_l_node = fs["kp_l"];
     cv::FileNode kp_r_node = fs["kp_r"];
-    read(kp_l_node, kp_l);
-    read(kp_r_node, kp_r);
+    cv::read(kp_l_node, kp_l);
+    cv::read(kp_r_node, kp_r);
     fs.release();
 
     // Set the properties of the cluster
