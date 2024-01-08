@@ -7,14 +7,14 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## Declare ROS messages and services
-add_message_files(DIRECTORY msg 
-                  FILES GraphPoses.msg
-                  TimeTracking.msg
-                  TimeGraph.msg
-                  TimeLoopClosing.msg
-                  SubTimeLoopClosing.msg)
+# add_message_files(DIRECTORY msg 
+#                   FILES GraphPoses.msg
+#                   TimeTracking.msg
+#                   TimeGraph.msg
+#                   TimeLoopClosing.msg
+#                   SubTimeLoopClosing.msg)
                   
-generate_messages(DEPENDENCIES std_msgs)
+# generate_messages(DEPENDENCIES std_msgs)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall  -O3 -march=native")
@@ -46,3 +46,13 @@ else()
 endif()
 
 ####################################################
+
+catkin_package(CATKIN_DEPENDS message_runtime)
+
+include_directories(include
+                    ${catkin_INCLUDE_DIRS})
+
+add_executable(slamon 
+               src/node.cpp)
+target_link_libraries(slamon ${catkin_LIBRARIES})
+add_dependencies(slamon ${catkin_EXPORTED_TARGETS})
