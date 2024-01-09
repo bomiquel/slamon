@@ -10,8 +10,6 @@ int main(int argc, char **argv)
     // Threads
     VisualOdometry visual_odometer;
 
-    ROS_INFO("May the force be with you");
-
     // Launch threads
     std::thread visual_odometer_thread(&VisualOdometry::run, &visual_odometer);
 

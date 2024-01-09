@@ -7,18 +7,21 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 
+#include "tools.hpp"
+#include "publisher.hpp"
 #include "stereo_motion_estimation_modules.hpp"
 
 
-class VisualOdometry: public StereoMotionEstimationModules
+class VisualOdometry: public Tools, Publisher, StereoMotionEstimationModules 
 {
     public:
 
-        /** \brief Class constructor
-         *  \param pub Frame publisher object pointer
-         *  \param graph Graph object pointer
+        /** \brief Class constructor.
+         *  \param pub Frame publisher object pointer.
+         *  \param graph Graph object pointer.
          */
         VisualOdometry() {}
 
@@ -31,10 +34,10 @@ class VisualOdometry: public StereoMotionEstimationModules
 
         /** \brief Messages callback. This function is called when synchronized image
          * messages are received.
-         * \param l_img_msg left stereo image message of type sensor_msgs::Image
-         * \param r_img_msg right stereo image message of type sensor_msgs::Image
-         * \param l_info_msg left stereo info message of type sensor_msgs::CameraInfo
-         * \param r_info_msg right stereo info message of type sensor_msgs::CameraInfo
+         * \param l_img_msg left stereo image message of type sensor_msgs::Image.
+         * \param r_img_msg right stereo image message of type sensor_msgs::Image.
+         * \param l_info_msg left stereo info message of type sensor_msgs::CameraInfo.
+         * \param r_info_msg right stereo info message of type sensor_msgs::CameraInfo.
          */  
         void imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                            const sensor_msgs::ImageConstPtr& r_img_msg,
@@ -42,6 +45,8 @@ class VisualOdometry: public StereoMotionEstimationModules
                            const sensor_msgs::CameraInfoConstPtr& r_info_msg);
 
     private:
+
+        image_transport::Publisher pub_stereo_keypoints_;
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,

@@ -36,6 +36,7 @@ endif()
 
 find_package(catkin REQUIRED COMPONENTS
              roscpp
+             cv_bridge
              sensor_msgs
              image_transport
              message_filters
@@ -53,6 +54,8 @@ link_directories(${OpenCV_INCLUDE_DIRS})
 
 add_executable(slam 
                src/node.cpp
+               src/tools.cpp
+               src/publisher.cpp
                src/stereo_motion_estimation_modules.cpp
                src/visual_odometry.cpp)
 target_link_libraries(slam ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

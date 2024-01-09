@@ -14,6 +14,14 @@ class StereoMotionEstimationModules
 {
     public:
 
+        enum visualOdometryState
+        {
+            NOT_INITIALIZED   = 0,
+            INITIALIZING      = 1,
+            WORKING           = 2,
+            LOST              = 3
+        };
+
         /** \brief Empty class constructor.
          */
         StereoMotionEstimationModules() {}

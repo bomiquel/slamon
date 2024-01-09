@@ -2,8 +2,8 @@
 
 
 void StereoMotionEstimationModules::detectKeypoints(const cv::Mat& img,
-                                             cv::Mat& descs,
-                                             std::vector<cv::KeyPoint>& kps)
+                                                    cv::Mat& descs,
+                                                    std::vector<cv::KeyPoint>& kps)
 {
     // Convert images to grayscale
     cv::Mat img_gray;
@@ -16,11 +16,11 @@ void StereoMotionEstimationModules::detectKeypoints(const cv::Mat& img,
 
 
 void StereoMotionEstimationModules::detectStereoKeypoints(const cv::Mat& l_img,
-                                                   const cv::Mat& r_img,
-                                                   cv::Mat& l_descs,
-                                                   cv::Mat& r_descs,
-                                                   std::vector<cv::KeyPoint>& l_kps,
-                                                   std::vector<cv::KeyPoint>& r_kps)
+                                                          const cv::Mat& r_img,
+                                                          cv::Mat& l_descs,
+                                                          cv::Mat& r_descs,
+                                                          std::vector<cv::KeyPoint>& l_kps,
+                                                          std::vector<cv::KeyPoint>& r_kps)
 {
     std::thread l_detection(&StereoMotionEstimationModules::detectKeypoints, this, std::ref(l_img), std::ref(l_descs), std::ref(l_kps));
     std::thread r_detection(&StereoMotionEstimationModules::detectKeypoints, this, std::ref(r_img), std::ref(r_descs), std::ref(r_kps));
