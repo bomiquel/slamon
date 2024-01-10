@@ -2,22 +2,28 @@
 #define VISUAL_ODOMETRY_HPP
 
 
-#include <ros/ros.h>
-#include <sensor_msgs/Image.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <image_transport/image_transport.h>
-#include <image_transport/subscriber_filter.h>
-
 #include "tools.hpp"
 #include "publisher.hpp"
 #include "stereo_motion_estimation_modules.hpp"
 
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <image_transport/subscriber_filter.h>
 
-class VisualOdometry: public Tools, Publisher, StereoMotionEstimationModules 
+
+class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules 
 {
     public:
+
+        enum visualOdometryState
+        {
+            NOT_INITIALIZED   = 0,
+            INITIALIZING      = 1,
+            WORKING           = 2,
+            LOST              = 3
+        };
+
 
         /** \brief Class constructor.
          *  \param pub Frame publisher object pointer.
@@ -46,7 +52,9 @@ class VisualOdometry: public Tools, Publisher, StereoMotionEstimationModules
 
     private:
 
-        image_transport::Publisher pub_stereo_keypoints_;
+        image_transport::Publisher stereo_kps_pub_; // !> Stereo keypoints publisher
+
+        image_transport::Publisher stereo_matches_pub_; // !> Stereo matches publisher
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,

@@ -13,7 +13,8 @@ void VisualOdometry::run()
     message_filters::Subscriber<sensor_msgs::CameraInfo> l_info_sub, r_info_sub;
 
     // Publishers
-    pub_stereo_keypoints_ = it.advertise("stereo_keypoints", 1);
+    stereo_kps_pub_ = it.advertise("stereo_keypoints", 1);
+    stereo_matches_pub_ = it.advertise("stereo_matches", 1);
 
     // Message sync
     boost::shared_ptr<Sync_> sync;
@@ -33,25 +34,30 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                                    const sensor_msgs::CameraInfoConstPtr& l_info_msg,
                                    const sensor_msgs::CameraInfoConstPtr& r_info_msg)
 {
-    // From image ROS message to cv::Mat
+    // From ROS image message to cv::Mat
     cv::Mat l_img, r_img;
     if(!imgMsgToMat(l_img_msg, r_img_msg, l_img, r_img))// TODO: paralellization?
         return; 
 
-    // Keypoint detection
+    // Detecting keypoints
     cv::Mat l_descs, r_descs;
     std::vector<cv::KeyPoint> l_kps, r_kps;
     detectStereoKeypoints(l_img, r_img, l_descs, r_descs, l_kps, r_kps);
+
     // Keypoint detection debugging
-    cv::Mat stereo;
-    cv::Scalar color(0.0, 0.0, 255);
-    std::vector<cv::Point2f> c_l_kps, c_r_kps;
-    cv::KeyPoint::convert(l_kps, c_l_kps, std::vector<int>());
-    cv::KeyPoint::convert(r_kps, c_r_kps, std::vector<int>());
-    cv::Mat l_img_drawn = drawPoints(3, l_img, color, c_l_kps);
-    cv::Mat r_img_drawn = drawPoints(3, r_img, color, c_r_kps);
-    l_img_drawn.copyTo(stereo);
-    cv::hconcat(stereo, r_img_drawn, stereo);
-    publishImage(pub_stereo_keypoints_, stereo, l_img_msg->header.stamp);
+    if (stereo_kps_pub_.getNumSubscribers() > 0)
+        publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, l_kps, r_kps, stereo_kps_pub_);
+
+    // Matching keypoints
+    double ratio = 0.8;
+    cv::Mat f_l_descs, f_r_descs;
+    std::vector<cv::DMatch> f_matches;
+    std::vector<cv::KeyPoint> f_l_kps, f_r_kps;
+    if(!matchStereoKeypoints(ratio, l_descs, r_descs, l_kps, r_kps, f_l_descs, f_r_descs, f_matches, f_l_kps, f_r_kps))
+        return;
+
+    // Matching keypoints debugging
+    if (stereo_matches_pub_.getNumSubscribers() > 0)
+        publishStereoMatches(l_img, r_img, l_img_msg->header.stamp, f_matches, l_kps, r_kps, stereo_matches_pub_);
 }
 

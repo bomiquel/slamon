@@ -25,18 +25,3 @@ bool Tools::imgMsgToMat(const sensor_msgs::ImageConstPtr& l_img_msg,
     r_img = r_img_ptr->image;
     return true;
 }
-
-
-cv::Mat Tools::drawPoints(int r, 
-                          const cv::Mat& img, 
-                          const cv::Scalar& color,
-                          const std::vector<cv::Point2f>& pts)
-{
-    cv::Mat drawn_img;
-    img.copyTo(drawn_img);
-
-    for (uint i = 0; i < pts.size(); i++)
-        cv::circle(drawn_img, pts[i], r, color, -1);
-    
-    return drawn_img;
-}

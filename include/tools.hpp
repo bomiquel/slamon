@@ -28,19 +28,6 @@ class Tools
                          const sensor_msgs::ImageConstPtr& r_img_msg,
                          cv::Mat& l_img, 
                          cv::Mat& r_img);
-
-
-        /** \brief Draws points on an image.
-         *  \param r The desired radius to draw the points.
-         *  \param img The image in cv::Mat type. 
-         *  \param color The desired color to draw the points.
-         *  \param pts The points.
-         *  @return The image with the points drawn.
-         */
-        cv::Mat drawPoints(int r, 
-                           const cv::Mat& img, 
-                           const cv::Scalar& color,
-                           const std::vector<cv::Point2f>& pts); 
 };
 
 
