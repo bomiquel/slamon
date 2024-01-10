@@ -34,10 +34,20 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                                    const sensor_msgs::CameraInfoConstPtr& l_info_msg,
                                    const sensor_msgs::CameraInfoConstPtr& r_info_msg)
 {
+    double delta_t_sec;
+    ros::Duration delta_t;
+    ros::Time start_time = ros::Time::now();
+
     // From ROS image message to cv::Mat
     cv::Mat l_img, r_img;
     if(!imgMsgToMat(l_img_msg, r_img_msg, l_img, r_img))// TODO: paralellization?
+    {
+        delta_t = ros::Time::now() - start_time;
+        delta_t_sec = delta_t.toSec();
+        std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
         return; 
+    }
+
 
     // Detecting keypoints
     cv::Mat l_descs, r_descs;
@@ -54,10 +64,19 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     std::vector<cv::DMatch> f_matches;
     std::vector<cv::KeyPoint> f_l_kps, f_r_kps;
     if(!matchStereoKeypoints(ratio, l_descs, r_descs, l_kps, r_kps, f_l_descs, f_r_descs, f_matches, f_l_kps, f_r_kps))
-        return;
+    {
+        delta_t = ros::Time::now() - start_time;
+        delta_t_sec = delta_t.toSec();
+        std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
+        return; 
+    }
 
     // Matching keypoints debugging
     if (stereo_matches_pub_.getNumSubscribers() > 0)
         publishStereoMatches(l_img, r_img, l_img_msg->header.stamp, f_matches, l_kps, r_kps, stereo_matches_pub_);
+
+    delta_t = ros::Time::now() - start_time;
+    delta_t_sec = delta_t.toSec();
+    std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
 }
 
