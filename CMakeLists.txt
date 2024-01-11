@@ -35,6 +35,7 @@ endif()
 ####################################################
 
 find_package(catkin REQUIRED COMPONENTS
+             tf
              roscpp
              cv_bridge
              sensor_msgs
@@ -56,6 +57,7 @@ link_directories(${OpenCV_INCLUDE_DIRS})
 add_executable(slam 
                src/node.cpp
                src/tools.cpp
+               src/frame.cpp
                src/publisher.cpp
                src/stereo_motion_estimation_modules.cpp
                src/visual_odometry.cpp)

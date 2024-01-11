@@ -1,5 +1,14 @@
+/**
+ *  @file
+ *  @brief The Publisher class is responsive to publish the image visualizations for debugging purposes (presentation).
+ *  @author Pep Lluís Negre-Carrasco
+ *  @date 2014-2016
+ *  @modified Bo Miquel Nordfeldt-Fiol Winter 2024
+ */
+
 #ifndef PUBLISHER_HPP
 #define PUBLISHER_HPP
+
 
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>

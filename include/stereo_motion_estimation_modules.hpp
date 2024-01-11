@@ -1,7 +1,15 @@
+/**
+ *  @file
+ *  @brief The Stereo Motion Estimation Modules class provides all the modules (feature-baseds) needed to calculate the motion between two pairs of stereoscopic images.
+ *  @author Bo Miquel Nordfeldt-Fiol
+ *  @date Winter 2024
+ */
+
 #ifndef STEREO_MOTION_ESTIMATION_MODULES_HPP
 #define STEREO_MOTION_ESTIMATION_MODULES_HPP
 
 
+#include <vector>
 #include <thread>
 
 #include <opencv2/opencv.hpp>

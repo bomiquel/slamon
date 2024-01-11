@@ -1,11 +1,20 @@
+/**
+ *  @file
+ *  @brief The Visual Odometry class is responsive to track consecutive image frames and compute their motion.
+ *  @author Bo Miquel Nordfeldt-Fiol
+ *  @date Winter 2024
+ */
+
 #ifndef VISUAL_ODOMETRY_HPP
 #define VISUAL_ODOMETRY_HPP
 
 
+#include "frame.hpp"
 #include "tools.hpp"
 #include "publisher.hpp"
 #include "stereo_motion_estimation_modules.hpp"
 
+#include <tf/transform_listener.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -17,12 +26,12 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
 {
     public:
 
-        enum visualOdometryState
+        enum VOStatus
         {
-            NOT_INITIALIZED   = 0,
-            INITIALIZING      = 1,
-            WORKING           = 2,
-            LOST              = 3
+            UNINITIALIZED   = 0,
+            INITIALIZING    = 1,
+            WORKING         = 2,
+            LOST            = 3
         };
 
 
@@ -41,16 +50,54 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
     protected:
 
         /** \brief Messages callback. This function is called when synchronized image
-         * messages are received.
-         * \param l_img_msg ROS message containing the left image (input).
-         * \param r_img_msg ROS message containing the right image (input).
-         * \param l_info_msg ROS message containing the info of the left image (input).
-         * \param r_info_msg ROS message containing the info of the right image (input).
+         *  messages are received.
+         *  \param l_img_msg ROS message containing the left image (input).
+         *  \param r_img_msg ROS message containing the right image (input).
+         *  \param l_info_msg ROS message containing the info of the left image (input).
+         *  \param r_info_msg ROS message containing the info of the right image (input).
          */  
         void imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                            const sensor_msgs::ImageConstPtr& r_img_msg,
                            const sensor_msgs::CameraInfoConstPtr& l_info_msg,
                            const sensor_msgs::CameraInfoConstPtr& r_info_msg);
+
+
+        void initialization(const sensor_msgs::ImageConstPtr& l_img_msg,
+                            const sensor_msgs::ImageConstPtr& r_img_msg,
+                            const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+                            const sensor_msgs::CameraInfoConstPtr& r_info_msg,
+                            Frame& c_frame);
+
+        
+        /** \brief Get the static transform between robot frame (base link) and camera frame.
+         *  \param robot_frame_id Name of the robot frame.
+         *  \param sensor_frame_id Name of the sensor frame.
+         *  @return True if valid transform, false otherwise
+         */
+        bool getRobot2CameraTf(std::string robot_frame_id,
+                               std::string sensor_frame_id);
+
+
+        /** \brief Gets the stereo camera model and the camera matrix from the ROS 
+         *  messages containing the image information.
+         *  \param l_info_msg ROS message containing the info of the left image (input).
+         *  \param r_info_msg ROS message containing the info of the right image (input).
+         *  @return If it has been possible to obtain the model of the camera
+         */
+        void getCameraModelMatrix(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+                                  const sensor_msgs::CameraInfoConstPtr& r_info_msg);
+
+
+        /** \brief Detects, matches, filters and calculates the 3D points of the keypoints
+         *  of the current stereo image pair.
+         *  \param l_img_msg ROS message containing the left image (input).
+         *  \param r_img_msg ROS message containing the right image (input).
+         *  \param c_frame Will contain all the corresponfing data of the current frame (output).
+         *  @return Whether the current frame could be processed.
+         */
+        bool processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img_msg,
+                                 const sensor_msgs::ImageConstPtr& r_img_msg,
+                                 Frame& c_frame);
 
 
         /** \brief Convert ROS image messages to cv::Mat
@@ -64,16 +111,6 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
                          const sensor_msgs::ImageConstPtr& r_img_msg,
                          cv::Mat& l_img, 
                          cv::Mat& r_img);
-
-
-        /** \brief Gets the stereo camera model and the camera matrix from the ROS 
-         *  messages containing the image information.
-         *  \param l_info_msg ROS message containing the info of the left image (input).
-         *  \param r_info_msg ROS message containing the info of the right image (input).
-         *  @return If it has been possible to obtain the model of the camera
-         */
-        void getCameraModelMatrix(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
-                                  const sensor_msgs::CameraInfoConstPtr& r_info_msg);
 
 
         /** \brief Calculates the 3D points of the keypoints of the image stereo pair.
@@ -95,7 +132,15 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
 
     private:
 
+        VOStatus status_; //!> Visual odometer state
+
+        ros::Time start_time_;
+
         cv::Mat camera_matrix_; //!> Stereo camera matrix
+
+        tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
+
+        tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.
 
         image_transport::Publisher stereo_kps_pub_; // !> Stereo keypoints publisher
 
@@ -110,6 +155,8 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
                                                                 sensor_msgs::CameraInfo> SyncPolicy_;
 
         typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
+
+        // ros::Duration delta_t double delta_t_sec
 
 };
 
