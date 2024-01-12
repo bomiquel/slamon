@@ -68,25 +68,6 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
                             const sensor_msgs::CameraInfoConstPtr& r_info_msg,
                             Frame& c_frame);
 
-        
-        /** \brief Get the static transform between robot frame (base link) and camera frame.
-         *  \param robot_frame_id Name of the robot frame.
-         *  \param sensor_frame_id Name of the sensor frame.
-         *  @return True if valid transform, false otherwise
-         */
-        bool getRobot2CameraTf(std::string robot_frame_id,
-                               std::string sensor_frame_id);
-
-
-        /** \brief Gets the stereo camera model and the camera matrix from the ROS 
-         *  messages containing the image information.
-         *  \param l_info_msg ROS message containing the info of the left image (input).
-         *  \param r_info_msg ROS message containing the info of the right image (input).
-         *  @return If it has been possible to obtain the model of the camera
-         */
-        void getCameraModelMatrix(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
-                                  const sensor_msgs::CameraInfoConstPtr& r_info_msg);
-
 
         /** \brief Detects, matches, filters and calculates the 3D points of the keypoints
          *  of the current stereo image pair.
@@ -98,6 +79,36 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
         bool processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img_msg,
                                  const sensor_msgs::ImageConstPtr& r_img_msg,
                                  Frame& c_frame);
+
+
+
+        bool computeMotionSuccessiveFrames(const Frame& c_frame,
+                                           const Frame& p_frame);
+
+
+        /** \brief Get the static transform between robot frame (base link) and camera frame.
+         *  \param robot_frame_id Name of the robot frame (input).
+         *  \param sensor_frame_id Name of the sensor frame (input).
+         *  \param transform Will contain the transform between robot frame and camera frame (output).
+         *  @return True if valid transform, false otherwise.
+         */
+        bool getRobot2CameraTf(const std::string& robot_frame_id,
+                               const std::string& sensor_frame_id,
+                               tf::StampedTransform& transform);
+
+
+        /** \brief Gets the stereo camera model and the camera matrix from the ROS 
+         *  messages containing the image information.
+         *  \param l_info_msg ROS message containing the info of the left image (input).
+         *  \param r_info_msg ROS message containing the info of the right image (input).
+         *  \param camera_matrix Will contain the stereo camera matrix (output).
+         *  \param stereo_camera_model Will contain the stereo camera model (output).
+         *  @return If it has been possible to obtain the model of the camera.
+         */
+        void getCameraModelMatrix(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+                                  const sensor_msgs::CameraInfoConstPtr& r_info_msg,
+                                  cv::Mat& camera_matrix,
+                                  image_geometry::StereoCameraModel& stereo_camera_model);
 
 
         /** \brief Convert ROS image messages to cv::Mat
@@ -124,6 +135,7 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
                                                  const std::vector<cv::DMatch>& matches,
                                                  const std::vector<cv::KeyPoint>& l_kps,
                                                  const std::vector<cv::KeyPoint>& r_kps,
+                                                 const image_geometry::StereoCameraModel& camera_model,
                                                  cv::Mat& f_l_descs,
                                                  cv::Mat& f_r_descs,
                                                  std::vector<cv::DMatch>& f_matches,
@@ -131,10 +143,12 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
                                                  std::vector<cv::KeyPoint>& f_r_kps);
 
     private:
+        
+        Frame p_frame_; //!> Previous frame
 
         VOStatus status_; //!> Visual odometer state
 
-        ros::Time start_time_;
+        ros::Time start_time_; //>! Time at which the program enters into the callback.
 
         cv::Mat camera_matrix_; //!> Stereo camera matrix
 
@@ -145,6 +159,8 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
         image_transport::Publisher stereo_kps_pub_; // !> Stereo keypoints publisher
 
         image_transport::Publisher stereo_matches_pub_; // !> Stereo matches publisher
+
+        image_transport::Publisher successive_matches_pub_; // !> Successive frame matching publisher 
 
         image_geometry::StereoCameraModel camera_model_; //!> Stereo camera model
 

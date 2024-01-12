@@ -6,6 +6,8 @@ void VisualOdometry::run()
     // Assign "uninitialized" status to visual odometer
     status_ = UNINITIALIZED;
 
+    match_type_ = PLAIN_MATCHING;
+
     // Create node
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
@@ -18,6 +20,7 @@ void VisualOdometry::run()
     // Publishers
     stereo_kps_pub_ = it.advertise("stereo_keypoints", 1);
     stereo_matches_pub_ = it.advertise("stereo_matches", 1);
+    successive_matches_pub_ = it.advertise("successive_matches", 1);
 
     // Message sync
     boost::shared_ptr<Sync_> sync;
@@ -37,40 +40,31 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                                    const sensor_msgs::CameraInfoConstPtr& l_info_msg,
                                    const sensor_msgs::CameraInfoConstPtr& r_info_msg)
 {
-    Frame c_frame; 
     start_time_ = ros::Time::now();
 
+    // Create current frame object.
+    Frame c_frame; 
+
+    // 
     switch (status_)
     {
         case UNINITIALIZED:
             ROS_INFO_STREAM("UNINITIALIZED");
             initialization(l_img_msg, r_img_msg, l_info_msg, r_info_msg, c_frame);
-            std::cout << "Frame l_kps: " << c_frame.getLeftKp().size() << std::endl;
-            std::cout << "Frame r_descs: " << c_frame.getRightDesc().rows << std::endl;
-            std::cout << "Frame matches: " << c_frame.getMatches().size() << std::endl;
-            std::cout << "Frame 3D points: " << c_frame.getCameraPoints().size() << std::endl;
             break;
 
         case INITIALIZING:
             ROS_INFO_STREAM("INITIALIZING");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 status_ = WORKING;
-            std::cout << "Frame l_kps: " << c_frame.getLeftKp().size() << std::endl;
-            std::cout << "Frame r_descs: " << c_frame.getRightDesc().rows << std::endl;
-            std::cout << "Frame matches: " << c_frame.getMatches().size() << std::endl;
-            std::cout << "Frame 3D points: " << c_frame.getCameraPoints().size() << std::endl;
             break;
 
         case WORKING:
             ROS_INFO_STREAM("WORKING");
-            if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
-                status_ = WORKING;
-            else
+            if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 status_ = LOST;
-            std::cout << "Frame l_kps: " << c_frame.getLeftKp().size() << std::endl;
-            std::cout << "Frame r_descs: " << c_frame.getRightDesc().rows << std::endl;
-            std::cout << "Frame matches: " << c_frame.getMatches().size() << std::endl;
-            std::cout << "Frame 3D points: " << c_frame.getCameraPoints().size() << std::endl;
+            computeMotionSuccessiveFrames(c_frame, p_frame_);
+                
             break;
 
         case LOST:
@@ -79,12 +73,11 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                 status_ = WORKING;
             else
                 status_ = LOST;
-            std::cout << "Frame l_kps: " << c_frame.getLeftKp().size() << std::endl;
-            std::cout << "Frame r_descs: " << c_frame.getRightDesc().rows << std::endl;
-            std::cout << "Frame matches: " << c_frame.getMatches().size() << std::endl;
-            std::cout << "Frame 3D points: " << c_frame.getCameraPoints().size() << std::endl;
             break;
     }
+
+    // Store current frame as previous.
+    p_frame_ = c_frame;
     
     ros::Duration delta_t = ros::Time::now() - start_time_;
     double delta_t_sec = delta_t.toSec();
@@ -99,14 +92,14 @@ void VisualOdometry::initialization(const sensor_msgs::ImageConstPtr& l_img_msg,
                                     Frame& c_frame)
 {
     // Get the static transformation between robot frame (base link) and camera frame
-    if (!getRobot2CameraTf("/robot_0/base_link", l_img_msg->header.frame_id))
+    if (!getRobot2CameraTf("/robot_0/base_link", l_img_msg->header.frame_id, robot2camera_))
     {
         ROS_WARN("[SLAMON:] Impossible to obtain transform between robot frame (base link) and camera frame. Waiting.");
         return;
     }
 
     // Get camera model and matrix
-    getCameraModelMatrix(l_info_msg, r_info_msg);
+    getCameraModelMatrix(l_info_msg, r_info_msg, camera_matrix_, camera_model_);
 
     // Process current frame
     if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
@@ -116,60 +109,13 @@ void VisualOdometry::initialization(const sensor_msgs::ImageConstPtr& l_img_msg,
 }
 
 
-bool VisualOdometry::getRobot2CameraTf(std::string robot_frame_id,
-                                       std::string sensor_frame_id)
-{
-    // Init the transform
-    robot2camera_.setIdentity();
-
-    // Try to extract the transform
-    try
-    {
-        tf_listener_.lookupTransform(robot_frame_id, sensor_frame_id, ros::Time(0), robot2camera_);
-    }
-    catch(const tf::TransformException& e)
-    {
-        ROS_WARN("%s", e.what());
-        return false;
-    }
-    return true;    
-}
-
-
-void VisualOdometry::getCameraModelMatrix(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
-                                          const sensor_msgs::CameraInfoConstPtr& r_info_msg)
-{
-    // Get the binning factors
-    int binning_x = l_info_msg->binning_x;
-    int binning_y = l_info_msg->binning_y;
-
-    // Get the stereo camera model
-    camera_model_.fromCameraInfo(l_info_msg, r_info_msg);
-
-    // Get the projection/camera matrix
-    const cv::Mat P(3, 4, CV_64FC1, const_cast<double*>(l_info_msg->P.data()));
-    camera_matrix_ = P.colRange(cv::Range(0, 3)).clone();
-
-    // Are the images scaled?
-    if (binning_x > 1 || binning_y > 1)
-    {
-      camera_matrix_.at<double>(0,0) = camera_matrix_.at<double>(0,0) / binning_x;
-      camera_matrix_.at<double>(0,2) = camera_matrix_.at<double>(0,2) / binning_x;
-      camera_matrix_.at<double>(0,3) = camera_matrix_.at<double>(0,3) / binning_x;
-      camera_matrix_.at<double>(1,1) = camera_matrix_.at<double>(1,1) / binning_y;
-      camera_matrix_.at<double>(1,2) = camera_matrix_.at<double>(1,2) / binning_y;
-      camera_matrix_.at<double>(1,3) = camera_matrix_.at<double>(1,3) / binning_y;
-    }
-}
-
-
 bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img_msg,
                                          const sensor_msgs::ImageConstPtr& r_img_msg,
                                          Frame& c_frame)
 {
     // From ROS image message to cv::Mat
     cv::Mat l_img, r_img;
-    if(!imgMsgToMat(l_img_msg, r_img_msg, l_img, r_img))// TODO: paralellization?
+    if(!imgMsgToMat(l_img_msg, r_img_msg, l_img, r_img)) // TODO: paralellization?
     {
         ros::Duration delta_t = ros::Time::now() - start_time_;
         double delta_t_sec = delta_t.toSec();
@@ -188,10 +134,10 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 
     // Matching keypoints
     double ratio = 0.8;
-    cv::Mat half_f_l_descs, half_f_r_descs;
-    std::vector<cv::DMatch> half_f_matches;
-    std::vector<cv::KeyPoint> half_f_l_kps, half_f_r_kps;
-    if(!matchStereoKeypoints(ratio, l_descs, r_descs, l_kps, r_kps, half_f_l_descs, half_f_r_descs, half_f_matches, half_f_l_kps, half_f_r_kps))
+    cv::Mat h_f_l_descs, h_f_r_descs;
+    std::vector<cv::DMatch> h_f_matches;
+    std::vector<cv::KeyPoint> h_f_l_kps, h_f_r_kps;
+    if(!matchStereoKeypoints(ratio, l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_matches, h_f_l_kps, h_f_r_kps))
     {
         ros::Duration delta_t = ros::Time::now() - start_time_;
         double delta_t_sec = delta_t.toSec();
@@ -203,22 +149,96 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     cv::Mat f_l_descs, f_r_descs;
     std::vector<cv::DMatch> f_matches;
     std::vector<cv::KeyPoint> f_l_kps, f_r_kps;
-    std::vector<cv::Point3f> camera_points = compute3DPoints(half_f_l_descs, half_f_r_descs, half_f_matches, half_f_l_kps, half_f_r_kps, 
-                                                             f_l_descs, f_r_descs, f_matches, f_l_kps, f_r_kps);
+    std::vector<cv::Point3f> camera_points = compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_matches, h_f_l_kps, h_f_r_kps, 
+                                                             camera_model_, f_l_descs, f_r_descs, f_matches, f_l_kps, f_r_kps);
 
-    // Matching keypoints debugging
+    // Stereo matching keypoints debugging
     if (stereo_matches_pub_.getNumSubscribers() > 0)
         publishStereoMatches(l_img, r_img, l_img_msg->header.stamp, f_matches, l_kps, r_kps, stereo_matches_pub_);
 
-    std::cout << "l_kps: " << f_l_kps.size() << std::endl;
-    std::cout << "r_descs: " << f_r_descs.rows << std::endl;
-    std::cout << "matches: " << f_matches.size() << std::endl;
-    std::cout << "3D points: " << camera_points.size() << std::endl;
-
     // Fill Frame object
-    c_frame = Frame(f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kps, f_r_kps, f_matches, camera_points);
+    c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kps, f_r_kps, f_matches, camera_points, l_kps, r_kps);
 
     return true;
+}
+
+
+bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
+                                                   const Frame& c_frame)
+{
+    //
+    double ratio = 0.8;
+    std::vector<cv::DMatch> f_l_matches, f_r_matches;
+    cv::Mat f_c_l_descs, f_c_r_descs, f_p_l_descs, f_p_r_descs;
+    std::vector<cv::Point3f> f_c_camera_points, f_p_camera_points;
+    std::vector<cv::KeyPoint> f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps;
+    if (!matchNonStereoKeypoints(ratio, c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame.getLeftDescs(), p_frame.getLeftDescs(),
+                                 c_frame.getLeftKps(), c_frame.getRightKps(), p_frame.getLeftKps(), p_frame.getRightKps(),
+                                 c_frame.getCameraPoints(), p_frame.getCameraPoints(), f_c_l_descs, f_c_r_descs, f_p_l_descs, f_p_r_descs,
+                                 f_l_matches, f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, f_c_camera_points, f_p_camera_points))
+    {
+        ros::Duration delta_t = ros::Time::now() - start_time_;
+        double delta_t_sec = delta_t.toSec();
+        std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
+        return false; 
+    }
+
+    // Non stereo matching keypoints debugging
+    if (successive_matches_pub_.getNumSubscribers() > 0)
+        publishStereoMatches(c_frame.getLeftImg(), p_frame.getLeftImg(), c_frame.getTimestamp(), f_l_matches,
+                             c_frame.getNonFilteredLeftKps(), p_frame.getNonFilteredLeftKps(), successive_matches_pub_);
+
+    return true;
+}
+
+
+bool VisualOdometry::getRobot2CameraTf(const std::string& robot_frame_id,
+                                       const std::string& sensor_frame_id,
+                                       tf::StampedTransform& transform)
+{
+    // Init the transform
+    robot2camera_.setIdentity();
+
+    // Try to extract the transform
+    try
+    {
+        tf_listener_.lookupTransform(robot_frame_id, sensor_frame_id, ros::Time(0), transform);
+    }
+    catch(const tf::TransformException& e)
+    {
+        ROS_WARN("%s", e.what());
+        return false;
+    }
+    return true;    
+}
+
+
+void VisualOdometry::getCameraModelMatrix(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+                                          const sensor_msgs::CameraInfoConstPtr& r_info_msg,
+                                          cv::Mat& camera_matrix,
+                                          image_geometry::StereoCameraModel& stereo_camera_model)
+{
+    // Get the binning factors
+    int binning_x = l_info_msg->binning_x;
+    int binning_y = l_info_msg->binning_y;
+
+    // Get the stereo camera model
+    stereo_camera_model.fromCameraInfo(l_info_msg, r_info_msg);
+
+    // Get the projection/camera matrix
+    const cv::Mat P(3, 4, CV_64FC1, const_cast<double*>(l_info_msg->P.data()));
+    camera_matrix = P.colRange(cv::Range(0, 3)).clone();
+
+    // Are the images scaled?
+    if (binning_x > 1 || binning_y > 1)
+    {
+      camera_matrix.at<double>(0,0) = camera_matrix.at<double>(0,0) / binning_x;
+      camera_matrix.at<double>(0,2) = camera_matrix.at<double>(0,2) / binning_x;
+      camera_matrix.at<double>(0,3) = camera_matrix.at<double>(0,3) / binning_x;
+      camera_matrix.at<double>(1,1) = camera_matrix.at<double>(1,1) / binning_y;
+      camera_matrix.at<double>(1,2) = camera_matrix.at<double>(1,2) / binning_y;
+      camera_matrix.at<double>(1,3) = camera_matrix.at<double>(1,3) / binning_y;
+    }
 }
 
 
@@ -253,6 +273,7 @@ std::vector<cv::Point3f> VisualOdometry::compute3DPoints(const cv::Mat& l_descs,
                                                          const std::vector<cv::DMatch>& matches,
                                                          const std::vector<cv::KeyPoint>& l_kps,
                                                          const std::vector<cv::KeyPoint>& r_kps,
+                                                         const image_geometry::StereoCameraModel& camera_model,
                                                          cv::Mat& f_l_descs,
                                                          cv::Mat& f_r_descs,
                                                          std::vector<cv::DMatch>& f_matches,
@@ -268,7 +289,7 @@ std::vector<cv::Point3f> VisualOdometry::compute3DPoints(const cv::Mat& l_descs,
         l_point = l_kps[i].pt;
         r_point = r_kps[i].pt;
         disparity = l_point.x - r_point.y;
-        camera_model_.projectDisparityTo3d(l_point, disparity, camera_point);
+        camera_model.projectDisparityTo3d(l_point, disparity, camera_point);
         if (isfinite(camera_point.x) && isfinite(camera_point.y) && isfinite(camera_point.z) && (camera_point.z) > 0)
         {
             f_l_kps.push_back(l_kps[i]);
