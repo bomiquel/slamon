@@ -51,18 +51,18 @@ bool StereoMotionEstimationModules::matchStereoKeypoints(double ratio,
     std::vector<cv::Point3f> points_3d_0, points_3d_1, f_points_3d_0, f_points_3d_1;
 
     // Perform keypoint matching and Lowe's ratio
-    cv::Mat half_f_l_descs, half_f_r_descs;
-    std::vector<cv::DMatch> half_f_matches;
-    std::vector<cv::KeyPoint> half_f_l_kps, half_f_r_kps;
+    cv::Mat h_f_l_descs, h_f_r_descs;
+    std::vector<cv::DMatch> h_f_matches;
+    std::vector<cv::KeyPoint> h_f_l_kps, h_f_r_kps;
     if (!ratioMatching(ratio, l_descs, r_descs, l_kps, r_kps, points_3d_0, points_3d_1,
-                       half_f_l_descs, half_f_r_descs, half_f_matches, half_f_l_kps, half_f_r_kps, f_points_3d_0, f_points_3d_1))
+                       h_f_l_descs, h_f_r_descs, h_f_matches, h_f_l_kps, h_f_r_kps, f_points_3d_0, f_points_3d_1))
         return false;
 
     // Compute fundamental matrix
     cv::Mat F, mask;
     std::vector<cv::Point2f> aux_l_kps, aux_r_kps;
-    cv::KeyPoint::convert(half_f_l_kps, aux_l_kps, std::vector<int>());
-    cv::KeyPoint::convert(half_f_r_kps, aux_r_kps, std::vector<int>());
+    cv::KeyPoint::convert(h_f_l_kps, aux_l_kps, std::vector<int>());
+    cv::KeyPoint::convert(h_f_r_kps, aux_r_kps, std::vector<int>());
     try
     {
         F = cv::findFundamentalMat(aux_l_kps, aux_r_kps, mask, cv::RANSAC, 1.0);
@@ -79,12 +79,74 @@ bool StereoMotionEstimationModules::matchStereoKeypoints(double ratio,
     {
         if (mask.at<bool>(i, 0) == 1)
         {
-            f_l_kps.push_back(half_f_l_kps[i]);
-            f_r_kps.push_back(half_f_r_kps[i]);
-            f_matches.push_back(half_f_matches[i]);
-            f_l_descs.push_back(half_f_l_descs.row(i));
-            f_r_descs.push_back(half_f_r_descs.row(i));
+            f_l_kps.push_back(h_f_l_kps[i]);
+            f_r_kps.push_back(h_f_r_kps[i]);
+            f_matches.push_back(h_f_matches[i]);
+            f_l_descs.push_back(h_f_l_descs.row(i));
+            f_r_descs.push_back(h_f_r_descs.row(i));
         }
+    }
+
+    return true;
+}
+
+
+bool StereoMotionEstimationModules::matchNonStereoKeypoints(double ratio,
+                                                            const cv::Mat& c_l_descs,
+                                                            const cv::Mat& c_r_descs,
+                                                            const cv::Mat& q_l_descs,
+                                                            const cv::Mat& q_r_descs,
+                                                            const std::vector<cv::KeyPoint>& c_l_kps,
+                                                            const std::vector<cv::KeyPoint>& c_r_kps,
+                                                            const std::vector<cv::KeyPoint>& q_l_kps,
+                                                            const std::vector<cv::KeyPoint>& q_r_kps,
+                                                            const std::vector<cv::Point3f>& c_camera_points,
+                                                            const std::vector<cv::Point3f>& q_camera_points,
+                                                            cv::Mat& f_c_l_descs,
+                                                            cv::Mat& f_c_r_descs,
+                                                            cv::Mat& f_q_l_descs,
+                                                            cv::Mat& f_q_r_descs,
+                                                            std::vector<cv::DMatch>& f_l_matches,
+                                                            std::vector<cv::KeyPoint>& f_c_l_kps,
+                                                            std::vector<cv::KeyPoint>& f_c_r_kps,
+                                                            std::vector<cv::KeyPoint>& f_q_l_kps,
+                                                            std::vector<cv::KeyPoint>& f_q_r_kps,
+                                                            std::vector<cv::Point3f>& f_c_camera_points,
+                                                            std::vector<cv::Point3f>& f_q_camera_points)
+{
+    // Create all the necessary variables for all possible cases.
+    // cv::Mat h_f_l_descs, h_f_r_descs;
+
+    switch (match_type_)
+    {
+        case PLAIN_MATCHING:
+            std::cout << "Plain matching" << std::endl;
+            if (!ratioMatching(ratio, c_l_descs, q_l_descs, c_l_kps, q_l_kps, c_camera_points, q_camera_points,
+                               f_c_l_descs, f_q_l_descs, f_l_matches, f_c_l_kps, f_q_l_kps, f_c_camera_points, f_q_camera_points))
+                return false;
+            break;
+
+        case PLAIN_MATCHING_H:
+            std::cout << "Plain matching with homography" << std::endl;
+            return false;
+            break;
+
+        case CIRCULAR_MATCHING:
+            std::cout << "Circular matching" << std::endl;
+            return false;
+            break;
+
+        case CIRCULAR_MATCHING_H:
+            std::cout << "Quad matching with homography" << std::endl;
+            return false;
+            break;
+
+        default:
+            std::cout << "Default" << std::endl;
+            if (!ratioMatching(ratio, c_l_descs, q_l_descs, c_l_kps, q_l_kps, c_camera_points, q_camera_points,
+                               f_c_l_descs, f_q_l_descs, f_l_matches, f_c_l_kps, f_q_l_kps, f_c_camera_points, f_q_camera_points))
+                return false;
+            break;
     }
 
     return true;

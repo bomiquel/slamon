@@ -22,6 +22,15 @@ class StereoMotionEstimationModules
 {
     public:
 
+        enum MatchType
+        {
+            PLAIN_MATCHING      = 1,
+            PLAIN_MATCHING_H    = 2,
+            CIRCULAR_MATCHING   = 3,
+            CIRCULAR_MATCHING_H = 4            
+        };
+
+
         /** \brief Empty class constructor.
          */
         StereoMotionEstimationModules() {}
@@ -80,43 +89,97 @@ class StereoMotionEstimationModules
                                   std::vector<cv::KeyPoint>& f_r_kps);
 
 
-        // void matchNonStereoKeypoints();
+        /** \brief Matches keypoints of differents stereo pairs and removes outliers.
+         *  To eliminate outliers, Lowe's ratio is always used, but additionally an 
+         *  homography can be applied. It is also possible to decide between a plain 
+         *  matching (matching between left images of each stereo pair) or a circular
+         *  matching (involving all 4 images).
+         *  \param ratio for eliminating outlier matches (input).
+         *  \param c_l_descs Current left image descriptors (input).
+         *  \param c_r_descs Current right image descriptors (input).
+         *  \param q_l_descs Query left image descriptors (input).
+         *  \param q_r_descs Query right image descriptors (input).
+         *  \param c_l_kps Current left image keypoints (input).
+         *  \param c_r_kps Current right image keypoints (input).
+         *  \param q_l_kps Query left image keypoints (input).
+         *  \param q_r_kps Query right image keypoints (input).
+         *  \param c_camera_points Current image 3D points (input).
+         *  \param q_camera_points Query image 3D points (input).
+         *  \param f_c_l_descs Current left image descriptors filtered out (output).
+         *  \param f_c_r_descs Current right image descriptors filtered out (output).
+         *  \param f_q_l_descs Query left image descriptors filtered out (output).
+         *  \param f_q_r_descs Query right image descriptors filtered out (output).
+         *  \param f_l_matches Left matches filtered out (output).
+         *  \param f_c_l_kps Current left image keypoints filtered out (output).
+         *  \param f_c_r_kps Current right image keypoints filtered out (output).
+         *  \param f_q_l_kps Query left image keypoints filtered out (output).
+         *  \param f_q_r_kps Query right image keypoints filtered out (output).
+         *  \param f_c_camera_points Current image 3D points filtered out (output).
+         *  \param f_q_camera_points Query image 3D points filtered out (output).
+         *  @return Whether keypoint matching and filtering has been performed correctly
+         *  and if there are enough filtered points.
+         */
+        bool matchNonStereoKeypoints(double ratio,
+                                     const cv::Mat& c_l_descs,
+                                     const cv::Mat& c_r_descs,
+                                     const cv::Mat& q_l_descs,
+                                     const cv::Mat& q_r_descs,
+                                     const std::vector<cv::KeyPoint>& c_l_kps,
+                                     const std::vector<cv::KeyPoint>& c_r_kps,
+                                     const std::vector<cv::KeyPoint>& q_l_kps,
+                                     const std::vector<cv::KeyPoint>& q_r_kps,
+                                     const std::vector<cv::Point3f>& c_camera_points,
+                                     const std::vector<cv::Point3f>& q_camera_points,
+                                     cv::Mat& f_c_l_descs,
+                                     cv::Mat& f_c_r_descs,
+                                     cv::Mat& f_q_l_descs,
+                                     cv::Mat& f_q_r_descs,
+                                     std::vector<cv::DMatch>& f_l_matches,
+                                     std::vector<cv::KeyPoint>& f_c_l_kps,
+                                     std::vector<cv::KeyPoint>& f_c_r_kps,
+                                     std::vector<cv::KeyPoint>& f_q_l_kps,
+                                     std::vector<cv::KeyPoint>& f_q_r_kps,
+                                     std::vector<cv::Point3f>& f_c_camera_points,
+                                     std::vector<cv::Point3f>& f_q_camera_points);
 
 
     protected:
 
         /** \brief Matches visual keypoints and applies Lowe's ratio.
          *  \param ratio for eliminating outlier matches (input).
-         *  \param descs_0 First image descriptors (input).
-         *  \param descs_1 Second image descriptors (input).
-         *  \param kps_0 First image keypoints (input).
-         *  \param kps_1 Second image keypoints (input).
-         *  \param points_3d_0 First image 3D points (input).
-         *  \param points_3d_1 Second image 3D points (input).
-         *  \param f_descs_0 First image descriptors filtered out (output).
-         *  \param f_descs_1 Second image descriptors filtered out (output).
+         *  \param c_descs Current image descriptors (input).
+         *  \param q_descs Query image descriptors (input).
+         *  \param c_kps Current image keypoints (input).
+         *  \param q_kps Query image keypoints (input).
+         *  \param c_camera_points Current image 3D points (input).
+         *  \param q_camera_points Query image 3D points (input).
+         *  \param f_c_descs Current image descriptors filtered out (output).
+         *  \param f_q_descs Query image descriptors filtered out (output).
          *  \param f_matches Keypoints matches filtered out (output).
-         *  \param f_kps_0 First image keypoints filtered out (output).
-         *  \param f_kps_1 Second image keypoints filtered out (output).
-         *  \param f_points_3d_0 First image 3D points filtered out (output).
-         *  \param f_points_3d_1 Second image 3D points filtered out (output).
+         *  \param f_c_kps Current image keypoints filtered out (output).
+         *  \param f_q_kps Query image keypoints filtered out (output).
+         *  \param f_c_camera_points Current image 3D points filtered out (output).
+         *  \param f_q_camera_points Query image 3D points filtered out (output).
          *  @return Whether keypoint matching and filtering has been performed correctly
          *  and if there are enough filtered points.
          */
         bool ratioMatching(double ratio,
-                           const cv::Mat& descs_0, 
-                           const cv::Mat& descs_1,
-                           const std::vector<cv::KeyPoint>& kps_0,
-                           const std::vector<cv::KeyPoint>& kps_1,
-                           const std::vector<cv::Point3f>& points_3d_0,
-                           const std::vector<cv::Point3f>& points_3d_1,
-                           cv::Mat& f_descs_0,
-                           cv::Mat& f_descs_1,
+                           const cv::Mat& c_descs, 
+                           const cv::Mat& q_descs,
+                           const std::vector<cv::KeyPoint>& c_kps,
+                           const std::vector<cv::KeyPoint>& q_kps,
+                           const std::vector<cv::Point3f>& c_camera_points,
+                           const std::vector<cv::Point3f>& q_camera_points,
+                           cv::Mat& f_c_descs,
+                           cv::Mat& f_q_descs,
                            std::vector<cv::DMatch>& f_matches,
-                           std::vector<cv::KeyPoint>& f_kps_0,
-                           std::vector<cv::KeyPoint>& f_kps_1,
-                           std::vector<cv::Point3f>& f_points_3d_0,
-                           std::vector<cv::Point3f>& f_points_3d_1);
+                           std::vector<cv::KeyPoint>& f_c_kps,
+                           std::vector<cv::KeyPoint>& f_q_kps,
+                           std::vector<cv::Point3f>& f_c_camera_points,
+                           std::vector<cv::Point3f>& f_q_camera_points);
+
+
+        MatchType match_type_;
 };
 
 
