@@ -126,19 +126,24 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
 
         /** \brief Calculates the 3D points of the keypoints of the image stereo pair.
          *  The points are related to the camera frame. 
+         *  \param l_descs Left image descriptors (input).
+         *  \param r_descs Right image descriptors (input).
          *  \param l_kps Left image keypoints (input).
          *  \param r_kps Right image keypoints (input).
+         *  \param camera_model Stereo camera model matrix (input).
+         *  \param f_l_descs Filtered left image descriptors (output).
+         *  \param f_r_descs Filtered right image descriptors (output).
+         *  \param f_l_kps Filtered left image keypoints (output).
+         *  \param r_l_kps Filtered right image keypoints (output).
          *  @return The 3D camera points.
          */
         std::vector<cv::Point3f> compute3DPoints(const cv::Mat& l_descs,
                                                  const cv::Mat& r_descs,
-                                                 const std::vector<cv::DMatch>& matches,
                                                  const std::vector<cv::KeyPoint>& l_kps,
                                                  const std::vector<cv::KeyPoint>& r_kps,
                                                  const image_geometry::StereoCameraModel& camera_model,
                                                  cv::Mat& f_l_descs,
                                                  cv::Mat& f_r_descs,
-                                                 std::vector<cv::DMatch>& f_matches,
                                                  std::vector<cv::KeyPoint>& f_l_kps,
                                                  std::vector<cv::KeyPoint>& f_r_kps);
 

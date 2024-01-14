@@ -72,7 +72,6 @@ class StereoMotionEstimationModules
          *  \param r_kps Right image keypoints (input).
          *  \param f_l_descs Filtered left image descriptors (output).
          *  \param f_r_descs Filtered right image descriptors (output).
-         *  \param f_matches Filtered left-right matches (output).
          *  \param f_l_kps Filtered left image keypoints (output).
          *  \param r_l_kps Filtered right image keypoints (output).
          *  @return whether the keypoint matching and the filtering could be performed.
@@ -84,7 +83,6 @@ class StereoMotionEstimationModules
                                   const std::vector<cv::KeyPoint>& r_kps,
                                   cv::Mat& f_l_descs,
                                   cv::Mat& f_r_descs,
-                                  std::vector<cv::DMatch>& f_matches,
                                   std::vector<cv::KeyPoint>& f_l_kps,
                                   std::vector<cv::KeyPoint>& f_r_kps);
 
@@ -109,7 +107,6 @@ class StereoMotionEstimationModules
          *  \param f_c_r_descs Current right image descriptors filtered out (output).
          *  \param f_q_l_descs Query left image descriptors filtered out (output).
          *  \param f_q_r_descs Query right image descriptors filtered out (output).
-         *  \param f_l_matches Left matches filtered out (output).
          *  \param f_c_l_kps Current left image keypoints filtered out (output).
          *  \param f_c_r_kps Current right image keypoints filtered out (output).
          *  \param f_q_l_kps Query left image keypoints filtered out (output).
@@ -134,7 +131,6 @@ class StereoMotionEstimationModules
                                      cv::Mat& f_c_r_descs,
                                      cv::Mat& f_q_l_descs,
                                      cv::Mat& f_q_r_descs,
-                                     std::vector<cv::DMatch>& f_l_matches,
                                      std::vector<cv::KeyPoint>& f_c_l_kps,
                                      std::vector<cv::KeyPoint>& f_c_r_kps,
                                      std::vector<cv::KeyPoint>& f_q_l_kps,
@@ -155,7 +151,6 @@ class StereoMotionEstimationModules
          *  \param q_camera_points Query image 3D points (input).
          *  \param f_c_descs Current image descriptors filtered out (output).
          *  \param f_q_descs Query image descriptors filtered out (output).
-         *  \param f_matches Keypoints matches filtered out (output).
          *  \param f_c_kps Current image keypoints filtered out (output).
          *  \param f_q_kps Query image keypoints filtered out (output).
          *  \param f_c_camera_points Current image 3D points filtered out (output).
@@ -172,11 +167,42 @@ class StereoMotionEstimationModules
                            const std::vector<cv::Point3f>& q_camera_points,
                            cv::Mat& f_c_descs,
                            cv::Mat& f_q_descs,
-                           std::vector<cv::DMatch>& f_matches,
                            std::vector<cv::KeyPoint>& f_c_kps,
                            std::vector<cv::KeyPoint>& f_q_kps,
                            std::vector<cv::Point3f>& f_c_camera_points,
                            std::vector<cv::Point3f>& f_q_camera_points);
+
+
+        /** \brief Matches visual keypoints and applies Lowe's ratio.
+         *  \param ratio for eliminating outlier matches (input).
+         *  \param c_descs Current image descriptors (input).
+         *  \param q_descs Query image descriptors (input).
+         *  \param c_kps Current image keypoints (input).
+         *  \param q_kps Query image keypoints (input).
+         *  \param c_camera_points Current image 3D points (input).
+         *  \param q_camera_points Query image 3D points (input).
+         *  \param f_c_descs Current image descriptors filtered out (output).
+         *  \param f_q_descs Query image descriptors filtered out (output).
+         *  \param f_c_kps Current image keypoints filtered out (output).
+         *  \param f_q_kps Query image keypoints filtered out (output).
+         *  \param f_c_camera_points Current image 3D points filtered out (output).
+         *  \param f_q_camera_points Query image 3D points filtered out (output).
+         *  @return Whether keypoint matching and filtering has been performed correctly
+         *  and if there are enough filtered points.
+         */
+        bool ratioHomographyMatching(double ratio,
+                                     const cv::Mat& c_descs, 
+                                     const cv::Mat& q_descs,
+                                     const std::vector<cv::KeyPoint>& c_kps,
+                                     const std::vector<cv::KeyPoint>& q_kps,
+                                     const std::vector<cv::Point3f>& c_camera_points,
+                                     const std::vector<cv::Point3f>& q_camera_points,
+                                     cv::Mat& f_c_descs,
+                                     cv::Mat& f_q_descs,
+                                     std::vector<cv::KeyPoint>& f_c_kps,
+                                     std::vector<cv::KeyPoint>& f_q_kps,
+                                     std::vector<cv::Point3f>& f_c_camera_points,
+                                     std::vector<cv::Point3f>& f_q_camera_points);
 
 
         MatchType match_type_;

@@ -6,7 +6,7 @@ void VisualOdometry::run()
     // Assign "uninitialized" status to visual odometer
     status_ = UNINITIALIZED;
 
-    match_type_ = PLAIN_MATCHING;
+    match_type_ = PLAIN_MATCHING_H;
 
     // Create node
     ros::NodeHandle nh;
@@ -135,9 +135,8 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     // Matching keypoints
     double ratio = 0.8;
     cv::Mat h_f_l_descs, h_f_r_descs;
-    std::vector<cv::DMatch> h_f_matches;
     std::vector<cv::KeyPoint> h_f_l_kps, h_f_r_kps;
-    if(!matchStereoKeypoints(ratio, l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_matches, h_f_l_kps, h_f_r_kps))
+    if(!matchStereoKeypoints(ratio, l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps))
     {
         ros::Duration delta_t = ros::Time::now() - start_time_;
         double delta_t_sec = delta_t.toSec();
@@ -147,10 +146,9 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 
     // Compute 3D keypoints
     cv::Mat f_l_descs, f_r_descs;
-    std::vector<cv::DMatch> f_matches;
     std::vector<cv::KeyPoint> f_l_kps, f_r_kps;
-    std::vector<cv::Point3f> camera_points = compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_matches, h_f_l_kps, h_f_r_kps, 
-                                                             camera_model_, f_l_descs, f_r_descs, f_matches, f_l_kps, f_r_kps);
+    std::vector<cv::Point3f> camera_points = compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps, camera_model_,
+                                                             f_l_descs, f_r_descs, f_l_kps, f_r_kps);
 
     // Stereo matching keypoints debugging
     if (stereo_matches_pub_.getNumSubscribers() > 0)
@@ -168,14 +166,13 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
 {
     //
     double ratio = 0.8;
-    std::vector<cv::DMatch> f_l_matches, f_r_matches;
     cv::Mat f_c_l_descs, f_c_r_descs, f_p_l_descs, f_p_r_descs;
     std::vector<cv::Point3f> f_c_camera_points, f_p_camera_points;
     std::vector<cv::KeyPoint> f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps;
     if (!matchNonStereoKeypoints(ratio, c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame.getLeftDescs(), p_frame.getLeftDescs(),
                                  c_frame.getLeftKps(), c_frame.getRightKps(), p_frame.getLeftKps(), p_frame.getRightKps(),
                                  c_frame.getCameraPoints(), p_frame.getCameraPoints(), f_c_l_descs, f_c_r_descs, f_p_l_descs, f_p_r_descs,
-                                 f_l_matches, f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, f_c_camera_points, f_p_camera_points))
+                                 f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, f_c_camera_points, f_p_camera_points))
     {
         ros::Duration delta_t = ros::Time::now() - start_time_;
         double delta_t_sec = delta_t.toSec();
@@ -270,13 +267,11 @@ bool VisualOdometry::imgMsgToMat(const sensor_msgs::ImageConstPtr& l_img_msg,
 
 std::vector<cv::Point3f> VisualOdometry::compute3DPoints(const cv::Mat& l_descs,
                                                          const cv::Mat& r_descs,
-                                                         const std::vector<cv::DMatch>& matches,
                                                          const std::vector<cv::KeyPoint>& l_kps,
                                                          const std::vector<cv::KeyPoint>& r_kps,
                                                          const image_geometry::StereoCameraModel& camera_model,
                                                          cv::Mat& f_l_descs,
                                                          cv::Mat& f_r_descs,
-                                                         std::vector<cv::DMatch>& f_matches,
                                                          std::vector<cv::KeyPoint>& f_l_kps,
                                                          std::vector<cv::KeyPoint>& f_r_kps)
 {
@@ -294,7 +289,6 @@ std::vector<cv::Point3f> VisualOdometry::compute3DPoints(const cv::Mat& l_descs,
         {
             f_l_kps.push_back(l_kps[i]);
             f_r_kps.push_back(r_kps[i]);
-            f_matches.push_back(matches[i]);
             f_l_descs.push_back(l_descs.row(i));
             f_r_descs.push_back(r_descs.row(i));
             camera_points.push_back(camera_point);
