@@ -36,10 +36,7 @@ class Frame
               const ros::Time& stamp,
               const std::vector<cv::KeyPoint>& l_kps,
               const std::vector<cv::KeyPoint>& r_kps,
-              const std::vector<cv::DMatch>& stereo_matches,
-              const std::vector<cv::Point3f>& camera_points,
-              const std::vector<cv::KeyPoint>& non_filtered_l_kps,
-              const std::vector<cv::KeyPoint>& non_filtered_r_kps);
+              const std::vector<cv::Point3f>& camera_points);
 
 
         /** \brief Set keyframe id.
@@ -94,28 +91,11 @@ class Frame
          *  @return Right keypoints.
          */
         inline std::vector<cv::KeyPoint> getRightKps() const {return r_kps_;}
-
-
-        /** \brief Get non filtered left keypoints.
-         *  @return Left keypoints.
-         */
-        inline std::vector<cv::KeyPoint> getNonFilteredLeftKps() const {return non_filtered_l_kps_;}
-
-
-        /** \brief Get non filtered right keypoints.
-         *  @return Right keypoints.
-         */
-        inline std::vector<cv::KeyPoint> getNonFilteredRightKps() const {return non_filtered_r_kps_;}
-
         
+
         /** \brief Get 3D in camera frame.
          */
         inline std::vector<cv::Point3f> getCameraPoints() const {return camera_points_;}
-
-
-        /** \brief Get stereo matches.
-         */
-        inline std::vector<cv::DMatch> getMatches() const {return stereo_matches_;}
 
 
         /** \brief Set camera pose.
@@ -145,12 +125,7 @@ class Frame
         std::vector<cv::KeyPoint> l_kps_; //!> Left keypoints.
         std::vector<cv::KeyPoint> r_kps_; //!> Right keypoints.
 
-        std::vector<cv::KeyPoint> non_filtered_l_kps_; //!> Non filtered left keypoints.
-        std::vector<cv::KeyPoint> non_filtered_r_kps_; //!> Non filtered right keypoints.
-
         std::vector<cv::Point3f> camera_points_; //!> Stereo 3D points in camera frame.
-
-        std::vector<cv::DMatch> stereo_matches_; //!> Keypoints stereo matches.
 
         tf::Transform camera_pose_; //!> Camera world position for this frame.
 

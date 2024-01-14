@@ -8,10 +8,7 @@ Frame::Frame(const cv::Mat& l_img,
              const ros::Time& stamp,
              const std::vector<cv::KeyPoint>& l_kps,
              const std::vector<cv::KeyPoint>& r_kps,
-             const std::vector<cv::DMatch>& stereo_matches,
-             const std::vector<cv::Point3f>& camera_points,
-             const std::vector<cv::KeyPoint>& non_filtered_l_kps,
-             const std::vector<cv::KeyPoint>& non_filtered_r_kps)
+             const std::vector<cv::Point3f>& camera_points)
 {
     l_img_ = l_img;
     r_img_ = r_img;
@@ -21,7 +18,4 @@ Frame::Frame(const cv::Mat& l_img,
     l_descs_ = l_descs;
     r_descs_ = r_descs;
     camera_points_ = camera_points;
-    stereo_matches_ = stereo_matches;
-    non_filtered_l_kps_ = non_filtered_l_kps;
-    non_filtered_r_kps_ = non_filtered_r_kps;
 }

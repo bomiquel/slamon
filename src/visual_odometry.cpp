@@ -154,10 +154,10 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 
     // Stereo matching keypoints debugging
     if (stereo_matches_pub_.getNumSubscribers() > 0)
-        publishStereoMatches(l_img, r_img, l_img_msg->header.stamp, f_matches, l_kps, r_kps, stereo_matches_pub_);
+        publishMatches(false, l_img, r_img, l_img_msg->header.stamp, f_l_kps, f_r_kps, stereo_matches_pub_);
 
     // Fill Frame object
-    c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kps, f_r_kps, f_matches, camera_points, l_kps, r_kps);
+    c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kps, f_r_kps, camera_points);
 
     return true;
 }
@@ -185,8 +185,8 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
 
     // Non stereo matching keypoints debugging
     if (successive_matches_pub_.getNumSubscribers() > 0)
-        publishStereoMatches(c_frame.getLeftImg(), p_frame.getLeftImg(), c_frame.getTimestamp(), f_l_matches,
-                             c_frame.getNonFilteredLeftKps(), p_frame.getNonFilteredLeftKps(), successive_matches_pub_);
+        publishMatches(true, c_frame.getLeftImg(), p_frame.getLeftImg(), c_frame.getTimestamp(),
+                       f_c_l_kps, f_p_l_kps, successive_matches_pub_);
 
     return true;
 }
