@@ -167,6 +167,8 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
 
         image_transport::Publisher successive_matches_pub_; // !> Successive frame matching publisher 
 
+        image_transport::Publisher successive_matches_pub_2_; // !> Auxiliar successive frame matching publisher 
+
         image_geometry::StereoCameraModel camera_model_; //!> Stereo camera model
 
         // Topic sync

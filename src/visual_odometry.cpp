@@ -6,7 +6,9 @@ void VisualOdometry::run()
     // Assign "uninitialized" status to visual odometer
     status_ = UNINITIALIZED;
 
-    match_type_ = PLAIN_MATCHING_H;
+    match_type_ = CIRCULAR_MATCHING;
+
+    enable_debugging_ = true;
 
     // Create node
     ros::NodeHandle nh;
@@ -21,6 +23,7 @@ void VisualOdometry::run()
     stereo_kps_pub_ = it.advertise("stereo_keypoints", 1);
     stereo_matches_pub_ = it.advertise("stereo_matches", 1);
     successive_matches_pub_ = it.advertise("successive_matches", 1);
+    successive_matches_pub_2_ = it.advertise("successive_matches_2", 1);
 
     // Message sync
     boost::shared_ptr<Sync_> sync;
@@ -79,9 +82,12 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     // Store current frame as previous.
     p_frame_ = c_frame;
     
-    ros::Duration delta_t = ros::Time::now() - start_time_;
-    double delta_t_sec = delta_t.toSec();
-    std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
+    if (enable_debugging_)
+    {
+        ros::Duration delta_t = ros::Time::now() - start_time_;
+        double delta_t_sec = delta_t.toSec();
+        std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
+    }
 }
 
 
@@ -116,12 +122,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     // From ROS image message to cv::Mat
     cv::Mat l_img, r_img;
     if(!imgMsgToMat(l_img_msg, r_img_msg, l_img, r_img)) // TODO: paralellization?
-    {
-        ros::Duration delta_t = ros::Time::now() - start_time_;
-        double delta_t_sec = delta_t.toSec();
-        std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
         return false; 
-    }
 
     // Detecting keypoints
     cv::Mat l_descs, r_descs;
@@ -137,12 +138,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     cv::Mat h_f_l_descs, h_f_r_descs;
     std::vector<cv::KeyPoint> h_f_l_kps, h_f_r_kps;
     if(!matchStereoKeypoints(ratio, l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps))
-    {
-        ros::Duration delta_t = ros::Time::now() - start_time_;
-        double delta_t_sec = delta_t.toSec();
-        std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
         return false; 
-    }
 
     // Compute 3D keypoints
     cv::Mat f_l_descs, f_r_descs;
@@ -166,24 +162,22 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
 {
     //
     double ratio = 0.8;
-    cv::Mat f_c_l_descs, f_c_r_descs, f_p_l_descs, f_p_r_descs;
     std::vector<cv::Point3f> f_c_camera_points, f_p_camera_points;
     std::vector<cv::KeyPoint> f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps;
     if (!matchNonStereoKeypoints(ratio, c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame.getLeftDescs(), p_frame.getLeftDescs(),
                                  c_frame.getLeftKps(), c_frame.getRightKps(), p_frame.getLeftKps(), p_frame.getRightKps(),
-                                 c_frame.getCameraPoints(), p_frame.getCameraPoints(), f_c_l_descs, f_c_r_descs, f_p_l_descs, f_p_r_descs,
-                                 f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, f_c_camera_points, f_p_camera_points))
-    {
-        ros::Duration delta_t = ros::Time::now() - start_time_;
-        double delta_t_sec = delta_t.toSec();
-        std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
+                                 c_frame.getCameraPoints(), p_frame.getCameraPoints(), f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps,
+                                 f_c_camera_points, f_p_camera_points))
         return false; 
-    }
 
     // Non stereo matching keypoints debugging
     if (successive_matches_pub_.getNumSubscribers() > 0)
         publishMatches(true, c_frame.getLeftImg(), p_frame.getLeftImg(), c_frame.getTimestamp(),
                        f_c_l_kps, f_p_l_kps, successive_matches_pub_);
+
+    if (successive_matches_pub_2_.getNumSubscribers() > 0 && f_c_r_kps.size() > 0 )
+        publishMatches(true, c_frame.getRightImg(), p_frame.getRightImg(), c_frame.getTimestamp(),
+                       f_c_r_kps, f_p_r_kps, successive_matches_pub_2_);
 
     return true;
 }
@@ -201,7 +195,7 @@ bool VisualOdometry::getRobot2CameraTf(const std::string& robot_frame_id,
     {
         tf_listener_.lookupTransform(robot_frame_id, sensor_frame_id, ros::Time(0), transform);
     }
-    catch(const tf::TransformException& e)
+    catch (const tf::TransformException& e)
     {
         ROS_WARN("%s", e.what());
         return false;

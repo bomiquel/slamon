@@ -24,12 +24,22 @@ class StereoMotionEstimationModules
 
         enum MatchType
         {
-            PLAIN_MATCHING      = 1,
-            PLAIN_MATCHING_H    = 2,
-            CIRCULAR_MATCHING   = 3,
-            CIRCULAR_MATCHING_H = 4            
+            PLAIN_MATCHING      = 0,
+            PLAIN_MATCHING_H    = 1,
+            CIRCULAR_MATCHING   = 2,
+            CIRCULAR_MATCHING_H = 3            
         };
 
+
+        enum MatchResult
+        {
+            NOT_ENOUGH_KPS      = 0,
+            NOT_ENOUGH_F_KPS    = 1,
+            HOMOGRAPHY_PROBLEM  = 2,
+            NOT_ENOUGH_H_F_KPS  = 3,
+            SUCCESSFUL_MATCHING = 4
+        };
+        
 
         /** \brief Empty class constructor.
          */
@@ -103,10 +113,6 @@ class StereoMotionEstimationModules
          *  \param q_r_kps Query right image keypoints (input).
          *  \param c_camera_points Current image 3D points (input).
          *  \param q_camera_points Query image 3D points (input).
-         *  \param f_c_l_descs Current left image descriptors filtered out (output).
-         *  \param f_c_r_descs Current right image descriptors filtered out (output).
-         *  \param f_q_l_descs Query left image descriptors filtered out (output).
-         *  \param f_q_r_descs Query right image descriptors filtered out (output).
          *  \param f_c_l_kps Current left image keypoints filtered out (output).
          *  \param f_c_r_kps Current right image keypoints filtered out (output).
          *  \param f_q_l_kps Query left image keypoints filtered out (output).
@@ -127,10 +133,6 @@ class StereoMotionEstimationModules
                                      const std::vector<cv::KeyPoint>& q_r_kps,
                                      const std::vector<cv::Point3f>& c_camera_points,
                                      const std::vector<cv::Point3f>& q_camera_points,
-                                     cv::Mat& f_c_l_descs,
-                                     cv::Mat& f_c_r_descs,
-                                     cv::Mat& f_q_l_descs,
-                                     cv::Mat& f_q_r_descs,
                                      std::vector<cv::KeyPoint>& f_c_l_kps,
                                      std::vector<cv::KeyPoint>& f_c_r_kps,
                                      std::vector<cv::KeyPoint>& f_q_l_kps,
@@ -158,19 +160,19 @@ class StereoMotionEstimationModules
          *  @return Whether keypoint matching and filtering has been performed correctly
          *  and if there are enough filtered points.
          */
-        bool ratioMatching(double ratio,
-                           const cv::Mat& c_descs, 
-                           const cv::Mat& q_descs,
-                           const std::vector<cv::KeyPoint>& c_kps,
-                           const std::vector<cv::KeyPoint>& q_kps,
-                           const std::vector<cv::Point3f>& c_camera_points,
-                           const std::vector<cv::Point3f>& q_camera_points,
-                           cv::Mat& f_c_descs,
-                           cv::Mat& f_q_descs,
-                           std::vector<cv::KeyPoint>& f_c_kps,
-                           std::vector<cv::KeyPoint>& f_q_kps,
-                           std::vector<cv::Point3f>& f_c_camera_points,
-                           std::vector<cv::Point3f>& f_q_camera_points);
+        MatchResult ratioMatching(double ratio,
+                                  const cv::Mat& c_descs, 
+                                  const cv::Mat& q_descs,
+                                  const std::vector<cv::KeyPoint>& c_kps,
+                                  const std::vector<cv::KeyPoint>& q_kps,
+                                  const std::vector<cv::Point3f>& c_camera_points,
+                                  const std::vector<cv::Point3f>& q_camera_points,
+                                  cv::Mat& f_c_descs,
+                                  cv::Mat& f_q_descs,
+                                  std::vector<cv::KeyPoint>& f_c_kps,
+                                  std::vector<cv::KeyPoint>& f_q_kps,
+                                  std::vector<cv::Point3f>& f_c_camera_points,
+                                  std::vector<cv::Point3f>& f_q_camera_points);
 
 
         /** \brief Matches visual keypoints and applies Lowe's ratio.
@@ -190,22 +192,29 @@ class StereoMotionEstimationModules
          *  @return Whether keypoint matching and filtering has been performed correctly
          *  and if there are enough filtered points.
          */
-        bool ratioHomographyMatching(double ratio,
-                                     const cv::Mat& c_descs, 
-                                     const cv::Mat& q_descs,
-                                     const std::vector<cv::KeyPoint>& c_kps,
-                                     const std::vector<cv::KeyPoint>& q_kps,
-                                     const std::vector<cv::Point3f>& c_camera_points,
-                                     const std::vector<cv::Point3f>& q_camera_points,
-                                     cv::Mat& f_c_descs,
-                                     cv::Mat& f_q_descs,
-                                     std::vector<cv::KeyPoint>& f_c_kps,
-                                     std::vector<cv::KeyPoint>& f_q_kps,
-                                     std::vector<cv::Point3f>& f_c_camera_points,
-                                     std::vector<cv::Point3f>& f_q_camera_points);
+        MatchResult ratioHomographyMatching(double ratio,
+                                            const cv::Mat& c_descs, 
+                                            const cv::Mat& q_descs,
+                                            const std::vector<cv::KeyPoint>& c_kps,
+                                            const std::vector<cv::KeyPoint>& q_kps,
+                                            const std::vector<cv::Point3f>& c_camera_points,
+                                            const std::vector<cv::Point3f>& q_camera_points,
+                                            cv::Mat& f_c_descs,
+                                            cv::Mat& f_q_descs,
+                                            std::vector<cv::KeyPoint>& f_c_kps,
+                                            std::vector<cv::KeyPoint>& f_q_kps,
+                                            std::vector<cv::Point3f>& f_c_camera_points,
+                                            std::vector<cv::Point3f>& f_q_camera_points);
 
 
-        MatchType match_type_;
+        bool parseMatchResult(bool enable_printing, 
+                              const std::string& text,
+                              const MatchResult& result);
+        
+
+        MatchType match_type_; //!> Desired type of matching between images that are not of the same stereo pair.
+
+        bool enable_debugging_; //!> Enabling or disabling debugging messages.
 };
 
 
