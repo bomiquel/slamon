@@ -76,6 +76,7 @@ class StereoMotionEstimationModules
          *  To eliminate outliers, first Lowe's ratio is applied and then a
          *  Fundamental Matrix with 1 pixel of reprojection error is computed.
          *  \param ratio for eliminating outlier matches (input).
+         *  \param epipolar_filter 
          *  \param enable_debugging Enables or disables debugging messages (input).
          *  \param l_descs Left image descriptors (input).
          *  \param r_descs Right image descriptors (input).
@@ -88,6 +89,7 @@ class StereoMotionEstimationModules
          *  @return whether the keypoint matching and the filtering could be performed.
          */
         bool matchStereoKeypoints(double ratio, 
+                                  bool epipolar_filter,
                                   bool enable_debugging,
                                   const cv::Mat& l_descs,
                                   const cv::Mat& r_descs,

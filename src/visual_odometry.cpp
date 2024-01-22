@@ -10,6 +10,8 @@ void VisualOdometry::run()
 
     enable_debugging_ = true;
 
+    filter_by_epipolar_ = true;
+
     // Create node
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
@@ -136,7 +138,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     double ratio = 0.70;
     cv::Mat h_f_l_descs, h_f_r_descs;
     std::vector<cv::KeyPoint> h_f_l_kps, h_f_r_kps;
-    if(!matchStereoKeypoints(ratio, enable_debugging_, l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps))
+    if(!matchStereoKeypoints(ratio, enable_debugging_, filter_by_epipolar_, l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps))
         return false; 
 
     // Compute 3D keypoints

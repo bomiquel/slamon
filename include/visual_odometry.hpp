@@ -163,6 +163,8 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
 
         bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
+        bool filter_by_epipolar_; //!> If true stereo matches are fitlered by epipolar constraint, if false by fundamental matrix
+
         tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
         tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.

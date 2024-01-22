@@ -30,6 +30,7 @@ void StereoMotionEstimationModules::detectStereoKeypoints(const cv::Mat& l_img,
 
 
 bool StereoMotionEstimationModules::matchStereoKeypoints(double ratio, 
+                                                         bool epipolar_filter,
                                                          bool enable_debugging,
                                                          const cv::Mat& l_descs,
                                                          const cv::Mat& r_descs,
@@ -60,34 +61,50 @@ bool StereoMotionEstimationModules::matchStereoKeypoints(double ratio,
     if (!parseMatchResult(enable_debugging, "[Stereo Matching:]", result))
         return false;
 
-    // Compute fundamental matrix
-    cv::Mat F, mask;
-    std::vector<cv::Point2f> aux_l_kps, aux_r_kps;
-    cv::KeyPoint::convert(h_f_l_kps, aux_l_kps, std::vector<int>());
-    cv::KeyPoint::convert(h_f_r_kps, aux_r_kps, std::vector<int>());
-    try
+    if (epipolar_filter)
     {
-        F = cv::findFundamentalMat(aux_l_kps, aux_r_kps, mask, cv::RANSAC, 1.0);
-    }
-    catch(cv::Exception& e)
-    {
-        if (enable_debugging)
+        for (uint i = 0; i < h_f_l_kps.size(); i++)
         {
-            const char* err_msg = e.what();
-            std::cerr << "[Stereo Matching:] Problems in calculating the fundamental matrix in the outlier elimination step. Exception: " << err_msg << std::endl;
+            if (abs(h_f_l_kps[i].pt.y - h_f_r_kps[i].pt.y) < 1.0)
+            {
+                f_l_kps.push_back(h_f_l_kps[i]);
+                f_r_kps.push_back(h_f_r_kps[i]);
+                f_l_descs.push_back(h_f_l_descs.row(i));
+                f_r_descs.push_back(h_f_r_descs.row(i));
+            }
         }
-        return false;
     }
-
-    // Filter outliers using fundamental matrix
-    for (int i = 0; i < mask.rows; i++)
+    else
     {
-        if (mask.at<bool>(i, 0) == 1)
+        // Compute fundamental matrix
+        cv::Mat F, mask;
+        std::vector<cv::Point2f> aux_l_kps, aux_r_kps;
+        cv::KeyPoint::convert(h_f_l_kps, aux_l_kps, std::vector<int>());
+        cv::KeyPoint::convert(h_f_r_kps, aux_r_kps, std::vector<int>());
+        try
         {
-            f_l_kps.push_back(h_f_l_kps[i]);
-            f_r_kps.push_back(h_f_r_kps[i]);
-            f_l_descs.push_back(h_f_l_descs.row(i));
-            f_r_descs.push_back(h_f_r_descs.row(i));
+            F = cv::findFundamentalMat(aux_l_kps, aux_r_kps, mask, cv::RANSAC, 1.0);
+        }
+        catch(cv::Exception& e)
+        {
+            if (enable_debugging)
+            {
+                const char* err_msg = e.what();
+                std::cerr << "[Stereo Matching:] Problems in calculating the fundamental matrix in the outlier elimination step. Exception: " << err_msg << std::endl;
+            }
+            return false;
+        }
+
+        // Filter outliers using fundamental matrix
+        for (int i = 0; i < mask.rows; i++)
+        {
+            if (mask.at<bool>(i, 0) == 1)
+            {
+                f_l_kps.push_back(h_f_l_kps[i]);
+                f_r_kps.push_back(h_f_r_kps[i]);
+                f_l_descs.push_back(h_f_l_descs.row(i));
+                f_r_descs.push_back(h_f_r_descs.row(i));
+            }
         }
     }
 
