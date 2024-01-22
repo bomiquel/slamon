@@ -23,7 +23,6 @@ void VisualOdometry::run()
     stereo_kps_pub_ = it.advertise("stereo_keypoints", 1);
     stereo_matches_pub_ = it.advertise("stereo_matches", 1);
     successive_matches_pub_ = it.advertise("successive_matches", 1);
-    successive_matches_pub_2_ = it.advertise("successive_matches_2", 1);
 
     // Message sync
     boost::shared_ptr<Sync_> sync;
@@ -134,10 +133,10 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
         publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, l_kps, r_kps, stereo_kps_pub_);
 
     // Matching keypoints
-    double ratio = 0.8;
+    double ratio = 0.70;
     cv::Mat h_f_l_descs, h_f_r_descs;
     std::vector<cv::KeyPoint> h_f_l_kps, h_f_r_kps;
-    if(!matchStereoKeypoints(ratio, l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps))
+    if(!matchStereoKeypoints(ratio, enable_debugging_, l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps))
         return false; 
 
     // Compute 3D keypoints
@@ -161,23 +160,27 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
                                                    const Frame& c_frame)
 {
     //
-    double ratio = 0.8;
+    double ratio = 0.70;
     std::vector<cv::Point3f> f_c_camera_points, f_p_camera_points;
     std::vector<cv::KeyPoint> f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps;
-    if (!matchNonStereoKeypoints(ratio, c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame.getLeftDescs(), p_frame.getLeftDescs(),
-                                 c_frame.getLeftKps(), c_frame.getRightKps(), p_frame.getLeftKps(), p_frame.getRightKps(),
-                                 c_frame.getCameraPoints(), p_frame.getCameraPoints(), f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps,
-                                 f_c_camera_points, f_p_camera_points))
+    if (!matchNonStereoKeypoints(ratio, enable_debugging_, match_type_, c_frame.getLeftDescs(), c_frame.getRightDescs(), 
+                                 p_frame.getLeftDescs(), p_frame.getLeftDescs(), c_frame.getLeftKps(), c_frame.getRightKps(), 
+                                 p_frame.getLeftKps(), p_frame.getRightKps(), c_frame.getCameraPoints(), p_frame.getCameraPoints(), 
+                                 f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, f_c_camera_points, f_p_camera_points))
         return false; 
 
     // Non stereo matching keypoints debugging
     if (successive_matches_pub_.getNumSubscribers() > 0)
-        publishMatches(true, c_frame.getLeftImg(), p_frame.getLeftImg(), c_frame.getTimestamp(),
-                       f_c_l_kps, f_p_l_kps, successive_matches_pub_);
-
-    if (successive_matches_pub_2_.getNumSubscribers() > 0 && f_c_r_kps.size() > 0 )
-        publishMatches(true, c_frame.getRightImg(), p_frame.getRightImg(), c_frame.getTimestamp(),
-                       f_c_r_kps, f_p_r_kps, successive_matches_pub_2_);
+    {
+        if (match_type_ == PLAIN_MATCHING || match_type_ == PLAIN_MATCHING_H)
+            publishMatches(true, c_frame.getLeftImg(), p_frame.getLeftImg(), c_frame.getTimestamp(),
+                        f_c_l_kps, f_p_l_kps, successive_matches_pub_);
+        else if (match_type_ == CIRCULAR_MATCHING || match_type_ == CIRCULAR_MATCHING_H)
+            publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame.getLeftImg(), p_frame.getRightImg(),
+                                   c_frame.getTimestamp(), f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, successive_matches_pub_);
+        else
+            std::cerr << "Unforeseen type of matching!" << std::endl;
+    }
 
     return true;
 }

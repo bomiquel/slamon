@@ -22,7 +22,7 @@
 #include <image_geometry/stereo_camera_model.h>
 
 
-class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules 
+class VisualOdometry: protected Tools, protected Publisher, protected StereoMotionEstimationModules 
 {
     public:
 
@@ -149,13 +149,19 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
 
     private:
         
-        Frame p_frame_; //!> Previous frame
+        // Atributes
 
+        Frame p_frame_; //!> Previous frame
+        
         VOStatus status_; //!> Visual odometer state
+        
+        MatchType match_type_; //!> Matching type
 
         ros::Time start_time_; //>! Time at which the program enters into the callback.
 
         cv::Mat camera_matrix_; //!> Stereo camera matrix
+
+        bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
         tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
@@ -166,8 +172,6 @@ class VisualOdometry: protected Tools, Publisher, StereoMotionEstimationModules
         image_transport::Publisher stereo_matches_pub_; // !> Stereo matches publisher
 
         image_transport::Publisher successive_matches_pub_; // !> Successive frame matching publisher 
-
-        image_transport::Publisher successive_matches_pub_2_; // !> Auxiliar successive frame matching publisher 
 
         image_geometry::StereoCameraModel camera_model_; //!> Stereo camera model
 

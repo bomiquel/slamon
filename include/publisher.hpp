@@ -65,6 +65,30 @@ class Publisher
                             const image_transport::Publisher& publisher);
 
 
+        /** \brief Draws and publishes circular matches.
+         *  \param c_l_img Current left image (input).
+         *  \param c_r_img Current right image (input).
+         *  \param p_l_img Previous left image (input).
+         *  \param p_r_img Previous right image (input).
+         *  \param stamp The ROS timestamp (input).
+         *  \param f_c_l_kps Filtered and sorted current left keypoints (input).
+         *  \param f_c_r_kps Filtered and sorted current right keypoints (input).
+         *  \param f_p_l_kps Filtered and sorted previous left keypoints (input).
+         *  \param f_p_r_kps Filtered and sorted previous right keypoints (input).
+         *  \param publisher The ROS publisher (input).
+         */
+        void publishCircularMatches(const cv::Mat& c_l_img,                                    
+                                    const cv::Mat& c_r_img,
+                                    const cv::Mat& p_l_img,
+                                    const cv::Mat& p_r_img,
+                                    const ros::Time& stamp,
+                                    const std::vector<cv::KeyPoint>& f_c_l_kps,
+                                    const std::vector<cv::KeyPoint>& f_c_r_kps,
+                                    const std::vector<cv::KeyPoint>& f_p_l_kps,
+                                    const std::vector<cv::KeyPoint>& f_p_r_kps,
+                                    const image_transport::Publisher& publisher);
+
+
     protected:
 
         /** \brief Publishes images.

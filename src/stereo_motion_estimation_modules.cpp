@@ -6,12 +6,12 @@ void StereoMotionEstimationModules::detectKeypoints(const cv::Mat& img,
                                                     std::vector<cv::KeyPoint>& kps)
 {
     // Convert images to grayscale
-    cv::Mat img_gray;
-    cv::cvtColor(img, img_gray, cv::COLOR_RGB2GRAY);
+    cv::Mat g_img;
+    cv::cvtColor(img, g_img, cv::COLOR_RGB2GRAY);
 
     // Select detector and extract keypoints
     cv::Ptr<cv::Feature2D> detector = cv::xfeatures2d::SIFT::create();
-    detector->detectAndCompute(img_gray, cv::noArray(), kps, descs);
+    detector->detectAndCompute(g_img, cv::noArray(), kps, descs);
 }
 
 
@@ -30,6 +30,7 @@ void StereoMotionEstimationModules::detectStereoKeypoints(const cv::Mat& l_img,
 
 
 bool StereoMotionEstimationModules::matchStereoKeypoints(double ratio, 
+                                                         bool enable_debugging,
                                                          const cv::Mat& l_descs,
                                                          const cv::Mat& r_descs,
                                                          const std::vector<cv::KeyPoint>& l_kps,
@@ -56,7 +57,7 @@ bool StereoMotionEstimationModules::matchStereoKeypoints(double ratio,
                            h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps, f_points_3d_0, f_points_3d_1);
     
     // Check match result
-    if (!parseMatchResult(enable_debugging_, "[Stereo Matching:]", result))
+    if (!parseMatchResult(enable_debugging, "[Stereo Matching:]", result))
         return false;
 
     // Compute fundamental matrix
@@ -70,7 +71,7 @@ bool StereoMotionEstimationModules::matchStereoKeypoints(double ratio,
     }
     catch(cv::Exception& e)
     {
-        if (enable_debugging_)
+        if (enable_debugging)
         {
             const char* err_msg = e.what();
             std::cerr << "[Stereo Matching:] Problems in calculating the fundamental matrix in the outlier elimination step. Exception: " << err_msg << std::endl;
@@ -95,57 +96,59 @@ bool StereoMotionEstimationModules::matchStereoKeypoints(double ratio,
 
 
 bool StereoMotionEstimationModules::matchNonStereoKeypoints(double ratio,
+                                                            bool enable_debugging,
+                                                            const MatchType& type,
                                                             const cv::Mat& c_l_descs,
                                                             const cv::Mat& c_r_descs,
-                                                            const cv::Mat& q_l_descs,
-                                                            const cv::Mat& q_r_descs,
+                                                            const cv::Mat& p_l_descs,
+                                                            const cv::Mat& p_r_descs,
                                                             const std::vector<cv::KeyPoint>& c_l_kps,
                                                             const std::vector<cv::KeyPoint>& c_r_kps,
-                                                            const std::vector<cv::KeyPoint>& q_l_kps,
-                                                            const std::vector<cv::KeyPoint>& q_r_kps,
+                                                            const std::vector<cv::KeyPoint>& p_l_kps,
+                                                            const std::vector<cv::KeyPoint>& p_r_kps,
                                                             const std::vector<cv::Point3f>& c_camera_points,
-                                                            const std::vector<cv::Point3f>& q_camera_points,
+                                                            const std::vector<cv::Point3f>& p_camera_points,
                                                             std::vector<cv::KeyPoint>& f_c_l_kps,
                                                             std::vector<cv::KeyPoint>& f_c_r_kps,
-                                                            std::vector<cv::KeyPoint>& f_q_l_kps,
-                                                            std::vector<cv::KeyPoint>& f_q_r_kps,
+                                                            std::vector<cv::KeyPoint>& f_p_l_kps,
+                                                            std::vector<cv::KeyPoint>& f_p_r_kps,
                                                             std::vector<cv::Point3f>& f_c_camera_points,
-                                                            std::vector<cv::Point3f>& f_q_camera_points)
+                                                            std::vector<cv::Point3f>& f_p_camera_points)
 {
+    MatchResult l_result, r_result;
     bool successful_matching = false;
-    cv::Mat f_c_l_descs, f_c_r_descs, f_q_l_descs, f_q_r_descs;
-    switch (match_type_)
+    cv::Mat f_c_l_descs, f_c_r_descs, f_p_l_descs, f_p_r_descs;
+    switch (type)
     {
         case PLAIN_MATCHING:
         {
-            MatchResult result = ratioMatching(ratio, c_l_descs, q_l_descs, c_l_kps, q_l_kps, c_camera_points, q_camera_points,
-                                               f_c_l_descs, f_q_l_descs, f_c_l_kps, f_q_l_kps, f_c_camera_points, f_q_camera_points);
-            successful_matching = parseMatchResult(enable_debugging_, "[Plain matching:]", result);
+            MatchResult l_result = ratioMatching(ratio, c_l_descs, p_l_descs, c_l_kps, p_l_kps, c_camera_points, p_camera_points,
+                                                 f_c_l_descs, f_p_l_descs, f_c_l_kps, f_p_l_kps, f_c_camera_points, f_p_camera_points);
+            successful_matching = parseMatchResult(enable_debugging, "[Plain matching:]", l_result);
             break;
         }
         case PLAIN_MATCHING_H:
         {
-            MatchResult result = ratioHomographyMatching(ratio, c_l_descs, q_l_descs, c_l_kps, q_l_kps, c_camera_points, q_camera_points,
-                                                         f_c_l_descs, f_q_l_descs, f_c_l_kps, f_q_l_kps, f_c_camera_points, f_q_camera_points);
-            successful_matching = parseMatchResult(enable_debugging_, "[Plain matching with homography:]", result);
+            MatchResult l_result = ratioHomographyMatching(ratio, c_l_descs, p_l_descs, c_l_kps, p_l_kps, c_camera_points, p_camera_points,
+                                                           f_c_l_descs, f_p_l_descs, f_c_l_kps, f_p_l_kps, f_c_camera_points, f_p_camera_points);
+            successful_matching = parseMatchResult(enable_debugging, "[Plain matching with homography:]", l_result);
             break;
         }
         case CIRCULAR_MATCHING:
         {
-            MatchResult l_result, r_result;
-            std::vector<cv::KeyPoint> h_f_c_l_kps, h_f_c_r_kps, h_f_q_l_kps, h_f_q_r_kps;
+            std::vector<cv::KeyPoint> h_f_c_l_kps, h_f_c_r_kps, h_f_p_l_kps, h_f_p_r_kps;
             std::vector<cv::Point3f> c_l_camera_points = c_camera_points, c_r_camera_points = c_camera_points;
-            std::vector<cv::Point3f> q_l_camera_points = q_camera_points, q_r_camera_points = q_camera_points;
-            std::vector<cv::Point3f> h_f_c_l_camera_points, h_f_c_r_camera_points, h_f_q_l_camera_points, h_f_q_r_camera_points;
-            std::thread l_matcher([&] {l_result = ratioMatching(ratio, c_l_descs, q_l_descs, c_l_kps, q_l_kps, c_l_camera_points, q_l_camera_points,
-                                                                f_c_l_descs, f_q_l_descs, f_c_l_kps, f_q_l_kps, h_f_c_l_camera_points, h_f_q_l_camera_points);});
-            std::thread r_matcher([&] {r_result = ratioMatching(ratio, c_r_descs, q_r_descs, c_r_kps, q_r_kps, c_r_camera_points, q_r_camera_points,
-                                                                f_c_r_descs, f_q_r_descs, f_c_r_kps, f_q_r_kps, h_f_c_r_camera_points, h_f_q_r_camera_points);});
+            std::vector<cv::Point3f> p_l_camera_points = p_camera_points, p_r_camera_points = p_camera_points;
+            std::vector<cv::Point3f> h_f_c_l_camera_points, h_f_c_r_camera_points, h_f_p_l_camera_points, h_f_p_r_camera_points;
+            std::thread l_matcher([&] {l_result = ratioMatching(ratio, c_l_descs, p_l_descs, c_l_kps, p_l_kps, c_l_camera_points, p_l_camera_points,
+                                                                f_c_l_descs, f_p_l_descs, h_f_c_l_kps, h_f_p_l_kps, h_f_c_l_camera_points, h_f_p_l_camera_points);});
+            std::thread r_matcher([&] {r_result = ratioMatching(ratio, c_r_descs, p_r_descs, c_r_kps, p_r_kps, c_r_camera_points, p_r_camera_points,
+                                                                f_c_r_descs, f_p_r_descs, h_f_c_r_kps, h_f_p_r_kps, h_f_c_r_camera_points, h_f_p_r_camera_points);});
             l_matcher.join();
             r_matcher.join();
 
-            bool l_success = parseMatchResult(enable_debugging_, "[Left matching in circular matching:]", l_result);
-            bool r_success = parseMatchResult(enable_debugging_, "[Right matching in circular matching:]", r_result);
+            bool l_success = parseMatchResult(enable_debugging, "[Left matching in circular matching:]", l_result);
+            bool r_success = parseMatchResult(enable_debugging, "[Right matching in circular matching:]", r_result);
 
             if (!(l_success && r_success))
             {
@@ -154,27 +157,47 @@ bool StereoMotionEstimationModules::matchNonStereoKeypoints(double ratio,
             }
             else
             {
+                if (h_f_c_r_kps.size() < h_f_c_l_kps.size())
+                {
+                    if(!assembleCircularMatchings(c_r_kps, c_l_kps, p_r_kps, p_l_kps, 
+                                                  h_f_c_r_kps, h_f_c_l_kps, h_f_p_r_kps, h_f_p_l_kps,
+                                                  f_c_r_kps, f_c_l_kps, f_p_r_kps, f_p_l_kps))
+                    {
+                        std::cerr << "Problems assembling circular matches" << std::endl;
+                        successful_matching = false;
+                        break; 
+                    }
+                }
+                else
+                {
+                    if(!assembleCircularMatchings(c_l_kps, c_r_kps, p_l_kps, p_r_kps, 
+                                                  h_f_c_l_kps, h_f_c_r_kps, h_f_p_l_kps, h_f_p_r_kps,
+                                                  f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps))
+                    {
+                        std::cerr << "Problems assembling circular matches" << std::endl;
+                        successful_matching = false;
+                        break; 
+                    }
+                }
                 successful_matching = true;
                 break;
             }
         }
         case CIRCULAR_MATCHING_H:
         {
-            MatchResult l_result, r_result;
-            cv::Mat h_f_c_l_descs, h_f_c_r_descs, h_f_q_l_descs, h_f_q_r_descs;
-            std::vector<cv::KeyPoint> h_f_c_l_kps, h_f_c_r_kps, h_f_q_l_kps, h_f_q_r_kps;
+            std::vector<cv::KeyPoint> h_f_c_l_kps, h_f_c_r_kps, h_f_p_l_kps, h_f_p_r_kps;
             std::vector<cv::Point3f> c_l_camera_points = c_camera_points, c_r_camera_points = c_camera_points;
-            std::vector<cv::Point3f> q_l_camera_points = q_camera_points, q_r_camera_points = q_camera_points;
-            std::vector<cv::Point3f> h_f_c_l_camera_points, h_f_c_r_camera_points, h_f_q_l_camera_points, h_f_q_r_camera_points;
-            std::thread l_matcher([&] {l_result = ratioHomographyMatching(ratio, c_l_descs, q_l_descs, c_l_kps, q_l_kps, c_l_camera_points, q_l_camera_points,
-                                                                          f_c_l_descs, f_q_l_descs, f_c_l_kps, f_q_l_kps, h_f_c_l_camera_points, h_f_q_l_camera_points);});
-            std::thread r_matcher([&] {r_result = ratioHomographyMatching(ratio, c_r_descs, q_r_descs, c_r_kps, q_r_kps, c_r_camera_points, q_r_camera_points,
-                                                                          f_c_r_descs, f_q_r_descs, f_c_r_kps, f_q_r_kps, h_f_c_r_camera_points, h_f_q_r_camera_points);});
+            std::vector<cv::Point3f> p_l_camera_points = p_camera_points, p_r_camera_points = p_camera_points;
+            std::vector<cv::Point3f> h_f_c_l_camera_points, h_f_c_r_camera_points, h_f_p_l_camera_points, h_f_p_r_camera_points;
+            std::thread l_matcher([&] {l_result = ratioHomographyMatching(ratio, c_l_descs, p_l_descs, c_l_kps, p_l_kps, c_l_camera_points, p_l_camera_points,
+                                                                          f_c_l_descs, f_p_l_descs, h_f_c_l_kps, h_f_p_l_kps, h_f_c_l_camera_points, h_f_p_l_camera_points);});
+            std::thread r_matcher([&] {r_result = ratioHomographyMatching(ratio, c_r_descs, p_r_descs, c_r_kps, p_r_kps, c_r_camera_points, p_r_camera_points,
+                                                                          f_c_r_descs, f_p_r_descs, h_f_c_r_kps, h_f_p_r_kps, h_f_c_r_camera_points, h_f_p_r_camera_points);});
             l_matcher.join();
             r_matcher.join();
 
-            bool l_success = parseMatchResult(enable_debugging_, "[Left matching in circular matching with homography:]", l_result);
-            bool r_success = parseMatchResult(enable_debugging_, "[Right matching in circular matching with homography:]", r_result);
+            bool l_success = parseMatchResult(enable_debugging, "[Left matching in circular matching with homography:]", l_result);
+            bool r_success = parseMatchResult(enable_debugging, "[Right matching in circular matching with homography:]", r_result);
 
             if (!(l_success && r_success))
             {
@@ -183,13 +206,35 @@ bool StereoMotionEstimationModules::matchNonStereoKeypoints(double ratio,
             }
             else
             {
+                if (h_f_c_r_kps.size() < h_f_c_l_kps.size())
+                {
+                    if(!assembleCircularMatchings(c_r_kps, c_l_kps, p_r_kps, p_l_kps, 
+                                                  h_f_c_r_kps, h_f_c_l_kps, h_f_p_r_kps, h_f_p_l_kps,
+                                                  f_c_r_kps, f_c_l_kps, f_p_r_kps, f_p_l_kps))
+                    {
+                        std::cerr << "Problems assembling circular matches" << std::endl;
+                        successful_matching = false;
+                        break; 
+                    }
+                }
+                else
+                {
+                    if(!assembleCircularMatchings(c_l_kps, c_r_kps, p_l_kps, p_r_kps, 
+                                                  h_f_c_l_kps, h_f_c_r_kps, h_f_p_l_kps, h_f_p_r_kps,
+                                                  f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps))
+                    {
+                        std::cerr << "Problems assembling circular matches" << std::endl;
+                        successful_matching = false;
+                        break; 
+                    }
+                }
                 successful_matching = true;
                 break;
             }
         }
         default:
         {
-            std::cout << " Unforeseen type of matching!" << std::endl;
+            std::cerr << "Unforeseen type of matching!" << std::endl;
             break;
         }
     }
@@ -235,7 +280,7 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::ratioM
     descriptor_matcher->knnMatch(c_descs, q_descs, knn_matches, knn, match_mask);
 
     // Lowe's ratio
-    int idx_0, idx_1;
+    int c_idx, q_idx;
     for (uint i = 0; i < knn_matches.size(); i++)
     {
         if (knn_matches[i].size() < 2)
@@ -243,17 +288,17 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::ratioM
 
         if (knn_matches[i][0].distance <= knn_matches[i][1].distance * ratio)
         {
-            idx_0 = knn_matches[i][0].queryIdx;
-            idx_1 = knn_matches[i][0].trainIdx;
-            f_c_kps.push_back(c_kps[idx_0]);
-            f_q_kps.push_back(q_kps[idx_1]);
-            f_c_descs.push_back(c_descs.row(idx_0));
-            f_q_descs.push_back(q_descs.row(idx_1));
+            c_idx = knn_matches[i][0].queryIdx;
+            q_idx = knn_matches[i][0].trainIdx;
+            f_c_kps.push_back(c_kps[c_idx]);
+            f_q_kps.push_back(q_kps[q_idx]);
+            f_c_descs.push_back(c_descs.row(c_idx));
+            f_q_descs.push_back(q_descs.row(q_idx));
             
             if (fill_3d)
             {
-                f_c_camera_points.push_back(c_camera_points[idx_0]);
-                f_q_camera_points.push_back(q_camera_points[idx_0]);
+                f_c_camera_points.push_back(c_camera_points[c_idx]);
+                f_q_camera_points.push_back(q_camera_points[c_idx]);
             }
         }
     }
@@ -376,4 +421,59 @@ bool StereoMotionEstimationModules::parseMatchResult(bool enable_printing,
         }
     }
     return successful_matching;
+}
+
+
+bool StereoMotionEstimationModules::assembleCircularMatchings(const std::vector<cv::KeyPoint>& c_0_stereo_kps,
+                                                              const std::vector<cv::KeyPoint>& c_1_stereo_kps,
+                                                              const std::vector<cv::KeyPoint>& p_0_stereo_kps,
+                                                              const std::vector<cv::KeyPoint>& p_1_stereo_kps,
+                                                              const std::vector<cv::KeyPoint>& c_0_successive_kps,
+                                                              const std::vector<cv::KeyPoint>& c_1_successive_kps,
+                                                              const std::vector<cv::KeyPoint>& p_0_successive_kps,
+                                                              const std::vector<cv::KeyPoint>& p_1_successive_kps,
+                                                              std::vector<cv::KeyPoint>& f_c_0_kps,
+                                                              std::vector<cv::KeyPoint>& f_c_1_kps,
+                                                              std::vector<cv::KeyPoint>& f_p_0_kps,
+                                                              std::vector<cv::KeyPoint>& f_p_1_kps)
+{
+    uint j;
+    uint k;
+    uint l;
+    for (uint i = 0; i < p_0_successive_kps.size(); i++)
+    {
+        for (j = 0; j < p_0_stereo_kps.size(); j++)
+        {
+            if (p_0_successive_kps[i].pt == p_0_stereo_kps[j].pt)
+            {
+                for (k = 0; k < p_1_successive_kps.size(); k++)
+                {
+                    if (p_1_stereo_kps[j].pt == p_1_successive_kps[k].pt)
+                    {
+                        for (l = 0; l < c_1_stereo_kps.size(); l++)
+                        {
+                            if (c_1_successive_kps[k].pt == c_1_stereo_kps[l].pt)
+                            {
+                                if (c_0_stereo_kps[l].pt == c_0_successive_kps[i].pt)
+                                {
+                                    f_c_0_kps.push_back(c_0_successive_kps[i]);
+                                    f_c_1_kps.push_back(c_1_successive_kps[k]);
+                                    f_p_0_kps.push_back(p_0_successive_kps[i]);
+                                    f_p_1_kps.push_back(p_1_successive_kps[k]);
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    if (f_c_0_kps.size() < 10)
+        return false;
+    else
+        return true;
 }

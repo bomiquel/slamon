@@ -55,6 +55,59 @@ void Publisher::publishMatches(bool vertical,
 }
 
 
+void Publisher::publishCircularMatches(const cv::Mat& c_l_img,                                    
+                                       const cv::Mat& c_r_img,
+                                       const cv::Mat& p_l_img,
+                                       const cv::Mat& p_r_img,
+                                       const ros::Time& stamp,
+                                       const std::vector<cv::KeyPoint>& f_c_l_kps,
+                                       const std::vector<cv::KeyPoint>& f_c_r_kps,
+                                       const std::vector<cv::KeyPoint>& f_p_l_kps,
+                                       const std::vector<cv::KeyPoint>& f_p_r_kps,
+                                       const image_transport::Publisher& publisher)
+{
+    // Concatenate horizontal images and draw matches
+    cv::Scalar color(0.0, 0.0, 255);
+    cv::Mat c_stereo_img, p_stereo_img;
+    drawMatches(false, c_l_img, c_r_img, color, f_c_l_kps, f_c_r_kps, c_stereo_img);
+    drawMatches(false, p_l_img, p_r_img, color, f_p_l_kps, f_p_r_kps, p_stereo_img);
+
+    // Vertical concatenation
+    cv::Mat out_img;
+    cv::vconcat(c_stereo_img, p_stereo_img, out_img);
+
+    // Draw vertical matches
+    int x_offset = c_l_img.cols;
+    int y_offset = c_l_img.rows;
+    cv::Point2f f_c_r_pt_offset, f_p_l_pt_offset, f_p_r_pt_offset;
+    for (uint i = 0; i < f_c_l_kps.size(); i++)
+    {
+        // Add offset to filtered current right keypoints
+        f_c_r_pt_offset = f_c_r_kps[i].pt;
+        f_c_r_pt_offset.x += x_offset;
+        // Add offset to filtered previous left keypoints
+        f_p_l_pt_offset = f_p_l_kps[i].pt;
+        f_p_l_pt_offset.y += y_offset;
+        // Add offset to filtered previous right keypoints
+        f_p_r_pt_offset = f_p_r_kps[i].pt;
+        f_p_r_pt_offset.x += x_offset;
+        f_p_r_pt_offset.y += y_offset;
+
+        cv::line(out_img, f_c_l_kps[i].pt, f_p_l_pt_offset, color, 1, cv::LINE_AA, 0);
+        cv::line(out_img, f_c_r_pt_offset, f_p_r_pt_offset, color, 1, cv::LINE_AA, 0);
+    }
+
+    // Write text
+    std::stringstream s;
+    cv::Mat out_text_img;
+    s << " Number of matches: " << f_c_l_kps.size();
+    writeTxtInImage(out_img, s, out_text_img);
+    
+    // Publish image
+    publishImage(out_text_img, stamp, publisher);
+}
+
+
 void Publisher::publishImage(const cv::Mat& img,
                              const ros::Time& stamp,
                              const image_transport::Publisher& publisher)
