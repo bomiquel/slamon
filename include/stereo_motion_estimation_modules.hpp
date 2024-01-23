@@ -76,7 +76,8 @@ class StereoMotionEstimationModules
          *  To eliminate outliers, first Lowe's ratio is applied and then a
          *  Fundamental Matrix with 1 pixel of reprojection error is computed.
          *  \param ratio for eliminating outlier matches (input).
-         *  \param epipolar_filter 
+         *  \param epipolar_filter If true stereo matches are fitlered by epipolar
+         *  constraint, if false by fundamental matrix (input).
          *  \param enable_debugging Enables or disables debugging messages (input).
          *  \param l_descs Left image descriptors (input).
          *  \param r_descs Right image descriptors (input).
