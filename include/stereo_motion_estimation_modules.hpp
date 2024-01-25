@@ -41,9 +41,14 @@ class StereoMotionEstimationModules
         };
         
 
-        /** \brief Empty class constructor.
+        /** \brief Class constructor.
+         *  \param ratio The ratio for Lowe's ratio test.
+         *  \param enable_debugging Enabling or disabling debugging messages.
+         *  \param matching_type Matching type.
          */
-        StereoMotionEstimationModules() {}
+        StereoMotionEstimationModules(double ratio,
+                                      bool enable_debugging,
+                                      const std::string& matching_type);
 
 
         /** \brief Detects keypoints of an image.
@@ -75,10 +80,6 @@ class StereoMotionEstimationModules
         /** \brief Matches keypoints of the same stereo pair and removes outliers.
          *  To eliminate outliers, first Lowe's ratio is applied and then a
          *  Fundamental Matrix with 1 pixel of reprojection error is computed.
-         *  \param ratio for eliminating outlier matches (input).
-         *  \param epipolar_filter If true stereo matches are fitlered by epipolar
-         *  constraint, if false by fundamental matrix (input).
-         *  \param enable_debugging Enables or disables debugging messages (input).
          *  \param l_descs Left image descriptors (input).
          *  \param r_descs Right image descriptors (input).
          *  \param l_kps Left image keypoints (input).
@@ -89,10 +90,7 @@ class StereoMotionEstimationModules
          *  \param r_l_kps Filtered right image keypoints (output).
          *  @return whether the keypoint matching and the filtering could be performed.
          */
-        bool matchStereoKeypoints(double ratio, 
-                                  bool epipolar_filter,
-                                  bool enable_debugging,
-                                  const cv::Mat& l_descs,
+        bool matchStereoKeypoints(const cv::Mat& l_descs,
                                   const cv::Mat& r_descs,
                                   const std::vector<cv::KeyPoint>& l_kps,
                                   const std::vector<cv::KeyPoint>& r_kps,
@@ -107,9 +105,6 @@ class StereoMotionEstimationModules
          *  homography can be applied. It is also possible to decide between a plain 
          *  matching (matching between left images of each stereo pair) or a circular
          *  matching (involving all 4 images).
-         *  \param ratio for eliminating outlier matches (input).
-         *  \param enable_debugging Enables or disables debugging messages (input).
-         *  \param type Matching type (input).
          *  \param c_l_descs Current left image descriptors (input).
          *  \param c_r_descs Current right image descriptors (input).
          *  \param p_l_descs Previous left image descriptors (input).
@@ -129,10 +124,7 @@ class StereoMotionEstimationModules
          *  @return Whether keypoint matching and filtering has been performed correctly
          *  and if there are enough filtered points.
          */
-        bool matchNonStereoKeypoints(double ratio,
-                                     bool enable_debugging,
-                                     const MatchType& type,
-                                     const cv::Mat& c_l_descs,
+        bool matchNonStereoKeypoints(const cv::Mat& c_l_descs,
                                      const cv::Mat& c_r_descs,
                                      const cv::Mat& p_l_descs,
                                      const cv::Mat& p_r_descs,
@@ -153,7 +145,6 @@ class StereoMotionEstimationModules
     protected:
 
         /** \brief Matches visual keypoints and applies Lowe's ratio.
-         *  \param ratio for eliminating outlier matches (input).
          *  \param c_descs Current image descriptors (input).
          *  \param q_descs Query image descriptors (input).
          *  \param c_kps Current image keypoints (input).
@@ -168,8 +159,7 @@ class StereoMotionEstimationModules
          *  \param f_q_camera_points Query image 3D points filtered out (output).
          *  @return Success or failure type.
          */
-        MatchResult ratioMatching(double ratio,
-                                  const cv::Mat& c_descs, 
+        MatchResult ratioMatching(const cv::Mat& c_descs, 
                                   const cv::Mat& q_descs,
                                   const std::vector<cv::KeyPoint>& c_kps,
                                   const std::vector<cv::KeyPoint>& q_kps,
@@ -184,7 +174,6 @@ class StereoMotionEstimationModules
 
 
         /** \brief Matches visual keypoints and applies Lowe's ratio.
-         *  \param ratio for eliminating outlier matches (input).
          *  \param c_descs Current image descriptors (input).
          *  \param q_descs Query image descriptors (input).
          *  \param c_kps Current image keypoints (input).
@@ -199,8 +188,7 @@ class StereoMotionEstimationModules
          *  \param f_q_camera_points Query image 3D points filtered out (output).
          *  @return Success or failure type.
          */
-        MatchResult ratioHomographyMatching(double ratio,
-                                            const cv::Mat& c_descs, 
+        MatchResult ratioHomographyMatching(const cv::Mat& c_descs, 
                                             const cv::Mat& q_descs,
                                             const std::vector<cv::KeyPoint>& c_kps,
                                             const std::vector<cv::KeyPoint>& q_kps,
@@ -215,14 +203,12 @@ class StereoMotionEstimationModules
 
 
         /** \brief From enumerated type Match result to boolean + success or error message printout.
-         *  \param enable_printing Enables or disables message printing.
          *  \param text Extra text to know which module sends the message.
          *  \param result The result of the matching and its subsequent filtering.
          *  @return Whether keypoint matching and filtering has been performed correctly
          *  and if there are enough filtered points.
          */
-        bool parseMatchResult(bool enable_printing, 
-                              const std::string& text,
+        bool parseMatchResult(const std::string& text,
                               const MatchResult& result);
 
 
@@ -260,6 +246,13 @@ class StereoMotionEstimationModules
                                        std::vector<cv::KeyPoint>& f_c_1_kps,
                                        std::vector<cv::KeyPoint>& f_p_0_kps,
                                        std::vector<cv::KeyPoint>& f_p_1_kps);
+
+
+        double ratio_;
+
+        MatchType match_type_; //!> Matching type
+        
+        bool enable_debugging_; //!> Enabling or disabling debugging messages.
 };
 
 

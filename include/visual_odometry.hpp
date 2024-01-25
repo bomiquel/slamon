@@ -35,12 +35,21 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
         };
 
 
-        /** \brief Class constructor.
-         *  \param pub Frame publisher object pointer.
-         *  \param graph Graph object pointer.
-         */
-        VisualOdometry() {}
+        // /** \brief Class constructor.
+        //  *  \param pub Frame publisher object pointer.
+        //  *  \param graph Graph object pointer.
+        //  */
+        // VisualOdometry() {}
 
+        /** \brief Class constructor.
+         *  \param ratio The ratio for Lowe's ratio test.
+         *  \param enable_debugging Enabling or disabling debugging messages.
+         *  \param matching_type Matching type.
+         */
+        VisualOdometry(double ratio,
+                       bool enable_debugging,
+                       const std::string& matching_type): 
+                       StereoMotionEstimationModules(ratio, enable_debugging, matching_type) {}
 
         /** \brief Starts tracking
          */
@@ -86,31 +95,6 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
                                            const Frame& p_frame);
 
 
-        /** \brief Get the static transform between robot frame (base link) and camera frame.
-         *  \param robot_frame_id Name of the robot frame (input).
-         *  \param sensor_frame_id Name of the sensor frame (input).
-         *  \param transform Will contain the transform between robot frame and camera frame (output).
-         *  @return True if valid transform, false otherwise.
-         */
-        bool getRobot2CameraTf(const std::string& robot_frame_id,
-                               const std::string& sensor_frame_id,
-                               tf::StampedTransform& transform);
-
-
-        /** \brief Gets the stereo camera model and the camera matrix from the ROS 
-         *  messages containing the image information.
-         *  \param l_info_msg ROS message containing the info of the left image (input).
-         *  \param r_info_msg ROS message containing the info of the right image (input).
-         *  \param camera_matrix Will contain the stereo camera matrix (output).
-         *  \param stereo_camera_model Will contain the stereo camera model (output).
-         *  @return If it has been possible to obtain the model of the camera.
-         */
-        void getCameraModelMatrix(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
-                                  const sensor_msgs::CameraInfoConstPtr& r_info_msg,
-                                  cv::Mat& camera_matrix,
-                                  image_geometry::StereoCameraModel& stereo_camera_model);
-
-
         /** \brief Convert ROS image messages to cv::Mat
          *  \param l_img_msg ROS message containing the left image (input).
          *  \param r_img_msg ROS message containing the right image (input).
@@ -154,16 +138,10 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
         Frame p_frame_; //!> Previous frame
         
         VOStatus status_; //!> Visual odometer state
-        
-        MatchType match_type_; //!> Matching type
 
         ros::Time start_time_; //>! Time at which the program enters into the callback.
 
         cv::Mat camera_matrix_; //!> Stereo camera matrix
-
-        bool enable_debugging_; //!> Enabling or disabling debugging messages.
-
-        bool filter_by_epipolar_; //!> If true stereo matches are fitlered by epipolar constraint, if false by fundamental matrix
 
         tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
@@ -175,7 +153,7 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
 
         image_transport::Publisher successive_matches_pub_; // !> Successive frame matching publisher 
 
-        image_geometry::StereoCameraModel camera_model_; //!> Stereo camera model
+        image_geometry::StereoCameraModel stereo_camera_model_; //!> Stereo camera model
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
