@@ -205,14 +205,14 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
     // Non stereo matching keypoints debugging
     if (successive_matches_pub_.getNumSubscribers() > 0)
     {
-        if (match_type_ == PLAIN_MATCHING || match_type_ == PLAIN_MATCHING_H)
+        if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
             publishMatches(true, c_frame.getLeftImg(), p_frame.getLeftImg(), c_frame.getTimestamp(),
                         f_c_l_kps, f_p_l_kps, successive_matches_pub_);
-        else if (match_type_ == CIRCULAR_MATCHING || match_type_ == CIRCULAR_MATCHING_H)
+        else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
             publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame.getLeftImg(), p_frame.getRightImg(),
                                    c_frame.getTimestamp(), f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, successive_matches_pub_);
         else
-            std::cerr << "Unforeseen type of matching!" << std::endl;
+            std::cout << "Unforeseen type of matching!" << std::endl;
     }
 
     return true;

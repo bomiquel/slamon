@@ -24,10 +24,12 @@ class StereoMotionEstimationModules
 
         enum MatchType
         {
-            PLAIN_MATCHING      = 0,
-            PLAIN_MATCHING_H    = 1,
-            CIRCULAR_MATCHING   = 2,
-            CIRCULAR_MATCHING_H = 3            
+            RATIO_MATCHING               = 1,
+            ESSENTIAL_MATCHING           = 2,
+            HOMOGRAPHY_MATCHING          = 3,
+            CIRCULAR_RATIO_MATCHING      = 4,
+            CIRCULAR_ESSENTIAL_MATCHING  = 5,
+            CIRCULAR_HOMOGRAPHY_MATCHING = 6
         };
 
 
@@ -35,7 +37,7 @@ class StereoMotionEstimationModules
         {
             NOT_ENOUGH_KPS      = 0,
             NOT_ENOUGH_F_KPS    = 1,
-            HOMOGRAPHY_PROBLEM  = 2,
+            GEOMETRIC_PROBLEM   = 2,
             NOT_ENOUGH_H_F_KPS  = 3,
             SUCCESSFUL_MATCHING = 4
         };
@@ -144,7 +146,18 @@ class StereoMotionEstimationModules
 
     protected:
 
-        /** \brief Matches visual keypoints and applies Lowe's ratio.
+
+        /** \brief Matches visual keypoints
+         *  \param c_descs Current image descriptors (input).
+         *  \param q_descs Query image descriptors (input).
+         *  @return The matches
+         */
+        std::vector<std::vector<cv::DMatch>> matching(const cv::Mat& c_descs, 
+                                                      const cv::Mat& q_descs);
+
+
+        /** \brief Matches visual keypoints and applies Lowe's ratio to remove
+         *  outliers.
          *  \param c_descs Current image descriptors (input).
          *  \param q_descs Query image descriptors (input).
          *  \param c_kps Current image keypoints (input).
@@ -173,7 +186,13 @@ class StereoMotionEstimationModules
                                   std::vector<cv::Point3f>& f_q_camera_points);
 
 
-        /** \brief Matches visual keypoints and applies Lowe's ratio.
+        /** \brief Matches visual keypoints and applies a geometrical restriction 
+         *  (essential matrix or homography) wrapped in a RANSAC scheme to remove
+         *  outliers.
+         *  \param coplanar_points If true, the points are assumed to be coplanar
+         *  (or can be approximated to be in the same plane) and a homography is
+         *  calculated to eliminate outliers. Otherwise, an essential matrix is 
+         *  computed to remove outliers.
          *  \param c_descs Current image descriptors (input).
          *  \param q_descs Query image descriptors (input).
          *  \param c_kps Current image keypoints (input).
@@ -188,18 +207,19 @@ class StereoMotionEstimationModules
          *  \param f_q_camera_points Query image 3D points filtered out (output).
          *  @return Success or failure type.
          */
-        MatchResult ratioHomographyMatching(const cv::Mat& c_descs, 
-                                            const cv::Mat& q_descs,
-                                            const std::vector<cv::KeyPoint>& c_kps,
-                                            const std::vector<cv::KeyPoint>& q_kps,
-                                            const std::vector<cv::Point3f>& c_camera_points,
-                                            const std::vector<cv::Point3f>& q_camera_points,
-                                            cv::Mat& f_c_descs,
-                                            cv::Mat& f_q_descs,
-                                            std::vector<cv::KeyPoint>& f_c_kps,
-                                            std::vector<cv::KeyPoint>& f_q_kps,
-                                            std::vector<cv::Point3f>& f_c_camera_points,
-                                            std::vector<cv::Point3f>& f_q_camera_points);
+        MatchResult geometricalMatching(bool coplanar_points,
+                                        const cv::Mat& c_descs, 
+                                        const cv::Mat& q_descs,
+                                        const std::vector<cv::KeyPoint>& c_kps,
+                                        const std::vector<cv::KeyPoint>& q_kps,
+                                        const std::vector<cv::Point3f>& c_camera_points,
+                                        const std::vector<cv::Point3f>& q_camera_points,
+                                        cv::Mat& f_c_descs,
+                                        cv::Mat& f_q_descs,
+                                        std::vector<cv::KeyPoint>& f_c_kps,
+                                        std::vector<cv::KeyPoint>& f_q_kps,
+                                        std::vector<cv::Point3f>& f_c_camera_points,
+                                        std::vector<cv::Point3f>& f_q_camera_points);
 
 
         /** \brief From enumerated type Match result to boolean + success or error message printout.
@@ -250,7 +270,9 @@ class StereoMotionEstimationModules
 
         double ratio_;
 
-        MatchType match_type_; //!> Matching type
+        MatchType matching_type_; //!> Matching type
+
+        cv::Mat camera_matrix_; //!> Stereo camera matrix
         
         bool enable_debugging_; //!> Enabling or disabling debugging messages.
 };

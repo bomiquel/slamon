@@ -134,14 +134,11 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
     private:
         
         // Atributes
-
         Frame p_frame_; //!> Previous frame
         
         VOStatus status_; //!> Visual odometer state
 
         ros::Time start_time_; //>! Time at which the program enters into the callback.
-
-        cv::Mat camera_matrix_; //!> Stereo camera matrix
 
         tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
