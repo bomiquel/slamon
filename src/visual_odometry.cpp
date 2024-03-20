@@ -47,26 +47,29 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     switch (status_)
     {
         case UNINITIALIZED:
-            ROS_INFO_STREAM("UNINITIALIZED");
+            if(enable_debugging_)
+                ROS_INFO_STREAM("UNINITIALIZED");
             initialization(l_img_msg, r_img_msg, l_info_msg, r_info_msg, c_frame);
             break;
 
         case INITIALIZING:
-            ROS_INFO_STREAM("INITIALIZING");
+            if(enable_debugging_)
+                ROS_INFO_STREAM("INITIALIZING");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 status_ = WORKING;
             break;
 
         case WORKING:
-            ROS_INFO_STREAM("WORKING");
+            if(enable_debugging_)
+                ROS_INFO_STREAM("WORKING");
             if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 status_ = LOST;
             computeMotionSuccessiveFrames(c_frame, p_frame_);
-                
             break;
 
         case LOST:
-            ROS_INFO_STREAM("LOST");
+            if(enable_debugging_)
+                ROS_INFO_STREAM("LOST");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 status_ = WORKING;
             else
@@ -156,20 +159,27 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     if(!matchStereoKeypoints(l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps))
         return false; 
 
-    // Compute 3D keypoints
+    // Compute 3D keypoints. Far points are filtered out because they do not provide accurate scale
+    // and translation information (Paz et al. 2008 and Mur-Artal et al. 2017). A point is considered "far" 
+    // when its z is more than 40 times the stereo baseline.
     double disparity;
     cv::Point3d camera_point;
     cv::Point2d l_point, r_point;
     cv::Mat f_l_descs, f_r_descs;
     std::vector<cv::Point3f> camera_points;
     std::vector<cv::KeyPoint> f_l_kps, f_r_kps;
+    double z_limit = stereo_camera_model_.baseline() * 40.0;
     for (uint i = 0; i < h_f_l_kps.size(); i++)
     {
         l_point = h_f_l_kps[i].pt;
         r_point = h_f_r_kps[i].pt;
         disparity = l_point.x - r_point.y;
         stereo_camera_model_.projectDisparityTo3d(l_point, disparity, camera_point);
-        if (isfinite(camera_point.x) && isfinite(camera_point.y) && isfinite(camera_point.z) && (camera_point.z) > 0)
+        if (isfinite(camera_point.x) && 
+            isfinite(camera_point.y) && 
+            isfinite(camera_point.z) && 
+            (camera_point.z > 0) && 
+            (camera_point.z < z_limit)) // Rejects "far" points.
         {
             f_l_kps.push_back(h_f_l_kps[i]);
             f_r_kps.push_back(h_f_r_kps[i]);
@@ -177,6 +187,12 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
             f_r_descs.push_back(h_f_r_descs.row(i));
             camera_points.push_back(camera_point);
         }
+    }
+
+    if (camera_points.size() < 10)
+    {
+        ROS_INFO_STREAM("[3D keypoint computer:] There are not enough close 3D keypoints");
+        return false;
     }
 
     // Stereo matching keypoints debugging

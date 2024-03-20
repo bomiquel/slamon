@@ -78,8 +78,13 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
                             Frame& c_frame);
 
 
-        /** \brief Detects, matches, filters and calculates the 3D points of the keypoints
-         *  of the current stereo image pair.
+        /** \brief Detects (using SIFT), matches and filters (using Lowe's ratio, homography,
+         *  essential matrix or circular version of the above) the key points of the current
+         *  stereo image pair. It then retrieves the 3D points from the scene and removes the
+         *  "far" ones. A 3D keypoint is considered "far away" when its z is more than 40 times
+         *  the stereo baseline. "Far" 3D keypoints are removed because they do not provide
+         *  accurate scale and translation information (Paz et al. 2008 and Mur-Artal et al.
+         *  2017).
          *  \param l_img_msg ROS message containing the left image (input).
          *  \param r_img_msg ROS message containing the right image (input).
          *  \param c_frame Will contain all the corresponfing data of the current frame (output).
