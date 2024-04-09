@@ -8,7 +8,6 @@ void VisualOdometry::run()
 
     // Create ROS node
     ros::NodeHandle nh;
-    ros::NodeHandle nhp("~");
     image_transport::ImageTransport it(nh);
 
     // Subscribers
@@ -190,7 +189,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
         }
     }
 
-    if (camera_points.size() < 10)
+    if (camera_points.size() < (uint)min_num_kps_)
     {
         ROS_WARN_STREAM("[3D keypoint computer:] There are not enough close 3D keypoints");
         return false;

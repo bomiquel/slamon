@@ -43,13 +43,15 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
 
         /** \brief Class constructor.
          *  \param ratio The ratio for Lowe's ratio test.
+         *  \param min_num_kps The minimum number of keypoints to estimate the movement.
          *  \param enable_debugging Enabling or disabling debugging messages.
          *  \param matching_type Matching type.
          */
         VisualOdometry(double ratio,
+                       int min_num_kps,
                        bool enable_debugging,
                        const std::string& matching_type): 
-                       StereoMotionEstimationModules(ratio, enable_debugging, matching_type) {}
+                       StereoMotionEstimationModules(ratio, min_num_kps, enable_debugging, matching_type) {}
 
         /** \brief Starts tracking
          */

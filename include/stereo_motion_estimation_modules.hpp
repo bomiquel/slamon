@@ -48,10 +48,12 @@ class StereoMotionEstimationModules
 
         /** \brief Class constructor.
          *  \param ratio The ratio for Lowe's ratio test.
+         *  \param min_num_kps The minimum number of keypoints to estimate the movement.
          *  \param enable_debugging Enabling or disabling debugging messages.
          *  \param matching_type Matching type.
          */
         StereoMotionEstimationModules(double ratio,
+                                      int min_num_kps,
                                       bool enable_debugging,
                                       const std::string& matching_type);
 
@@ -277,7 +279,9 @@ class StereoMotionEstimationModules
                               const MatchResult& result);
 
 
-        double ratio_;
+        double ratio_; //!> Lowe's ratio.
+
+        int min_num_kps_; //!> The minimum number of keypoints to estimate the movement.
 
         MatchType matching_type_; //!> Matching type
 

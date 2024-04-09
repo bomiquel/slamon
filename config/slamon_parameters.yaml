@@ -1,11 +1,6 @@
 slamon:
-  refine: false
-  lc_min_inliers: 100
-  distance_between_keyframes: 0.65
-  working_directory: /home/bomiquel/SLAM_ws/src/test/output/
-  lc_epipolar_thresh: 2.0
-  lc_neighbors: 4
-  lc_discard_window: 15
-  feature_detector_selection: SIFT
-  ransac_iterations: 300
+  lowe_ratio: 0.8 # 0.7/0.9, good 0.8
+  min_num_kps: 20 # 20
+  matching_type: circular_ratio_matching
+  enable_debugging: true
 

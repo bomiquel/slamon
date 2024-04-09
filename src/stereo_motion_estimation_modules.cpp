@@ -2,20 +2,22 @@
 
 
 StereoMotionEstimationModules::StereoMotionEstimationModules(double ratio,
+                                                             int min_num_kps,                                                             
                                                              bool enable_debugging,
                                                              const std::string& matching_type)
 {
     ratio_ = ratio;
+    min_num_kps_ = min_num_kps; 
     enable_debugging_ = enable_debugging;
-    if (matching_type == "ESSENTIAL_MATCHING")
+    if (matching_type == "essential_matching")
         matching_type_ = ESSENTIAL_MATCHING;
-    else if (matching_type == "HOMOGRAPHY_MATCHING")
+    else if (matching_type == "homography_matching")
         matching_type_ = HOMOGRAPHY_MATCHING;
-    else if (matching_type == "CIRCULAR_RATIO_MATCHING")
+    else if (matching_type == "circular_ratio_matching")
         matching_type_ = CIRCULAR_RATIO_MATCHING;
-    else if (matching_type == "CIRCULAR_ESSENTIAL_MATCHING")
+    else if (matching_type == "circular_essential_matching")
         matching_type_ = CIRCULAR_ESSENTIAL_MATCHING;
-    else if (matching_type == "CIRCULAR_HOMOGRAPHY_MATCHING")
+    else if (matching_type == "circular_homography_matching")
         matching_type_ = CIRCULAR_HOMOGRAPHY_MATCHING;
     else
         matching_type_ = RATIO_MATCHING;
@@ -91,7 +93,7 @@ bool StereoMotionEstimationModules::matchStereoKeypoints(const cv::Mat& l_descs,
         }
     }
 
-    if (f_l_kps.size() < 10)
+    if (f_l_kps.size() < (uint)min_num_kps_)
     {
         if (enable_debugging_)
             std::cout << "[Stereo Matching:] Not enough keypoints after epipolar filtering" << std::endl;
@@ -249,7 +251,7 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::ratioM
     f_q_descs.release();
     f_c_camera_points.clear();
     f_q_camera_points.clear();
-    if (c_descs.rows < 10 || q_descs.rows < 10) 
+    if (c_descs.rows < min_num_kps_ || q_descs.rows < min_num_kps_) 
         return NOT_ENOUGH_KPS;
 
     // During feature matching of the same stereo pair there are no 3D points.
@@ -288,7 +290,7 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::ratioM
     }
     
     // Sanity check
-    if (f_c_kps.size() < 10)
+    if (f_c_kps.size() < (uint)min_num_kps_)
         return NOT_ENOUGH_F_KPS;
     else
         return SUCCESSFUL_MATCHING;
@@ -316,7 +318,7 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::geomet
     f_q_descs.release();
     f_c_camera_points.clear();
     f_q_camera_points.clear();
-    if (c_descs.rows < 10 || q_descs.rows < 10) 
+    if (c_descs.rows < min_num_kps_ || q_descs.rows < min_num_kps_) 
         return NOT_ENOUGH_KPS;
 
     // // Visual keypoint matching
@@ -370,7 +372,7 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::geomet
     }
 
     // Sanity check
-    if (f_c_kps.size() < 10)
+    if (f_c_kps.size() < (uint)min_num_kps_)
         return NOT_ENOUGH_F_KPS;
     else
         return SUCCESSFUL_MATCHING;
@@ -426,7 +428,7 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::assemb
     }
 
     // Sanity check
-    if (f_c_0_kps.size() < 10)
+    if (f_c_0_kps.size() < (uint)min_num_kps_)
         return NOT_ENOUGH_CIRCLES;
     else
         return SUCCESSFUL_MATCHING;
