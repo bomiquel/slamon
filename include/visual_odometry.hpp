@@ -79,7 +79,7 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
 
 
         /** \brief Detects (using SIFT), matches and filters (using Lowe's ratio, homography,
-         *  essential matrix or circular version of the above) the key points of the current
+         *  essential matrix or circular version of the above) the keypoints of the current
          *  stereo image pair. It then retrieves the 3D points from the scene and removes the
          *  "far" ones. A 3D keypoint is considered "far away" when its z is more than 40 times
          *  the stereo baseline. "Far" 3D keypoints are removed because they do not provide
@@ -113,29 +113,6 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
                          cv::Mat& r_img);
 
 
-        /** \brief Calculates the 3D points of the keypoints of the image stereo pair.
-         *  The points are related to the camera frame. 
-         *  \param l_descs Left image descriptors (input).
-         *  \param r_descs Right image descriptors (input).
-         *  \param l_kps Left image keypoints (input).
-         *  \param r_kps Right image keypoints (input).
-         *  \param camera_model Stereo camera model matrix (input).
-         *  \param f_l_descs Filtered left image descriptors (output).
-         *  \param f_r_descs Filtered right image descriptors (output).
-         *  \param f_l_kps Filtered left image keypoints (output).
-         *  \param r_l_kps Filtered right image keypoints (output).
-         *  @return The 3D camera points.
-         */
-        std::vector<cv::Point3f> compute3DPoints(const cv::Mat& l_descs,
-                                                 const cv::Mat& r_descs,
-                                                 const std::vector<cv::KeyPoint>& l_kps,
-                                                 const std::vector<cv::KeyPoint>& r_kps,
-                                                 const image_geometry::StereoCameraModel& camera_model,
-                                                 cv::Mat& f_l_descs,
-                                                 cv::Mat& f_r_descs,
-                                                 std::vector<cv::KeyPoint>& f_l_kps,
-                                                 std::vector<cv::KeyPoint>& f_r_kps);
-
     private:
         
         // Atributes
@@ -165,8 +142,6 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
 
         typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
 
-        // ros::Duration delta_t double delta_t_sec
-
 };
 
-#endif // STEREO_MOTION_ESTIMATION_HPP
+#endif // VISUAL_ODOMETRY_HPP

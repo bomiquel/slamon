@@ -82,7 +82,7 @@ bool StereoMotionEstimationModules::matchStereoKeypoints(const cv::Mat& l_descs,
     // Epipolar filtering
     for (uint i = 0; i < h_f_l_kps.size(); i++)
     {
-        if (abs(h_f_l_kps[i].pt.y - h_f_r_kps[i].pt.y) < 1.0)
+        if (abs(h_f_l_kps[i].pt.y - h_f_r_kps[i].pt.y) <= 1.0)
         {
             f_l_kps.push_back(h_f_l_kps[i]);
             f_r_kps.push_back(h_f_r_kps[i]);
@@ -191,34 +191,26 @@ bool StereoMotionEstimationModules::matchNonStereoKeypoints(const cv::Mat& c_l_d
         }
         else
         {
+            MatchResult circle_result;
             if (h_f_c_r_kps.size() < h_f_c_l_kps.size())
             {
-                if(!assembleCircularMatchings(c_r_kps, c_l_kps, p_r_kps, p_l_kps, 
-                                                h_f_c_r_kps, h_f_c_l_kps, h_f_p_r_kps, h_f_p_l_kps,
-                                                f_c_r_kps, f_c_l_kps, f_p_r_kps, f_p_l_kps))
-                {
-                    if (enable_debugging_)
-                        std::cout << "There are not enough circular matches" << std::endl;
-                    successful_matching = false;
-                }
+                circle_result = assembleCircularMatchings(c_r_kps, c_l_kps, p_r_kps, p_l_kps, 
+                                                          h_f_c_r_kps, h_f_c_l_kps, h_f_p_r_kps, h_f_p_l_kps,
+                                                          f_c_r_kps, f_c_l_kps, f_p_r_kps, f_p_l_kps);
+                successful_matching = parseMatchResult("[Circular matching assembler:]", circle_result);
             }
             else
             {
-                if(!assembleCircularMatchings(c_l_kps, c_r_kps, p_l_kps, p_r_kps, 
-                                                h_f_c_l_kps, h_f_c_r_kps, h_f_p_l_kps, h_f_p_r_kps,
-                                                f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps))
-                {
-                    if (enable_debugging_)
-                        std::cout << "There are not enough circular matches" << std::endl;
-                    successful_matching = false;
-                }
+                circle_result = assembleCircularMatchings(c_l_kps, c_r_kps, p_l_kps, p_r_kps, 
+                                                          h_f_c_l_kps, h_f_c_r_kps, h_f_p_l_kps, h_f_p_r_kps,
+                                                          f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps);
+                successful_matching = parseMatchResult("[Circular matching assembler:]", circle_result);
             }
-            successful_matching = true;
         }
     }
     else
     {
-        std::cout << "Unforeseen type of matching!" << std::endl;
+        std::cerr << "Unforeseen type of matching!" << std::endl;
     }
 
     return successful_matching;
@@ -260,6 +252,7 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::ratioM
     if (c_descs.rows < 10 || q_descs.rows < 10) 
         return NOT_ENOUGH_KPS;
 
+    // During feature matching of the same stereo pair there are no 3D points.
     bool fill_3d;
     if (c_camera_points.size() > 0)
         fill_3d = true;
@@ -285,6 +278,7 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::ratioM
             f_c_descs.push_back(c_descs.row(c_idx));
             f_q_descs.push_back(q_descs.row(q_idx));
             
+            // During feature matching of the same stereo pair there are no 3D points.
             if (fill_3d)
             {
                 f_c_camera_points.push_back(c_camera_points[c_idx]);
@@ -383,63 +377,18 @@ StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::geomet
 }
 
 
-bool StereoMotionEstimationModules::parseMatchResult(const std::string& text,
-                                                     const MatchResult& result)
-{
-    bool successful_matching; 
-    switch (result)
-    {
-        case NOT_ENOUGH_KPS:
-        {
-            if (enable_debugging_)
-                std::cout << text << " There are not enough keypoints to match and filter!" << std::endl;
-            successful_matching = false;
-            break;
-        }
-        case NOT_ENOUGH_F_KPS:
-        {
-            if (enable_debugging_)
-                std::cout << text << " There are not enough keypoints after outlier filtering!" << std::endl;
-            successful_matching = false;
-            break;
-        }
-        case GEOMETRIC_PROBLEM:
-        {
-            if (enable_debugging_)
-                std::cout << text << " Problems in applying the selected geometric constraint. Probably not enough keypoints!" << std::endl;
-            successful_matching = false;
-            break;
-        }
-        case SUCCESSFUL_MATCHING:
-        {
-            if (enable_debugging_)
-                std::cout << text << " Successful matching!" << std::endl;
-            successful_matching = true;
-            break;
-        }
-        default:
-        {
-            std::cout << text << " Unforeseen result of matching!" << std::endl;
-            successful_matching = false;
-            break;
-        }
-    }
-    return successful_matching;
-}
-
-
-bool StereoMotionEstimationModules::assembleCircularMatchings(const std::vector<cv::KeyPoint>& c_0_stereo_kps,
-                                                              const std::vector<cv::KeyPoint>& c_1_stereo_kps,
-                                                              const std::vector<cv::KeyPoint>& p_0_stereo_kps,
-                                                              const std::vector<cv::KeyPoint>& p_1_stereo_kps,
-                                                              const std::vector<cv::KeyPoint>& c_0_successive_kps,
-                                                              const std::vector<cv::KeyPoint>& c_1_successive_kps,
-                                                              const std::vector<cv::KeyPoint>& p_0_successive_kps,
-                                                              const std::vector<cv::KeyPoint>& p_1_successive_kps,
-                                                              std::vector<cv::KeyPoint>& f_c_0_kps,
-                                                              std::vector<cv::KeyPoint>& f_c_1_kps,
-                                                              std::vector<cv::KeyPoint>& f_p_0_kps,
-                                                              std::vector<cv::KeyPoint>& f_p_1_kps)
+StereoMotionEstimationModules::MatchResult StereoMotionEstimationModules::assembleCircularMatchings(const std::vector<cv::KeyPoint>& c_0_stereo_kps,
+                                                                                                    const std::vector<cv::KeyPoint>& c_1_stereo_kps,
+                                                                                                    const std::vector<cv::KeyPoint>& p_0_stereo_kps,
+                                                                                                    const std::vector<cv::KeyPoint>& p_1_stereo_kps,
+                                                                                                    const std::vector<cv::KeyPoint>& c_0_successive_kps,
+                                                                                                    const std::vector<cv::KeyPoint>& c_1_successive_kps,
+                                                                                                    const std::vector<cv::KeyPoint>& p_0_successive_kps,
+                                                                                                    const std::vector<cv::KeyPoint>& p_1_successive_kps,
+                                                                                                    std::vector<cv::KeyPoint>& f_c_0_kps,
+                                                                                                    std::vector<cv::KeyPoint>& f_c_1_kps,
+                                                                                                    std::vector<cv::KeyPoint>& f_p_0_kps,
+                                                                                                    std::vector<cv::KeyPoint>& f_p_1_kps)
 {
     uint j;
     uint k;
@@ -476,8 +425,61 @@ bool StereoMotionEstimationModules::assembleCircularMatchings(const std::vector<
         }
     }
 
+    // Sanity check
     if (f_c_0_kps.size() < 10)
-        return false;
+        return NOT_ENOUGH_CIRCLES;
     else
-        return true;
+        return SUCCESSFUL_MATCHING;
+}
+
+
+bool StereoMotionEstimationModules::parseMatchResult(const std::string& msg,
+                                                     const MatchResult& result)
+{
+    bool successful_matching; 
+    switch (result)
+    {
+        case NOT_ENOUGH_KPS:
+        {
+            if (enable_debugging_)
+                std::cout << msg << " There are not enough keypoints to match and filter!" << std::endl;
+            successful_matching = false;
+            break;
+        }
+        case NOT_ENOUGH_F_KPS:
+        {
+            if (enable_debugging_)
+                std::cout << msg << " There are not enough keypoints after outlier filtering!" << std::endl;
+            successful_matching = false;
+            break;
+        }
+        case GEOMETRIC_PROBLEM:
+        {
+            if (enable_debugging_)
+                std::cout << msg << " Problems in applying the selected geometric constraint. Probably not enough keypoints!" << std::endl;
+            successful_matching = false;
+            break;
+        }
+        case NOT_ENOUGH_CIRCLES:
+        {
+            if (enable_debugging_)
+                std::cout << msg << " There are not enough matching circles!" << std::endl;
+            successful_matching = false;
+            break;
+        }
+        case SUCCESSFUL_MATCHING:
+        {
+            if (enable_debugging_)
+                std::cout << msg << " Successful matching!" << std::endl;
+            successful_matching = true;
+            break;
+        }
+        default:
+        {
+            std::cout << msg << " Unforeseen result of matching!" << std::endl;
+            successful_matching = false;
+            break;
+        }
+    }
+    return successful_matching;
 }

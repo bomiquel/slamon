@@ -1,6 +1,7 @@
 /**
  *  @file
- *  @brief The Stereo Motion Estimation Modules class provides all the modules (feature-baseds) needed to calculate the motion between two pairs of stereoscopic images.
+ *  @brief The Stereo Motion Estimation Modules class provides all the modules (feature-baseds)
+ *  needed to calculate the motion between two pairs of stereoscopic images.
  *  @author Bo Miquel Nordfeldt-Fiol
  *  @date Winter 2024
  */
@@ -22,6 +23,7 @@ class StereoMotionEstimationModules
 {
     public:
 
+        // Matching types between pairs of stereo images.
         enum MatchType
         {
             RATIO_MATCHING               = 1,
@@ -33,12 +35,13 @@ class StereoMotionEstimationModules
         };
 
 
+        // Matching results between two stereo images.
         enum MatchResult
         {
             NOT_ENOUGH_KPS      = 0,
             NOT_ENOUGH_F_KPS    = 1,
             GEOMETRIC_PROBLEM   = 2,
-            NOT_ENOUGH_H_F_KPS  = 3,
+            NOT_ENOUGH_CIRCLES  = 3,
             SUCCESSFUL_MATCHING = 4
         };
         
@@ -80,8 +83,8 @@ class StereoMotionEstimationModules
 
 
         /** \brief Matches keypoints of the same stereo pair and removes outliers.
-         *  To eliminate outliers, first Lowe's ratio is applied and then a
-         *  Fundamental Matrix with 1 pixel of reprojection error is computed.
+         *  To eliminate outliers, the Lowe's ratio is applied first, followed by
+         *  an epipolar constraint with a maximum error of 1 pixel.
          *  \param l_descs Left image descriptors (input).
          *  \param r_descs Right image descriptors (input).
          *  \param l_kps Left image keypoints (input).
@@ -103,10 +106,16 @@ class StereoMotionEstimationModules
 
 
         /** \brief Matches keypoints of differents stereo pairs and removes outliers.
-         *  To eliminate outliers, Lowe's ratio is always used, but additionally an 
-         *  homography can be applied. It is also possible to decide between a plain 
-         *  matching (matching between left images of each stereo pair) or a circular
-         *  matching (involving all 4 images).
+         *  To remove outliers, the user can choose between these different techniques:
+         *      - Plain Lowe's ratio.
+         *      - Plain homography + RANSAC.
+         *      - Plain essential matrix + RANSAC.
+         *      - Circular Lowe's ratio.
+         *      - Circular homography + RANSAC.
+         *      - Circular essential matrix + RANSAC.
+         *  "Plain" involves only left images, "Circular" all 4 images. To select the
+         *  desired outlier eliminator, the appropriate matcher (enum type: MatchType)
+         *  must be chosen.
          *  \param c_l_descs Current left image descriptors (input).
          *  \param c_r_descs Current right image descriptors (input).
          *  \param p_l_descs Previous left image descriptors (input).
@@ -222,16 +231,6 @@ class StereoMotionEstimationModules
                                         std::vector<cv::Point3f>& f_q_camera_points);
 
 
-        /** \brief From enumerated type Match result to boolean + success or error message printout.
-         *  \param text Extra text to know which module sends the message.
-         *  \param result The result of the matching and its subsequent filtering.
-         *  @return Whether keypoint matching and filtering has been performed correctly
-         *  and if there are enough filtered points.
-         */
-        bool parseMatchResult(const std::string& text,
-                              const MatchResult& result);
-
-
         /** \brief Assemble the four matchings to build circular matches.
          *  \param c_0_stereo_kps Keypoints of the current image matched in stereo matching. 
          *  Must belong to the current image with the lowest number of points after the successive matching.
@@ -254,18 +253,28 @@ class StereoMotionEstimationModules
          *  \param f_p_0_kps Filtered keypoints of previous image with lowest number of points after successive matching.
          *  \param f_p_1_kps Filtered keypoints of previous image with highest number of points after successive matching.
          */
-        bool assembleCircularMatchings(const std::vector<cv::KeyPoint>& c_0_stereo_kps,
-                                       const std::vector<cv::KeyPoint>& c_1_stereo_kps,
-                                       const std::vector<cv::KeyPoint>& p_0_stereo_kps,
-                                       const std::vector<cv::KeyPoint>& p_1_stereo_kps,
-                                       const std::vector<cv::KeyPoint>& c_0_successive_kps,
-                                       const std::vector<cv::KeyPoint>& c_1_successive_kps,
-                                       const std::vector<cv::KeyPoint>& p_0_successive_kps,
-                                       const std::vector<cv::KeyPoint>& p_1_successive_kps,
-                                       std::vector<cv::KeyPoint>& f_c_0_kps,
-                                       std::vector<cv::KeyPoint>& f_c_1_kps,
-                                       std::vector<cv::KeyPoint>& f_p_0_kps,
-                                       std::vector<cv::KeyPoint>& f_p_1_kps);
+        MatchResult assembleCircularMatchings(const std::vector<cv::KeyPoint>& c_0_stereo_kps,
+                                              const std::vector<cv::KeyPoint>& c_1_stereo_kps,
+                                              const std::vector<cv::KeyPoint>& p_0_stereo_kps,
+                                              const std::vector<cv::KeyPoint>& p_1_stereo_kps,
+                                              const std::vector<cv::KeyPoint>& c_0_successive_kps,
+                                              const std::vector<cv::KeyPoint>& c_1_successive_kps,
+                                              const std::vector<cv::KeyPoint>& p_0_successive_kps,
+                                              const std::vector<cv::KeyPoint>& p_1_successive_kps,
+                                              std::vector<cv::KeyPoint>& f_c_0_kps,
+                                              std::vector<cv::KeyPoint>& f_c_1_kps,
+                                              std::vector<cv::KeyPoint>& f_p_0_kps,
+                                              std::vector<cv::KeyPoint>& f_p_1_kps);
+
+
+        /** \brief From enumerated type Match result to boolean + success or error message printout.
+         *  \param msg Extra msg to know which module sends the message.
+         *  \param result The result of the matching and its subsequent filtering.
+         *  @return Whether keypoint matching and filtering has been performed correctly
+         *  and if there are enough filtered points.
+         */
+        bool parseMatchResult(const std::string& msg,
+                              const MatchResult& result);
 
 
         double ratio_;

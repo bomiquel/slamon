@@ -6,7 +6,7 @@ void VisualOdometry::run()
     // Assign "uninitialized" status to visual odometer
     status_ = UNINITIALIZED;
 
-    // Create node
+    // Create ROS node
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
     image_transport::ImageTransport it(nh);
@@ -29,6 +29,7 @@ void VisualOdometry::run()
     sync.reset(new Sync_(SyncPolicy_(10), l_img_sub, r_img_sub, l_info_sub, r_info_sub));
     sync->registerCallback(boost::bind(&VisualOdometry::imageCallback, this, _1, _2, _3, _4));
     
+    // 
     ros::spin();
 }
 
@@ -43,7 +44,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     // Create current frame object.
     Frame c_frame; 
 
-    // 
+    // Different actions depending on the state
     switch (status_)
     {
         case UNINITIALIZED:
@@ -191,7 +192,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 
     if (camera_points.size() < 10)
     {
-        ROS_INFO_STREAM("[3D keypoint computer:] There are not enough close 3D keypoints");
+        ROS_WARN_STREAM("[3D keypoint computer:] There are not enough close 3D keypoints");
         return false;
     }
 
@@ -209,7 +210,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
                                                    const Frame& c_frame)
 {
-    //
+    // Search for matches of keypoints between successive frames or pairs of frames.
     std::vector<cv::Point3f> f_c_camera_points, f_p_camera_points;
     std::vector<cv::KeyPoint> f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps;
     if (!matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame.getLeftDescs(), p_frame.getLeftDescs(),
@@ -228,7 +229,7 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
             publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame.getLeftImg(), p_frame.getRightImg(),
                                    c_frame.getTimestamp(), f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, successive_matches_pub_);
         else
-            std::cout << "Unforeseen type of matching!" << std::endl;
+            ROS_ERROR_STREAM("[Match debugger:] Unforeseen type of matching!");
     }
 
     return true;
@@ -244,7 +245,9 @@ bool VisualOdometry::imgMsgToMat(const sensor_msgs::ImageConstPtr& l_img_msg,
     cv_bridge::CvImagePtr l_img_ptr, r_img_ptr;
     try
     {
-        // TODO: cv_bridge gives problems with OpenCV-4.2.0-contrib. If SLAM uses only this cv_bridge::toCvCopy, we can copy this function into the code and the warning will no longer appear.
+        // TODO: cv_bridge gives problems with OpenCV-4.2.0-contrib. 
+        // If SLAM uses only this cv_bridge::toCvCopy, we can copy
+        // this function into the code and the warning will no longer appear.
         l_img_ptr = cv_bridge::toCvCopy(l_img_msg, sensor_msgs::image_encodings::BGR8);
         r_img_ptr = cv_bridge::toCvCopy(r_img_msg, sensor_msgs::image_encodings::BGR8);
     }

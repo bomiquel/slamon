@@ -63,7 +63,6 @@
         <arg name = "q_z" default = "-0.993023205573187"/>
         <arg name = "q_w" default = "0.072610268293763"/> -->
 
-
         <include file = "$(find slamon)/launch/stereo_processing/stereo_pipeline.launch">
             <arg name="stereo"             value="$(arg camera)" />
             <arg name="resolution"         value="$(arg resolution)" />
