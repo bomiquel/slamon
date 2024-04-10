@@ -2,4 +2,5 @@ slamon:
   lowe_ratio: 0.6 # 0.7/0.9, good 0.8
   min_num_kps: 20 # 20
   matching_type: ratio_matching
+  robot_frame_id: /robot_0/base_link
   enable_debugging: true

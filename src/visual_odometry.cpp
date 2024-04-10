@@ -1,10 +1,20 @@
 #include "visual_odometry.hpp"
 
 
+VisualOdometry::VisualOdometry(double ratio,
+                               int min_num_kps,
+                               bool enable_debugging,
+                               const std::string& matching_type, 
+                               const std::string& robot_frame_id):
+                               StereoMotionEstimationModules(ratio, min_num_kps, enable_debugging, matching_type)
+{
+    robot_frame_id_ = robot_frame_id;
+}
+
 void VisualOdometry::run()
 {
-    // Assign "uninitialized" status to visual odometer
-    status_ = UNINITIALIZED;
+    // Assign "uninitialised" status to visual odometer
+    status_ = UNINITIALISED;
 
     // Create ROS node
     ros::NodeHandle nh;
@@ -46,35 +56,55 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     // Different actions depending on the state
     switch (status_)
     {
-        case UNINITIALIZED:
-            if(enable_debugging_)
+        case UNINITIALISED:
+            if (enable_debugging_)
                 ROS_INFO_STREAM("UNINITIALIZED");
-            initialization(l_img_msg, r_img_msg, l_info_msg, r_info_msg, c_frame);
-            break;
-
-        case INITIALIZING:
-            if(enable_debugging_)
-                ROS_INFO_STREAM("INITIALIZING");
+            if (!initialisation(l_info_msg, r_info_msg))
+                break;
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
-                status_ = WORKING;
-            break;
-
-        case WORKING:
-            if(enable_debugging_)
-                ROS_INFO_STREAM("WORKING");
-            if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
-                status_ = LOST;
-            computeMotionSuccessiveFrames(c_frame, p_frame_);
-            break;
-
-        case LOST:
-            if(enable_debugging_)
-                ROS_INFO_STREAM("LOST");
-            if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
-                status_ = WORKING;
+            {
+                // getFirstPose();
+                status_ = RUNNING;
+            }
             else
-                status_ = LOST;
+                status_ = SEMI_INITIALISED;
             break;
+
+        case SEMI_INITIALISED:
+            if (enable_debugging_)
+                ROS_INFO_STREAM("SEMI_INITIALISED");
+            if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
+            {
+                // getFirstPose();
+                status_ = RUNNING;
+            }
+            break;
+
+        case RUNNING:
+            bool valid_motion = false;
+            if(enable_debugging_)
+                ROS_INFO_STREAM("RUNNING");
+            if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
+            {
+                if (computeMotionSuccessiveFrames(c_frame, p_frame_))
+                    valid_motion = true;
+            }
+
+            if (valid_motion)
+            {
+                // ekf.predict();
+                // ekf.correct();
+                // publishPose();
+                // publishInfo();
+                // if(needNewKeyFrame())
+                //      addNewKeyFrame();
+            }
+            else
+            {
+                // ekf.predict();
+                // publishPose();
+                // publishInfo();
+            }
     }
 
     // Store current frame as previous.
@@ -89,30 +119,46 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
 }
 
 
-void VisualOdometry::initialization(const sensor_msgs::ImageConstPtr& l_img_msg,
-                                    const sensor_msgs::ImageConstPtr& r_img_msg,
-                                    const sensor_msgs::CameraInfoConstPtr& l_info_msg,
-                                    const sensor_msgs::CameraInfoConstPtr& r_info_msg,
-                                    Frame& c_frame)
+bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+                                    const sensor_msgs::CameraInfoConstPtr& r_info_msg)
 {
     // Get the static transformation between robot frame (base link) and camera frame
     robot2camera_.setIdentity();
     try
     {
-        tf_listener_.lookupTransform("/robot_0/base_link", l_img_msg->header.frame_id, ros::Time(0), robot2camera_);
+        tf_listener_.lookupTransform(robot_frame_id_, l_info_msg->header.frame_id, ros::Time(0), robot2camera_);
     }
     catch (const tf::TransformException& e)
     {
-        ROS_WARN("%s", e.what());
-        return;
+        ROS_WARN("[initialisation:] %s", e.what());
+        return false;
     }
 
     // Get the stereo camera model
-    stereo_camera_model_.fromCameraInfo(l_info_msg, r_info_msg);
+    if (!stereo_camera_model_.fromCameraInfo(l_info_msg, r_info_msg))
+    {
+        ROS_WARN_STREAM("[initialisation:] Impossible to get the stereo camera model");
+        return false;
+    }
 
     // Get the projection/camera matrix
     const cv::Mat P(3, 4, CV_64FC1, const_cast<double*>(l_info_msg->P.data()));
     camera_matrix_ = P.colRange(cv::Range(0, 3)).clone();
+
+    // Check if camera_matrix is full of 0s
+    double counter = 0.0;
+    for (int i = 0; i < camera_matrix_.rows; i++)
+    {
+        for (int j = 0; j < camera_matrix_.cols; j++) 
+        {
+            counter += camera_matrix_.at<double>(i,j);
+        }
+    }
+    if (counter == 0.0)
+    {
+        ROS_WARN_STREAM("[initialisation:] Camera matrix is full of 0s");
+        return false;
+    }
 
     // Are the images scaled?
     int binning_x = l_info_msg->binning_x;
@@ -127,11 +173,7 @@ void VisualOdometry::initialization(const sensor_msgs::ImageConstPtr& l_img_msg,
       camera_matrix_.at<double>(1,3) = camera_matrix_.at<double>(1,3) / binning_y;
     }
 
-    // Process current frame
-    if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
-        status_ = WORKING;
-    else
-        status_ = INITIALIZING;
+    return true;
 }
 
 
@@ -141,7 +183,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 {
     // From ROS image message to cv::Mat
     cv::Mat l_img, r_img;
-    if(!imgMsgToMat(l_img_msg, r_img_msg, l_img, r_img)) // TODO: paralellization?
+    if (!imgMsgToMat(l_img_msg, r_img_msg, l_img, r_img)) // TODO: paralellization?
         return false; 
 
     // Detecting keypoints

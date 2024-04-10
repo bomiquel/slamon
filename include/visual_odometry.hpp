@@ -8,6 +8,8 @@
 #ifndef VISUAL_ODOMETRY_HPP
 #define VISUAL_ODOMETRY_HPP
 
+#include <string>
+#include <vector>
 
 #include "frame.hpp"
 #include "tools.hpp"
@@ -28,30 +30,25 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
 
         enum VOStatus
         {
-            UNINITIALIZED   = 0,
-            INITIALIZING    = 1,
-            WORKING         = 2,
-            LOST            = 3
+            UNINITIALISED    = 0,
+            SEMI_INITIALISED = 1,
+            RUNNING          = 2
         };
 
-
-        // /** \brief Class constructor.
-        //  *  \param pub Frame publisher object pointer.
-        //  *  \param graph Graph object pointer.
-        //  */
-        // VisualOdometry() {}
 
         /** \brief Class constructor.
          *  \param ratio The ratio for Lowe's ratio test.
          *  \param min_num_kps The minimum number of keypoints to estimate the movement.
          *  \param enable_debugging Enabling or disabling debugging messages.
          *  \param matching_type Matching type.
+         *  \param robot_frame_id Robot coordinate axis identficator (base link).
          */
         VisualOdometry(double ratio,
                        int min_num_kps,
                        bool enable_debugging,
-                       const std::string& matching_type): 
-                       StereoMotionEstimationModules(ratio, min_num_kps, enable_debugging, matching_type) {}
+                       const std::string& matching_type, 
+                       const std::string& robot_frame_id);
+
 
         /** \brief Starts tracking
          */
@@ -73,11 +70,13 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
                            const sensor_msgs::CameraInfoConstPtr& r_info_msg);
 
 
-        void initialization(const sensor_msgs::ImageConstPtr& l_img_msg,
-                            const sensor_msgs::ImageConstPtr& r_img_msg,
-                            const sensor_msgs::CameraInfoConstPtr& l_info_msg,
-                            const sensor_msgs::CameraInfoConstPtr& r_info_msg,
-                            Frame& c_frame);
+        /** \brief
+         *  \param l_info_msg ROS message containing the info of the left image (input).
+         *  \param r_info_msg ROS message containing the info of the right image (input).
+         *  @return Whether the SLAM could be initialised.
+         */
+        bool initialisation(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+                            const sensor_msgs::CameraInfoConstPtr& r_info_msg);
 
 
         /** \brief Detects (using SIFT), matches and filters (using Lowe's ratio, homography,
@@ -123,6 +122,10 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
         VOStatus status_; //!> Visual odometer state
 
         ros::Time start_time_; //>! Time at which the program enters into the callback.
+
+        std::string odom_frame_id_; //!> Odometry coordinate axis identficator.
+        
+        std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 
         tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 

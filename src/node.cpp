@@ -9,13 +9,15 @@
 void readParams(int& min_num_kps,
                 double& lowe_ratio, 
                 bool& enable_debugging,
-                std::string& matching_type)
+                std::string& matching_type,
+                std::string& robot_frame_id)
 {
     // Getting parameters from parameter server.
     ros::NodeHandle nhp("~");
     nhp.param("min_num_kps",      min_num_kps,      10);
     nhp.param("lowe_ratio",       lowe_ratio,       0.8);
     nhp.param("matching_type",    matching_type,    std::string("ratio_matching"));
+    nhp.param("robot_frame_id",   robot_frame_id,   std::string("base_link"));
     nhp.param("enable_debugging", enable_debugging, true);
 
     // Printing parameters values.
@@ -23,6 +25,7 @@ void readParams(int& min_num_kps,
                     "Minimum kps      = " << min_num_kps << std::endl << 
                     "Lowe's ratio     = " << lowe_ratio << std::endl <<
                     "Matching type    = " << matching_type << std::endl <<
+                    "Robot frame id   = " << robot_frame_id << std::endl <<
                     "Enable debugging = " << enable_debugging);
 
     // Checking the validity of the parameters
@@ -55,6 +58,11 @@ void readParams(int& min_num_kps,
         min_num_kps = 0.8;
         invalid_parameter = true;
     }
+    if (robot_frame_id == "")
+    {
+        robot_frame_id = "base_link";
+        invalid_parameter = true;
+    }
     if (invalid_parameter)
     {
         ROS_INFO_STREAM("Some parameter was invalid and has been assigned its default value." << std::endl <<
@@ -62,6 +70,7 @@ void readParams(int& min_num_kps,
                         "Minimum kps      = " << min_num_kps << std::endl << 
                         "Lowe's ratio     = " << lowe_ratio << std::endl <<
                         "Matching type    = " << matching_type << std::endl <<
+                        "Robot frame id   = " << robot_frame_id << std::endl <<
                         "Enable debugging = " << enable_debugging);
     }
 }
@@ -76,11 +85,11 @@ int main(int argc, char **argv)
     int min_num_kps;
     double lowe_ratio;
     bool enable_debugging;
-    std::string matching_type;
-    readParams(min_num_kps, lowe_ratio, enable_debugging, matching_type);
+    std::string matching_type, robot_frame_id;
+    readParams(min_num_kps, lowe_ratio, enable_debugging, matching_type, robot_frame_id);
 
     // Threads
-    VisualOdometry visual_odometer(lowe_ratio, min_num_kps, enable_debugging, matching_type);
+    VisualOdometry visual_odometer(lowe_ratio, min_num_kps, enable_debugging, matching_type, robot_frame_id);
 
     // Launch threads
     std::thread visual_odometer_thread(&VisualOdometry::run, &visual_odometer);
