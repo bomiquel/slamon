@@ -11,11 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "frame.hpp"
-#include "tools.hpp"
-#include "publisher.hpp"
-#include "stereo_motion_estimation_modules.hpp"
-
+#include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -23,6 +19,12 @@
 #include <image_transport/subscriber_filter.h>
 #include <image_geometry/stereo_camera_model.h>
 
+#include "frame.hpp"
+#include "tools.hpp"
+#include "publisher.hpp"
+#include "stereo_motion_estimation_modules.hpp"
+
+#include "slamon/GetPose.h"
 
 class VisualOdometry: protected Tools, protected Publisher, protected StereoMotionEstimationModules 
 {
@@ -98,7 +100,9 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
                                  Frame& c_frame);
 
 
-
+        /**
+         * 
+         */ 
         bool computeMotionSuccessiveFrames(const Frame& c_frame,
                                            const Frame& p_frame);
 
@@ -116,6 +120,14 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
                          cv::Mat& r_img);
 
 
+        /** \brief Initialises the robot pose (robot coordinate axis). To do this,
+         *  it calls a service and waits for another part of the system to respond.
+         *  If there is a response, the received pose is assigned, otherwise the pose
+         *  is initialised to 0 (identity).
+         */                        
+        void getInitialPose();
+
+
     private:
         
         // Atributes
@@ -129,9 +141,13 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
         
         std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 
+        tf::Transform c_robot_pose_; //!> Current robot pose.
+
         tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
         tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.
+
+        ros::ServiceClient initial_pose_client_; //!> Service client to assign the initial position to the SLAM.
 
         image_transport::Publisher stereo_kps_pub_; // !> Stereo keypoints publisher
 

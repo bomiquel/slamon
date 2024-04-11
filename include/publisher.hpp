@@ -9,12 +9,11 @@
 #ifndef PUBLISHER_HPP
 #define PUBLISHER_HPP
 
+#include <opencv2/opencv.hpp>
 
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
-
-#include <opencv2/opencv.hpp>
 
 
 class Publisher

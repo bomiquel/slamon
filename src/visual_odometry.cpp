@@ -22,6 +22,9 @@ void VisualOdometry::run()
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
 
+    // Client services
+    initial_pose_client_ = nh.serviceClient<slamon::GetPose>("get_first_pose");
+
     // Subscribers
     image_transport::SubscriberFilter l_img_sub, r_img_sub;
     message_filters::Subscriber<sensor_msgs::CameraInfo> l_info_sub, r_info_sub;
@@ -65,7 +68,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                 break;
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
             {
-                // getFirstPose();
+                getInitialPose();
                 status_ = RUNNING;
             }
             else
@@ -77,7 +80,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                 ROS_INFO_STREAM("SEMI_INITIALISED");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
             {
-                // getFirstPose();
+                getInitialPose();
                 status_ = RUNNING;
             }
             break;
@@ -128,7 +131,7 @@ bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_inf
     }
     catch (const tf::TransformException& e)
     {
-        ROS_WARN("[initialisation:] %s", e.what());
+        ROS_WARN_STREAM("[initialisation:] TF listener exception: " << e.what());
         return false;
     }
 
@@ -292,7 +295,7 @@ bool VisualOdometry::imgMsgToMat(const sensor_msgs::ImageConstPtr& l_img_msg,
     }
     catch(const cv_bridge::Exception& e)
     {
-        ROS_ERROR("[SLAMON:] cv_bridge exception: %s", e.what());
+        ROS_ERROR_STREAM("[SLAMON:] cv_bridge exception: " << e.what());
         return false;
     }
     
@@ -300,4 +303,39 @@ bool VisualOdometry::imgMsgToMat(const sensor_msgs::ImageConstPtr& l_img_msg,
     l_img = l_img_ptr->image;
     r_img = r_img_ptr->image;
     return true;
+}
+
+
+void VisualOdometry::getInitialPose()
+{
+    slamon::GetPose srv;
+    if (initial_pose_client_.call(srv))
+    {
+        double tx = srv.response.pose.pose.pose.position.x;
+        double ty = srv.response.pose.pose.pose.position.y;
+        double tz = srv.response.pose.pose.pose.position.z;
+        double qx = srv.response.pose.pose.pose.orientation.x;
+        double qy = srv.response.pose.pose.pose.orientation.y;
+        double qz = srv.response.pose.pose.pose.orientation.z;
+        double qw = srv.response.pose.pose.pose.orientation.w;
+
+        ROS_WARN_STREAM("[getInitialPose:] GetPose service call successful. The initial position is as follows:" << std::endl <<
+                         "tx: " << tx << std::endl << 
+                         "ty: " << ty << std::endl << 
+                         "tz: " << tz << std::endl << 
+                         "qx: " << qx << std::endl << 
+                         "qy: " << qy << std::endl << 
+                         "qz: " << qz << std::endl << 
+                         "qw: " << qw);
+
+        tf::Vector3 tf_t(tx, ty, tz);
+        tf::Quaternion tf_q(qx, qy, qz, qw);
+        c_robot_pose_.setOrigin(tf_t);
+        c_robot_pose_.setRotation(tf_q);
+    }
+    else
+    {
+        ROS_WARN_STREAM("[getInitialPose:] Failed to call GetPose service. The initial pose will be assumed as the identity.");
+        c_robot_pose_.setIdentity();
+    }
 }
