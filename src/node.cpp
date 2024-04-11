@@ -10,6 +10,7 @@ void readParams(int& min_num_kps,
                 double& lowe_ratio, 
                 bool& enable_debugging,
                 std::string& matching_type,
+                std::string& odom_frame_id,
                 std::string& robot_frame_id)
 {
     // Getting parameters from parameter server.
@@ -17,6 +18,7 @@ void readParams(int& min_num_kps,
     nhp.param("min_num_kps",      min_num_kps,      10);
     nhp.param("lowe_ratio",       lowe_ratio,       0.8);
     nhp.param("matching_type",    matching_type,    std::string("ratio_matching"));
+    nhp.param("odom_frame_id",    odom_frame_id,    std::string("odom"));
     nhp.param("robot_frame_id",   robot_frame_id,   std::string("base_link"));
     nhp.param("enable_debugging", enable_debugging, true);
 
@@ -25,6 +27,7 @@ void readParams(int& min_num_kps,
                     "Minimum kps      = " << min_num_kps << std::endl << 
                     "Lowe's ratio     = " << lowe_ratio << std::endl <<
                     "Matching type    = " << matching_type << std::endl <<
+                    "Odom frame id    = " << odom_frame_id << std::endl <<
                     "Robot frame id   = " << robot_frame_id << std::endl <<
                     "Enable debugging = " << enable_debugging);
 
@@ -58,6 +61,11 @@ void readParams(int& min_num_kps,
         min_num_kps = 0.8;
         invalid_parameter = true;
     }
+    if (odom_frame_id == "")
+    {
+        odom_frame_id = "odom";
+        invalid_parameter = true;
+    }
     if (robot_frame_id == "")
     {
         robot_frame_id = "base_link";
@@ -70,6 +78,7 @@ void readParams(int& min_num_kps,
                         "Minimum kps      = " << min_num_kps << std::endl << 
                         "Lowe's ratio     = " << lowe_ratio << std::endl <<
                         "Matching type    = " << matching_type << std::endl <<
+                        "Odom frame id    = " << odom_frame_id << std::endl <<
                         "Robot frame id   = " << robot_frame_id << std::endl <<
                         "Enable debugging = " << enable_debugging);
     }
@@ -85,11 +94,11 @@ int main(int argc, char **argv)
     int min_num_kps;
     double lowe_ratio;
     bool enable_debugging;
-    std::string matching_type, robot_frame_id;
-    readParams(min_num_kps, lowe_ratio, enable_debugging, matching_type, robot_frame_id);
+    std::string matching_type, odom_frame_id, robot_frame_id;
+    readParams(min_num_kps, lowe_ratio, enable_debugging, matching_type, odom_frame_id, robot_frame_id);
 
     // Threads
-    VisualOdometry visual_odometer(lowe_ratio, min_num_kps, enable_debugging, matching_type, robot_frame_id);
+    VisualOdometry visual_odometer(lowe_ratio, min_num_kps, enable_debugging, matching_type, odom_frame_id, robot_frame_id);
 
     // Launch threads
     std::thread visual_odometer_thread(&VisualOdometry::run, &visual_odometer);

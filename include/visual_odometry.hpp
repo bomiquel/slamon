@@ -41,12 +41,14 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
          *  \param min_num_kps The minimum number of keypoints to estimate the movement.
          *  \param enable_debugging Enabling or disabling debugging messages.
          *  \param matching_type Matching type.
+         *  \param odom_frame_id Odometry coordinate axis identficator.
          *  \param robot_frame_id Robot coordinate axis identficator (base link).
          */
         VisualOdometry(double ratio,
                        int min_num_kps,
                        bool enable_debugging,
-                       const std::string& matching_type, 
+                       const std::string& matching_type,
+                       const std::string& odom_frame_id, 
                        const std::string& robot_frame_id);
 
 

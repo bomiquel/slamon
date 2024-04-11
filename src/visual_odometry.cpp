@@ -4,10 +4,12 @@
 VisualOdometry::VisualOdometry(double ratio,
                                int min_num_kps,
                                bool enable_debugging,
-                               const std::string& matching_type, 
+                               const std::string& matching_type,
+                               const std::string& odom_frame_id, 
                                const std::string& robot_frame_id):
                                StereoMotionEstimationModules(ratio, min_num_kps, enable_debugging, matching_type)
 {
+    odom_frame_id_ = odom_frame_id;
     robot_frame_id_ = robot_frame_id;
 }
 
@@ -85,11 +87,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
             if(enable_debugging_)
                 ROS_INFO_STREAM("RUNNING");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
-            {
-                if (computeMotionSuccessiveFrames(c_frame, p_frame_))
-                    valid_motion = true;
-            }
-
+                valid_motion = computeMotionSuccessiveFrames(c_frame, p_frame_);
             if (valid_motion)
             {
                 // ekf.predict();
