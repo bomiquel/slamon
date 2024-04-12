@@ -20,12 +20,13 @@
 #include <image_geometry/stereo_camera_model.h>
 
 #include "frame.hpp"
+#include "caster.hpp"
 #include "publisher.hpp"
 #include "vision_modules.hpp"
 
 #include "slamon/GetPose.h"
 
-class VisualOdometry: protected Publisher, protected VisionModules 
+class VisualOdometry: protected Caster, protected Publisher, protected VisionModules 
 {
     public:
 
@@ -104,19 +105,6 @@ class VisualOdometry: protected Publisher, protected VisionModules
          */ 
         bool computeMotionSuccessiveFrames(const Frame& c_frame,
                                            const Frame& p_frame);
-
-
-        /** \brief Convert ROS image messages to cv::Mat
-         *  \param l_img_msg ROS message containing the left image (input).
-         *  \param r_img_msg ROS message containing the right image (input).
-         *  \param l_img Will contain the left image in cv::Mat type (output).
-         *  \param r_img Will contain the right image in cv::Mat type (output).
-         *  @return If the conversion has been possible.
-         */
-        bool imgMsgToMat(const sensor_msgs::ImageConstPtr& l_img_msg,
-                         const sensor_msgs::ImageConstPtr& r_img_msg,
-                         cv::Mat& l_img, 
-                         cv::Mat& r_img);
 
 
         /** \brief Initialises the robot pose (robot coordinate axis). To do this,

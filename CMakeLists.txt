@@ -108,6 +108,7 @@ link_directories(${OpenCV_INCLUDE_DIRS})
 add_executable(slam 
                src/node.cpp
                src/frame.cpp
+               src/caster.cpp
                src/publisher.cpp
                src/vision_modules.cpp
                src/visual_odometry.cpp)

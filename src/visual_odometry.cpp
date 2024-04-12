@@ -185,7 +185,9 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 {
     // From ROS image message to cv::Mat
     cv::Mat l_img, r_img;
-    if (!imgMsgToMat(l_img_msg, r_img_msg, l_img, r_img)) // TODO: paralellization?
+    if (!imgMsgToMat(l_img_msg, l_img)) // TODO: paralellization?
+        return false; 
+    if (!imgMsgToMat(r_img_msg, r_img)) // TODO: paralellization?
         return false; 
 
     // Detecting keypoints
@@ -282,34 +284,6 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
             ROS_ERROR_STREAM("[Match debugger:] Unforeseen type of matching!");
     }
 
-    return true;
-}
-
-
-bool VisualOdometry::imgMsgToMat(const sensor_msgs::ImageConstPtr& l_img_msg,
-                                 const sensor_msgs::ImageConstPtr& r_img_msg,
-                                 cv::Mat& l_img, 
-                                 cv::Mat& r_img)
-{
-    // Convert message to cv::Mat
-    cv_bridge::CvImagePtr l_img_ptr, r_img_ptr;
-    try
-    {
-        // TODO: cv_bridge gives problems with OpenCV-4.2.0-contrib. 
-        // If SLAM uses only this cv_bridge::toCvCopy, we can copy
-        // this function into the code and the warning will no longer appear.
-        l_img_ptr = cv_bridge::toCvCopy(l_img_msg, sensor_msgs::image_encodings::BGR8);
-        r_img_ptr = cv_bridge::toCvCopy(r_img_msg, sensor_msgs::image_encodings::BGR8);
-    }
-    catch(const cv_bridge::Exception& e)
-    {
-        ROS_ERROR_STREAM("[Img msg to cv mat:] cv_bridge exception: " << e.what());
-        return false;
-    }
-    
-    // Set the images
-    l_img = l_img_ptr->image;
-    r_img = r_img_ptr->image;
     return true;
 }
 
