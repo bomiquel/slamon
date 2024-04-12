@@ -110,7 +110,7 @@ add_executable(slam
                src/tools.cpp
                src/frame.cpp
                src/publisher.cpp
-               src/stereo_motion_estimation_modules.cpp
+               src/vision_modules.cpp
                src/visual_odometry.cpp)
 add_executable(initial_pose_server src/initial_pose_server)
 

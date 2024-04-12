@@ -1,7 +1,7 @@
 #ifndef TOOLS_HPP
 #define TOOLS_HPP
 
-// #include <ros/ros.h>
+#include <ros/ros.h>
 // #include <sensor_msgs/Image.h>
 // #include <cv_bridge/cv_bridge.h>
 
@@ -15,6 +15,8 @@ class Tools
         /** \brief Empty class constructor.
          */
         Tools() {}
+
+
 };
 
 

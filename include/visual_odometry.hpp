@@ -22,11 +22,11 @@
 #include "frame.hpp"
 #include "tools.hpp"
 #include "publisher.hpp"
-#include "stereo_motion_estimation_modules.hpp"
+#include "vision_modules.hpp"
 
 #include "slamon/GetPose.h"
 
-class VisualOdometry: protected Tools, protected Publisher, protected StereoMotionEstimationModules 
+class VisualOdometry: protected Tools, protected Publisher, protected VisionModules 
 {
     public:
 
@@ -128,6 +128,16 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
         void getInitialPose();
 
 
+        /** \brief From enumerated type Match result to boolean + success or error message printout.
+         *  \param msg Extra msg to know which module sends the message.
+         *  \param result The result of the matching and its subsequent filtering.
+         *  @return Whether keypoint matching and filtering has been performed correctly
+         *  and if there are enough filtered points.
+         */
+        bool decodeVisionResult(const std::string& msg,
+                                const VisionResult& result);
+
+
     private:
         
         // Atributes
@@ -136,6 +146,8 @@ class VisualOdometry: protected Tools, protected Publisher, protected StereoMoti
         VOStatus status_; //!> Visual odometer state
 
         ros::Time start_time_; //>! Time at which the program enters into the callback.
+
+        bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
         std::string odom_frame_id_; //!> Odometry coordinate axis identficator.
         

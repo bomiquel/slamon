@@ -7,10 +7,11 @@ VisualOdometry::VisualOdometry(double ratio,
                                const std::string& matching_type,
                                const std::string& odom_frame_id, 
                                const std::string& robot_frame_id):
-                               StereoMotionEstimationModules(ratio, min_num_kps, enable_debugging, matching_type)
+                               VisionModules(ratio, min_num_kps, matching_type)
 {
     odom_frame_id_ = odom_frame_id;
     robot_frame_id_ = robot_frame_id;
+    enable_debugging_ = enable_debugging;
 }
 
 void VisualOdometry::run()
@@ -115,7 +116,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     {
         ros::Duration delta_t = ros::Time::now() - start_time_;
         double delta_t_sec = delta_t.toSec();
-        std::cout << "[SLAMON:] Delta t: " << delta_t_sec << std::endl;
+        ROS_INFO_STREAM("Delta t: " << delta_t_sec);
     }
 }
 
@@ -131,14 +132,14 @@ bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_inf
     }
     catch (const tf::TransformException& e)
     {
-        ROS_WARN_STREAM("[initialisation:] TF listener exception: " << e.what());
+        ROS_WARN_STREAM("[Initialisation:] TF listener exception: " << e.what());
         return false;
     }
 
     // Get the stereo camera model
     if (!stereo_camera_model_.fromCameraInfo(l_info_msg, r_info_msg))
     {
-        ROS_WARN_STREAM("[initialisation:] Impossible to get the stereo camera model");
+        ROS_WARN_STREAM("[Initialisation:] Impossible to get the stereo camera model");
         return false;
     }
 
@@ -157,7 +158,7 @@ bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_inf
     }
     if (counter == 0.0)
     {
-        ROS_WARN_STREAM("[initialisation:] Camera matrix is full of 0s");
+        ROS_WARN_STREAM("[Initialisation:] Camera matrix is full of 0s");
         return false;
     }
 
@@ -199,7 +200,9 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     // Matching keypoints
     cv::Mat h_f_l_descs, h_f_r_descs;
     std::vector<cv::KeyPoint> h_f_l_kps, h_f_r_kps;
-    if(!matchStereoKeypoints(l_descs, r_descs, l_kps, r_kps, h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps))
+    std::pair<std::string, VisionResult> match_result = matchStereoKeypoints(l_descs, r_descs, l_kps, r_kps, h_f_l_descs, 
+                                                                             h_f_r_descs, h_f_l_kps, h_f_r_kps);
+    if(!decodeVisionResult(match_result.first, match_result.second))
         return false; 
 
     // Compute 3D keypoints. Far points are filtered out because they do not provide accurate scale
@@ -255,18 +258,41 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
     // Search for matches of keypoints between successive frames or pairs of frames.
     std::vector<cv::Point3f> f_c_camera_points, f_p_camera_points;
     std::vector<cv::KeyPoint> f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps;
-    if (!matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame.getLeftDescs(), p_frame.getLeftDescs(),
-                                 c_frame.getLeftKps(), c_frame.getRightKps(), p_frame.getLeftKps(), p_frame.getRightKps(),
-                                 c_frame.getCameraPoints(), p_frame.getCameraPoints(), f_c_l_kps, f_c_r_kps,
-                                 f_p_l_kps, f_p_r_kps, f_c_camera_points, f_p_camera_points))
-        return false; 
+    std::pair<std::string, std::vector<VisionResult>> match_result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
+                                                                                             p_frame.getLeftDescs(), p_frame.getLeftDescs(),
+                                                                                             c_frame.getLeftKps(), c_frame.getRightKps(), 
+                                                                                             p_frame.getLeftKps(), p_frame.getRightKps(),
+                                                                                             c_frame.getCameraPoints(), p_frame.getCameraPoints(),
+                                                                                             f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, 
+                                                                                             f_c_camera_points, f_p_camera_points);
+    
+    // Decoding matching results. Two different results may arrive from circular matching and must be dealt with.
+    if (match_result.second.size() > 1)
+    {
+        if (match_result.second.size() > 2)
+        {
+            ROS_ERROR_STREAM("Impossible number of results");
+            return false;
+        }
+        else
+        {
+            decodeVisionResult(match_result.first + " left side:] ", match_result.second[0]);
+            decodeVisionResult(match_result.first + " right side:] ", match_result.second[1]);
+            return false;
+        }
+    }
+    else
+    {
+        if (!decodeVisionResult(match_result.first, match_result.second[0]))
+            return false;
+    }
 
     // Non stereo matching keypoints debugging
     if (successive_matches_pub_.getNumSubscribers() > 0)
     {
         if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
             publishMatches(true, c_frame.getLeftImg(), p_frame.getLeftImg(), c_frame.getTimestamp(),
-                        f_c_l_kps, f_p_l_kps, successive_matches_pub_);
+                           f_c_l_kps, f_p_l_kps, successive_matches_pub_);
         else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
             publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame.getLeftImg(), p_frame.getRightImg(),
                                    c_frame.getTimestamp(), f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, successive_matches_pub_);
@@ -295,7 +321,7 @@ bool VisualOdometry::imgMsgToMat(const sensor_msgs::ImageConstPtr& l_img_msg,
     }
     catch(const cv_bridge::Exception& e)
     {
-        ROS_ERROR_STREAM("[SLAMON:] cv_bridge exception: " << e.what());
+        ROS_ERROR_STREAM("[Img msg to cv mat:] cv_bridge exception: " << e.what());
         return false;
     }
     
@@ -319,7 +345,7 @@ void VisualOdometry::getInitialPose()
         double qz = srv.response.pose.pose.pose.orientation.z;
         double qw = srv.response.pose.pose.pose.orientation.w;
 
-        ROS_WARN_STREAM("[getInitialPose:] GetPose service call successful. The initial position is as follows:" << std::endl <<
+        ROS_WARN_STREAM("[Initial pose:] GetPose service call successful. The initial position is as follows:" << std::endl <<
                          "tx: " << tx << std::endl << 
                          "ty: " << ty << std::endl << 
                          "tz: " << tz << std::endl << 
@@ -335,7 +361,66 @@ void VisualOdometry::getInitialPose()
     }
     else
     {
-        ROS_WARN_STREAM("[getInitialPose:] Failed to call GetPose service. The initial pose will be assumed as the identity.");
+        ROS_WARN_STREAM("[Initial pose:] Failed to call GetPose service. The initial pose will be assumed as the identity.");
         c_robot_pose_.setIdentity();
     }
+}
+
+
+bool VisualOdometry::decodeVisionResult(const std::string& msg,
+                                        const VisionResult& result)
+{
+    bool successful_matching; 
+    switch (result)
+    {
+        case NOT_ENOUGH_KPS:
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM(msg << "There are not enough keypoints to match and filter!");
+            successful_matching = false;
+            break;
+        }
+        case NOT_ENOUGH_F_KPS:
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM(msg << "There are not enough keypoints after outlier filtering!");
+            successful_matching = false;
+            break;
+        }
+        case NOT_ENOUGH_E_KPS:
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM(msg << "There are not enough keypoints after epipolar filtering!");
+            successful_matching = false;
+            break;
+        }
+        case GEOMETRIC_PROBLEM:
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM(msg << "Problems in applying the selected geometric constraint. Probably not enough keypoints!");
+            successful_matching = false;
+            break;
+        }
+        case NOT_ENOUGH_CIRCLES:
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM(msg << "There are not enough matching circles!");
+            successful_matching = false;
+            break;
+        }
+        case SUCCESSFUL_MATCHING:
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM(msg << "Successful matching!");
+            successful_matching = true;
+            break;
+        }
+        default:
+        {
+            ROS_ERROR_STREAM(msg << "Unforeseen result of matching!");
+            successful_matching = false;
+            break;
+        }
+    }
+    return successful_matching;
 }
