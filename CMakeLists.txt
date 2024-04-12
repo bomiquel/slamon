@@ -107,7 +107,6 @@ link_directories(${OpenCV_INCLUDE_DIRS})
 # Executables
 add_executable(slam 
                src/node.cpp
-               src/tools.cpp
                src/frame.cpp
                src/publisher.cpp
                src/vision_modules.cpp

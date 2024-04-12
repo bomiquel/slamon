@@ -35,15 +35,16 @@ class VisionModules
         };
 
 
-        // Matching results between two stereo images.
+        // Possible modules results.
         enum VisionResult
         {
             NOT_ENOUGH_KPS      = 0,
             NOT_ENOUGH_F_KPS    = 1,
             NOT_ENOUGH_E_KPS    = 2,
             GEOMETRIC_PROBLEM   = 3,
-            NOT_ENOUGH_CIRCLES  = 4,
-            SUCCESSFUL_MATCHING = 5
+            DIFFERENT_PROBLEMS  = 4,
+            NOT_ENOUGH_CIRCLES  = 5,
+            SUCCESSFUL_MATCHING = 6
         };
         
 
@@ -94,16 +95,16 @@ class VisionModules
          *  \param f_r_descs Filtered right image descriptors (output).
          *  \param f_l_kps Filtered left image keypoints (output).
          *  \param r_l_kps Filtered right image keypoints (output).
-         *  @return whether the keypoint matching and the filtering could be performed.
+         *  @return an enumerated type (VisionResult) encoding the result of the matching.
          */
-        std::pair<std::string, VisionModules::VisionResult> matchStereoKeypoints(const cv::Mat& l_descs,
-                                                                                const cv::Mat& r_descs,
-                                                                                const std::vector<cv::KeyPoint>& l_kps,
-                                                                                const std::vector<cv::KeyPoint>& r_kps,
-                                                                                cv::Mat& f_l_descs,
-                                                                                cv::Mat& f_r_descs,
-                                                                                std::vector<cv::KeyPoint>& f_l_kps,
-                                                                                std::vector<cv::KeyPoint>& f_r_kps);
+        VisionModules::VisionResult matchStereoKeypoints(const cv::Mat& l_descs,
+                                                         const cv::Mat& r_descs,
+                                                         const std::vector<cv::KeyPoint>& l_kps,
+                                                         const std::vector<cv::KeyPoint>& r_kps,
+                                                         cv::Mat& f_l_descs,
+                                                         cv::Mat& f_r_descs,
+                                                         std::vector<cv::KeyPoint>& f_l_kps,
+                                                         std::vector<cv::KeyPoint>& f_r_kps);
 
 
         /** \brief Matches keypoints of differents stereo pairs and removes outliers.
@@ -133,25 +134,24 @@ class VisionModules
          *  \param f_p_r_kps Previous right image keypoints filtered out (output).
          *  \param f_c_camera_points Current image 3D points filtered out (output).
          *  \param f_p_camera_points Previous image 3D points filtered out (output).
-         *  @return Whether keypoint matching and filtering has been performed correctly
-         *  and if there are enough filtered points.
+         *  @return an enumerated type (VisionResult) encoding the result of the matching.
          */
-        std::pair<std::string, std::vector<VisionModules::VisionResult>> matchNonStereoKeypoints(const cv::Mat& c_l_descs,
-                                                                                                const cv::Mat& c_r_descs,
-                                                                                                const cv::Mat& p_l_descs,
-                                                                                                const cv::Mat& p_r_descs,
-                                                                                                const std::vector<cv::KeyPoint>& c_l_kps,
-                                                                                                const std::vector<cv::KeyPoint>& c_r_kps,
-                                                                                                const std::vector<cv::KeyPoint>& p_l_kps,
-                                                                                                const std::vector<cv::KeyPoint>& p_r_kps,
-                                                                                                const std::vector<cv::Point3f>& c_camera_points,
-                                                                                                const std::vector<cv::Point3f>& p_camera_points,
-                                                                                                std::vector<cv::KeyPoint>& f_c_l_kps,
-                                                                                                std::vector<cv::KeyPoint>& f_c_r_kps,
-                                                                                                std::vector<cv::KeyPoint>& f_p_l_kps,
-                                                                                                std::vector<cv::KeyPoint>& f_p_r_kps,
-                                                                                                std::vector<cv::Point3f>& f_c_camera_points,
-                                                                                                std::vector<cv::Point3f>& f_p_camera_points);
+        VisionModules::VisionResult matchNonStereoKeypoints(const cv::Mat& c_l_descs,
+                                                            const cv::Mat& c_r_descs,
+                                                            const cv::Mat& p_l_descs,
+                                                            const cv::Mat& p_r_descs,
+                                                            const std::vector<cv::KeyPoint>& c_l_kps,
+                                                            const std::vector<cv::KeyPoint>& c_r_kps,
+                                                            const std::vector<cv::KeyPoint>& p_l_kps,
+                                                            const std::vector<cv::KeyPoint>& p_r_kps,
+                                                            const std::vector<cv::Point3f>& c_camera_points,
+                                                            const std::vector<cv::Point3f>& p_camera_points,
+                                                            std::vector<cv::KeyPoint>& f_c_l_kps,
+                                                            std::vector<cv::KeyPoint>& f_c_r_kps,
+                                                            std::vector<cv::KeyPoint>& f_p_l_kps,
+                                                            std::vector<cv::KeyPoint>& f_p_r_kps,
+                                                            std::vector<cv::Point3f>& f_c_camera_points,
+                                                            std::vector<cv::Point3f>& f_p_camera_points);
 
 
     protected:

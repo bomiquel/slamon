@@ -20,13 +20,12 @@
 #include <image_geometry/stereo_camera_model.h>
 
 #include "frame.hpp"
-#include "tools.hpp"
 #include "publisher.hpp"
 #include "vision_modules.hpp"
 
 #include "slamon/GetPose.h"
 
-class VisualOdometry: protected Tools, protected Publisher, protected VisionModules 
+class VisualOdometry: protected Publisher, protected VisionModules 
 {
     public:
 
@@ -128,13 +127,14 @@ class VisualOdometry: protected Tools, protected Publisher, protected VisionModu
         void getInitialPose();
 
 
-        /** \brief From enumerated type Match result to boolean + success or error message printout.
-         *  \param msg Extra msg to know which module sends the message.
-         *  \param result The result of the matching and its subsequent filtering.
+        /** \brief Decodes the enum type VisionResults into a boolean and a message
+         *  printed to the console (optional).
+         *  \param title Extra info to know which module sends the result.
+         *  \param result The vision module result.
          *  @return Whether keypoint matching and filtering has been performed correctly
          *  and if there are enough filtered points.
          */
-        bool decodeVisionResult(const std::string& msg,
+        bool decodeVisionResult(const std::string& title,
                                 const VisionResult& result);
 
 

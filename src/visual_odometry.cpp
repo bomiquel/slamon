@@ -78,7 +78,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
 
         case SEMI_INITIALISED:
             if (enable_debugging_)
-                ROS_INFO_STREAM("SEMI_INITIALISED");
+                ROS_INFO_STREAM("SEMI-INITIALISED");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
             {
                 getInitialPose();
@@ -200,9 +200,9 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     // Matching keypoints
     cv::Mat h_f_l_descs, h_f_r_descs;
     std::vector<cv::KeyPoint> h_f_l_kps, h_f_r_kps;
-    std::pair<std::string, VisionResult> match_result = matchStereoKeypoints(l_descs, r_descs, l_kps, r_kps, h_f_l_descs, 
-                                                                             h_f_r_descs, h_f_l_kps, h_f_r_kps);
-    if(!decodeVisionResult(match_result.first, match_result.second))
+    VisionResult match_result = matchStereoKeypoints(l_descs, r_descs, l_kps, r_kps, h_f_l_descs, 
+                                                     h_f_r_descs, h_f_l_kps, h_f_r_kps);
+    if(!decodeVisionResult("[Stereo matching:] ", match_result))
         return false; 
 
     // Compute 3D keypoints. Far points are filtered out because they do not provide accurate scale
@@ -258,34 +258,16 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& p_frame,
     // Search for matches of keypoints between successive frames or pairs of frames.
     std::vector<cv::Point3f> f_c_camera_points, f_p_camera_points;
     std::vector<cv::KeyPoint> f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps;
-    std::pair<std::string, std::vector<VisionResult>> match_result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
-                                                                                             p_frame.getLeftDescs(), p_frame.getLeftDescs(),
-                                                                                             c_frame.getLeftKps(), c_frame.getRightKps(), 
-                                                                                             p_frame.getLeftKps(), p_frame.getRightKps(),
-                                                                                             c_frame.getCameraPoints(), p_frame.getCameraPoints(),
-                                                                                             f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, 
-                                                                                             f_c_camera_points, f_p_camera_points);
+    VisionResult match_result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
+                                                        p_frame.getLeftDescs(), p_frame.getLeftDescs(),
+                                                        c_frame.getLeftKps(), c_frame.getRightKps(), 
+                                                        p_frame.getLeftKps(), p_frame.getRightKps(),
+                                                        c_frame.getCameraPoints(), p_frame.getCameraPoints(),
+                                                        f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, 
+                                                        f_c_camera_points, f_p_camera_points);
     
-    // Decoding matching results. Two different results may arrive from circular matching and must be dealt with.
-    if (match_result.second.size() > 1)
-    {
-        if (match_result.second.size() > 2)
-        {
-            ROS_ERROR_STREAM("Impossible number of results");
-            return false;
-        }
-        else
-        {
-            decodeVisionResult(match_result.first + " left side:] ", match_result.second[0]);
-            decodeVisionResult(match_result.first + " right side:] ", match_result.second[1]);
-            return false;
-        }
-    }
-    else
-    {
-        if (!decodeVisionResult(match_result.first, match_result.second[0]))
-            return false;
-    }
+    if(!decodeVisionResult("[Non-stereo matching:] ", match_result))
+        return false; 
 
     // Non stereo matching keypoints debugging
     if (successive_matches_pub_.getNumSubscribers() > 0)
@@ -367,7 +349,7 @@ void VisualOdometry::getInitialPose()
 }
 
 
-bool VisualOdometry::decodeVisionResult(const std::string& msg,
+bool VisualOdometry::decodeVisionResult(const std::string& title,
                                         const VisionResult& result)
 {
     bool successful_matching; 
@@ -376,48 +358,55 @@ bool VisualOdometry::decodeVisionResult(const std::string& msg,
         case NOT_ENOUGH_KPS:
         {
             if (enable_debugging_)
-                ROS_INFO_STREAM(msg << "There are not enough keypoints to match and filter!");
+                ROS_INFO_STREAM(title << "There are not enough keypoints to match and filter!");
             successful_matching = false;
             break;
         }
         case NOT_ENOUGH_F_KPS:
         {
             if (enable_debugging_)
-                ROS_INFO_STREAM(msg << "There are not enough keypoints after outlier filtering!");
+                ROS_INFO_STREAM(title << "There are not enough keypoints after outlier filtering!");
             successful_matching = false;
             break;
         }
         case NOT_ENOUGH_E_KPS:
         {
             if (enable_debugging_)
-                ROS_INFO_STREAM(msg << "There are not enough keypoints after epipolar filtering!");
+                ROS_INFO_STREAM(title << "There are not enough keypoints after epipolar filtering!");
             successful_matching = false;
             break;
         }
         case GEOMETRIC_PROBLEM:
         {
             if (enable_debugging_)
-                ROS_INFO_STREAM(msg << "Problems in applying the selected geometric constraint. Probably not enough keypoints!");
+                ROS_INFO_STREAM(title << "Problems in applying the selected geometric constraint. Probably not enough keypoints!");
+            successful_matching = false;
+            break;
+        }
+        case DIFFERENT_PROBLEMS:
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM(title << "In the parallel matches there have been different problems.");
             successful_matching = false;
             break;
         }
         case NOT_ENOUGH_CIRCLES:
         {
             if (enable_debugging_)
-                ROS_INFO_STREAM(msg << "There are not enough matching circles!");
+                ROS_INFO_STREAM(title << "There are not enough matching circles!");
             successful_matching = false;
             break;
         }
         case SUCCESSFUL_MATCHING:
         {
             if (enable_debugging_)
-                ROS_INFO_STREAM(msg << "Successful matching!");
+                ROS_INFO_STREAM(title << "Successful matching!");
             successful_matching = true;
             break;
         }
         default:
         {
-            ROS_ERROR_STREAM(msg << "Unforeseen result of matching!");
+            ROS_ERROR_STREAM(title << "Unforeseen result of matching!");
             successful_matching = false;
             break;
         }
