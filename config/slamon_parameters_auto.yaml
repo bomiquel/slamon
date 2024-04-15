@@ -1,7 +1,7 @@
 slamon:
   lowe_ratio: 0.6 # 0.7/0.9, good 0.8
-  min_num_kps: 20 # 20
+  min_inliers: 20 # 20
   matching_type: ratio_matching
-  odom_frame_id: /odom
   robot_frame_id: /robot_0/base_link
+  origin_frame_id: /odom
   enable_debugging: true

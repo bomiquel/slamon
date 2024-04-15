@@ -38,23 +38,24 @@ class VisionModules
         // Possible modules results.
         enum VisionResult
         {
-            NOT_ENOUGH_KPS      = 0,
-            NOT_ENOUGH_F_KPS    = 1,
-            NOT_ENOUGH_E_KPS    = 2,
-            GEOMETRIC_PROBLEM   = 3,
-            DIFFERENT_PROBLEMS  = 4,
-            NOT_ENOUGH_CIRCLES  = 5,
-            SUCCESSFUL_MATCHING = 6
+            SUCCESSFUL          = 0,
+            NOT_ENOUGH_KPS      = 1,
+            NOT_ENOUGH_F_KPS    = 2,
+            NOT_ENOUGH_E_KPS    = 3,
+            GEOMETRIC_PROBLEM   = 4,
+            DIFFERENT_PROBLEMS  = 5,
+            NOT_ENOUGH_CIRCLES  = 6,
+            NOT_ENOUGH_INLIERS  = 7
         };
         
 
         /** \brief Class constructor.
          *  \param ratio The ratio for Lowe's ratio test.
-         *  \param min_num_kps The minimum number of keypoints to estimate the movement.
+         *  \param min_inliers The minimum number of keypoints to estimate the movement.
          *  \param matching_type Matching type.
          */
         VisionModules(double ratio,
-                      int min_num_kps,
+                      int min_inliers,
                       const std::string& matching_type);
 
 
@@ -95,7 +96,7 @@ class VisionModules
          *  \param f_r_descs Filtered right image descriptors (output).
          *  \param f_l_kps Filtered left image keypoints (output).
          *  \param r_l_kps Filtered right image keypoints (output).
-         *  @return an enumerated type (VisionResult) encoding the result of the matching.
+         *  @return an enumerated type (VisionResult) encoding matching result.
          */
         VisionModules::VisionResult matchStereoKeypoints(const cv::Mat& l_descs,
                                                          const cv::Mat& r_descs,
@@ -134,7 +135,7 @@ class VisionModules
          *  \param f_p_r_kps Previous right image keypoints filtered out (output).
          *  \param f_c_camera_points Current image 3D points filtered out (output).
          *  \param f_p_camera_points Previous image 3D points filtered out (output).
-         *  @return an enumerated type (VisionResult) encoding the result of the matching.
+         *  @return an enumerated type (VisionResult) encoding matching result.
          */
         VisionModules::VisionResult matchNonStereoKeypoints(const cv::Mat& c_l_descs,
                                                             const cv::Mat& c_r_descs,
@@ -154,46 +155,61 @@ class VisionModules
                                                             std::vector<cv::Point3f>& f_p_camera_points);
 
 
+        /** \brief 
+         *  \param f_c_l_kps Current left image keypoints filtered out (input).
+         *  \param f_c_r_kps Current right image keypoints filtered out (input).
+         *  \param f_p_camera_points Previous image 3D points filtered out (input).
+         *  \param r_vec Estimated rotation vector (output).
+         *  \param t_vec Estimated translation matrix (output).
+         *  @return an enumerated type (VisionResult) encoding motion estimation result.
+         */
+        VisionModules::VisionResult estimateMotion(const std::vector<cv::KeyPoint>& f_c_l_kps,
+                                                   const std::vector<cv::KeyPoint>& f_c_r_kps,
+                                                   const std::vector<cv::Point3f>& f_p_camera_points,
+                                                   cv::Mat& r_vec,
+                                                   cv::Mat& t_vec);
+
+
     protected:
 
 
         /** \brief Matches visual keypoints
          *  \param c_descs Current image descriptors (input).
-         *  \param q_descs Query image descriptors (input).
+         *  \param p_descs Previous image descriptors (input).
          *  @return The matches
          */
         std::vector<std::vector<cv::DMatch>> matching(const cv::Mat& c_descs, 
-                                                      const cv::Mat& q_descs);
+                                                      const cv::Mat& p_descs);
 
 
         /** \brief Matches visual keypoints and applies Lowe's ratio to remove
          *  outliers.
          *  \param c_descs Current image descriptors (input).
-         *  \param q_descs Query image descriptors (input).
+         *  \param p_descs Previous image descriptors (input).
          *  \param c_kps Current image keypoints (input).
-         *  \param q_kps Query image keypoints (input).
+         *  \param p_kps Previous image keypoints (input).
          *  \param c_camera_points Current image 3D points (input).
-         *  \param q_camera_points Query image 3D points (input).
+         *  \param p_camera_points Previous image 3D points (input).
          *  \param f_c_descs Current image descriptors filtered out (output).
-         *  \param f_q_descs Query image descriptors filtered out (output).
+         *  \param f_p_descs Previous image descriptors filtered out (output).
          *  \param f_c_kps Current image keypoints filtered out (output).
-         *  \param f_q_kps Query image keypoints filtered out (output).
+         *  \param f_p_kps Previous image keypoints filtered out (output).
          *  \param f_c_camera_points Current image 3D points filtered out (output).
-         *  \param f_q_camera_points Query image 3D points filtered out (output).
+         *  \param f_p_camera_points Previous image 3D points filtered out (output).
          *  @return Success or failure type.
          */
         VisionResult ratioMatching(const cv::Mat& c_descs, 
-                                  const cv::Mat& q_descs,
+                                  const cv::Mat& p_descs,
                                   const std::vector<cv::KeyPoint>& c_kps,
-                                  const std::vector<cv::KeyPoint>& q_kps,
+                                  const std::vector<cv::KeyPoint>& p_kps,
                                   const std::vector<cv::Point3f>& c_camera_points,
-                                  const std::vector<cv::Point3f>& q_camera_points,
+                                  const std::vector<cv::Point3f>& p_camera_points,
                                   cv::Mat& f_c_descs,
-                                  cv::Mat& f_q_descs,
+                                  cv::Mat& f_p_descs,
                                   std::vector<cv::KeyPoint>& f_c_kps,
-                                  std::vector<cv::KeyPoint>& f_q_kps,
+                                  std::vector<cv::KeyPoint>& f_p_kps,
                                   std::vector<cv::Point3f>& f_c_camera_points,
-                                  std::vector<cv::Point3f>& f_q_camera_points);
+                                  std::vector<cv::Point3f>& f_p_camera_points);
 
 
         /** \brief Matches visual keypoints and applies a geometrical restriction 
@@ -204,73 +220,81 @@ class VisionModules
          *  calculated to eliminate outliers. Otherwise, an essential matrix is 
          *  computed to remove outliers.
          *  \param c_descs Current image descriptors (input).
-         *  \param q_descs Query image descriptors (input).
+         *  \param p_descs Previous image descriptors (input).
          *  \param c_kps Current image keypoints (input).
-         *  \param q_kps Query image keypoints (input).
+         *  \param p_kps Previous image keypoints (input).
          *  \param c_camera_points Current image 3D points (input).
-         *  \param q_camera_points Query image 3D points (input).
+         *  \param p_camera_points Previous image 3D points (input).
          *  \param f_c_descs Current image descriptors filtered out (output).
-         *  \param f_q_descs Query image descriptors filtered out (output).
+         *  \param f_p_descs Previous image descriptors filtered out (output).
          *  \param f_c_kps Current image keypoints filtered out (output).
-         *  \param f_q_kps Query image keypoints filtered out (output).
+         *  \param f_p_kps Previous image keypoints filtered out (output).
          *  \param f_c_camera_points Current image 3D points filtered out (output).
-         *  \param f_q_camera_points Query image 3D points filtered out (output).
+         *  \param f_p_camera_points Previous image 3D points filtered out (output).
          *  @return Success or failure type.
          */
         VisionResult geometricalMatching(bool coplanar_points,
                                         const cv::Mat& c_descs, 
-                                        const cv::Mat& q_descs,
+                                        const cv::Mat& p_descs,
                                         const std::vector<cv::KeyPoint>& c_kps,
-                                        const std::vector<cv::KeyPoint>& q_kps,
+                                        const std::vector<cv::KeyPoint>& p_kps,
                                         const std::vector<cv::Point3f>& c_camera_points,
-                                        const std::vector<cv::Point3f>& q_camera_points,
+                                        const std::vector<cv::Point3f>& p_camera_points,
                                         cv::Mat& f_c_descs,
-                                        cv::Mat& f_q_descs,
+                                        cv::Mat& f_p_descs,
                                         std::vector<cv::KeyPoint>& f_c_kps,
-                                        std::vector<cv::KeyPoint>& f_q_kps,
+                                        std::vector<cv::KeyPoint>& f_p_kps,
                                         std::vector<cv::Point3f>& f_c_camera_points,
-                                        std::vector<cv::Point3f>& f_q_camera_points);
+                                        std::vector<cv::Point3f>& f_p_camera_points);
 
 
         /** \brief Assemble the four matchings to build circular matches.
          *  \param c_0_stereo_kps Keypoints of the current image matched in stereo matching. 
-         *  Must belong to the current image with the lowest number of points after the successive matching.
+         *  Must belong to the current image with the lowest number of points after the 
+         *  successive matching (input).
          *  \param c_1_stereo_kps Keypoints of the current image matched in stereo matching.
-         *  Must belong to the current image with the highest number of points after the successive matching.
+         *  Must belong to the current image with the highest number of points after the 
+         *  successive matching (input).
          *  \param p_0_stereo_kps Keypoints of the previous image matched in stereo matching.
-         *  Must belong to the previous image with the lowest number of points after the successive matching.
+         *  Must belong to the previous image with the lowest number of points after the 
+         *  successive matching (input).
          *  \param p_1_stereo_kps Keypoints of the previous image matched in stereo matching.
-         *  Must belong to the previous image with the highest number of points after the successive matching.
+         *  Must belong to the previous image with the highest number of points after the 
+         *  successive matching (input).
          *  \param c_0_successive_kps Current keypoint vector with the lowest number of points
-         *  after successive matching.
+         *  after successive matching (input).
          *  \param c_1_successive_kps Current keypoint vector with the highest number of points
-         *  after successive matching.
+         *  after successive matching (input).
          *  \param p_0_successive_kps Previous keypoint vector with the lowest number of points
-         *  after successive matching.
+         *  after successive matching (input).
          *  \param p_1_successive_kps Previous keypoint vector with the highest number of points
-         *  after successive matching.
-         *  \param f_c_0_kps Filtered keypoints of current image with lowest number of points after successive matching.
-         *  \param f_c_1_kps Filtered keypoints of current image with highest number of points after successive matching.
-         *  \param f_p_0_kps Filtered keypoints of previous image with lowest number of points after successive matching.
-         *  \param f_p_1_kps Filtered keypoints of previous image with highest number of points after successive matching.
+         *  after successive matching (input).
+         *  \param f_c_0_kps Filtered keypoints of current image with lowest number of points
+         *  after successive matching (output).
+         *  \param f_c_1_kps Filtered keypoints of current image with highest number of points
+         *  after successive matching (output).
+         *  \param f_p_0_kps Filtered keypoints of previous image with lowest number of points
+         *  after successive matching (output).
+         *  \param f_p_1_kps Filtered keypoints of previous image with highest number of points
+         *  after successive matching (output).
          */
         VisionResult assembleCircularMatchings(const std::vector<cv::KeyPoint>& c_0_stereo_kps,
-                                              const std::vector<cv::KeyPoint>& c_1_stereo_kps,
-                                              const std::vector<cv::KeyPoint>& p_0_stereo_kps,
-                                              const std::vector<cv::KeyPoint>& p_1_stereo_kps,
-                                              const std::vector<cv::KeyPoint>& c_0_successive_kps,
-                                              const std::vector<cv::KeyPoint>& c_1_successive_kps,
-                                              const std::vector<cv::KeyPoint>& p_0_successive_kps,
-                                              const std::vector<cv::KeyPoint>& p_1_successive_kps,
-                                              std::vector<cv::KeyPoint>& f_c_0_kps,
-                                              std::vector<cv::KeyPoint>& f_c_1_kps,
-                                              std::vector<cv::KeyPoint>& f_p_0_kps,
-                                              std::vector<cv::KeyPoint>& f_p_1_kps);
+                                               const std::vector<cv::KeyPoint>& c_1_stereo_kps,
+                                               const std::vector<cv::KeyPoint>& p_0_stereo_kps,
+                                               const std::vector<cv::KeyPoint>& p_1_stereo_kps,
+                                               const std::vector<cv::KeyPoint>& c_0_successive_kps,
+                                               const std::vector<cv::KeyPoint>& c_1_successive_kps,
+                                               const std::vector<cv::KeyPoint>& p_0_successive_kps,
+                                               const std::vector<cv::KeyPoint>& p_1_successive_kps,
+                                               std::vector<cv::KeyPoint>& f_c_0_kps,
+                                               std::vector<cv::KeyPoint>& f_c_1_kps,
+                                               std::vector<cv::KeyPoint>& f_p_0_kps,
+                                               std::vector<cv::KeyPoint>& f_p_1_kps);
 
 
         double ratio_; //!> Lowe's ratio.
 
-        int min_num_kps_; //!> The minimum number of keypoints to estimate the movement.
+        int min_inliers_; //!> The minimum number of inliers to estimate the movement.
 
         MatchType matching_type_; //!> Matching type
 

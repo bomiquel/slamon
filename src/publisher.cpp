@@ -120,6 +120,42 @@ void Publisher::publishImage(const cv::Mat& img,
 }
 
 
+void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
+                                       const ros::Time& p_stamp,
+                                       const tf::Transform& pose,
+                                       const tf::Transform& motion,
+                                       const ros::Publisher& publisher,
+                                       const std::string& world_frame_id,
+                                       const std::string& robot_frame_id)
+{
+    nav_msgs::Odometry msg;
+
+    // Set header
+    msg.header.stamp = c_stamp;
+    msg.header.frame_id = world_frame_id;
+    msg.child_frame_id = robot_frame_id;
+
+    // Set pose
+    tf::poseTFToMsg(pose, msg.pose.pose);
+
+    // Set linear velocity
+    double delta_t = (c_stamp - p_stamp).toSec();
+    msg.twist.twist.linear.x = motion.getOrigin().getX() / delta_t;
+    msg.twist.twist.linear.y = motion.getOrigin().getY() / delta_t;
+    msg.twist.twist.linear.z = motion.getOrigin().getZ() / delta_t;
+    tf::Quaternion delta_rot = motion.getRotation();
+    tfScalar angle = delta_rot.getAngle();
+    tf::Vector3 axis = delta_rot.getAxis();
+    tf::Vector3 angular_velocity = (axis * angle) / delta_t;
+    msg.twist.twist.angular.x = angular_velocity.x();
+    msg.twist.twist.angular.y = angular_velocity.y();
+    msg.twist.twist.angular.z = angular_velocity.z();
+
+    // Publish pose and velocity
+    publisher.publish(msg);
+}
+
+
 void Publisher::writeTxtInImage(const cv::Mat& img,
                                 const std::stringstream& s,
                                 cv::Mat& txt_img)

@@ -40,18 +40,18 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
 
         /** \brief Class constructor.
          *  \param ratio The ratio for Lowe's ratio test.
-         *  \param min_num_kps The minimum number of keypoints to estimate the movement.
+         *  \param min_inliers The minimum number of keypoints to estimate the movement.
          *  \param enable_debugging Enabling or disabling debugging messages.
          *  \param matching_type Matching type.
-         *  \param odom_frame_id Odometry coordinate axis identficator.
          *  \param robot_frame_id Robot coordinate axis identficator (base link).
+         *  \param origin_frame_id Origin coordinate axis identficator.
          */
         VisualOdometry(double ratio,
-                       int min_num_kps,
+                       int min_inliers,
                        bool enable_debugging,
                        const std::string& matching_type,
-                       const std::string& odom_frame_id, 
-                       const std::string& robot_frame_id);
+                       const std::string& robot_frame_id,
+                       const std::string& origin_frame_id);
 
 
         /** \brief Starts tracking
@@ -104,7 +104,7 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
          * 
          */ 
         bool computeMotionSuccessiveFrames(const Frame& c_frame,
-                                           const Frame& p_frame);
+                                           tf::Transform& robot_motion);
 
 
         /** \brief Initialises the robot pose (robot coordinate axis). To do this,
@@ -117,8 +117,8 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
 
         /** \brief Decodes the enum type VisionResults into a boolean and a message
          *  printed to the console (optional).
-         *  \param title Extra info to know which module sends the result.
-         *  \param result The vision module result.
+         *  \param title Extra info to know which module sends the result (input).
+         *  \param result The vision module result (input).
          *  @return Whether keypoint matching and filtering has been performed correctly
          *  and if there are enough filtered points.
          */
@@ -136,16 +136,18 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
         ros::Time start_time_; //>! Time at which the program enters into the callback.
 
         bool enable_debugging_; //!> Enabling or disabling debugging messages.
-
-        std::string odom_frame_id_; //!> Odometry coordinate axis identficator.
         
         std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
+
+        std::string origin_frame_id_; //!> Odometry coordinate axis identficator.
 
         tf::Transform c_robot_pose_; //!> Current robot pose.
 
         tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
         tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.
+
+        ros::Publisher odom_pub_; //!> Publishes current velocity and accumulated movement (odometry).
 
         ros::ServiceClient initial_pose_client_; //!> Service client to assign the initial position to the SLAM.
 

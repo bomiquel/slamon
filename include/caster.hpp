@@ -2,6 +2,7 @@
 #define CASTER_HPP
 
 #include <ros/ros.h>
+#include <tf/tf.h>
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
 
@@ -24,12 +25,19 @@ class Caster
      *  \param img Will contain the image in cv::Mat type (output).
      *  @return If the conversion has been possible.
      */
-    bool imgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
-                     cv::Mat& img);
-
-    
+    bool fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
+                         cv::Mat& img);
 
 
+    /** \brief Convert motion cv::Mat to ROS transform
+     *  \param r_vec OpenCV estimated rotation vector (input).
+     *  \param t_vec OpenCV estimated translation vector (input).
+     *  \param tf ROS estimated transform (output).
+     *  @return If the cast could be made
+     */
+    bool fromMotionMatToTf(const cv::Mat& r_vec,
+                           const cv::Mat& t_vec,
+                           tf::Transform& tf);
 };
 
 

@@ -6,29 +6,29 @@
 #include "visual_odometry.hpp"
 
 
-void readParams(int& min_num_kps,
+void readParams(int& min_inliers,
                 double& lowe_ratio, 
                 bool& enable_debugging,
                 std::string& matching_type,
-                std::string& odom_frame_id,
-                std::string& robot_frame_id)
+                std::string& robot_frame_id,
+                std::string& origin_frame_id)
 {
     // Getting parameters from parameter server.
     ros::NodeHandle nhp("~");
-    nhp.param("min_num_kps",      min_num_kps,      10);
+    nhp.param("min_inliers",      min_inliers,      10);
     nhp.param("lowe_ratio",       lowe_ratio,       0.8);
     nhp.param("matching_type",    matching_type,    std::string("ratio_matching"));
-    nhp.param("odom_frame_id",    odom_frame_id,    std::string("odom"));
     nhp.param("robot_frame_id",   robot_frame_id,   std::string("base_link"));
+    nhp.param("origin_frame_id",  origin_frame_id,  std::string("odom"));
     nhp.param("enable_debugging", enable_debugging, true);
 
     // Printing parameters values.
     ROS_INFO_STREAM("Parameter setting: " << std::endl <<
-                    "Minimum kps      = " << min_num_kps << std::endl << 
+                    "Minimum kps      = " << min_inliers << std::endl << 
                     "Lowe's ratio     = " << lowe_ratio << std::endl <<
                     "Matching type    = " << matching_type << std::endl <<
-                    "Odom frame id    = " << odom_frame_id << std::endl <<
                     "Robot frame id   = " << robot_frame_id << std::endl <<
+                    "Odom frame id    = " << origin_frame_id << std::endl <<
                     "Enable debugging = " << enable_debugging);
 
     // Checking the validity of the parameters
@@ -51,19 +51,14 @@ void readParams(int& min_num_kps,
     {
         matching_type = "ratio_matching";
     }
-    if (min_num_kps < 10)
+    if (min_inliers < 10)
     {
-        min_num_kps = 10;
+        min_inliers = 10;
         invalid_parameter = true;
     }
     if (lowe_ratio < 0.01 || lowe_ratio > 0.99)
     {
-        min_num_kps = 0.8;
-        invalid_parameter = true;
-    }
-    if (odom_frame_id == "")
-    {
-        odom_frame_id = "odom";
+        min_inliers = 0.8;
         invalid_parameter = true;
     }
     if (robot_frame_id == "")
@@ -71,15 +66,20 @@ void readParams(int& min_num_kps,
         robot_frame_id = "base_link";
         invalid_parameter = true;
     }
+    if (origin_frame_id == "")
+    {
+        origin_frame_id = "odom";
+        invalid_parameter = true;
+    }
     if (invalid_parameter)
     {
         ROS_INFO_STREAM("Some parameter was invalid and has been assigned its default value." << std::endl <<
                         "Current parameter values are: " << std::endl <<
-                        "Minimum kps      = " << min_num_kps << std::endl << 
+                        "Minimum kps      = " << min_inliers << std::endl << 
                         "Lowe's ratio     = " << lowe_ratio << std::endl <<
                         "Matching type    = " << matching_type << std::endl <<
-                        "Odom frame id    = " << odom_frame_id << std::endl <<
                         "Robot frame id   = " << robot_frame_id << std::endl <<
+                        "World frame id    = " << origin_frame_id << std::endl <<
                         "Enable debugging = " << enable_debugging);
     }
 }
@@ -91,14 +91,14 @@ int main(int argc, char **argv)
     ros::start();
 
     // Read parameters
-    int min_num_kps;
+    int min_inliers;
     double lowe_ratio;
     bool enable_debugging;
-    std::string matching_type, odom_frame_id, robot_frame_id;
-    readParams(min_num_kps, lowe_ratio, enable_debugging, matching_type, odom_frame_id, robot_frame_id);
+    std::string matching_type, robot_frame_id, origin_frame_id;
+    readParams(min_inliers, lowe_ratio, enable_debugging, matching_type, robot_frame_id, origin_frame_id);
 
     // Threads
-    VisualOdometry visual_odometer(lowe_ratio, min_num_kps, enable_debugging, matching_type, odom_frame_id, robot_frame_id);
+    VisualOdometry visual_odometer(lowe_ratio, min_inliers, enable_debugging, matching_type, robot_frame_id, origin_frame_id);
 
     // Launch threads
     std::thread visual_odometer_thread(&VisualOdometry::run, &visual_odometer);

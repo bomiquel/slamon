@@ -12,6 +12,8 @@
 #include <opencv2/opencv.hpp>
 
 #include <ros/ros.h>
+#include <tf/tf.h>
+#include <nav_msgs/Odometry.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 
@@ -88,8 +90,6 @@ class Publisher
                                     const image_transport::Publisher& publisher);
 
 
-    protected:
-
         /** \brief Publishes images.
          *  \param img The image (input).
          *  \param stamp The ROS timestamp (input).
@@ -98,6 +98,28 @@ class Publisher
         void publishImage(const cv::Mat& img,
                           const ros::Time& stamp,
                           const image_transport::Publisher& publisher);
+
+
+        /** \brief Publishes current robot pose and velocity.
+         *  \param c_stamp Current ROS timestamp (input).
+         *  \param p_stamp Previous ROS timestamp (input).
+         *  \param pose The current robot pose to be published (input).
+         *  \param motion The robot movement between current and previous franes.
+         *  Used to calculate robot velocity.
+         *  \param publisher The ROS publisher (input).
+         *  \param world_frame_id World coordinate axis id.
+         *  \param robot_frame_id Robot coordinate axis id.
+         */
+        void publishPoseAndVelocity(const ros::Time& c_stamp,
+                                    const ros::Time& p_stamp,
+                                    const tf::Transform& pose,
+                                    const tf::Transform& motion,
+                                    const ros::Publisher& publisher,
+                                    const std::string& world_frame_id,
+                                    const std::string& robot_frame_id);
+
+
+    private:
 
 
         /** \brief Writes text at the bottom of the image.

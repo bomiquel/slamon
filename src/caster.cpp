@@ -1,8 +1,8 @@
 #include "caster.hpp"
 
 
-bool Caster::imgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
-                         cv::Mat& img)
+bool Caster::fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
+                             cv::Mat& img)
 {
     // Convert message to cv::Mat
     cv_bridge::CvImagePtr img_ptr;
@@ -15,12 +15,43 @@ bool Caster::imgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
     }
     catch(const cv_bridge::Exception& e)
     {
-        ROS_ERROR_STREAM("[Img msg to CV mat:] cv_bridge exception: " << e.what());
+        ROS_ERROR_STREAM("[Caster:] cv_bridge exception: " << e.what());
         return false;
     }
     
     // Set the images
     img = img_ptr->image;
     
+    return true;
+}
+
+
+bool Caster::fromMotionMatToTf(const cv::Mat& r_vec,
+                               const cv::Mat& t_vec,
+                               tf::Transform& tf)
+{
+    // Sanity check
+    if (r_vec.empty() || t_vec.empty())
+    {
+        ROS_ERROR_STREAM("[Caster:] Something is wrong, one or both of the movement matrices is empty.");
+        return false;
+    }
+
+    // Build the quaternion of rotation
+    tf::Vector3 axis(r_vec.at<double>(0, 0),
+                     r_vec.at<double>(1, 0),
+                     r_vec.at<double>(2, 0));
+    double angle = norm(r_vec);
+    tf::Quaternion q(axis, angle);
+
+    // Build the vector of translation
+    tf::Vector3 t(t_vec.at<double>(0, 0),
+                  t_vec.at<double>(1, 0),
+                  t_vec.at<double>(2, 0));
+    
+    // Build the coordinates transform
+    tf.setRotation(q);
+    tf.setOrigin(t);
+
     return true;
 }

@@ -1,11 +1,11 @@
 #include "vision_modules.hpp"
 
 VisionModules::VisionModules(double ratio,
-                             int min_num_kps,
+                             int min_inliers,
                              const std::string &matching_type)
 {
     ratio_ = ratio;
-    min_num_kps_ = min_num_kps;
+    min_inliers_ = min_inliers;
     if (matching_type == "essential_matching")
         matching_type_ = ESSENTIAL_MATCHING;
     else if (matching_type == "homography_matching")
@@ -20,6 +20,7 @@ VisionModules::VisionModules(double ratio,
         matching_type_ = RATIO_MATCHING;
 }
 
+
 void VisionModules::detectKeypoints(const cv::Mat &img,
                                     cv::Mat &descs,
                                     std::vector<cv::KeyPoint> &kps)
@@ -33,6 +34,7 @@ void VisionModules::detectKeypoints(const cv::Mat &img,
     detector->detectAndCompute(g_img, cv::noArray(), kps, descs);
 }
 
+
 void VisionModules::detectStereoKeypoints(const cv::Mat &l_img,
                                           const cv::Mat &r_img,
                                           cv::Mat &l_descs,
@@ -45,6 +47,7 @@ void VisionModules::detectStereoKeypoints(const cv::Mat &l_img,
     l_detection.join();
     r_detection.join();
 }
+
 
 VisionModules::VisionResult VisionModules::matchStereoKeypoints(const cv::Mat &l_descs,
                                                                 const cv::Mat &r_descs,
@@ -72,7 +75,7 @@ VisionModules::VisionResult VisionModules::matchStereoKeypoints(const cv::Mat &l
                                  h_f_l_descs, h_f_r_descs, h_f_l_kps, h_f_r_kps, f_points_3d_0, f_points_3d_1);
 
     // Check match result
-    if (match_result != SUCCESSFUL_MATCHING)
+    if (match_result != SUCCESSFUL)
         return match_result;
 
     // Epipolar filtering
@@ -87,11 +90,12 @@ VisionModules::VisionResult VisionModules::matchStereoKeypoints(const cv::Mat &l
         }
     }
 
-    if (f_l_kps.size() < (uint)min_num_kps_)
+    if (f_l_kps.size() < (uint)(1.5 * min_inliers_))
         return NOT_ENOUGH_E_KPS;
     else
-        return SUCCESSFUL_MATCHING;
+        return SUCCESSFUL;
 }
+
 
 VisionModules::VisionResult VisionModules::matchNonStereoKeypoints(const cv::Mat &c_l_descs,
                                                                    const cv::Mat &c_r_descs,
@@ -163,7 +167,7 @@ VisionModules::VisionResult VisionModules::matchNonStereoKeypoints(const cv::Mat
             r_matcher.join();
         }
 
-        if (match_result == SUCCESSFUL_MATCHING && aux_result == SUCCESSFUL_MATCHING)
+        if (match_result == SUCCESSFUL && aux_result == SUCCESSFUL)
         {
             if (h_f_c_r_kps.size() < h_f_c_l_kps.size())
             {
@@ -191,38 +195,62 @@ VisionModules::VisionResult VisionModules::matchNonStereoKeypoints(const cv::Mat
     return match_result;
 }
 
+
+VisionModules::VisionResult VisionModules::estimateMotion(const std::vector<cv::KeyPoint>& f_c_l_kps,
+                                                          const std::vector<cv::KeyPoint>& f_c_r_kps,
+                                                          const std::vector<cv::Point3f>& f_p_camera_points,
+                                                          cv::Mat& r_vec,
+                                                          cv::Mat& t_vec)
+{
+    std::vector<int> inliers;
+    std::vector<cv::Point2f> f_c_l_pts;
+    cv::KeyPoint::convert(f_c_l_kps, f_c_l_pts);
+    std::cout << "Keypoints: " << f_c_l_pts.size() << std::endl;
+    std::cout << "3D points: " << f_p_camera_points.size() << std::endl;
+    cv::solvePnPRansac(f_p_camera_points, f_c_l_pts, camera_matrix_, cv::Mat(),
+                       r_vec, t_vec, false, 1000, 2.0, 0.99, inliers, cv::SOLVEPNP_P3P);
+    std::cout << "Inliers: " << inliers.size() << std::endl;
+
+    if (inliers.size() > (uint)min_inliers_)
+        return SUCCESSFUL;
+    else
+        return NOT_ENOUGH_INLIERS;   
+}
+
+
 std::vector<std::vector<cv::DMatch>> VisionModules::matching(const cv::Mat &c_descs,
-                                                             const cv::Mat &q_descs)
+                                                             const cv::Mat &p_descs)
 {
     const int knn = 2;
     cv::Mat match_mask;
     std::vector<std::vector<cv::DMatch>> knn_matches;
     cv::Ptr<cv::DescriptorMatcher> descriptor_matcher = cv::DescriptorMatcher::create("BruteForce");
-    descriptor_matcher->knnMatch(c_descs, q_descs, knn_matches, knn, match_mask);
+    descriptor_matcher->knnMatch(c_descs, p_descs, knn_matches, knn, match_mask);
     return knn_matches;
 }
 
+
 VisionModules::VisionResult VisionModules::ratioMatching(const cv::Mat &c_descs,
-                                                         const cv::Mat &q_descs,
+                                                         const cv::Mat &p_descs,
                                                          const std::vector<cv::KeyPoint> &c_kps,
-                                                         const std::vector<cv::KeyPoint> &q_kps,
+                                                         const std::vector<cv::KeyPoint> &p_kps,
                                                          const std::vector<cv::Point3f> &c_camera_points,
-                                                         const std::vector<cv::Point3f> &q_camera_points,
+                                                         const std::vector<cv::Point3f> &p_camera_points,
                                                          cv::Mat &f_c_descs,
-                                                         cv::Mat &f_q_descs,
+                                                         cv::Mat &f_p_descs,
                                                          std::vector<cv::KeyPoint> &f_c_kps,
-                                                         std::vector<cv::KeyPoint> &f_q_kps,
+                                                         std::vector<cv::KeyPoint> &f_p_kps,
                                                          std::vector<cv::Point3f> &f_c_camera_points,
-                                                         std::vector<cv::Point3f> &f_q_camera_points)
+                                                         std::vector<cv::Point3f> &f_p_camera_points)
 {
     // Sanity check
     f_c_kps.clear();
-    f_q_kps.clear();
+    f_p_kps.clear();
     f_c_descs.release();
-    f_q_descs.release();
+    f_p_descs.release();
     f_c_camera_points.clear();
-    f_q_camera_points.clear();
-    if (c_descs.rows < min_num_kps_ || q_descs.rows < min_num_kps_)
+    f_p_camera_points.clear();
+    if (c_descs.rows < (int)(1.5 * min_inliers_) || p_descs.rows < (int)(1.5 * min_inliers_))
         return NOT_ENOUGH_KPS;
 
     // During feature matching of the same stereo pair there are no 3D points.
@@ -233,10 +261,10 @@ VisionModules::VisionResult VisionModules::ratioMatching(const cv::Mat &c_descs,
         fill_3d = false;
 
     // Visual keypoint matching
-    std::vector<std::vector<cv::DMatch>> knn_matches = matching(c_descs, q_descs);
+    std::vector<std::vector<cv::DMatch>> knn_matches = matching(c_descs, p_descs);
 
     // Lowe's ratio
-    int c_idx, q_idx;
+    int c_idx, p_idx;
     for (uint i = 0; i < knn_matches.size(); i++)
     {
         if (knn_matches[i].size() < 2)
@@ -245,72 +273,73 @@ VisionModules::VisionResult VisionModules::ratioMatching(const cv::Mat &c_descs,
         if (knn_matches[i][0].distance <= knn_matches[i][1].distance * ratio_)
         {
             c_idx = knn_matches[i][0].queryIdx;
-            q_idx = knn_matches[i][0].trainIdx;
+            p_idx = knn_matches[i][0].trainIdx;
             f_c_kps.push_back(c_kps[c_idx]);
-            f_q_kps.push_back(q_kps[q_idx]);
+            f_p_kps.push_back(p_kps[p_idx]);
             f_c_descs.push_back(c_descs.row(c_idx));
-            f_q_descs.push_back(q_descs.row(q_idx));
+            f_p_descs.push_back(p_descs.row(p_idx));
 
             // During feature matching of the same stereo pair there are no 3D points.
             if (fill_3d)
             {
                 f_c_camera_points.push_back(c_camera_points[c_idx]);
-                f_q_camera_points.push_back(q_camera_points[c_idx]);
+                f_p_camera_points.push_back(p_camera_points[c_idx]);
             }
         }
     }
 
     // Sanity check
-    if (f_c_kps.size() < (uint)min_num_kps_)
+    if (f_c_kps.size() < (uint)(1.5 * min_inliers_))
         return NOT_ENOUGH_F_KPS;
     else
-        return SUCCESSFUL_MATCHING;
+        return SUCCESSFUL;
 }
+
 
 VisionModules::VisionResult VisionModules::geometricalMatching(bool coplanar_points,
                                                                const cv::Mat &c_descs,
-                                                               const cv::Mat &q_descs,
+                                                               const cv::Mat &p_descs,
                                                                const std::vector<cv::KeyPoint> &c_kps,
-                                                               const std::vector<cv::KeyPoint> &q_kps,
+                                                               const std::vector<cv::KeyPoint> &p_kps,
                                                                const std::vector<cv::Point3f> &c_camera_points,
-                                                               const std::vector<cv::Point3f> &q_camera_points,
+                                                               const std::vector<cv::Point3f> &p_camera_points,
                                                                cv::Mat &f_c_descs,
-                                                               cv::Mat &f_q_descs,
+                                                               cv::Mat &f_p_descs,
                                                                std::vector<cv::KeyPoint> &f_c_kps,
-                                                               std::vector<cv::KeyPoint> &f_q_kps,
+                                                               std::vector<cv::KeyPoint> &f_p_kps,
                                                                std::vector<cv::Point3f> &f_c_camera_points,
-                                                               std::vector<cv::Point3f> &f_q_camera_points)
+                                                               std::vector<cv::Point3f> &f_p_camera_points)
 {
     // Sanity check
     f_c_kps.clear();
-    f_q_kps.clear();
+    f_p_kps.clear();
     f_c_descs.release();
-    f_q_descs.release();
+    f_p_descs.release();
     f_c_camera_points.clear();
-    f_q_camera_points.clear();
-    if (c_descs.rows < min_num_kps_ || q_descs.rows < min_num_kps_)
+    f_p_camera_points.clear();
+    if (c_descs.rows < (int)(1.5 * min_inliers_) || p_descs.rows < (int)(1.5 * min_inliers_))
         return NOT_ENOUGH_KPS;
 
     // // Visual keypoint matching
-    std::vector<std::vector<cv::DMatch>> matches = matching(c_descs, q_descs);
+    std::vector<std::vector<cv::DMatch>> matches = matching(c_descs, p_descs);
 
-    int c_idx, q_idx;
-    cv::Mat m_c_descs, m_q_descs;
-    std::vector<cv::KeyPoint> m_c_kps, m_q_kps;
-    std::vector<cv::Point2f> m_c_pts, m_q_pts;
-    std::vector<cv::Point3f> m_c_camera_points, m_q_camera_points;
+    int c_idx, p_idx;
+    cv::Mat m_c_descs, m_p_descs;
+    std::vector<cv::KeyPoint> m_c_kps, m_p_kps;
+    std::vector<cv::Point2f> m_c_pts, m_p_pts;
+    std::vector<cv::Point3f> m_c_camera_points, m_p_camera_points;
     for (uint i = 0; i < matches.size(); i++)
     {
         c_idx = matches[i][0].queryIdx;
-        q_idx = matches[i][0].trainIdx;
+        p_idx = matches[i][0].trainIdx;
         m_c_kps.push_back(c_kps[c_idx]);
-        m_q_kps.push_back(q_kps[q_idx]);
+        m_p_kps.push_back(p_kps[p_idx]);
         m_c_pts.push_back(c_kps[c_idx].pt);
-        m_q_pts.push_back(q_kps[q_idx].pt);
+        m_p_pts.push_back(p_kps[p_idx].pt);
         m_c_descs.push_back(c_descs.row(c_idx));
-        m_q_descs.push_back(q_descs.row(q_idx));
+        m_p_descs.push_back(p_descs.row(p_idx));
         m_c_camera_points.push_back(c_camera_points[c_idx]);
-        m_q_camera_points.push_back(q_camera_points[q_idx]);
+        m_p_camera_points.push_back(p_camera_points[p_idx]);
     }
 
     // Compute homography or essential matrix
@@ -318,9 +347,9 @@ VisionModules::VisionResult VisionModules::geometricalMatching(bool coplanar_poi
     try
     {
         if (coplanar_points)
-            M = cv::findHomography(m_c_pts, m_q_pts, mask, cv::RANSAC, 1.0);
+            M = cv::findHomography(m_c_pts, m_p_pts, mask, cv::RANSAC, 1.0);
         else
-            M = cv::findEssentialMat(m_c_pts, m_q_pts, camera_matrix_, cv::RANSAC, 0.999, 1.0, mask);
+            M = cv::findEssentialMat(m_c_pts, m_p_pts, camera_matrix_, cv::RANSAC, 0.999, 1.0, mask);
     }
     catch (cv::Exception &e)
     {
@@ -333,20 +362,21 @@ VisionModules::VisionResult VisionModules::geometricalMatching(bool coplanar_poi
         if (mask.at<bool>(i, 0) == 1)
         {
             f_c_kps.push_back(m_c_kps[i]);
-            f_q_kps.push_back(m_q_kps[i]);
+            f_p_kps.push_back(m_p_kps[i]);
             f_c_descs.push_back(m_c_descs.row(i));
-            f_q_descs.push_back(m_q_descs.row(i));
+            f_p_descs.push_back(m_p_descs.row(i));
             f_c_camera_points.push_back(m_c_camera_points[i]);
-            f_q_camera_points.push_back(m_q_camera_points[i]);
+            f_p_camera_points.push_back(m_p_camera_points[i]);
         }
     }
 
     // Sanity check
-    if (f_c_kps.size() < (uint)min_num_kps_)
+    if (f_c_kps.size() < (uint)(1.5 * min_inliers_))
         return NOT_ENOUGH_F_KPS;
     else
-        return SUCCESSFUL_MATCHING;
+        return SUCCESSFUL;
 }
+
 
 VisionModules::VisionResult VisionModules::assembleCircularMatchings(const std::vector<cv::KeyPoint> &c_0_stereo_kps,
                                                                      const std::vector<cv::KeyPoint> &c_1_stereo_kps,
@@ -397,8 +427,8 @@ VisionModules::VisionResult VisionModules::assembleCircularMatchings(const std::
     }
 
     // Sanity check
-    if (f_c_0_kps.size() < (uint)min_num_kps_)
+    if (f_c_0_kps.size() < (uint)(1.5 * min_inliers_))
         return NOT_ENOUGH_CIRCLES;
     else
-        return SUCCESSFUL_MATCHING;
+        return SUCCESSFUL;
 }
