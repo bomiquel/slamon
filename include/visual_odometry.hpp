@@ -83,8 +83,7 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
                             const sensor_msgs::CameraInfoConstPtr& r_info_msg);
 
 
-        /** \brief Detects (using SIFT), matches and filters (using Lowe's ratio, homography,
-         *  essential matrix or circular version of the above) the keypoints of the current
+        /** \brief Detects (using SIFT), matches and filters the keypoints of the current
          *  stereo image pair. It then retrieves the 3D points from the scene and removes the
          *  "far" ones. A 3D keypoint is considered "far away" when its z is more than 40 times
          *  the stereo baseline. "Far" 3D keypoints are removed because they do not provide
@@ -100,8 +99,15 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
                                  Frame& c_frame);
 
 
-        /**
-         * 
+        /** \brief First, it matches and filters the key points of successive frames. 
+         *  These actions can be carried out in a "plain" or "circular" manner, the user chooses.
+         *  Filtering is performed using Lowe's ratio, computing the best homography (with RANSAC)
+         *  or computing the best essential matrix (with RANSAC). Finally, the movement between
+         *  frames is estimated using the 3D to 2D method (PnP + RANSAC).
+         *  \param c_frame Current stereo frame (input).
+         *  \param robot_motion Estimated movement between the two images, referenced to
+         *  robot coordinate axis.
+         *  @return "hether it was possible to match key points, filter outliers and estimate movement. 
          */ 
         bool computeMotionSuccessiveFrames(const Frame& c_frame,
                                            tf::Transform& robot_motion);

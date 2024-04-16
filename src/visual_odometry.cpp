@@ -9,8 +9,8 @@ VisualOdometry::VisualOdometry(double ratio,
                                const std::string& origin_frame_id):
                                VisionModules(ratio, min_inliers, matching_type)
 {
-    origin_frame_id_ = origin_frame_id;
     robot_frame_id_ = robot_frame_id;
+    origin_frame_id_ = origin_frame_id;
     enable_debugging_ = enable_debugging;
 }
 
@@ -92,8 +92,8 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
             tf::Transform c_robot_motion;
             if(enable_debugging_)
                 ROS_INFO_STREAM("RUNNING");
-            if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))                
-                valid_motion = computeMotionSuccessiveFrames(c_frame, c_robot_motion);
+            if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
+                valid_motion = computeMotionSuccessiveFrames(c_frame, c_robot_motion);          
             if (valid_motion)
             {
                 // ekf.predict();

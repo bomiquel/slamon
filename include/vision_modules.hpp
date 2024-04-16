@@ -269,6 +269,10 @@ class VisionModules
          *  after successive matching (input).
          *  \param p_1_successive_kps Previous keypoint vector with the highest number of points
          *  after successive matching (input).
+         *  \param c_successive_camera_points Current camera point vector after successive
+         *  matching (input).
+         *  \param p_successive_camera_points Previous camera point vector after successive
+         *  matching (input). 
          *  \param f_c_0_kps Filtered keypoints of current image with lowest number of points
          *  after successive matching (output).
          *  \param f_c_1_kps Filtered keypoints of current image with highest number of points
@@ -277,6 +281,8 @@ class VisionModules
          *  after successive matching (output).
          *  \param f_p_1_kps Filtered keypoints of previous image with highest number of points
          *  after successive matching (output).
+         *  \param f_c_camera_points Filtered camera points of current stereo image.
+         *  \param f_p_camera_points Fultered camera points of previous stereo image.
          */
         VisionResult assembleCircularMatchings(const std::vector<cv::KeyPoint>& c_0_stereo_kps,
                                                const std::vector<cv::KeyPoint>& c_1_stereo_kps,
@@ -286,10 +292,14 @@ class VisionModules
                                                const std::vector<cv::KeyPoint>& c_1_successive_kps,
                                                const std::vector<cv::KeyPoint>& p_0_successive_kps,
                                                const std::vector<cv::KeyPoint>& p_1_successive_kps,
+                                               const std::vector<cv::Point3f>& c_successive_camera_points,
+                                               const std::vector<cv::Point3f>& p_successive_camera_points,
                                                std::vector<cv::KeyPoint>& f_c_0_kps,
                                                std::vector<cv::KeyPoint>& f_c_1_kps,
                                                std::vector<cv::KeyPoint>& f_p_0_kps,
-                                               std::vector<cv::KeyPoint>& f_p_1_kps);
+                                               std::vector<cv::KeyPoint>& f_p_1_kps,
+                                               std::vector<cv::Point3f>& f_c_camera_points,
+                                               std::vector<cv::Point3f>& f_p_camera_points);
 
 
         double ratio_; //!> Lowe's ratio.

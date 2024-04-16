@@ -173,13 +173,17 @@ VisionModules::VisionResult VisionModules::matchNonStereoKeypoints(const cv::Mat
             {
                 match_result = assembleCircularMatchings(c_r_kps, c_l_kps, p_r_kps, p_l_kps,
                                                          h_f_c_r_kps, h_f_c_l_kps, h_f_p_r_kps, h_f_p_l_kps,
-                                                         f_c_r_kps, f_c_l_kps, f_p_r_kps, f_p_l_kps);
+                                                         h_f_c_r_camera_points, h_f_p_r_camera_points,
+                                                         f_c_r_kps, f_c_l_kps, f_p_r_kps, f_p_l_kps,
+                                                         f_c_camera_points, f_p_camera_points);
             }
             else
             {
                 match_result = assembleCircularMatchings(c_l_kps, c_r_kps, p_l_kps, p_r_kps,
                                                          h_f_c_l_kps, h_f_c_r_kps, h_f_p_l_kps, h_f_p_r_kps,
-                                                         f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps);
+                                                         h_f_c_l_camera_points, h_f_p_l_camera_points,
+                                                         f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps,
+                                                         f_c_camera_points, f_p_camera_points);
             }
         }
         else if (match_result != aux_result)
@@ -205,11 +209,9 @@ VisionModules::VisionResult VisionModules::estimateMotion(const std::vector<cv::
     std::vector<int> inliers;
     std::vector<cv::Point2f> f_c_l_pts;
     cv::KeyPoint::convert(f_c_l_kps, f_c_l_pts);
-    std::cout << "Keypoints: " << f_c_l_pts.size() << std::endl;
-    std::cout << "3D points: " << f_p_camera_points.size() << std::endl;
     cv::solvePnPRansac(f_p_camera_points, f_c_l_pts, camera_matrix_, cv::Mat(),
-                       r_vec, t_vec, false, 1000, 2.0, 0.99, inliers, cv::SOLVEPNP_P3P);
-    std::cout << "Inliers: " << inliers.size() << std::endl;
+                       r_vec, t_vec, false, 1000, 2.0, 0.99, inliers, cv::SOLVEPNP_ITERATIVE);
+    std::cout << "Inliers: " << inliers.size() << std::endl;    
 
     if (inliers.size() > (uint)min_inliers_)
         return SUCCESSFUL;
@@ -283,7 +285,7 @@ VisionModules::VisionResult VisionModules::ratioMatching(const cv::Mat &c_descs,
             if (fill_3d)
             {
                 f_c_camera_points.push_back(c_camera_points[c_idx]);
-                f_p_camera_points.push_back(p_camera_points[c_idx]);
+                f_p_camera_points.push_back(p_camera_points[p_idx]);
             }
         }
     }
@@ -386,10 +388,14 @@ VisionModules::VisionResult VisionModules::assembleCircularMatchings(const std::
                                                                      const std::vector<cv::KeyPoint> &c_1_successive_kps,
                                                                      const std::vector<cv::KeyPoint> &p_0_successive_kps,
                                                                      const std::vector<cv::KeyPoint> &p_1_successive_kps,
+                                                                     const std::vector<cv::Point3f>& c_successive_camera_points,
+                                                                     const std::vector<cv::Point3f>& p_successive_camera_points,
                                                                      std::vector<cv::KeyPoint> &f_c_0_kps,
                                                                      std::vector<cv::KeyPoint> &f_c_1_kps,
                                                                      std::vector<cv::KeyPoint> &f_p_0_kps,
-                                                                     std::vector<cv::KeyPoint> &f_p_1_kps)
+                                                                     std::vector<cv::KeyPoint> &f_p_1_kps,
+                                                                     std::vector<cv::Point3f>& f_c_camera_points,
+                                                                     std::vector<cv::Point3f>& f_p_camera_points)
 {
     uint j;
     uint k;
@@ -414,6 +420,8 @@ VisionModules::VisionResult VisionModules::assembleCircularMatchings(const std::
                                     f_c_1_kps.push_back(c_1_successive_kps[k]);
                                     f_p_0_kps.push_back(p_0_successive_kps[i]);
                                     f_p_1_kps.push_back(p_1_successive_kps[k]);
+                                    f_c_camera_points.push_back(c_successive_camera_points[i]);
+                                    f_p_camera_points.push_back(p_successive_camera_points[i]);
                                     break;
                                 }
                             }
