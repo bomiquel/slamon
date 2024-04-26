@@ -55,3 +55,16 @@ bool Caster::fromMotionMatToTf(const cv::Mat& r_vec,
 
     return true;
 }
+
+std::string Caster::convertTo5digits(int in)
+{
+    uint val = (uint)in;
+    std::string output;
+    int digits = 5;
+    while (digits-- > 0) {
+        output += ('0' + val % 10);
+        val /= 10;
+    }
+    reverse(output.begin(), output.end());
+    return output;
+}
