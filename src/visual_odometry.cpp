@@ -27,6 +27,7 @@ void VisualOdometry::run()
     initial_pose_client_ = nh.serviceClient<slamon::GetPose>("get_first_pose");
 
     // Publishers.
+    info_pub_ = nh.advertise<slamon::VOInfo>("vo_info", 1);
     odom_pub_ = nh.advertise<nav_msgs::Odometry>("odom", 1);
     stereo_kps_pub_ = it.advertise("stereo_keypoints", 1);
     stereo_matches_pub_ = it.advertise("stereo_matches", 1);
@@ -55,10 +56,14 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                                    const sensor_msgs::CameraInfoConstPtr& l_info_msg,
                                    const sensor_msgs::CameraInfoConstPtr& r_info_msg)
 {
-    start_time_ = ros::Time::now();
+    // Time at which the program enters into the callback.
+    ros::Time start_time = ros::Time::now();
 
     // Create current frame object.
     Frame c_frame; 
+
+    // 
+    bool valid_motion = false;
 
     // Different actions depending on the state.
     switch (status_)
@@ -88,7 +93,6 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
             break;
 
         case RUNNING:
-            bool valid_motion = false;
             tf::Transform c_robot_motion;
             if(enable_debugging_)
                 ROS_INFO_STREAM("RUNNING");
@@ -115,12 +119,9 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     // Store current frame as previous.
     p_frame_ = c_frame;
     
-    if (enable_debugging_)
-    {
-        ros::Duration delta_t = ros::Time::now() - start_time_;
-        double delta_t_sec = delta_t.toSec();
-        ROS_INFO_STREAM("Delta t: " << delta_t_sec);
-    }
+    // Publishes last iteration performance
+    double delta_t = (ros::Time::now() - start_time).toSec();
+    publishInfo(l_img_msg->header.stamp, valid_motion, delta_t, info_pub_);
 }
 
 

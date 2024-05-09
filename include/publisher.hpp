@@ -17,6 +17,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 
+#include "slamon/VOInfo.h"
 
 class Publisher
 {
@@ -117,6 +118,18 @@ class Publisher
                                     const ros::Publisher& publisher,
                                     const std::string& world_frame_id,
                                     const std::string& robot_frame_id);
+
+
+        /** \brief Publishes current visual odometer internal performance.
+         *  \param stamp Current ROS timestamp (input).
+         *  \param valid_motion If a valid movement could be estimated in the last iteration (input).
+         *  \param total_runtime Last iteration runtime (input).
+         *  \param publisher The ROS publisher (input).
+         */
+        void publishInfo(const ros::Time& stamp,
+                         const bool valid_motion,
+                         const double total_runtime,
+                         const ros::Publisher& publisher);              
 
 
     private:

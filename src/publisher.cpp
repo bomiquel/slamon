@@ -151,6 +151,25 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
 }
 
 
+void Publisher::publishInfo(const ros::Time& stamp,
+                            const bool valid_motion,
+                            const double total_runtime,
+                            const ros::Publisher& publisher)
+{
+    slamon::VOInfo msg;
+
+    // Sets header
+    msg.header.stamp = stamp;
+
+    // Sets payload
+    msg.valid_motion = valid_motion;
+    msg.total_runtime = total_runtime;
+
+    // Publishes performance information
+    publisher.publish(msg);
+}   
+
+
 cv::Mat Publisher::drawPoints(const cv::Mat& img,
                               const cv::Scalar& color,
                               const std::vector<cv::Point2f>& pts)

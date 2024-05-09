@@ -140,8 +140,6 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
         
         VOStatus status_; //!> Visual odometer state
 
-        ros::Time start_time_; //>! Time at which the program enters into the callback.
-
         bool enable_debugging_; //!> Enabling or disabling debugging messages.
         
         std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
@@ -153,6 +151,8 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
         tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
         tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.
+
+        ros::Publisher info_pub_; //!> Publishes last visual odometer last iteration performance.
 
         ros::Publisher odom_pub_; //!> Publishes current velocity and accumulated movement (odometry).
 

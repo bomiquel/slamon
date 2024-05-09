@@ -58,6 +58,7 @@ add_message_files(
     DIRECTORY 
         msg 
     FILES
+        VOInfo.msg
         GraphPoses.msg
         TimeTracking.msg
         TimeGraph.msg
