@@ -140,7 +140,7 @@ class StereoModules
          *  \param f_l_descs Filtered left image descriptors (output).
          *  \param f_r_descs Filtered right image descriptors (output).
          *  \param f_l_kpts Filtered left image keypoints (output).
-         *  \param r_l_kpts Filtered right image keypoints (output).
+         *  \param f_r_kpts Filtered right image keypoints (output).
          *  @return an enumerated type (StereoResult) encoding matching result.
          */
         StereoModules::StereoResult matchStereoKeypoints(const cv::Mat& l_descs,

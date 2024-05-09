@@ -16,7 +16,7 @@ VisualOdometry::VisualOdometry(double ratio,
 
 void VisualOdometry::run()
 {
-    // Assign "uninitialised" status to visual odometer.
+    // Set "uninitialised" status to visual odometer.
     status_ = UNINITIALISED;
 
     // Create ROS node.
@@ -140,8 +140,8 @@ bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_inf
     }
 
     // Gets projection matrix
-    l_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(l_info_msg->P.data()));
-    r_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(r_info_msg->P.data()));
+    l_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(l_info_msg->P.data())).clone();
+    r_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(r_info_msg->P.data())).clone();
 
     // Checks if the projection matrices are filled with 0s
     double counter = 0.0;

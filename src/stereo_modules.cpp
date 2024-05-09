@@ -156,15 +156,18 @@ StereoModules::StereoResult StereoModules::compute3DPoints(const cv::Mat& l_desc
                                                            std::vector<cv::Point2f>& f_r_kpts,
                                                            std::vector<cv::Point3f>& f_obj_pts)
 {
+    // Triangulates keypoints.
     cv::Mat pts_4d, obj_pts;
     cv::triangulatePoints(l_proj_mat_, r_proj_mat_, l_kpts, r_kpts, pts_4d);
     cv::convertPointsFromHomogeneous(pts_4d.t(), obj_pts);
     obj_pts = obj_pts.reshape(1, obj_pts.rows).clone();
 
+    // Computes baseline.
     double f_u = l_proj_mat_.at<double>(0, 0);
     double t_x = r_proj_mat_.at<double>(0, 3);
     double b = (t_x / -f_u);
 
+    // Filters "far" keypoints.
     cv::Point3f pt;
     double z_limit = 40 * b;
     for (int i = 0; i < obj_pts.rows; i++)
