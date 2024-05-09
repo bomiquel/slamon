@@ -2,7 +2,7 @@
  *  @file
  *  @brief The Visual Odometry class is responsive to track consecutive image frames and compute their motion.
  *  @author Bo Miquel Nordfeldt-Fiol
- *  @date Winter 2024
+ *  @date Winter-Spring 2024
  */
 
 #ifndef VISUAL_ODOMETRY_HPP
@@ -22,11 +22,11 @@
 #include "frame.hpp"
 #include "caster.hpp"
 #include "publisher.hpp"
-#include "vision_modules.hpp"
+#include "stereo_modules.hpp"
 
 #include "slamon/GetPose.h"
 
-class VisualOdometry: protected Caster, protected Publisher, protected VisionModules 
+class VisualOdometry: protected Caster, protected Publisher, protected StereoModules 
 {
     public:
 
@@ -49,7 +49,7 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
         VisualOdometry(double ratio,
                        int min_inliers,
                        bool enable_debugging,
-                       const std::string& matching_type,
+                       std::string& matching_type,
                        const std::string& robot_frame_id,
                        const std::string& origin_frame_id);
 
@@ -74,7 +74,8 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
                            const sensor_msgs::CameraInfoConstPtr& r_info_msg);
 
 
-        /** \brief
+        /** \brief Initialise the visual odometer by setting the transform between the camera
+         *  and the centre of the robot and the projection matrices.
          *  \param l_info_msg ROS message containing the info of the left image (input).
          *  \param r_info_msg ROS message containing the info of the right image (input).
          *  @return Whether the SLAM could be initialised.
@@ -99,7 +100,7 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
                                  Frame& c_frame);
 
 
-        /** \brief First, it matches and filters the key points of successive frames. 
+        /** \brief First, it matches and filters the keypoints of successive frames. 
          *  These actions can be carried out in a "plain" or "circular" manner, the user chooses.
          *  Filtering is performed using Lowe's ratio, computing the best homography (with RANSAC)
          *  or computing the best essential matrix (with RANSAC). Finally, the movement between
@@ -107,7 +108,7 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
          *  \param c_frame Current stereo frame (input).
          *  \param robot_motion Estimated movement between the two images, referenced to
          *  robot coordinate axis.
-         *  @return "hether it was possible to match key points, filter outliers and estimate movement. 
+         *  @return Whether it was possible to match keypoints, filter outliers and estimate movement. 
          */ 
         bool computeMotionSuccessiveFrames(const Frame& c_frame,
                                            tf::Transform& robot_motion);
@@ -121,15 +122,15 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
         void getInitialPose();
 
 
-        /** \brief Decodes the enum type VisionResults into a boolean and a message
+        /** \brief Decodes the enum type StereoResults into a boolean and a message
          *  printed to the console (optional).
          *  \param title Extra info to know which module sends the result (input).
-         *  \param result The vision module result (input).
+         *  \param result The stereo module result (input).
          *  @return Whether keypoint matching and filtering has been performed correctly
          *  and if there are enough filtered points.
          */
-        bool decodeVisionResult(const std::string& title,
-                                const VisionResult& result);
+        bool decodeStereoResult(const std::string& title,
+                                const StereoResult& result);
 
 
     private:
@@ -162,8 +163,6 @@ class VisualOdometry: protected Caster, protected Publisher, protected VisionMod
         image_transport::Publisher stereo_matches_pub_; // !> Stereo matches publisher
 
         image_transport::Publisher successive_matches_pub_; // !> Successive frame matching publisher 
-
-        image_geometry::StereoCameraModel stereo_camera_model_; //!> Stereo camera model
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,

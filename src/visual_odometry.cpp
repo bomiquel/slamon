@@ -4,10 +4,10 @@
 VisualOdometry::VisualOdometry(double ratio,
                                int min_inliers,
                                bool enable_debugging,
-                               const std::string& matching_type,
+                               std::string& matching_type,
                                const std::string& robot_frame_id, 
                                const std::string& origin_frame_id):
-                               VisionModules(ratio, min_inliers, matching_type)
+                               StereoModules(ratio, min_inliers, matching_type)
 {
     robot_frame_id_ = robot_frame_id;
     origin_frame_id_ = origin_frame_id;
@@ -16,27 +16,27 @@ VisualOdometry::VisualOdometry(double ratio,
 
 void VisualOdometry::run()
 {
-    // Assign "uninitialised" status to visual odometer
+    // Assign "uninitialised" status to visual odometer.
     status_ = UNINITIALISED;
 
-    // Create ROS node
+    // Create ROS node.
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
 
-    // Client services
+    // Client services.
     initial_pose_client_ = nh.serviceClient<slamon::GetPose>("get_first_pose");
 
-    // Publishers
+    // Publishers.
     odom_pub_ = nh.advertise<nav_msgs::Odometry>("odom", 1);
     stereo_kps_pub_ = it.advertise("stereo_keypoints", 1);
     stereo_matches_pub_ = it.advertise("stereo_matches", 1);
     successive_matches_pub_ = it.advertise("successive_matches", 1);
 
-    // Subscribers
+    // Subscribers.
     image_transport::SubscriberFilter l_img_sub, r_img_sub;
     message_filters::Subscriber<sensor_msgs::CameraInfo> l_info_sub, r_info_sub;
 
-    // Message sync
+    // Message sync.
     boost::shared_ptr<Sync_> sync;
     l_img_sub.subscribe(it, "left_image_rect_color", 5);
     r_img_sub.subscribe(it, "right_image_rect_color", 5);
@@ -60,7 +60,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     // Create current frame object.
     Frame c_frame; 
 
-    // Different actions depending on the state
+    // Different actions depending on the state.
     switch (status_)
     {
         case UNINITIALISED:
@@ -127,7 +127,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
 bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
                                     const sensor_msgs::CameraInfoConstPtr& r_info_msg)
 {
-    // Get the static transformation between robot frame (base link) and camera frame
+    // Gets the static transformation between robot frame (base link) and camera frame.
     robot2camera_.setIdentity();
     try
     {
@@ -139,29 +139,31 @@ bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_inf
         return false;
     }
 
-    // Get the stereo camera model
-    if (!stereo_camera_model_.fromCameraInfo(l_info_msg, r_info_msg))
-    {
-        ROS_WARN_STREAM("[Initialiser:] Impossible to get the stereo camera model");
-        return false;
-    }
+    // Gets projection matrix
+    l_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(l_info_msg->P.data()));
+    r_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(r_info_msg->P.data()));
 
-    // Get the projection/camera matrix
-    const cv::Mat P(3, 4, CV_64FC1, const_cast<double*>(l_info_msg->P.data()));
-    camera_matrix_ = P.colRange(cv::Range(0, 3)).clone();
-
-    // Check if camera_matrix is full of 0s
+    // Checks if the projection matrices are filled with 0s
     double counter = 0.0;
-    for (int i = 0; i < camera_matrix_.rows; i++)
+    for (int i = 0; i < l_proj_mat_.rows; i++)
     {
-        for (int j = 0; j < camera_matrix_.cols; j++) 
-        {
-            counter += camera_matrix_.at<double>(i,j);
-        }
+        for (int j = 0; j < l_proj_mat_.cols; j++) 
+            counter += l_proj_mat_.at<double>(i,j);
     }
     if (counter == 0.0)
     {
-        ROS_WARN_STREAM("[Initialiser:] Camera matrix is full of 0s");
+        ROS_WARN_STREAM("[Initialiser:] Left projection matrix is full of 0s");
+        return false;
+    }
+    counter = 0.0; 
+    for (int i = 0; i < r_proj_mat_.rows; i++)
+    {
+        for (int j = 0; j < r_proj_mat_.cols; j++)
+            counter += r_proj_mat_.at<double>(i, j);
+    }
+    if (counter == 0.0)
+    {
+        ROS_WARN_STREAM("[Initialiser:] Right projection matrix is full of 0s");
         return false;
     }
 
@@ -170,12 +172,19 @@ bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_inf
     int binning_y = l_info_msg->binning_y;
     if (binning_x > 1 || binning_y > 1)
     {
-      camera_matrix_.at<double>(0,0) = camera_matrix_.at<double>(0,0) / binning_x;
-      camera_matrix_.at<double>(0,2) = camera_matrix_.at<double>(0,2) / binning_x;
-      camera_matrix_.at<double>(0,3) = camera_matrix_.at<double>(0,3) / binning_x;
-      camera_matrix_.at<double>(1,1) = camera_matrix_.at<double>(1,1) / binning_y;
-      camera_matrix_.at<double>(1,2) = camera_matrix_.at<double>(1,2) / binning_y;
-      camera_matrix_.at<double>(1,3) = camera_matrix_.at<double>(1,3) / binning_y;
+      l_proj_mat_.at<double>(0,0) = l_proj_mat_.at<double>(0,0) / binning_x;
+      l_proj_mat_.at<double>(0,2) = l_proj_mat_.at<double>(0,2) / binning_x;
+      l_proj_mat_.at<double>(0,3) = l_proj_mat_.at<double>(0,3) / binning_x;
+      l_proj_mat_.at<double>(1,1) = l_proj_mat_.at<double>(1,1) / binning_y;
+      l_proj_mat_.at<double>(1,2) = l_proj_mat_.at<double>(1,2) / binning_y;
+      l_proj_mat_.at<double>(1,3) = l_proj_mat_.at<double>(1,3) / binning_y;
+
+      r_proj_mat_.at<double>(0,0) = r_proj_mat_.at<double>(0,0) / binning_x;
+      r_proj_mat_.at<double>(0,2) = r_proj_mat_.at<double>(0,2) / binning_x;
+      r_proj_mat_.at<double>(0,3) = r_proj_mat_.at<double>(0,3) / binning_x;
+      r_proj_mat_.at<double>(1,1) = r_proj_mat_.at<double>(1,1) / binning_y;
+      r_proj_mat_.at<double>(1,2) = r_proj_mat_.at<double>(1,2) / binning_y;
+      r_proj_mat_.at<double>(1,3) = r_proj_mat_.at<double>(1,3) / binning_y;
     }
 
     return true;
@@ -186,72 +195,44 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
                                          const sensor_msgs::ImageConstPtr& r_img_msg,
                                          Frame& c_frame)
 {
-    // From ROS image message to cv::Mat
+    // From ROS image message to cv::Mat.
     cv::Mat l_img, r_img;
     if (!fromImgMsgToMat(l_img_msg, l_img)) // TODO: paralellization?
         return false; 
     if (!fromImgMsgToMat(r_img_msg, r_img)) // TODO: paralellization?
         return false; 
 
-    // Detecting keypoints
+    // Detecting keypoints.
     cv::Mat l_descs, r_descs;
-    std::vector<cv::KeyPoint> l_kps, r_kps;
-    detectStereoKeypoints(l_img, r_img, l_descs, r_descs, l_kps, r_kps);
+    std::vector<cv::Point2f> l_kpts, r_kpts;
+    std::string feature_detector_type = "sift";
+    detectStereoKeypoints(l_img, r_img, feature_detector_type, l_descs, r_descs, l_kpts, r_kpts);
 
-    // Keypoint detection debugging
+    // Keypoint detection debugging.
     if (stereo_kps_pub_.getNumSubscribers() > 0)
-        publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, l_kps, r_kps, stereo_kps_pub_);
+        publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, l_kpts, r_kpts, stereo_kps_pub_);
 
-    // Matching keypoints
+    // Matching keypoints.
     cv::Mat h_f_l_descs, h_f_r_descs;
-    std::vector<cv::KeyPoint> h_f_l_kps, h_f_r_kps;
-    VisionResult match_result = matchStereoKeypoints(l_descs, r_descs, l_kps, r_kps, h_f_l_descs, 
-                                                     h_f_r_descs, h_f_l_kps, h_f_r_kps);
-    if(!decodeVisionResult("[Stereo matcher:] ", match_result))
+    std::vector<cv::Point2f> h_f_l_kpts, h_f_r_kpts;
+    StereoResult result = matchStereoKeypoints(l_descs, r_descs, l_kpts, r_kpts, h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts);
+    if(!decodeStereoResult("[Stereo matcher:] ", result))
         return false; 
 
-    // Compute 3D keypoints. Far points are filtered out because they do not provide accurate scale
-    // and translation information (Paz et al. 2008 and Mur-Artal et al. 2017). A point is considered "far" 
-    // when its z is more than 40 times the stereo baseline.
-    double disparity;
-    cv::Point3d camera_point;
-    cv::Point2d l_point, r_point;
+    // Compute 3D keypoints. 
     cv::Mat f_l_descs, f_r_descs;
-    std::vector<cv::Point3f> camera_points;
-    std::vector<cv::KeyPoint> f_l_kps, f_r_kps;
-    double z_limit = stereo_camera_model_.baseline() * 40.0;
-    for (uint i = 0; i < h_f_l_kps.size(); i++)
-    {
-        l_point = h_f_l_kps[i].pt;
-        r_point = h_f_r_kps[i].pt;
-        disparity = l_point.x - r_point.y;
-        stereo_camera_model_.projectDisparityTo3d(l_point, disparity, camera_point);
-        if (isfinite(camera_point.x) && 
-            isfinite(camera_point.y) && 
-            isfinite(camera_point.z) && 
-            (camera_point.z > 0) && 
-            (camera_point.z < z_limit)) // Rejects "far" points.
-        {
-            f_l_kps.push_back(h_f_l_kps[i]);
-            f_r_kps.push_back(h_f_r_kps[i]);
-            f_l_descs.push_back(h_f_l_descs.row(i));
-            f_r_descs.push_back(h_f_r_descs.row(i));
-            camera_points.push_back(camera_point);
-        }
-    }
+    std::vector<cv::Point3f> f_obj_pts;
+    std::vector<cv::Point2f> f_l_kpts, f_r_kpts;
+    result = compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_obj_pts);
+    if(!decodeStereoResult("[Triangulator:] ", result))
+        return false; 
 
-    if (camera_points.size() < (uint)(1.5 * min_inliers_))
-    {
-        ROS_WARN_STREAM("[3D keypoint computer:] There are not enough close 3D keypoints");
-        return false;
-    }
-
-    // Stereo matching keypoints debugging
+    // Stereo matching keypoints debugging.
     if (stereo_matches_pub_.getNumSubscribers() > 0)
-        publishMatches(false, l_img, r_img, l_img_msg->header.stamp, f_l_kps, f_r_kps, stereo_matches_pub_);
+        publishMatches(false, l_img, r_img, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, stereo_matches_pub_);
 
     // Fill Frame object
-    c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kps, f_r_kps, camera_points);
+    c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_obj_pts);
 
     return true;
 }
@@ -261,36 +242,38 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
                                                    tf::Transform& c_robot_motion)
 {
     // Search for matches of keypoints between successive frames or pairs of frames.
-    std::vector<cv::Point3f> f_c_camera_points, f_p_camera_points;
-    std::vector<cv::KeyPoint> f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps;
-    VisionResult result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
+    std::vector<cv::Point3f> f_c_obj_pts, f_p_obj_pts;
+    std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
+    StereoResult result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
                                                   p_frame_.getLeftDescs(), p_frame_.getLeftDescs(),
-                                                  c_frame.getLeftKps(), c_frame.getRightKps(), 
-                                                  p_frame_.getLeftKps(), p_frame_.getRightKps(),
-                                                  c_frame.getCameraPoints(), p_frame_.getCameraPoints(),
-                                                  f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, 
-                                                  f_c_camera_points, f_p_camera_points);
+                                                  c_frame.getLeftKpts(), c_frame.getRightKpts(), 
+                                                  p_frame_.getLeftKpts(), p_frame_.getRightKpts(),
+                                                  c_frame.getObjectPoints(), p_frame_.getObjectPoints(),
+                                                  f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, 
+                                                  f_c_obj_pts, f_p_obj_pts);
     
-    if(!decodeVisionResult("[Non-stereo matcher:] ", result))
+    if(!decodeStereoResult("[Non-stereo matcher:] ", result))
         return false; 
 
-    // Non stereo matching keypoints debugging
+    // Non stereo matching keypoints debugging.
     if (successive_matches_pub_.getNumSubscribers() > 0)
     {
         if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
             publishMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
-                           f_c_l_kps, f_p_l_kps, successive_matches_pub_);
+                           f_c_l_kpts, f_p_l_kpts, successive_matches_pub_);
         else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
             publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                   c_frame.getTimestamp(), f_c_l_kps, f_c_r_kps, f_p_l_kps, f_p_r_kps, successive_matches_pub_);
+                                   c_frame.getTimestamp(), f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, successive_matches_pub_);
         else
             ROS_ERROR_STREAM("[Non-stereo matcher debugger:] Unforeseen type of matching!");
     }
 
-    // Estimate the motion
+    // Estimate the motion.
     cv::Mat r_vec, t_vec;
-    result = estimateMotion(f_c_l_kps, f_c_r_kps, f_p_camera_points, r_vec, t_vec);
-    if(!decodeVisionResult("[Motion estimator:] ", result))
+    std::vector<cv::Point3f> i_p_obj_pts;
+    std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts; 
+    result = estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_obj_pts, r_vec, t_vec, i_c_l_kpts, i_c_r_kpts, i_p_obj_pts);
+    if(!decodeStereoResult("[Motion estimator:] ", result))
         return false; 
 
     // Build a TF
@@ -345,8 +328,8 @@ void VisualOdometry::getInitialPose()
 }
 
 
-bool VisualOdometry::decodeVisionResult(const std::string& title,
-                                        const VisionResult& result)
+bool VisualOdometry::decodeStereoResult(const std::string& title,
+                                        const StereoResult& result)
 {
     bool successful; 
     switch (result)
@@ -358,24 +341,31 @@ bool VisualOdometry::decodeVisionResult(const std::string& title,
             successful = true;
             break;
         }
-        case NOT_ENOUGH_KPS:
+        case NOT_ENOUGH_KPTS:
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM(title << "There are not enough keypoints to match and filter!");
             successful = false;
             break;
         }
-        case NOT_ENOUGH_F_KPS:
+        case NOT_ENOUGH_F_KPTS:
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM(title << "There are not enough keypoints after outlier filtering!");
             successful = false;
             break;
         }
-        case NOT_ENOUGH_E_KPS:
+        case NOT_ENOUGH_E_KPTS:
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM(title << "There are not enough keypoints after epipolar filtering!");
+            successful = false;
+            break;
+        }
+        case NOT_ENOUGH_3D_PTS:
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM(title << "There are not enough 3D points after triangulation!");
             successful = false;
             break;
         }

@@ -31,15 +31,15 @@ class Publisher
          *  \param l_img The left image (input). 
          *  \param r_img The right image (input).
          *  \param stamp The ROS timestamp (input).
-         *  \param l_kps The left image keypoints (input).
-         *  \param r_kps The left image keypoints (input).
+         *  \param l_kpts The left image keypoints (input).
+         *  \param r_kpts The left image keypoints (input).
          *  \param publisher The ROS publisher (input).
          */
         void publishStereoKeypoints(const cv::Mat& l_img,
                                     const cv::Mat& r_img,
                                     const ros::Time& stamp,
-                                    const std::vector<cv::KeyPoint>& l_kps,
-                                    const std::vector<cv::KeyPoint>& r_kps,
+                                    const std::vector<cv::Point2f>& l_kpts,
+                                    const std::vector<cv::Point2f>& r_kpts,
                                     const image_transport::Publisher& publisher);
 
 
@@ -48,21 +48,21 @@ class Publisher
          *  \param vertical If true, draws and publishes vertical matches 
          *  (case for the successive images). If false, draws and publishes horizontal
          *  matches (case for stereo pair) (input).
-         *  \param c_img In the case of successive images, it is the current image.
+         *  \param img_0 In the case of successive images, it is the current image.
          *  In the stereo case, it is the left image (input).
-         *  \param q_img In the case of successive images, it is the previous image.
+         *  \param img_1 In the case of successive images, it is the previous image.
          *  In the stereo case, it is the right image (input).
          *  \param stamp The ROS timestamp (input).
-         *  \param f_c_kps Filtered and sorted current/left keypoints (input).
-         *  \param f_q_kps Filtered and sorted previous/right keypoints (input).
+         *  \param f_kpts_0 Filtered and sorted current/left keypoints (input).
+         *  \param f_kpts_1 Filtered and sorted previous/right keypoints (input).
          *  \param publisher The ROS publisher (input).
          */
         void publishMatches(bool vertical, 
-                            const cv::Mat& c_img,
-                            const cv::Mat& q_img,
+                            const cv::Mat& img_0,
+                            const cv::Mat& img_1,
                             const ros::Time& stamp,
-                            const std::vector<cv::KeyPoint>& f_c_kps,
-                            const std::vector<cv::KeyPoint>& f_q_kps,
+                            const std::vector<cv::Point2f>& f_kpts_0,
+                            const std::vector<cv::Point2f>& f_kpts_1,
                             const image_transport::Publisher& publisher);
 
 
@@ -72,10 +72,10 @@ class Publisher
          *  \param p_l_img Previous left image (input).
          *  \param p_r_img Previous right image (input).
          *  \param stamp The ROS timestamp (input).
-         *  \param f_c_l_kps Filtered and sorted current left keypoints (input).
-         *  \param f_c_r_kps Filtered and sorted current right keypoints (input).
-         *  \param f_p_l_kps Filtered and sorted previous left keypoints (input).
-         *  \param f_p_r_kps Filtered and sorted previous right keypoints (input).
+         *  \param f_c_l_kpts Filtered and sorted current left keypoints (input).
+         *  \param f_c_r_kpts Filtered and sorted current right keypoints (input).
+         *  \param f_p_l_kpts Filtered and sorted previous left keypoints (input).
+         *  \param f_p_r_kpts Filtered and sorted previous right keypoints (input).
          *  \param publisher The ROS publisher (input).
          */
         void publishCircularMatches(const cv::Mat& c_l_img,                                    
@@ -83,10 +83,10 @@ class Publisher
                                     const cv::Mat& p_l_img,
                                     const cv::Mat& p_r_img,
                                     const ros::Time& stamp,
-                                    const std::vector<cv::KeyPoint>& f_c_l_kps,
-                                    const std::vector<cv::KeyPoint>& f_c_r_kps,
-                                    const std::vector<cv::KeyPoint>& f_p_l_kps,
-                                    const std::vector<cv::KeyPoint>& f_p_r_kps,
+                                    const std::vector<cv::Point2f>& f_c_l_kpts,
+                                    const std::vector<cv::Point2f>& f_c_r_kpts,
+                                    const std::vector<cv::Point2f>& f_p_l_kpts,
+                                    const std::vector<cv::Point2f>& f_p_r_kpts,
                                     const image_transport::Publisher& publisher);
 
 
@@ -104,11 +104,11 @@ class Publisher
          *  \param c_stamp Current ROS timestamp (input).
          *  \param p_stamp Previous ROS timestamp (input).
          *  \param pose The current robot pose to be published (input).
-         *  \param motion The robot movement between current and previous franes.
-         *  Used to calculate robot velocity.
+         *  \param motion The robot movement between current and previous frames.
+         *  Used to calculate robot velocity (input).
          *  \param publisher The ROS publisher (input).
-         *  \param world_frame_id World coordinate axis id.
-         *  \param robot_frame_id Robot coordinate axis id.
+         *  \param world_frame_id World coordinate axis id (input).
+         *  \param robot_frame_id Robot coordinate axis id (input).
          */
         void publishPoseAndVelocity(const ros::Time& c_stamp,
                                     const ros::Time& p_stamp,
@@ -122,36 +122,45 @@ class Publisher
     private:
 
 
-        /** \brief Writes text at the bottom of the image.
-         *  \param in_img The image (input).
-         *  \param s The text (input).
-         *  \param txt_img The image with the txt at the bottom (output).
+        /** \brief Draw points to image.
+         *  \param img Original image (input).
+         *  \param color The colour desired to be used to paint the points (input).
+         *  \param pts The points (input).
+         *  @return The image with the points drawn.
          */
-        void writeTxtInImage(const cv::Mat& img,
-                             const std::stringstream& s,
-                             cv::Mat& txt_img);
+        cv::Mat drawPoints(const cv::Mat& img,
+                           const cv::Scalar& color,
+                           const std::vector<cv::Point2f>& pts);
+
+
+        /** \brief Writes text at the bottom of the image.
+         *  \param img The image (input).
+         *  \param s The text (input).
+         *  @return An image with the txt at the bottom.
+         */
+        cv::Mat writeTxtInImage(const cv::Mat& img,
+                                const std::stringstream& s);
 
 
         /** \brief Draws vertical or horizontal matches between two images.
          *  \param vertical If true, the function concatenates the two images
          *  and paints the matchings vertically (case for the successive images). 
          *  In false, it does it horizontally (case for stereo pair) (input).
-         *  \param c_img In the case of successive images, it is the current image.
+         *  \param img_0 In the case of successive images, it is the current image.
          *  In the stereo case, it is the left image (input).
-         *  \param q_img In the case of successive images, it is the previous image.
+         *  \param img_1 In the case of successive images, it is the previous image.
          *  In the stereo case, it is the right image (input).
          *  \param color Color of the keypoints and matches (input).
-         *  \param f_c_kps Filtered and sorted current/left keypoints (input).
-         *  \param f_q_kps Filtered and sorted previous/right keypoints (input).
-         *  \param out_img Concatened and drawn image (output). 
+         *  \param f_kpts_0 Filtered and sorted current/left keypoints (input).
+         *  \param f_kpts_1 Filtered and sorted previous/right keypoints (input).
+         *  @return a concatened and drawn image. 
          */
-        void drawMatches(bool vertical,
-                         const cv::Mat& c_img,
-                         const cv::Mat& q_img,
-                         const cv::Scalar& color,
-                         const std::vector<cv::KeyPoint> f_c_kps,
-                         const std::vector<cv::KeyPoint> f_q_kps,
-                         cv::Mat& out_img);
+        cv::Mat drawMatches(const bool vertical,
+                            const cv::Mat& img_0,
+                            const cv::Mat& img_1,
+                            const cv::Scalar& color,
+                            const std::vector<cv::Point2f>& f_kpts_0,
+                            const std::vector<cv::Point2f>& f_kpts_1);
 };
 
 

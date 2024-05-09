@@ -32,7 +32,7 @@ class Caster
          *  @return If the conversion has been possible.
          */
         bool fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
-                            cv::Mat& img);
+                             cv::Mat& img);
 
 
         /** \brief Convert motion cv::Mat to ROS transform

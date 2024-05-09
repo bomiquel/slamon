@@ -3,7 +3,7 @@
  *  @brief The Frame class represents each stereo camera frame (presentation).
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
- *  @modified Bo Miquel Nordfeldt-Fiol Winter 2024
+ *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
  */
 
 #ifndef FRAME_H
@@ -34,9 +34,9 @@ class Frame
               const cv::Mat& l_descs,
               const cv::Mat& r_descs,
               const ros::Time& stamp,
-              const std::vector<cv::KeyPoint>& l_kps,
-              const std::vector<cv::KeyPoint>& r_kps,
-              const std::vector<cv::Point3f>& camera_points);
+              const std::vector<cv::Point2f>& l_kpts,
+              const std::vector<cv::Point2f>& r_kpts,
+              const std::vector<cv::Point3f>& obj_pts);
 
 
         /** \brief Set keyframe id.
@@ -84,18 +84,18 @@ class Frame
         /** \brief Get left keypoints.
          *  @return Left keypoints.
          */
-        inline std::vector<cv::KeyPoint> getLeftKps() const {return l_kps_;}
+        inline std::vector<cv::Point2f> getLeftKpts() const {return l_kpts_;}
 
 
         /** \brief Get right keypoints.
          *  @return Right keypoints.
          */
-        inline std::vector<cv::KeyPoint> getRightKps() const {return r_kps_;}
+        inline std::vector<cv::Point2f> getRightKpts() const {return r_kpts_;}
         
 
         /** \brief Get 3D in camera frame.
          */
-        inline std::vector<cv::Point3f> getCameraPoints() const {return camera_points_;}
+        inline std::vector<cv::Point3f> getObjectPoints() const {return obj_pts_;}
 
 
         /** \brief Set camera pose.
@@ -122,10 +122,10 @@ class Frame
         cv::Mat l_descs_; //!> Left descriptors.
         cv::Mat r_descs_; //!> Right descriptors.
 
-        std::vector<cv::KeyPoint> l_kps_; //!> Left keypoints.
-        std::vector<cv::KeyPoint> r_kps_; //!> Right keypoints.
+        std::vector<cv::Point2f> l_kpts_; //!> Left keypoints.
+        std::vector<cv::Point2f> r_kpts_; //!> Right keypoints.
 
-        std::vector<cv::Point3f> camera_points_; //!> Stereo 3D points in camera frame.
+        std::vector<cv::Point3f> obj_pts_; //!> Stereo 3D points in camera frame.
 
         tf::Transform camera_pose_; //!> Camera world position for this frame.
 

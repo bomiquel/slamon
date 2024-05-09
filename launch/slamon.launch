@@ -1,7 +1,7 @@
 <launch>
 
     <!-- Robots parameters -->
-    <arg name = "robot_name"         default = "turbot"/>
+    <arg name = "robot_name"         default = "robot_0"/>
 
     <!-- Image parameters -->
     <arg name = "camera"             default = "/stereo_down"/>
@@ -15,21 +15,21 @@
     <param name="/use_sim_time"      value = "true"/>
 
     <!-- Portals Vells T0 -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-14-41-06_0.bag
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-14-41-06_0.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-14-47-26_1.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-14-53-45_2.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-15-00-04_3.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-15-06-23_4.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/images_2021-02-25-15-12-43_5.bag
-                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/topics_2021-02-25-14-41-52_0.bag"/> -->
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_new_frame_id/topics_2021-02-25-14-41-52_0.bag"/>
 
-    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_corrected/images_2021-02-25-14-41-06_0.bag
+    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_corrected/images_2021-02-25-14-41-06_0.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_corrected/images_2021-02-25-14-47-26_1.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_corrected/images_2021-02-25-14-53-45_2.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_corrected/images_2021-02-25-15-00-04_3.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_corrected/images_2021-02-25-15-06-23_4.bag
                                         /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_corrected/images_2021-02-25-15-12-43_5.bag
-                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_corrected/topics_2021-02-25-14-41-52_0.bag"/>
+                                        /home/bomiquel/datasets/bagfiles/portals/2021_02_25/14_41_06_corrected/topics_2021-02-25-14-41-52_0.bag"/> -->
 
     <!-- Portals Vells T2 -->
     <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/portals/2021_02_25/15_56_25_new_frame_id/images_2021-02-25-15-56-26_0.bag
@@ -42,7 +42,7 @@
 
 
     <!-- PLAY bagfile -->
-    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera)/left/camera_info /$(arg camera)/left/image_raw /$(arg camera)/right/camera_info /$(arg camera)/right/image_raw" required = "true" />
+    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics $(arg camera)/left/camera_info $(arg camera)/left/image_raw $(arg camera)/right/camera_info $(arg camera)/right/image_raw" required = "true" />
 
     <!-- Static TF's -->
     <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_base_link_to_stereo_stick" args = "0.4 0.0 0.8 0.0 0.0 0.0 /$(arg robot_name)/base_link /$(arg robot_name)/stereo_stick 30" />
@@ -95,24 +95,24 @@
         <rosparam command="load" file="$(find slamon)/config/slamon_parameters.yaml"/>
         <node pkg = "slamon" type = "slam" name = "slamon" output = "screen" if = "$(eval enable_decimate_x1 == true)">
             <remap from = "get_first_pose"              to = "slamon/get_first_pose"/>
-            <remap from = "left_camera_info"            to = "/$(arg camera)/left/camera_info"/>
-            <remap from = "right_camera_info"           to = "/$(arg camera)/right/camera_info"/>
-            <remap from = "left_image_rect_color"       to = "/$(arg camera)/left/image_rect_color"/>
-            <remap from = "right_image_rect_color"      to = "/$(arg camera)/right/image_rect_color"/> 
+            <remap from = "left_camera_info"            to = "$(arg camera)/left/camera_info"/>
+            <remap from = "right_camera_info"           to = "$(arg camera)/right/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "$(arg camera)/left/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "$(arg camera)/right/image_rect_color"/> 
         </node>
         <node pkg = "slamon" type = "slam" name = "slamon" output = "screen" if = "$(eval enable_decimate_x2 == true)">
             <remap from = "get_first_pose"              to = "slamon/get_first_pose"/>
-            <remap from = "left_camera_info"            to = "/$(arg camera)/scaled_x2/left/camera_info"/>
-            <remap from = "right_camera_info"           to = "/$(arg camera)/scaled_x2/right/camera_info"/>
-            <remap from = "left_image_rect_color"       to = "/$(arg camera)/scaled_x2/left/image_rect_color"/>
-            <remap from = "right_image_rect_color"      to = "/$(arg camera)/scaled_x2/right/image_rect_color"/> 
+            <remap from = "left_camera_info"            to = "$(arg camera)/scaled_x2/left/camera_info"/>
+            <remap from = "right_camera_info"           to = "$(arg camera)/scaled_x2/right/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "$(arg camera)/scaled_x2/left/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "$(arg camera)/scaled_x2/right/image_rect_color"/> 
         </node>
         <node pkg = "slamon" type = "slam" name = "slamon" output = "screen" if = "$(eval enable_decimate_x4 == true)">
             <remap from = "get_first_pose"              to = "slamon/get_first_pose"/>
-            <remap from = "left_camera_info"            to = "/$(arg camera)/scaled_x4/left/camera_info"/>
-            <remap from = "right_camera_info"           to = "/$(arg camera)/scaled_x4/right/camera_info"/>
-            <remap from = "left_image_rect_color"       to = "/$(arg camera)/scaled_x4/left/image_rect_color"/>
-            <remap from = "right_image_rect_color"      to = "/$(arg camera)/scaled_x4/right/image_rect_color"/> 
+            <remap from = "left_camera_info"            to = "$(arg camera)/scaled_x4/left/camera_info"/>
+            <remap from = "right_camera_info"           to = "$(arg camera)/scaled_x4/right/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "$(arg camera)/scaled_x4/left/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "$(arg camera)/scaled_x4/right/image_rect_color"/> 
         </node>
 
     </group>

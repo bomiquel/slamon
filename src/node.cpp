@@ -24,7 +24,7 @@ void readParams(int& min_inliers,
 
     // Printing parameters values.
     ROS_INFO_STREAM("Parameter setting: " << std::endl <<
-                    "Minimum kps      = " << min_inliers << std::endl << 
+                    "Minimum kpts     = " << min_inliers << std::endl << 
                     "Lowe's ratio     = " << lowe_ratio << std::endl <<
                     "Matching type    = " << matching_type << std::endl <<
                     "Robot frame id   = " << robot_frame_id << std::endl <<
@@ -75,7 +75,7 @@ void readParams(int& min_inliers,
     {
         ROS_INFO_STREAM("Some parameter was invalid and has been assigned its default value." << std::endl <<
                         "Current parameter values are: " << std::endl <<
-                        "Minimum kps      = " << min_inliers << std::endl << 
+                        "Minimum kpts     = " << min_inliers << std::endl << 
                         "Lowe's ratio     = " << lowe_ratio << std::endl <<
                         "Matching type    = " << matching_type << std::endl <<
                         "Robot frame id   = " << robot_frame_id << std::endl <<

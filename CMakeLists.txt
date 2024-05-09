@@ -101,7 +101,7 @@ add_executable(slam
                src/frame.cpp
                src/caster.cpp
                src/publisher.cpp
-               src/vision_modules.cpp
+               src/stereo_modules.cpp
                src/visual_odometry.cpp)
 add_executable(initial_pose_server src/initial_pose_server)
 

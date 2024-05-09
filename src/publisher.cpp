@@ -4,54 +4,50 @@
 void Publisher::publishStereoKeypoints(const cv::Mat& l_img,
                                        const cv::Mat& r_img,
                                        const ros::Time& stamp,
-                                       const std::vector<cv::KeyPoint>& l_kps,
-                                       const std::vector<cv::KeyPoint>& r_kps,
+                                       const std::vector<cv::Point2f>& l_kpts,
+                                       const std::vector<cv::Point2f>& r_kpts,
                                        const image_transport::Publisher& publisher)
 {
     // Draw the key points in their respective images.
-    cv::Mat aux_l_img, aux_r_img;
     cv::Scalar color(0.0, 0.0, 255);
-    cv::drawKeypoints(l_img, l_kps, aux_l_img, color);
-    cv::drawKeypoints(r_img, r_kps, aux_r_img, color);
+    cv::Mat drawn_l_img = drawPoints(l_img, color, l_kpts);
+    cv::Mat drawn_r_img = drawPoints(r_img, color, r_kpts);
 
     // Write text
     std::stringstream s;
-    cv::Mat stereo_txt_img, aux_txt_r_img;
-    s << " Number of keypoints: " << l_kps.size();
-    writeTxtInImage(aux_l_img, s, stereo_txt_img);
+    s << " Number of keypoints: " << l_kpts.size();
+    cv::Mat stereo_drawn_img = writeTxtInImage(drawn_l_img, s);
     s.str("");
-    s << " Number of keypoints: " << r_kps.size();
-    writeTxtInImage(aux_r_img, s, aux_txt_r_img);
-
+    s << " Number of keypoints: " << r_kpts.size();
+    cv::Mat aux_drawn_r_img = writeTxtInImage(drawn_r_img, s) ;
+    
     // Concatenates horizontally the painted images.
-    cv::hconcat(stereo_txt_img, aux_txt_r_img, stereo_txt_img);
+    cv::hconcat(stereo_drawn_img, aux_drawn_r_img, stereo_drawn_img);
 
     // Publish image
-    publishImage(stereo_txt_img, stamp, publisher);
+    publishImage(stereo_drawn_img, stamp, publisher);
 }
 
 
 void Publisher::publishMatches(bool vertical, 
-                               const cv::Mat& c_img,
-                               const cv::Mat& q_img,
+                               const cv::Mat& img_0,
+                               const cv::Mat& img_1,
                                const ros::Time& stamp,
-                               const std::vector<cv::KeyPoint>& f_c_kps,
-                               const std::vector<cv::KeyPoint>& f_q_kps,
+                               const std::vector<cv::Point2f>& f_kpts_0,
+                               const std::vector<cv::Point2f>& f_kpts_1,
                                const image_transport::Publisher& publisher)
 {
     // Draw matches
-    cv::Mat out_img;
     cv::Scalar color(0.0, 0.0, 255);
-    drawMatches(vertical, c_img, q_img, color, f_c_kps, f_q_kps, out_img);
+    cv::Mat drawn_img = drawMatches(vertical, img_0, img_1, color, f_kpts_0, f_kpts_1);
 
     // Write text
     std::stringstream s;
-    cv::Mat out_text_img;
-    s << " Number of matches: " << f_c_kps.size();
-    writeTxtInImage(out_img, s, out_text_img);
+    s << " Number of matches: " << f_kpts_0.size();
+    cv::Mat o_img = writeTxtInImage(drawn_img, s);
 
     // Publish image
-    publishImage(out_text_img, stamp, publisher);
+    publishImage(o_img, stamp, publisher);
 }
 
 
@@ -60,51 +56,50 @@ void Publisher::publishCircularMatches(const cv::Mat& c_l_img,
                                        const cv::Mat& p_l_img,
                                        const cv::Mat& p_r_img,
                                        const ros::Time& stamp,
-                                       const std::vector<cv::KeyPoint>& f_c_l_kps,
-                                       const std::vector<cv::KeyPoint>& f_c_r_kps,
-                                       const std::vector<cv::KeyPoint>& f_p_l_kps,
-                                       const std::vector<cv::KeyPoint>& f_p_r_kps,
+                                       const std::vector<cv::Point2f>& f_c_l_kpts,
+                                       const std::vector<cv::Point2f>& f_c_r_kpts,
+                                       const std::vector<cv::Point2f>& f_p_l_kpts,
+                                       const std::vector<cv::Point2f>& f_p_r_kpts,
                                        const image_transport::Publisher& publisher)
 {
     // Concatenate horizontal images and draw matches
     cv::Scalar color(0.0, 0.0, 255);
-    cv::Mat c_stereo_img, p_stereo_img;
-    drawMatches(false, c_l_img, c_r_img, color, f_c_l_kps, f_c_r_kps, c_stereo_img);
-    drawMatches(false, p_l_img, p_r_img, color, f_p_l_kps, f_p_r_kps, p_stereo_img);
+    // cv::Mat c_stereo_img, p_stereo_img;
+    cv::Mat c_stereo_img = drawMatches(false, c_l_img, c_r_img, color, f_c_l_kpts, f_c_r_kpts);
+    cv::Mat p_stereo_img = drawMatches(false, p_l_img, p_r_img, color, f_p_l_kpts, f_p_r_kpts);
 
     // Vertical concatenation
-    cv::Mat out_img;
-    cv::vconcat(c_stereo_img, p_stereo_img, out_img);
+    cv::Mat drawn_stereo_img;
+    cv::vconcat(c_stereo_img, p_stereo_img, drawn_stereo_img);
 
     // Draw vertical matches
     int x_offset = c_l_img.cols;
     int y_offset = c_l_img.rows;
     cv::Point2f f_c_r_pt_offset, f_p_l_pt_offset, f_p_r_pt_offset;
-    for (uint i = 0; i < f_c_l_kps.size(); i++)
+    for (uint i = 0; i < f_c_l_kpts.size(); i++)
     {
         // Add offset to filtered current right keypoints
-        f_c_r_pt_offset = f_c_r_kps[i].pt;
+        f_c_r_pt_offset = f_c_r_kpts[i];
         f_c_r_pt_offset.x += x_offset;
         // Add offset to filtered previous left keypoints
-        f_p_l_pt_offset = f_p_l_kps[i].pt;
+        f_p_l_pt_offset = f_p_l_kpts[i];
         f_p_l_pt_offset.y += y_offset;
         // Add offset to filtered previous right keypoints
-        f_p_r_pt_offset = f_p_r_kps[i].pt;
+        f_p_r_pt_offset = f_p_r_kpts[i];
         f_p_r_pt_offset.x += x_offset;
         f_p_r_pt_offset.y += y_offset;
 
-        cv::line(out_img, f_c_l_kps[i].pt, f_p_l_pt_offset, color, 1, cv::LINE_AA, 0);
-        cv::line(out_img, f_c_r_pt_offset, f_p_r_pt_offset, color, 1, cv::LINE_AA, 0);
+        cv::line(drawn_stereo_img, f_c_l_kpts[i], f_p_l_pt_offset, color, 1, cv::LINE_AA, 0);
+        cv::line(drawn_stereo_img, f_c_r_pt_offset, f_p_r_pt_offset, color, 1, cv::LINE_AA, 0);
     }
 
     // Write text
     std::stringstream s;
-    cv::Mat out_text_img;
-    s << " Number of matches: " << f_c_l_kps.size();
-    writeTxtInImage(out_img, s, out_text_img);
+    s << " Number of matches: " << f_c_l_kpts.size();
+    cv::Mat o_img = writeTxtInImage(drawn_stereo_img, s);
     
     // Publish image
-    publishImage(out_text_img, stamp, publisher);
+    publishImage(o_img, stamp, publisher);
 }
 
 
@@ -156,52 +151,70 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
 }
 
 
-void Publisher::writeTxtInImage(const cv::Mat& img,
-                                const std::stringstream& s,
-                                cv::Mat& txt_img)
+cv::Mat Publisher::drawPoints(const cv::Mat& img,
+                              const cv::Scalar& color,
+                              const std::vector<cv::Point2f>& pts)
 {
-    int baseline = 0;
-    cv::Size text_size = cv::getTextSize(s.str(), cv::FONT_HERSHEY_PLAIN, 1.5, 1, &baseline);
-    txt_img = cv::Mat(img.rows + text_size.height + 20, img.cols, img.type());
-    img.copyTo(txt_img.rowRange(0, img.rows).colRange(0, img.cols));
-    txt_img.rowRange(img.rows, txt_img.rows).setTo(cv::Scalar(255, 255, 255));
-    cv::putText(txt_img, s.str(), cv::Point(5, txt_img.rows - 10), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2, 8);
+    cv::Mat o_img;
+    img.copyTo(o_img);
+
+    // Draw points
+    for (uint i = 0; i < pts.size(); i++)
+        cv::circle(o_img, pts[i], 2, color, -1);
+
+    return o_img;
 }
 
 
-void Publisher::drawMatches(bool vertical,
-                            const cv::Mat& c_img,
-                            const cv::Mat& q_img,
-                            const cv::Scalar& color,
-                            const std::vector<cv::KeyPoint> f_c_kps,
-                            const std::vector<cv::KeyPoint> f_q_kps,
-                            cv::Mat& out_img)
+cv::Mat Publisher::writeTxtInImage(const cv::Mat& img,
+                                   const std::stringstream& s)
+{
+    int baseline = 0;
+    cv::Size text_size = cv::getTextSize(s.str(), cv::FONT_HERSHEY_PLAIN, 1.5, 1, &baseline);
+    cv::Mat o_img = cv::Mat(img.rows + text_size.height + 20, img.cols, img.type());
+    img.copyTo(o_img.rowRange(0, img.rows).colRange(0, img.cols));
+    o_img.rowRange(img.rows, o_img.rows).setTo(cv::Scalar(255, 255, 255));
+    cv::putText(o_img, s.str(), cv::Point(5, o_img.rows - 10), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2, 8);
+
+    return o_img;
+}
+
+
+cv::Mat Publisher::drawMatches(const bool vertical,
+                               const cv::Mat& img_0,
+                               const cv::Mat& img_1,
+                               const cv::Scalar& color,
+                               const std::vector<cv::Point2f>& f_kpts_0,
+                               const std::vector<cv::Point2f>& f_kpts_1)
 {
     // Image concatenation and offset assignment
     int offset;
+    cv::Mat o_img;
     if (vertical)
     {
-        cv::vconcat(c_img, q_img, out_img);
-        offset = c_img.rows;
+        cv::vconcat(img_0, img_1, o_img);
+        offset = img_0.rows;
     }
     else
     {
-        cv::hconcat(c_img, q_img, out_img);
-        offset = c_img.cols;
+        cv::hconcat(img_0, img_1, o_img);
+        offset = img_0.cols;
     }
 
     // Draw keypoints and matches
-    cv::Point2f f_q_kp_offset;
-    for (uint i = 0; i < f_c_kps.size(); i++)
+    cv::Point2f f_q_kpt_offset;
+    for (uint i = 0; i < f_kpts_0.size(); i++)
     {
-        f_q_kp_offset = f_q_kps[i].pt;
+        f_q_kpt_offset = f_kpts_1[i];
         if (vertical)
-            f_q_kp_offset.y += offset;
+            f_q_kpt_offset.y += offset;
         else
-            f_q_kp_offset.x += offset;
+            f_q_kpt_offset.x += offset;
 
-        cv::circle(out_img, f_c_kps[i].pt, 4, color, 1, cv::LINE_AA, 0);
-        cv::circle(out_img, f_q_kp_offset, 4, color, 1, cv::LINE_AA, 0);
-        cv::line(out_img, f_c_kps[i].pt, f_q_kp_offset, color, 1, cv::LINE_AA, 0);
+        cv::circle(o_img, f_kpts_0[i], 4, color, 1, cv::LINE_AA, 0);
+        cv::circle(o_img, f_q_kpt_offset, 4, color, 1, cv::LINE_AA, 0);
+        cv::line(o_img, f_kpts_0[i], f_q_kpt_offset, color, 1, cv::LINE_AA, 0);
     }
+
+    return o_img;
 }

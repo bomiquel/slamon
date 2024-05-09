@@ -2,6 +2,6 @@ slamon:
   lowe_ratio: 0.8 # 0.7/0.9, good 0.8
   min_inliers: 30 # 20
   matching_type: ratio_matching
-  robot_frame_id: /turbot/base_link
+  robot_frame_id: /robot_0/base_link
   origin_frame_id: /odom
   enable_debugging: true
