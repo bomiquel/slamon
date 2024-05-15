@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -136,12 +137,20 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
     private:
         
         // Atributes
-        Frame p_frame_; //!> Previous frame
+        int c_frame_id_; //!> Current frame id.
+
+        Frame p_frame_; //!> Previous frame.
         
-        VOStatus status_; //!> Visual odometer state
+        VOStatus status_; //!> Visual odometer state.
 
         bool enable_debugging_; //!> Enabling or disabling debugging messages.
-        
+
+        // std::string o_path_; //!> Output path for debugging purpose.
+
+        std::string f_path_; //!> Path to store frames with debugging purpose.
+
+        std::string c_frame_name_; //!> Current frame name.
+
         std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 
         std::string origin_frame_id_; //!> Odometry coordinate axis identficator.
@@ -158,11 +167,13 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
 
         ros::ServiceClient initial_pose_client_; //!> Service client to assign the initial position to the SLAM.
 
+        image_transport::Publisher inliers_pub_; // !> Inliers publisher 
+
         image_transport::Publisher stereo_kps_pub_; // !> Stereo keypoints publisher
 
         image_transport::Publisher stereo_matches_pub_; // !> Stereo matches publisher
 
-        image_transport::Publisher successive_matches_pub_; // !> Successive frame matching publisher 
+        image_transport::Publisher successive_matches_pub_; // !> Successive frames matching publisher 
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,

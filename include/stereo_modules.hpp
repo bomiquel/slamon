@@ -254,6 +254,46 @@ class StereoModules
                                                    std::vector<cv::Point3f>& f_p_obj_pts);
 
 
+        /** \brief Estimate motion between frames using 3D-to-2D method.
+         *  To be robust, the motion estimation is wrapped in a RANSAC scheme.
+         *  \param c_l_kpts Current left image keypoints (input).
+         *  \param c_r_kpts Current right image keypoints (input).
+         *  \param p_l_kpts Previous left image keypoints (input).
+         *  \param p_r_kpts Previous right image keypoints (input).
+         *  \param c_obj_pts Current image 3D points (input).
+         *  \param p_obj_pts Previous image 3D points (input).
+         *  \param r_vec Estimated rotation vector (output).
+         *  \param t_vec Estimated translation matrix (output).
+         *  \param f_c_l_kpts Current left image keypoints filtered by the 
+         *  RANSAC scheme (output).
+         *  \param f_c_r_kpts Current right iamge keypoints filtered by the
+         *  RANSAC scheme (output).
+         *  \param f_p_l_kpts Previous left image keypoints filtered by the 
+         *  RANSAC scheme (output).
+         *  \param f_p_r_kpts Previous right iamge keypoints filtered by the
+         *  RANSAC scheme (output).
+         *  \param f_c_obj_pts Current image 3D points filtered by the 
+         *  RANSAC scheme (output).
+         *  \param f_p_obj_pts Previous image 3D points filtered by the 
+         *  RANSAC scheme (output).
+         *  @return an enumerated type (StereoResult) encoding motion estimation result.
+         */
+        StereoModules::StereoResult estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
+                                                   const std::vector<cv::Point2f>& c_r_kpts,
+                                                   const std::vector<cv::Point2f>& p_l_kpts,
+                                                   const std::vector<cv::Point2f>& p_r_kpts,
+                                                   const std::vector<cv::Point3f>& c_obj_pts,
+                                                   const std::vector<cv::Point3f>& p_obj_pts,
+                                                   cv::Mat& r_vec,
+                                                   cv::Mat& t_vec,
+                                                   std::vector<cv::Point2f>& f_c_l_kpts,
+                                                   std::vector<cv::Point2f>& f_c_r_kpts,
+                                                   std::vector<cv::Point2f>& f_p_l_kpts,
+                                                   std::vector<cv::Point2f>& f_p_r_kpts,
+                                                   std::vector<cv::Point3f>& f_c_obj_pts,
+                                                   std::vector<cv::Point3f>& f_p_obj_pts);
+
+
     protected:
 
         /** \brief Using a string selects the correct value for the enumerated type

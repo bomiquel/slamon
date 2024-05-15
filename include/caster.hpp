@@ -41,9 +41,20 @@ class Caster
          *  \param tf ROS estimated transform (output).
          *  @return If the cast could be made
          */
-        bool fromMotionMatToTf(const cv::Mat& r_vec,
-                               const cv::Mat& t_vec,
-                               tf::Transform& tf);
+        bool fromMatToTf(const cv::Mat& r_vec,
+                         const cv::Mat& t_vec,
+                         tf::Transform& tf);
+
+
+        /** \brief Convert ROS transform to motion cv::Mat
+         *  \param tf ROS estimated transform (input).
+         *  \param r_vec OpenCV estimated rotation vector (output).
+         *  \param t_vec OpenCV estimated translation vector (output).
+         *  @return If the cast could be made
+         */
+        void fromTfToMat(const tf::Transform& tf,
+                         cv::Mat& r_vec,
+                         cv::Mat& t_vec);
 
 
         /** \brief Converts an integer to a string containing a
@@ -51,7 +62,7 @@ class Caster
          *  \param in Input integer (input).
          *  @return The string containing the five-digit number.
         */
-        std::string convertTo5digits(int in);
+        std::string convertTo5Digits(int in);
 };
 
 

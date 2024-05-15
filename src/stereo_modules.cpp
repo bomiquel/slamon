@@ -342,6 +342,60 @@ StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::
 }
 
 
+StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
+                                                          const std::vector<cv::Point2f>& c_r_kpts,
+                                                          const std::vector<cv::Point2f>& p_l_kpts,
+                                                          const std::vector<cv::Point2f>& p_r_kpts,
+                                                          const std::vector<cv::Point3f>& c_obj_pts,
+                                                          const std::vector<cv::Point3f>& p_obj_pts,
+                                                          cv::Mat& r_vec,
+                                                          cv::Mat& t_vec,
+                                                          std::vector<cv::Point2f>& f_c_l_kpts,
+                                                          std::vector<cv::Point2f>& f_c_r_kpts,
+                                                          std::vector<cv::Point2f>& f_p_l_kpts,
+                                                          std::vector<cv::Point2f>& f_p_r_kpts,
+                                                          std::vector<cv::Point3f>& f_c_obj_pts,
+                                                          std::vector<cv::Point3f>& f_p_obj_pts)
+{
+    // Sanity check.
+    r_vec.release();
+    t_vec.release();
+
+    // Estimate motion.
+    std::vector<int> inliers;
+    cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
+    cv::solvePnPRansac(p_obj_pts, c_l_kpts, K, cv::Mat(), r_vec, t_vec, 
+                       false, 2000, 2.0, 0.99, inliers, cv::SOLVEPNP_ITERATIVE); 
+
+    // Filter keypoints and 3D points.
+    if (c_r_kpts.size() > 0)
+        for (uint i = 0; i < inliers.size(); i++)
+        {
+            f_c_l_kpts.push_back(c_l_kpts[inliers[i]]);
+            f_c_r_kpts.push_back(c_r_kpts[inliers[i]]);
+            f_p_l_kpts.push_back(p_l_kpts[inliers[i]]);
+            f_p_r_kpts.push_back(p_r_kpts[inliers[i]]);
+            f_c_obj_pts.push_back(c_obj_pts[inliers[i]]);
+            f_p_obj_pts.push_back(p_obj_pts[inliers[i]]);
+        }
+    else
+    {
+        for (uint i = 0; i < inliers.size(); i++)
+        {
+            f_c_l_kpts.push_back(c_l_kpts[inliers[i]]);
+            f_p_l_kpts.push_back(p_l_kpts[inliers[i]]);
+            f_c_obj_pts.push_back(c_obj_pts[inliers[i]]);
+            f_p_obj_pts.push_back(p_obj_pts[inliers[i]]);
+        }
+    }
+
+    if (inliers.size() >= (uint)min_inliers_)
+        return SUCCESSFUL;
+    else
+        return NOT_ENOUGH_INLIERS;   
+}
+
+
 StereoModules::MatchingType StereoModules::selectMatchingType(std::string& matching_type)
 {
     // Sanity check

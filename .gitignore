@@ -6,3 +6,5 @@ graph_edges.txt
 odom.txt
 test/*
 .vscode
+output/*
+*/output/*
