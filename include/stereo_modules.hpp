@@ -26,12 +26,12 @@ class StereoModules
         // Matching types between pairs of stereo images.
         enum MatchingType
         {
-            RATIO_MATCHING               = 1,
-            ESSENTIAL_MATCHING           = 2,
-            HOMOGRAPHY_MATCHING          = 3,
-            CIRCULAR_RATIO_MATCHING      = 4,
-            CIRCULAR_ESSENTIAL_MATCHING  = 5,
-            CIRCULAR_HOMOGRAPHY_MATCHING = 6
+            RATIO_MATCHING               = 0,
+            ESSENTIAL_MATCHING           = 1,
+            HOMOGRAPHY_MATCHING          = 2,
+            CIRCULAR_RATIO_MATCHING      = 3,
+            CIRCULAR_ESSENTIAL_MATCHING  = 4,
+            CIRCULAR_HOMOGRAPHY_MATCHING = 5
         };
 
 

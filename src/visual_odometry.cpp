@@ -16,6 +16,7 @@ VisualOdometry::VisualOdometry(double ratio,
     enable_debugging_ = enable_debugging;
 }
 
+
 void VisualOdometry::run()
 {
     // Set "uninitialised" status to visual odometer.
@@ -393,12 +394,15 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
     if(!fromMatToTf(r_camera_motion, t_camera_motion, c_camera_motion))
         return false;
 
+    // From {c2}^T_{c1} to {c1}^T_{c2}.
+    c_camera_motion = c_camera_motion.inverse();
+
     // Changes the coordinate axis of the movement. From camera to robot. 
-    // {r1}^T_{r2} = {r}^T_{c} * {c1}^T_{c2} * {c}^T_{r}
+    // {r1}^T_{r2} = {r1}^T_{c1} * {c1}^T_{c2} * {c2}^T_{r2}
     c_robot_motion = robot2camera_ * c_camera_motion * robot2camera_.inverse();
 
     // Calculates the robot's current pose by accumulating its movement.
-    // {o}^T_{r1} = {0}^T_{r1} * {r1}^T_{r2}
+    // {o}^T_{r2} = {0}^T_{r1} * {r1}^T_{r2}
     c_robot_pose_ *= c_robot_motion;
 
     // Motion debugging
