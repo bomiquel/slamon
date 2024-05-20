@@ -46,17 +46,6 @@ class Caster
                          tf::Transform& tf);
 
 
-        /** \brief Convert ROS transform to motion cv::Mat
-         *  \param tf ROS estimated transform (input).
-         *  \param r_vec OpenCV estimated rotation vector (output).
-         *  \param t_vec OpenCV estimated translation vector (output).
-         *  @return If the cast could be made
-         */
-        void fromTfToMat(const tf::Transform& tf,
-                         cv::Mat& r_vec,
-                         cv::Mat& t_vec);
-
-
         /** \brief Converts an integer to a string containing a
          *  five-digit number.
          *  \param in Input integer (input).

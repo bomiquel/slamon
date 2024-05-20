@@ -57,29 +57,6 @@ bool Caster::fromMatToTf(const cv::Mat& r_vec,
 }
 
 
-void Caster::fromTfToMat(const tf::Transform& tf,
-                         cv::Mat& r_vec,
-                         cv::Mat& t_vec)
-{
-    // Sanity check
-    r_vec = cv::Mat(3, 1, CV_32FC1);
-    t_vec = cv::Mat(3, 1, CV_32FC1);
-
-    // Build the vector of translation
-    t_vec.at<double>(0, 0) = tf.getOrigin().getX();
-    t_vec.at<double>(1, 0) = tf.getOrigin().getY();
-    t_vec.at<double>(3, 0) = tf.getOrigin().getZ();
-
-    //
-    tfScalar roll, pitch, yaw;
-    tf::Matrix3x3 mat(tf.getRotation());
-    mat.getEulerYPR(yaw, pitch, roll);
-    r_vec.at<double>(0, 0) = roll;
-    r_vec.at<double>(1, 0) = pitch;
-    r_vec.at<double>(3, 0) = yaw;
-}
-
-
 std::string Caster::convertTo5Digits(int in)
 {
     uint val = (uint)in;

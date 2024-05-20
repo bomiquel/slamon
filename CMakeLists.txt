@@ -98,9 +98,9 @@ link_directories(${OpenCV_INCLUDE_DIRS})
 
 # Executables
 add_executable(slam 
-               src/node.cpp
                src/frame.cpp
                src/caster.cpp
+               src/vo_node.cpp
                src/publisher.cpp
                src/stereo_modules.cpp
                src/visual_odometry.cpp)

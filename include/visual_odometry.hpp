@@ -50,6 +50,7 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
         VisualOdometry(double ratio,
                        int min_inliers,
                        bool enable_debugging,
+                       const std::string& w_path,
                        std::string& matching_type,
                        const std::string& robot_frame_id,
                        const std::string& origin_frame_id);
@@ -145,7 +146,7 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
 
         bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
-        // std::string o_path_; //!> Output path for debugging purpose.
+        std::string w_path_; //!> Path to working directory.
 
         std::string f_path_; //!> Path to store frames with debugging purpose.
 
@@ -167,13 +168,13 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
 
         ros::ServiceClient initial_pose_client_; //!> Service client to assign the initial position to the SLAM.
 
-        image_transport::Publisher inliers_pub_; // !> Inliers publisher 
+        image_transport::Publisher inliers_img_pub_; // !> Inliers publisher 
 
-        image_transport::Publisher stereo_kps_pub_; // !> Stereo keypoints publisher
+        image_transport::Publisher stereo_kps_img_pub_; // !> Stereo keypoints publisher
 
-        image_transport::Publisher stereo_matches_pub_; // !> Stereo matches publisher
+        image_transport::Publisher stereo_matches_img_pub_; // !> Stereo matches publisher
 
-        image_transport::Publisher successive_matches_pub_; // !> Successive frames matching publisher 
+        image_transport::Publisher successive_matches_img_pub_; // !> Successive frames matching publisher 
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,

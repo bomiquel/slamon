@@ -1,6 +1,7 @@
 slamon:
   lowe_ratio: 0.8 # 0.7/0.9, good 0.8
   min_inliers: 30 # 20
+  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/test
   # matching_type: ratio_matching
   matching_type: circular_ratio_matching 
   robot_frame_id: /robot_0/base_link

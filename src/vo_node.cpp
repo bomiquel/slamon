@@ -2,6 +2,7 @@
 #include <string>
 
 #include <ros/ros.h>
+#include <ros/package.h>
 
 #include "visual_odometry.hpp"
 
@@ -9,6 +10,7 @@
 void readParams(int& min_inliers,
                 double& lowe_ratio, 
                 bool& enable_debugging,
+                std::string& working_path,
                 std::string& matching_type,
                 std::string& robot_frame_id,
                 std::string& origin_frame_id)
@@ -17,6 +19,7 @@ void readParams(int& min_inliers,
     ros::NodeHandle nhp("~");
     nhp.param("min_inliers",      min_inliers,      10);
     nhp.param("lowe_ratio",       lowe_ratio,       0.8);
+    nhp.param("working_path",     working_path,     ros::package::getPath("slamon") + "/output/");
     nhp.param("matching_type",    matching_type,    std::string("ratio_matching"));
     nhp.param("robot_frame_id",   robot_frame_id,   std::string("base_link"));
     nhp.param("origin_frame_id",  origin_frame_id,  std::string("odom"));
@@ -26,6 +29,7 @@ void readParams(int& min_inliers,
     ROS_INFO_STREAM("Parameter setting: " << std::endl <<
                     "Minimum kpts     = " << min_inliers << std::endl << 
                     "Lowe's ratio     = " << lowe_ratio << std::endl <<
+                    "Working path     = " << working_path << std::endl <<
                     "Matching type    = " << matching_type << std::endl <<
                     "Robot frame id   = " << robot_frame_id << std::endl <<
                     "Odom frame id    = " << origin_frame_id << std::endl <<
@@ -58,7 +62,17 @@ void readParams(int& min_inliers,
     }
     if (lowe_ratio < 0.01 || lowe_ratio > 0.99)
     {
-        min_inliers = 0.8;
+        lowe_ratio = 0.85;
+        invalid_parameter = true;
+    }
+    if (working_path == "")
+    {
+        working_path = ros::package::getPath("slamon") + "/output/";
+        invalid_parameter = true;
+    }
+    if (working_path.back() != '/')
+    {
+        working_path += "/";
         invalid_parameter = true;
     }
     if (robot_frame_id == "")
@@ -77,9 +91,10 @@ void readParams(int& min_inliers,
                         "Current parameter values are: " << std::endl <<
                         "Minimum kpts     = " << min_inliers << std::endl << 
                         "Lowe's ratio     = " << lowe_ratio << std::endl <<
+                        "Working path     = " << working_path << std::endl <<
                         "Matching type    = " << matching_type << std::endl <<
                         "Robot frame id   = " << robot_frame_id << std::endl <<
-                        "World frame id    = " << origin_frame_id << std::endl <<
+                        "World frame id   = " << origin_frame_id << std::endl <<
                         "Enable debugging = " << enable_debugging);
     }
 }
@@ -94,11 +109,17 @@ int main(int argc, char **argv)
     int min_inliers;
     double lowe_ratio;
     bool enable_debugging;
-    std::string matching_type, robot_frame_id, origin_frame_id;
-    readParams(min_inliers, lowe_ratio, enable_debugging, matching_type, robot_frame_id, origin_frame_id);
+    std::string working_path, matching_type, robot_frame_id, origin_frame_id;
+    readParams(min_inliers, lowe_ratio, enable_debugging, working_path, matching_type, robot_frame_id, origin_frame_id);
 
     // Threads
-    VisualOdometry visual_odometer(lowe_ratio, min_inliers, enable_debugging, matching_type, robot_frame_id, origin_frame_id);
+    VisualOdometry visual_odometer(lowe_ratio, 
+                                   min_inliers, 
+                                   enable_debugging, 
+                                   working_path, 
+                                   matching_type, 
+                                   robot_frame_id, 
+                                   origin_frame_id);
 
     // Launch threads
     std::thread visual_odometer_thread(&VisualOdometry::run, &visual_odometer);

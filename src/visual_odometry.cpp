@@ -4,11 +4,13 @@
 VisualOdometry::VisualOdometry(double ratio,
                                int min_inliers,
                                bool enable_debugging,
+                               const std::string& w_path,
                                std::string& matching_type,
                                const std::string& robot_frame_id, 
                                const std::string& origin_frame_id):
                                StereoModules(ratio, min_inliers, matching_type)
 {
+    w_path_ = w_path;
     robot_frame_id_ = robot_frame_id;
     origin_frame_id_ = origin_frame_id;
     enable_debugging_ = enable_debugging;
@@ -23,10 +25,13 @@ void VisualOdometry::run()
     c_frame_id_ = 0;
 
     // Create debugging directories
-    f_path_ = "/home/bomiquel/catkin_ws/src/slamon/output/frames/";
-    if (std::filesystem::exists(f_path_))
-        std::filesystem::remove_all(f_path_);
-    std::filesystem::create_directory(f_path_);
+    if (enable_debugging_)
+    {
+        f_path_ = w_path_ + "frames/";
+        if (std::filesystem::exists(f_path_))
+            std::filesystem::remove_all(f_path_);
+        std::filesystem::create_directory(f_path_);
+    }
 
     // Create ROS node.
     ros::NodeHandle nh;
@@ -38,10 +43,10 @@ void VisualOdometry::run()
     // Publishers.
     info_pub_ = nh.advertise<slamon::VOInfo>("vo_info", 1);
     odom_pub_ = nh.advertise<nav_msgs::Odometry>("odom", 1);
-    inliers_pub_ = it.advertise("inliers", 1);
-    stereo_kps_pub_ = it.advertise("stereo_keypoints", 1);
-    stereo_matches_pub_ = it.advertise("stereo_matches", 1);
-    successive_matches_pub_ = it.advertise("successive_matches", 1);
+    inliers_img_pub_ = it.advertise("inliers", 1);
+    stereo_kps_img_pub_ = it.advertise("stereo_keypoints", 1);
+    stereo_matches_img_pub_ = it.advertise("stereo_matches", 1);
+    successive_matches_img_pub_ = it.advertise("successive_matches", 1);
 
     // Subscribers.
     image_transport::SubscriberFilter l_img_sub, r_img_sub;
@@ -235,8 +240,8 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     detectStereoKeypoints(l_img, r_img, feature_detector_type, l_descs, r_descs, l_kpts, r_kpts);
 
     // Keypoint detection debugging.
-    if (stereo_kps_pub_.getNumSubscribers() > 0)
-        publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, l_kpts, r_kpts, stereo_kps_pub_);
+    if (stereo_kps_img_pub_.getNumSubscribers() > 0)
+        publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, l_kpts, r_kpts, stereo_kps_img_pub_);
     if (enable_debugging_)
         writeStereoKeypoints(l_img, r_img, f_path_ + c_frame_name_ + "/stereo_keypoints", l_kpts, r_kpts);
 
@@ -256,8 +261,8 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
         return false; 
 
     // Stereo matching keypoints debugging.
-    if (stereo_matches_pub_.getNumSubscribers() > 0)
-        publishMatches(false, l_img, r_img, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, stereo_matches_pub_);
+    if (stereo_matches_img_pub_.getNumSubscribers() > 0)
+        publishMatches(false, l_img, r_img, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, stereo_matches_img_pub_);
     if (enable_debugging_)
         writeMatches(false, l_img, r_img, f_path_ + c_frame_name_ + "/stereo_matches", f_l_kpts, f_r_kpts);
 
@@ -286,15 +291,15 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
         return false; 
 
     // Non stereo matching keypoints debugging.
-    if (successive_matches_pub_.getNumSubscribers() > 0)
+    if (successive_matches_img_pub_.getNumSubscribers() > 0)
     {
         if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
             publishMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
-                           f_c_l_kpts, f_p_l_kpts, successive_matches_pub_);
+                           f_c_l_kpts, f_p_l_kpts, successive_matches_img_pub_);
 
         else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
             publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                   c_frame.getTimestamp(), f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, successive_matches_pub_);
+                                   c_frame.getTimestamp(), f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, successive_matches_img_pub_);
 
         else
             ROS_ERROR_STREAM("[Non-stereo matcher debugger:] Unforeseen type of matching!");
@@ -324,15 +329,15 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
         return false; 
 
     // Inliers debugging.
-    if (inliers_pub_.getNumSubscribers() > 0)
+    if (inliers_img_pub_.getNumSubscribers() > 0)
     {
         if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
             publishMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
-                           i_c_l_kpts, i_p_l_kpts, inliers_pub_);
+                           i_c_l_kpts, i_p_l_kpts, inliers_img_pub_);
 
         else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
             publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                   c_frame.getTimestamp(), i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, inliers_pub_);
+                                   c_frame.getTimestamp(), i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, inliers_img_pub_);
 
         else
             ROS_ERROR_STREAM("[Motion estimator debugger:] Unforeseen type of matching!");
@@ -366,23 +371,9 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
     // Motion debugging
     if (enable_debugging_)
     {
-        double delta_t = (c_frame.getTimestamp() - p_frame_.getTimestamp()).toSec();
-
-        cv::Mat r_robot_motion, t_robot_motion, r_robot_pose, t_robot_pose;
-        fromTfToMat(c_robot_motion, r_robot_motion, t_robot_motion);
-        fromTfToMat(c_robot_pose_, r_robot_pose, t_robot_pose);
-
         cv::FileStorage fs(f_path_ + c_frame_name_ + "/transform.yml", cv::FileStorage::WRITE);
         cv::write(fs, "r_camera_motion", r_camera_motion);
         cv::write(fs, "t_camera_motion", t_camera_motion);
-        cv::write(fs, "r_robot_motion", r_robot_motion);
-        cv::write(fs, "t_robot_motion", t_robot_motion);
-        cv::write(fs, "r_robot_pose", r_robot_pose);
-        cv::write(fs, "t_robot_pose", t_robot_pose);
-        cv::write(fs, "r_camera_velocity", r_camera_motion / delta_t);
-        cv::write(fs, "t_camera_velocity", t_camera_motion / delta_t);
-        cv::write(fs, "r_robot_velocity", r_robot_motion / delta_t);
-        cv::write(fs, "t_robot_velocity", t_robot_motion / delta_t);
         fs.release();
     }
 
