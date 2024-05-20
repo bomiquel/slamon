@@ -3,7 +3,7 @@
  *  @brief The Publisher class is responsive to publish the image visualizations for debugging purposes (presentation).
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
- *  @modified Bo Miquel Nordfeldt-Fiol Winter 2024
+ *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
  */
 
 #ifndef PUBLISHER_HPP
@@ -26,6 +26,20 @@ class Publisher
         /** \brief Empty class constructor.
          */
         Publisher() {};
+
+
+        /** \brief Structure for storing all internal times
+         *  of the visual odometer.
+         */
+        struct VORunTimes
+        {
+            double feature_extraction = 0.0;    //!> Time needed to extract keypoints and compute descriptors.
+            double stereo_matching = 0.0;       //!> Time needed to match stereo keypoints.
+            double triangulation = 0.0;         //!> Time needed to compute 3D keypoints.
+            double successive_matching = 0.0;   //!> Time needed to match successive keypoints.
+            double motion_estimation = 0.0;     //!> Time needed to estimate the motion.
+            double total = 0.0;                 //!> Total callback run time.
+        };
 
 
         /** \brief Publishes stereo images with its keypoints drawn.
@@ -182,16 +196,14 @@ class Publisher
 
 
         /** \brief Publishes current visual odometer internal performance.
-         *  \param c_frame_id Current frame id (input).
          *  \param stamp Current ROS timestamp (input).
          *  \param valid_motion If a valid movement could be estimated in the last iteration (input).
-         *  \param total_runtime Last iteration runtime (input).
+         *  \param run_times Structure with all visual odometer internal run times (input).
          *  \param publisher The ROS publisher (input).
          */
-        void publishInfo(const int c_frame_id,
-                         const ros::Time& stamp,
+        void publishInfo(const ros::Time& stamp,
                          const bool valid_motion,
-                         const double total_runtime,
+                         const VORunTimes& run_times,
                          const ros::Publisher& publisher);              
 
 

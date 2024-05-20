@@ -63,6 +63,7 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
 
     protected:
 
+
         /** \brief Messages callback. This function is called when synchronized image
          *  messages are received.
          *  \param l_img_msg ROS message containing the left image (input).
@@ -175,6 +176,8 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
         image_transport::Publisher stereo_matches_img_pub_; // !> Stereo matches publisher
 
         image_transport::Publisher successive_matches_img_pub_; // !> Successive frames matching publisher 
+
+        VORunTimes run_times_; // !> Internal times of the visual odometer.
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,

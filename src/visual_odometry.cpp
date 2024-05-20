@@ -72,7 +72,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                                    const sensor_msgs::CameraInfoConstPtr& r_info_msg)
 {
     // Time at which the program enters into the callback.
-    ros::Time start_time = ros::Time::now();
+    double start_time = ros::Time::now().toSec();
 
     // Create current frame object.
     Frame c_frame; 
@@ -91,8 +91,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     switch (status_)
     {
         case UNINITIALISED:
-            if (enable_debugging_)
-                ROS_INFO_STREAM("UNINITIALIZED");
+            ROS_INFO_STREAM("UNINITIALIZED");
             if (!initialisation(l_info_msg, r_info_msg))
                 break;
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
@@ -101,25 +100,39 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                 status_ = RUNNING;
             }
             else
+            {
                 status_ = SEMI_INITIALISED;
+                run_times_.successive_matching = 0.0;
+                run_times_.motion_estimation = 0.0;
+            }
             break;
 
         case SEMI_INITIALISED:
-            if (enable_debugging_)
-                ROS_INFO_STREAM("SEMI-INITIALISED");
+            ROS_INFO_STREAM("SEMI-INITIALISED");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
             {
                 getInitialPose();
                 status_ = RUNNING;
             }
+            else
+            {
+                run_times_.successive_matching = 0.0;
+                run_times_.motion_estimation = 0.0;
+            }
             break;
 
         case RUNNING:
             tf::Transform c_robot_motion;
-            if(enable_debugging_)
-                ROS_INFO_STREAM("RUNNING");
+            ROS_INFO_STREAM("RUNNING");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
+            {
                 valid_motion = computeMotionSuccessiveFrames(c_frame, c_robot_motion);          
+            }
+            else
+            {
+                run_times_.successive_matching = 0.0;
+                run_times_.motion_estimation = 0.0;
+            }
             if (valid_motion)
             {
                 // ekf.predict();
@@ -142,8 +155,8 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     p_frame_ = c_frame;
     
     // Publishes last iteration performance
-    double delta_t = (ros::Time::now() - start_time).toSec();
-    publishInfo(c_frame_id_, l_img_msg->header.stamp, valid_motion, delta_t, info_pub_);
+    run_times_.total = ros::Time::now().toSec() - start_time;
+    publishInfo(l_img_msg->header.stamp, valid_motion, run_times_, info_pub_);
 
     c_frame_id_++;
 }
@@ -220,6 +233,9 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
                                          const sensor_msgs::ImageConstPtr& r_img_msg,
                                          Frame& c_frame)
 {
+    // Auxilary variable to set the start time of a process.
+    double start_time;
+
     // From ROS image message to cv::Mat.
     cv::Mat l_img, r_img;
     if (!fromImgMsgToMat(l_img_msg, l_img)) // TODO: paralellization?
@@ -234,10 +250,12 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     }
 
     // Detecting keypoints.
+    start_time = ros::Time::now().toSec();
     cv::Mat l_descs, r_descs;
     std::vector<cv::Point2f> l_kpts, r_kpts;
     std::string feature_detector_type = "sift";
     detectStereoKeypoints(l_img, r_img, feature_detector_type, l_descs, r_descs, l_kpts, r_kpts);
+    run_times_.feature_extraction = ros::Time::now().toSec() - start_time;
 
     // Keypoint detection debugging.
     if (stereo_kps_img_pub_.getNumSubscribers() > 0)
@@ -246,17 +264,24 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
         writeStereoKeypoints(l_img, r_img, f_path_ + c_frame_name_ + "/stereo_keypoints", l_kpts, r_kpts);
 
     // Matching keypoints.
+    start_time = ros::Time::now().toSec();
     cv::Mat h_f_l_descs, h_f_r_descs;
     std::vector<cv::Point2f> h_f_l_kpts, h_f_r_kpts;
     StereoResult result = matchStereoKeypoints(l_descs, r_descs, l_kpts, r_kpts, h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts);
+    run_times_.stereo_matching = ros::Time::now().toSec() - start_time;
     if(!decodeStereoResult("[Stereo matcher:] ", result))
+    {
+        run_times_.triangulation = 0;
         return false; 
-
+    }
+        
     // Compute 3D keypoints. 
+    start_time = ros::Time::now().toSec();
     cv::Mat f_l_descs, f_r_descs;
     std::vector<cv::Point3f> f_obj_pts;
     std::vector<cv::Point2f> f_l_kpts, f_r_kpts;
     result = compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_obj_pts);
+    run_times_.stereo_matching = ros::Time::now().toSec() - start_time;
     if(!decodeStereoResult("[Triangulator:] ", result))
         return false; 
 
@@ -276,7 +301,11 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
                                                    tf::Transform& c_robot_motion)
 {
+    // Auxilary variable to set the start time of a process
+    double start_time;
+
     // Search for matches of keypoints between successive frames or pairs of frames.
+    start_time = ros::Time::now().toSec();
     std::vector<cv::Point3f> f_c_obj_pts, f_p_obj_pts;
     std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
     StereoResult result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
@@ -286,9 +315,12 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
                                                   c_frame.getObjectPoints(), p_frame_.getObjectPoints(),
                                                   f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, 
                                                   f_c_obj_pts, f_p_obj_pts);
-    
+    run_times_.successive_matching = ros::Time::now().toSec() - start_time;
     if(!decodeStereoResult("[Non-stereo matcher:] ", result))
-        return false; 
+    {
+        run_times_.motion_estimation = 0.0;
+        return false;
+    }
 
     // Non stereo matching keypoints debugging.
     if (successive_matches_img_pub_.getNumSubscribers() > 0)
@@ -318,13 +350,14 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
     }
 
     // Estimate the motion.
+    start_time = ros::Time::now().toSec();
     cv::Mat r_camera_motion, t_camera_motion;
     std::vector<cv::Point3f> i_c_obj_pts, i_p_obj_pts;
     std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
     result = estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
                             r_camera_motion, t_camera_motion,
                             i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
-
+    run_times_.motion_estimation = ros::Time::now().toSec() - start_time;
     if(!decodeStereoResult("[Motion estimator:] ", result))
         return false; 
 

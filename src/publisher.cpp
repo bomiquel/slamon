@@ -164,10 +164,9 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
 }
 
 
-void Publisher::publishInfo(const int c_frame_id,
-                            const ros::Time& stamp,
+void Publisher::publishInfo(const ros::Time& stamp,
                             const bool valid_motion,
-                            const double total_runtime,
+                            const VORunTimes& run_times,
                             const ros::Publisher& publisher)
 {
     slamon::VOInfo msg;
@@ -176,9 +175,13 @@ void Publisher::publishInfo(const int c_frame_id,
     msg.header.stamp = stamp;
 
     // Sets payload
-    msg.frame_id = c_frame_id;
     msg.valid_motion = valid_motion;
-    msg.total_runtime = total_runtime;
+    msg.feature_extraction_run_time = run_times.feature_extraction;
+    msg.stereo_matching_run_time = run_times.stereo_matching;
+    msg.triangulation_run_time = run_times.triangulation;
+    msg.successive_matching_run_time = run_times.successive_matching;
+    msg.motion_estimation_run_time = run_times.motion_estimation;
+    msg.total_run_time = run_times.total;
 
     // Publishes performance information
     publisher.publish(msg);
