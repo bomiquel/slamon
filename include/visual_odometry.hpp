@@ -167,15 +167,15 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
 
         ros::Publisher odom_pub_; //!> Publishes current velocity and accumulated movement (odometry).
 
+        ros::Publisher inliers_img_pub_; // !> Publisher for the image with drawn inliers.
+
+        ros::Publisher stereo_kps_img_pub_; // !> Publisher for the image with drawn stereo keypoints.
+
+        ros::Publisher stereo_matches_img_pub_; // !> Publisher for the image with drawn stereo matches.
+
+        ros::Publisher successive_matches_img_pub_; // !> Publisher for the image with drawn successive matches.
+
         ros::ServiceClient initial_pose_client_; //!> Service client to assign the initial position to the SLAM.
-
-        image_transport::Publisher inliers_img_pub_; // !> Inliers publisher 
-
-        image_transport::Publisher stereo_kps_img_pub_; // !> Stereo keypoints publisher
-
-        image_transport::Publisher stereo_matches_img_pub_; // !> Stereo matches publisher
-
-        image_transport::Publisher successive_matches_img_pub_; // !> Successive frames matching publisher 
 
         VORunTimes run_times_; // !> Internal times of the visual odometer.
 

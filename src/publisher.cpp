@@ -6,7 +6,7 @@ void Publisher::publishStereoKeypoints(const cv::Mat& l_img,
                                        const ros::Time& stamp,
                                        const std::vector<cv::Point2f>& l_kpts,
                                        const std::vector<cv::Point2f>& r_kpts,
-                                       const image_transport::Publisher& publisher)
+                                       const ros::Publisher& publisher)
 {
     // Concatenates stereo images and draws their keypoints.
     cv::Scalar color(0.0, 0.0, 255);
@@ -38,7 +38,7 @@ void Publisher::publishMatches(const bool vertical,
                                const ros::Time& stamp,
                                const std::vector<cv::Point2f>& f_kpts_0,
                                const std::vector<cv::Point2f>& f_kpts_1,
-                               const image_transport::Publisher& publisher)
+                               const ros::Publisher& publisher)
 {
     // Draws matches,
     cv::Scalar color(0.0, 0.0, 255);
@@ -84,7 +84,7 @@ void Publisher::publishCircularMatches(const cv::Mat& c_l_img,
                                        const std::vector<cv::Point2f>& f_c_r_kpts,
                                        const std::vector<cv::Point2f>& f_p_l_kpts,
                                        const std::vector<cv::Point2f>& f_p_r_kpts,
-                                       const image_transport::Publisher& publisher)
+                                       const ros::Publisher& publisher)
 {
     // Draws matches,
     cv::Scalar color(0.0, 0.0, 255);
@@ -118,7 +118,7 @@ void Publisher::writeCircularMatches(const cv::Mat& c_l_img,
 
 void Publisher::publishImage(const cv::Mat& img,
                              const ros::Time& stamp,
-                             const image_transport::Publisher& publisher)
+                             const ros::Publisher& publisher)
 {
     cv_bridge::CvImage ros_image;
     ros_image.image = img;

@@ -13,9 +13,9 @@
 
 #include <ros/ros.h>
 #include <tf/tf.h>
+#include <sensor_msgs/Image.h>
 #include <nav_msgs/Odometry.h>
 #include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
 
 #include "slamon/VOInfo.h"
 
@@ -55,7 +55,7 @@ class Publisher
                                     const ros::Time& stamp,
                                     const std::vector<cv::Point2f>& l_kpts,
                                     const std::vector<cv::Point2f>& r_kpts,
-                                    const image_transport::Publisher& publisher);
+                                    const ros::Publisher& publisher);
 
 
         /** \brief Writes on disk the stereoscopic images with their
@@ -94,7 +94,7 @@ class Publisher
                             const ros::Time& stamp,
                             const std::vector<cv::Point2f>& f_kpts_0,
                             const std::vector<cv::Point2f>& f_kpts_1,
-                            const image_transport::Publisher& publisher);
+                            const ros::Publisher& publisher);
 
 
         /** \brief Draws and writes on disk vertical (successive) or horizontal (stereo)
@@ -140,7 +140,7 @@ class Publisher
                                     const std::vector<cv::Point2f>& f_c_r_kpts,
                                     const std::vector<cv::Point2f>& f_p_l_kpts,
                                     const std::vector<cv::Point2f>& f_p_r_kpts,
-                                    const image_transport::Publisher& publisher);
+                                    const ros::Publisher& publisher);
 
 
         /** \brief Draws and writes on disk circular matches.
@@ -173,7 +173,7 @@ class Publisher
          */
         void publishImage(const cv::Mat& img,
                           const ros::Time& stamp,
-                          const image_transport::Publisher& publisher);
+                          const ros::Publisher& publisher);
 
 
         /** \brief Publishes current robot pose and velocity.

@@ -36,18 +36,19 @@ void VisualOdometry::run()
 
     // Create ROS node.
     ros::NodeHandle nh;
+    ros::NodeHandle nhp("~");
     image_transport::ImageTransport it(nh);
 
     // Client services.
     initial_pose_client_ = nh.serviceClient<slamon::GetPose>("get_first_pose");
 
     // Publishers.
-    info_pub_ = nh.advertise<slamon::VOInfo>("vo_info", 1);
-    odom_pub_ = nh.advertise<nav_msgs::Odometry>("odom", 1);
-    inliers_img_pub_ = it.advertise("inliers", 1);
-    stereo_kps_img_pub_ = it.advertise("stereo_keypoints", 1);
-    stereo_matches_img_pub_ = it.advertise("stereo_matches", 1);
-    successive_matches_img_pub_ = it.advertise("successive_matches", 1);
+    info_pub_ = nhp.advertise<slamon::VOInfo>("vo_info", 1);
+    odom_pub_ = nhp.advertise<nav_msgs::Odometry>("odom", 1);
+    inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("inliers_img", 1);
+    stereo_kps_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
+    stereo_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_matches_img", 1);
+    successive_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("successive_matches_img", 1);
 
     // Subscribers.
     image_transport::SubscriberFilter l_img_sub, r_img_sub;
