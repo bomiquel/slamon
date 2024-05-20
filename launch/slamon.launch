@@ -4,7 +4,7 @@
     <arg name = "robot_name"         default = "robot_0"/>
 
     <!-- Image parameters -->
-    <arg name = "camera"             default = "/stereo_down"/>
+    <arg name = "camera"             default = "stereo_down"/>
     <arg name = "resolution"         default = "full"/>
     <arg name = "enable_decimate_x1" default = "false"/>
     <arg name = "enable_decimate_x2" default = "false"/>
@@ -42,7 +42,7 @@
 
 
     <!-- PLAY bagfile -->
-    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics $(arg camera)/left/camera_info $(arg camera)/left/image_raw $(arg camera)/right/camera_info $(arg camera)/right/image_raw" required = "true" />
+    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera)/left/camera_info /$(arg camera)/left/image_raw /$(arg camera)/right/camera_info /$(arg camera)/right/image_raw" required = "true" />
 
     <!-- Static TF's -->
     <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_base_link_to_stereo_stick" args = "0.4 0.0 0.8 0.0 0.0 0.0 /$(arg robot_name)/base_link /$(arg robot_name)/stereo_stick 30" />
@@ -72,7 +72,7 @@
         <arg name = "q_w" default = "0.072610268293763"/> -->
 
         <include file = "$(find slamon)/launch/stereo_processing/stereo_pipeline.launch">
-            <arg name = "stereo"             value = "$(arg camera)" />
+            <arg name = "stereo"             value = "/$(arg camera)" />
             <arg name = "resolution"         value = "$(arg resolution)" />
             <arg name = "enable_decimate_x1" value = "$(arg enable_decimate_x1)" />
             <arg name = "enable_decimate_x2" value = "$(arg enable_decimate_x2)" />
@@ -95,24 +95,24 @@
         <rosparam command="load" file="$(find slamon)/config/slamon_parameters.yaml"/>
         <node pkg = "slamon" type = "slam" name = "slamon" output = "screen" if = "$(eval enable_decimate_x1 == true)">
             <remap from = "get_first_pose"              to = "slamon/get_first_pose"/>
-            <remap from = "left_camera_info"            to = "$(arg camera)/left/camera_info"/>
-            <remap from = "right_camera_info"           to = "$(arg camera)/right/camera_info"/>
-            <remap from = "left_image_rect_color"       to = "$(arg camera)/left/image_rect_color"/>
-            <remap from = "right_image_rect_color"      to = "$(arg camera)/right/image_rect_color"/> 
+            <remap from = "left_camera_info"            to = "/$(arg camera)/left/camera_info"/>
+            <remap from = "right_camera_info"           to = "/$(arg camera)/right/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "/$(arg camera)/left/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "/$(arg camera)/right/image_rect_color"/> 
         </node>
         <node pkg = "slamon" type = "slam" name = "slamon" output = "screen" if = "$(eval enable_decimate_x2 == true)">
             <remap from = "get_first_pose"              to = "slamon/get_first_pose"/>
-            <remap from = "left_camera_info"            to = "$(arg camera)/scaled_x2/left/camera_info"/>
-            <remap from = "right_camera_info"           to = "$(arg camera)/scaled_x2/right/camera_info"/>
-            <remap from = "left_image_rect_color"       to = "$(arg camera)/scaled_x2/left/image_rect_color"/>
-            <remap from = "right_image_rect_color"      to = "$(arg camera)/scaled_x2/right/image_rect_color"/> 
+            <remap from = "left_camera_info"            to = "/$(arg camera)/scaled_x2/left/camera_info"/>
+            <remap from = "right_camera_info"           to = "/$(arg camera)/scaled_x2/right/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "/$(arg camera)/scaled_x2/left/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "/$(arg camera)/scaled_x2/right/image_rect_color"/> 
         </node>
         <node pkg = "slamon" type = "slam" name = "slamon" output = "screen" if = "$(eval enable_decimate_x4 == true)">
             <remap from = "get_first_pose"              to = "slamon/get_first_pose"/>
-            <remap from = "left_camera_info"            to = "$(arg camera)/scaled_x4/left/camera_info"/>
-            <remap from = "right_camera_info"           to = "$(arg camera)/scaled_x4/right/camera_info"/>
-            <remap from = "left_image_rect_color"       to = "$(arg camera)/scaled_x4/left/image_rect_color"/>
-            <remap from = "right_image_rect_color"      to = "$(arg camera)/scaled_x4/right/image_rect_color"/> 
+            <remap from = "left_camera_info"            to = "/$(arg camera)/scaled_x4/left/camera_info"/>
+            <remap from = "right_camera_info"           to = "/$(arg camera)/scaled_x4/right/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "/$(arg camera)/scaled_x4/left/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "/$(arg camera)/scaled_x4/right/image_rect_color"/> 
         </node>
 
     </group>
