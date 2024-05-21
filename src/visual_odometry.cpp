@@ -6,9 +6,10 @@ VisualOdometry::VisualOdometry(double ratio,
                                bool enable_debugging,
                                const std::string& w_path,
                                std::string& matching_type,
+                               std::string& motion_estimation_type,
                                const std::string& robot_frame_id, 
                                const std::string& origin_frame_id):
-                               StereoModules(ratio, min_inliers, matching_type)
+                               StereoModules(ratio, min_inliers, matching_type, motion_estimation_type)
 {
     w_path_ = w_path;
     robot_frame_id_ = robot_frame_id;

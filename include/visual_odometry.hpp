@@ -52,6 +52,7 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
                        bool enable_debugging,
                        const std::string& w_path,
                        std::string& matching_type,
+                       std::string& motion_estimation_type,
                        const std::string& robot_frame_id,
                        const std::string& origin_frame_id);
 

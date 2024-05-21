@@ -56,10 +56,12 @@ class StereoModules
          *  \param ratio The ratio for Lowe's ratio test (input).
          *  \param min_inliers The minimum number of keypoints to estimate the movement (input).
          *  \param matching_type Desired matching type name (input).
+         *  \param motion_estimation_type Desired motion type name (input).
          */
         StereoModules(const double ratio,
                       const int min_inliers,
-                      std::string& matching_type);
+                      std::string& matching_type,
+                      std::string& motion_estimation_type);
 
 
         /** \brief Class constructor. Sets projection matrices.
@@ -69,12 +71,14 @@ class StereoModules
          *  \param l_proj_mat Left camera projection matrix (input).
          *  \param r_proj_mat Right camera projection matrix (input).
          *  \param matching_type Desired matching type name (input).
+         *  \param motion_estimation_type Desired motion type name (input).
          */
         StereoModules(const double ratio,
                       const int min_inliers,
                       const cv::Mat& l_proj_mat,
                       const cv::Mat& r_proj_mat,
-                      std::string& matching_type);
+                      std::string& matching_type,
+                      std::string& motion_estimation_type);
 
 
         /** \brief Class constructor. Builds projection matrices.
@@ -87,6 +91,7 @@ class StereoModules
          *  \param ratio The ratio for Lowe's ratio test (input).
          *  \param min_inliers The minimum number of keypoints to estimate the movement (input).
          *  \param matching_type Desired matching type name (input).
+         *  \param motion_estimation_type Desired motion type name (input).
          */
         StereoModules(const double b,
                       const double f_x,
@@ -95,7 +100,8 @@ class StereoModules
                       const double c_y,
                       const double ratio,
                       const int min_inliers,
-                      std::string& matching_type);
+                      std::string& matching_type,
+                      std::string& motion_estimation_type);
 
 
         /** \brief Detects keypoints of an image.
@@ -296,12 +302,18 @@ class StereoModules
 
     protected:
 
-        /** \brief Using a string selects the correct value for the enumerated type
-         *  MatchingType.
+        /** \brief Transforms a string into the correct MatchingType value.
          *  \param matching_type Desired matching type name (input).
-         *  @return Enumerated type MatchingType value.
+         *  @return a MatchingType value.
          */
         StereoModules::MatchingType selectMatchingType(std::string& matching_type);
+
+
+        /** \brief Transforms a string into the correct SolvePnPMethod value.
+         *  \param motion_type Desired motion estimation type name (input).
+         *  @return a SolvePnPMethod value.
+         */
+        cv::SolvePnPMethod selectMotionEstimationType(std::string& motion_estimation_type);
 
 
         /** \brief Computes the projection matrix of a stereo image.
@@ -458,6 +470,8 @@ class StereoModules
         cv::Mat r_proj_mat_ = cv::Mat::eye(3, 3, CV_64F); //!> Right camera projection matrix.
 
         MatchingType matching_type_; //!> Matching type.
+
+        cv::SolvePnPMethod motion_estimation_type_; //!> Motion estimation type.
 };
 
 

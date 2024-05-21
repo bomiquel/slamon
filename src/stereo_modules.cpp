@@ -3,11 +3,13 @@
 
 StereoModules::StereoModules(const double ratio,
                              const int min_inliers,
-                             std::string &matching_type)
+                             std::string& matching_type,
+                             std::string& motion_estimation_type)
 {
     ratio_ = ratio;
     min_inliers_ = min_inliers;
     matching_type_ = selectMatchingType(matching_type);
+    motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
 }
 
 
@@ -15,13 +17,15 @@ StereoModules::StereoModules(const double ratio,
                              const int min_inliers,
                              const cv::Mat& l_proj_mat,
                              const cv::Mat& r_proj_mat,
-                             std::string& matching_type)
+                             std::string& matching_type,
+                             std::string& motion_estimation_type)
 {
     ratio_ = ratio;
     l_proj_mat_ = l_proj_mat;
     r_proj_mat_ = r_proj_mat;
     min_inliers_ = min_inliers;
     matching_type_ = selectMatchingType(matching_type);
+    motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
 }
 
 
@@ -32,13 +36,15 @@ StereoModules::StereoModules(const double b,
                              const double c_y,
                              const double ratio,
                              const int min_inliers,
-                             std::string& matching_type)
+                             std::string& matching_type,
+                             std::string& motion_estimation_type)
 {
     ratio_ = ratio;
     min_inliers_ = min_inliers;
     matching_type_ = selectMatchingType(matching_type);
-    l_proj_mat_ = computeProjectionMatrix(0.0, f_x, f_x, c_x, c_y);
     r_proj_mat_ = computeProjectionMatrix(b, f_x, f_x, c_x, c_y);
+    l_proj_mat_ = computeProjectionMatrix(0.0, f_x, f_x, c_x, c_y);
+    motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
 }
 
 
@@ -316,7 +322,7 @@ StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::
     std::vector<int> inliers;
     cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
     cv::solvePnPRansac(p_obj_pts, c_l_kpts, K, cv::Mat(), r_vec, t_vec, 
-                       false, 2000, 2.0, 0.99, inliers, cv::SOLVEPNP_ITERATIVE); 
+                       false, 10000, 2.0, 0.99, inliers, motion_estimation_type_); 
 
     // Filter keypoints and 3D points.
     if (c_r_kpts.size() > 0)
@@ -365,7 +371,7 @@ StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::
     std::vector<int> inliers;
     cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
     cv::solvePnPRansac(p_obj_pts, c_l_kpts, K, cv::Mat(), r_vec, t_vec, 
-                       false, 2000, 2.0, 0.99, inliers, cv::SOLVEPNP_ITERATIVE); 
+                       false, 10000, 2.0, 0.99, inliers, motion_estimation_type_);
 
     // Filter keypoints and 3D points.
     if (c_r_kpts.size() > 0)
@@ -423,6 +429,33 @@ StereoModules::MatchingType StereoModules::selectMatchingType(std::string& match
     {
         std::cerr << "Unforseen matching type" << std::endl;
         return RATIO_MATCHING;
+    }
+}
+
+
+cv::SolvePnPMethod StereoModules::selectMotionEstimationType(std::string& motion_estimation_type)
+{
+    // Sanity check
+    for (uint i = 0; i < motion_estimation_type.size(); i++)
+    {
+        if (isupper(motion_estimation_type[i]))
+            motion_estimation_type[i] = std::tolower(motion_estimation_type[i]);
+    }
+
+    std::cout << "Motion estimation type: " << motion_estimation_type << std::endl;
+
+    if (motion_estimation_type == "solvepnp_iterative" || motion_estimation_type == "iterative")
+        return cv::SOLVEPNP_ITERATIVE;
+    else if (motion_estimation_type == "solvepnp_p3p" || motion_estimation_type == "p3p")
+        return cv::SOLVEPNP_P3P;
+    else if (motion_estimation_type == "solvepnp_ap3p" || motion_estimation_type == "ap3p")
+        return cv::SOLVEPNP_AP3P;
+    else if (motion_estimation_type == "solvepnp_epnp" || motion_estimation_type == "epnp")
+        return cv::SOLVEPNP_EPNP;
+    else
+    {
+        std::cerr << "Unforseen motion estimation type" << std::endl;
+        return cv::SOLVEPNP_EPNP;
     }
 }
 

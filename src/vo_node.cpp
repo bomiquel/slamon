@@ -13,48 +13,33 @@ void readParams(int& min_inliers,
                 std::string& working_path,
                 std::string& matching_type,
                 std::string& robot_frame_id,
-                std::string& origin_frame_id)
+                std::string& origin_frame_id,
+                std::string& motion_estimation_type)
 {
     // Getting parameters from parameter server.
     ros::NodeHandle nhp("~");
-    nhp.param("min_inliers",      min_inliers,      10);
-    nhp.param("lowe_ratio",       lowe_ratio,       0.8);
-    nhp.param("working_path",     working_path,     ros::package::getPath("slamon") + "/output/");
-    nhp.param("matching_type",    matching_type,    std::string("ratio_matching"));
-    nhp.param("robot_frame_id",   robot_frame_id,   std::string("base_link"));
-    nhp.param("origin_frame_id",  origin_frame_id,  std::string("odom"));
-    nhp.param("enable_debugging", enable_debugging, true);
+    nhp.param("min_inliers",            min_inliers,            10);
+    nhp.param("lowe_ratio",             lowe_ratio,             0.8);
+    nhp.param("working_path",           working_path,           ros::package::getPath("slamon") + "/output/");
+    nhp.param("matching_type",          matching_type,          std::string("ratio_matching"));
+    nhp.param("robot_frame_id",         robot_frame_id,         std::string("base_link"));
+    nhp.param("origin_frame_id",        origin_frame_id,        std::string("odom"));
+    nhp.param("enable_debugging",       enable_debugging,       true);
+    nhp.param("motion_estimation_type", motion_estimation_type, std::string("p3p"));
 
     // Printing parameters values.
     ROS_INFO_STREAM("Parameter setting: " << std::endl <<
-                    "Minimum kpts     = " << min_inliers << std::endl << 
-                    "Lowe's ratio     = " << lowe_ratio << std::endl <<
-                    "Working path     = " << working_path << std::endl <<
-                    "Matching type    = " << matching_type << std::endl <<
-                    "Robot frame id   = " << robot_frame_id << std::endl <<
-                    "Odom frame id    = " << origin_frame_id << std::endl <<
-                    "Enable debugging = " << enable_debugging);
+                    "Minimum kpts           = " << min_inliers << std::endl << 
+                    "Lowe's ratio           = " << lowe_ratio << std::endl <<
+                    "Working path           = " << working_path << std::endl <<
+                    "Matching type          = " << matching_type << std::endl <<
+                    "Robot frame id         = " << robot_frame_id << std::endl <<
+                    "Odom frame id          = " << origin_frame_id << std::endl <<
+                    "Enable debugging       = " << enable_debugging << std::endl <<
+                    "Motion estimation type = " << motion_estimation_type);
 
     // Checking the validity of the parameters
     bool invalid_parameter = false;
-    std::vector<std::string> matching_types = {"ratio_matching", "essential_matching", "homography_matching", "circular_ratio_matching",
-                                               "circular_essential_matching", "circular_homography_matching"};
-    for (uint i = 0; i < matching_types.size(); i++)
-    {
-        if (matching_type == matching_types[i])
-        {
-            invalid_parameter = false;
-            break;
-        }
-        else
-        {
-            invalid_parameter = true;
-        }
-    }
-    if (invalid_parameter)
-    {
-        matching_type = "ratio_matching";
-    }
     if (min_inliers < 10)
     {
         min_inliers = 10;
@@ -89,13 +74,14 @@ void readParams(int& min_inliers,
     {
         ROS_INFO_STREAM("Some parameter was invalid and has been assigned its default value." << std::endl <<
                         "Current parameter values are: " << std::endl <<
-                        "Minimum kpts     = " << min_inliers << std::endl << 
-                        "Lowe's ratio     = " << lowe_ratio << std::endl <<
-                        "Working path     = " << working_path << std::endl <<
-                        "Matching type    = " << matching_type << std::endl <<
-                        "Robot frame id   = " << robot_frame_id << std::endl <<
-                        "World frame id   = " << origin_frame_id << std::endl <<
-                        "Enable debugging = " << enable_debugging);
+                        "Minimum kpts           = " << min_inliers << std::endl << 
+                        "Lowe's ratio           = " << lowe_ratio << std::endl <<
+                        "Working path           = " << working_path << std::endl <<
+                        "Matching type          = " << matching_type << std::endl <<
+                        "Robot frame id         = " << robot_frame_id << std::endl <<
+                        "World frame id         = " << origin_frame_id << std::endl <<
+                        "Enable debugging       = " << enable_debugging << std::endl <<
+                        "Motion estimation type = " << motion_estimation_type);
     }
 }
     
@@ -109,8 +95,9 @@ int main(int argc, char **argv)
     int min_inliers;
     double lowe_ratio;
     bool enable_debugging;
-    std::string working_path, matching_type, robot_frame_id, origin_frame_id;
-    readParams(min_inliers, lowe_ratio, enable_debugging, working_path, matching_type, robot_frame_id, origin_frame_id);
+    std::string working_path, matching_type, robot_frame_id, origin_frame_id, motion_estimation_type;
+    readParams(min_inliers, lowe_ratio, enable_debugging, working_path, matching_type,
+               robot_frame_id, origin_frame_id, motion_estimation_type);
 
     // Threads
     VisualOdometry visual_odometer(lowe_ratio, 
@@ -118,6 +105,7 @@ int main(int argc, char **argv)
                                    enable_debugging, 
                                    working_path, 
                                    matching_type, 
+                                   motion_estimation_type,
                                    robot_frame_id, 
                                    origin_frame_id);
 
