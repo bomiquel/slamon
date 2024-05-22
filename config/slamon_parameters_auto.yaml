@@ -1,9 +1,0 @@
-slamon:
-  enable_debugging: true
-  lowe_ratio: 0.85
-  matching_type: homography_matching
-  min_inliers: 30
-  origin_frame_id: /odom
-  robot_frame_id: /robot_0/base_link
-  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/test/homography_matching/iterative/execution_1/
-  motion_estimation_type: ap3p
