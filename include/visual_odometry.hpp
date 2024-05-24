@@ -152,8 +152,6 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
 
         std::string f_path_; //!> Path to store frames with debugging purpose.
 
-        std::string c_frame_name_; //!> Current frame name.
-
         std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 
         std::string origin_frame_id_; //!> Odometry coordinate axis identficator.

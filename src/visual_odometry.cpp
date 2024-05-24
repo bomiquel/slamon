@@ -85,11 +85,11 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     bool valid_motion = false;
 
     // From id to name
-    c_frame_name_ = convertTo5Digits(c_frame_id_);
+    std::string c_frame_name = convertTo5Digits(c_frame_id_);
 
     // Create current frame path
     if (enable_debugging_)
-        std::filesystem::create_directory(f_path_ + c_frame_name_ + "/");
+        std::filesystem::create_directory(f_path_ + c_frame_name + "/");
 
     // Different actions depending on the state.
     switch (status_)
@@ -141,6 +141,11 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
             {
                 // ekf.predict();
                 // ekf.correct();
+                if (enable_debugging_)
+                {
+                    cv::imwrite(f_path_ + c_frame_name + "/" + c_frame_name + "_left.png", c_frame.getLeftImg());
+                    cv::imwrite(f_path_ + c_frame_name + "/" + c_frame_name + "_right.png", c_frame.getRightImg());
+                }
                 publishFrame(c_frame.getTimestamp(), c_frame.getLeftDescs(), c_frame.getRightDescs(),
                              c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints(),
                              frame_pub_);
@@ -248,12 +253,6 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     if (!fromImgMsgToMat(r_img_msg, r_img)) // TODO: paralellization?
         return false; 
 
-    if (enable_debugging_)
-    {
-        cv::imwrite(f_path_ + c_frame_name_ + "/" + c_frame_name_ + "_left.png", l_img);
-        cv::imwrite(f_path_ + c_frame_name_ + "/" + c_frame_name_ + "_right.png", r_img);
-    }
-
     // Detecting keypoints.
     start_time = ros::Time::now().toSec();
     cv::Mat l_descs, r_descs;
@@ -265,8 +264,6 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     // Keypoint detection debugging.
     if (stereo_kps_img_pub_.getNumSubscribers() > 0)
         publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, l_kpts, r_kpts, stereo_kps_img_pub_);
-    if (enable_debugging_)
-        writeStereoKeypoints(l_img, r_img, f_path_ + c_frame_name_ + "/stereo_keypoints", l_kpts, r_kpts);
 
     // Matching keypoints.
     start_time = ros::Time::now().toSec();
@@ -293,8 +290,6 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     // Stereo matching keypoints debugging.
     if (stereo_matches_img_pub_.getNumSubscribers() > 0)
         publishMatches(false, l_img, r_img, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, stereo_matches_img_pub_);
-    if (enable_debugging_)
-        writeMatches(false, l_img, r_img, f_path_ + c_frame_name_ + "/stereo_matches", f_l_kpts, f_r_kpts);
 
     // Fill Frame object
     c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_obj_pts);
@@ -341,18 +336,6 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
         else
             ROS_ERROR_STREAM("[Non-stereo matcher debugger:] Unforeseen type of matching!");
     }
-    if (enable_debugging_)
-    {
-        if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
-            writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), f_path_ + c_frame_name_ + "/successive_matches", f_c_l_kpts, f_p_l_kpts);
-
-        else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
-            writeCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                 f_path_ + c_frame_name_ + "/successive_matches", f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts);
-        
-        else
-            ROS_ERROR_STREAM("[Non-stereo matcher debugger:] Unforeseen type of matching!");
-    }
 
     // Estimate the motion.
     start_time = ros::Time::now().toSec();
@@ -380,18 +363,6 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
         else
             ROS_ERROR_STREAM("[Motion estimator debugger:] Unforeseen type of matching!");
     }
-    if (enable_debugging_)
-    {
-        if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
-            writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), f_path_ + c_frame_name_ + "/inliers", i_c_l_kpts, i_p_l_kpts);
-
-        else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
-            writeCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                 f_path_ + c_frame_name_ + "/inliers", i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts);
-        
-        else
-            ROS_ERROR_STREAM("[Motion estimator debugger:] Unforeseen type of matching!");
-    }
 
     // Build a TF
     tf::Transform c_camera_motion;
@@ -408,15 +379,6 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
     // Calculates the robot's current pose by accumulating its movement.
     // {o}^T_{r2} = {0}^T_{r1} * {r1}^T_{r2}
     c_robot_pose_ *= c_robot_motion;
-
-    // Motion debugging
-    if (enable_debugging_)
-    {
-        cv::FileStorage fs(f_path_ + c_frame_name_ + "/transform.yml", cv::FileStorage::WRITE);
-        cv::write(fs, "r_camera_motion", r_camera_motion);
-        cv::write(fs, "t_camera_motion", t_camera_motion);
-        fs.release();
-    }
 
     return true;
 }
