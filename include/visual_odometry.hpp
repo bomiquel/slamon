@@ -168,6 +168,8 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
 
         ros::Publisher odom_pub_; //!> Publishes current velocity and accumulated movement (odometry).
 
+        ros::Publisher frame_pub_; //!> Publishes current relevant information from a stereo pair of images.
+
         ros::Publisher inliers_img_pub_; // !> Publisher for the image with drawn inliers.
 
         ros::Publisher stereo_kps_img_pub_; // !> Publisher for the image with drawn stereo keypoints.

@@ -58,12 +58,10 @@ add_message_files(
     DIRECTORY 
         msg 
     FILES
+        Frame.msg
         VOInfo.msg
+        Keypoint.msg
         GraphPoses.msg
-        TimeTracking.msg
-        TimeGraph.msg
-        TimeLoopClosing.msg
-        SubTimeLoopClosing.msg
 )
 
 # Declare custom ROS services
@@ -97,7 +95,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 link_directories(${OpenCV_INCLUDE_DIRS})
 
 # Executables
-add_executable(slam 
+add_executable(vo_slamon 
                src/frame.cpp
                src/caster.cpp
                src/vo_node.cpp
@@ -107,9 +105,9 @@ add_executable(slam
 add_executable(initial_pose_server src/initial_pose_server)
 
 # Dependencies
-add_dependencies(slam ${catkin_EXPORTED_TARGETS})
+add_dependencies(vo_slamon ${catkin_EXPORTED_TARGETS})
 add_dependencies(initial_pose_server ${catkin_EXPORTED_TARGETS})
 
 # Linking
-target_link_libraries(slam ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(vo_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(initial_pose_server ${catkin_LIBRARIES})

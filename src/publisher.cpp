@@ -188,6 +188,43 @@ void Publisher::publishInfo(const ros::Time& stamp,
 }   
 
 
+void Publisher::publishFrame(const ros::Time& stamp,
+                             const cv::Mat& l_descs,
+                             const cv::Mat& r_descs,
+                             const std::vector<cv::Point2f>& l_kpts,
+                             const std::vector<cv::Point2f>& r_kpts,
+                             const std::vector<cv::Point3f>& obj_pts,
+                             const ros::Publisher& publisher)
+{
+    // Create and fill frame msg
+    slamon::Frame frame_msg;
+    geometry_msgs::Point obj_pt_msg;
+    slamon::Keypoint l_kpt_msg, r_kpt_msg;
+    frame_msg.header.stamp = stamp;
+    for (uint i = 0; i < l_kpts.size(); i++)
+    {
+        // Fill base msgs
+        obj_pt_msg.x = obj_pts[i].x;
+        obj_pt_msg.y = obj_pts[i].y;
+        obj_pt_msg.z = obj_pts[i].z;
+        l_kpt_msg.pt.x = l_kpts[i].x;
+        l_kpt_msg.pt.y = l_kpts[i].y;
+        r_kpt_msg.pt.x = r_kpts[i].x;
+        r_kpt_msg.pt.y = r_kpts[i].y;
+        l_kpt_msg.desc = l_descs.row(i);
+        r_kpt_msg.desc = r_descs.row(i);
+
+        // Fill Frame msg
+        frame_msg.l_kpts.push_back(l_kpt_msg);
+        frame_msg.r_kpts.push_back(r_kpt_msg);
+        frame_msg.obj_pts.push_back(obj_pt_msg);
+    }
+
+    // Publishes 
+    publisher.publish(frame_msg);
+}
+
+
 cv::Mat Publisher::drawPoints(const cv::Mat& img,
                               const cv::Scalar& color,
                               const std::vector<cv::Point2f>& pts)

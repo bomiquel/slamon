@@ -46,6 +46,7 @@ void VisualOdometry::run()
     // Publishers.
     info_pub_ = nhp.advertise<slamon::VOInfo>("vo_info", 1);
     odom_pub_ = nhp.advertise<nav_msgs::Odometry>("odom", 1);
+    frame_pub_ = nhp.advertise<slamon::Frame>("frame", 1);
     inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("inliers_img", 1);
     stereo_kps_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
     stereo_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_matches_img", 1);
@@ -140,9 +141,11 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
             {
                 // ekf.predict();
                 // ekf.correct();
+                publishFrame(c_frame.getTimestamp(), c_frame.getLeftDescs(), c_frame.getRightDescs(),
+                             c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints(),
+                             frame_pub_);
                 publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_robot_pose_,
                                        c_robot_motion, odom_pub_, "map", robot_frame_id_);
-                // publishInfo();
                 // if(needNewKeyFrame())
                 //      addNewKeyFrame();
             }
@@ -150,7 +153,6 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
             {
                 // ekf.predict();
                 // publishPose();
-                // publishInfo();
             }
     }
 

@@ -17,7 +17,9 @@
 #include <nav_msgs/Odometry.h>
 #include <cv_bridge/cv_bridge.h>
 
+#include "slamon/Frame.h"
 #include "slamon/VOInfo.h"
+#include "slamon/Keypoint.h"
 
 class Publisher
 {
@@ -177,7 +179,7 @@ class Publisher
 
 
         /** \brief Publishes current robot pose and velocity.
-         *  \param c_stamp Current ROS timestamp (input).
+         *  \param c_stamp Current frame ROS timestamp (input).
          *  \param p_stamp Previous ROS timestamp (input).
          *  \param pose The current robot pose to be published (input).
          *  \param motion The robot movement between current and previous frames.
@@ -196,7 +198,7 @@ class Publisher
 
 
         /** \brief Publishes current visual odometer internal performance.
-         *  \param stamp Current ROS timestamp (input).
+         *  \param stamp Current frame ROS timestamp (input).
          *  \param valid_motion If a valid movement could be estimated in the last iteration (input).
          *  \param run_times Structure with all visual odometer internal run times (input).
          *  \param publisher The ROS publisher (input).
@@ -205,6 +207,24 @@ class Publisher
                          const bool valid_motion,
                          const VORunTimes& run_times,
                          const ros::Publisher& publisher);              
+
+
+        /** \brief Publishes relevant information from a stereo pair of images.
+         *  \param stamp Current frame ROS timestamp (input).
+         *  \param l_descs The left image keypoints descriptors (input).
+         *  \param r_descs The right image keypoints descriptors (input).
+         *  \param l_kpts The left image keypoints (input).
+         *  \param r_kpts The right image keypoints (input).
+         *  \param obj_pts 3D points of the scene obtained from the stereo data (input).
+         *  \param publisher The ROS publisher (input).
+        */
+        void publishFrame(const ros::Time& stamp,
+                          const cv::Mat& l_descs,
+                          const cv::Mat& r_descs,
+                          const std::vector<cv::Point2f>& l_kpts,
+                          const std::vector<cv::Point2f>& r_kpts,
+                          const std::vector<cv::Point3f>& obj_pts, 
+                          const ros::Publisher& publisher);
 
 
     private:
