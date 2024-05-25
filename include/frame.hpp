@@ -18,120 +18,123 @@
 #include <tf/tf.h>
 
 
-class Frame
+namespace slam
 {
-    public:
+    class Frame
+    {
+        public:
 
-        /** \brief Empty class constructor
-         */
-        Frame() {};
-
-
-        /** \brief Class constructor
-         */
-        Frame(const cv::Mat& l_img,
-              const cv::Mat& r_img,
-              const cv::Mat& l_descs,
-              const cv::Mat& r_descs,
-              const ros::Time& stamp,
-              const std::vector<cv::Point2f>& l_kpts,
-              const std::vector<cv::Point2f>& r_kpts,
-              const std::vector<cv::Point3f>& obj_pts);
+            /** \brief Empty class constructor
+             */
+            Frame() {};
 
 
-        /** \brief Set keyframe id.
-         *  \param id of the keyframe.
-         */
-        inline void setId(const int id){id_ = id;}
+            /** \brief Class constructor
+             */
+            Frame(const cv::Mat& l_img,
+                  const cv::Mat& r_img,
+                  const cv::Mat& l_descs,
+                  const cv::Mat& r_descs,
+                  const ros::Time& stamp,
+                  const std::vector<cv::Point2f>& l_kpts,
+                  const std::vector<cv::Point2f>& r_kpts,
+                  const std::vector<cv::Point3f>& obj_pts);
 
 
-        /** \brief Get keyframe id.
-         *  @return keyframe id.
-         */
-        inline int getId() const {return id_;}
+            /** \brief Set keyframe id.
+             *  \param id of the keyframe.
+             */
+            inline void setId(const int id){id_ = id;}
 
 
-        /** \brief Get keyframe timestamp
-         *  @return The time stamp when taking the image.
-         */
-        inline ros::Time getTimestamp() const {return stamp_;}
+            /** \brief Get keyframe id.
+             *  @return keyframe id.
+             */
+            inline int getId() const {return id_;}
 
 
-        /** \brief Get left image
-         *  @return The left image of the stereo pair
-         */
-        inline cv::Mat getLeftImg() const {return l_img_;}
+            /** \brief Get keyframe timestamp
+             *  @return The time stamp when taking the image.
+             */
+            inline ros::Time getTimestamp() const {return stamp_;}
 
 
-        /** \brief Get right image
-         *  @return The right image of the stereo pair
-         */
-        inline cv::Mat getRightImg() const {return r_img_;}
+            /** \brief Get left image
+             *  @return The left image of the stereo pair
+             */
+            inline cv::Mat getLeftImg() const {return l_img_;}
 
 
-        /** \brief Get left descriptors.
-         *  @return Left descriptors.
-         */
-        inline cv::Mat getLeftDescs() const {return l_descs_;}
+            /** \brief Get right image
+             *  @return The right image of the stereo pair
+             */
+            inline cv::Mat getRightImg() const {return r_img_;}
 
 
-        /** \brief Get right descriptors.
-         *  @return Right descriptors.
-         */
-        inline cv::Mat getRightDescs() const {return r_descs_;}
+            /** \brief Get left descriptors.
+             *  @return Left descriptors.
+             */
+            inline cv::Mat getLeftDescs() const {return l_descs_;}
 
 
-        /** \brief Get left keypoints.
-         *  @return Left keypoints.
-         */
-        inline std::vector<cv::Point2f> getLeftKpts() const {return l_kpts_;}
+            /** \brief Get right descriptors.
+             *  @return Right descriptors.
+             */
+            inline cv::Mat getRightDescs() const {return r_descs_;}
 
 
-        /** \brief Get right keypoints.
-         *  @return Right keypoints.
-         */
-        inline std::vector<cv::Point2f> getRightKpts() const {return r_kpts_;}
-        
-
-        /** \brief Get 3D in camera frame.
-         */
-        inline std::vector<cv::Point3f> getObjectPoints() const {return obj_pts_;}
+            /** \brief Get left keypoints.
+             *  @return Left keypoints.
+             */
+            inline std::vector<cv::Point2f> getLeftKpts() const {return l_kpts_;}
 
 
-        /** \brief Set camera pose.
-         *  \param camera_pose Camera pose when taking the image.
-         */
-        inline void setCameraPose(const tf::Transform& camera_pose){camera_pose_ = camera_pose;}
+            /** \brief Get right keypoints.
+             *  @return Right keypoints.
+             */
+            inline std::vector<cv::Point2f> getRightKpts() const {return r_kpts_;}
+            
+
+            /** \brief Get 3D in camera frame.
+             */
+            inline std::vector<cv::Point3f> getObjectPoints() const {return obj_pts_;}
 
 
-        /** \brief Get camera pose
-         *  @return The camera pose when taking the image.
-         */
-        inline tf::Transform getCameraPose() const {return camera_pose_;}
+            /** \brief Set camera pose.
+             *  \param camera_pose Camera pose when taking the image.
+             */
+            inline void setCameraPose(const tf::Transform& camera_pose){camera_pose_ = camera_pose;}
 
 
-    private:
+            /** \brief Get camera pose
+             *  @return The camera pose when taking the image.
+             */
+            inline tf::Transform getCameraPose() const {return camera_pose_;}
 
-        int id_; //!> Frame id.
 
-        ros::Time stamp_; //!> Store the frame timestamp.
+        private:
 
-        cv::Mat l_img_; //!> Left image.
-        cv::Mat r_img_; //!> Right image.
+            int id_; //!> Frame id.
 
-        cv::Mat l_descs_; //!> Left descriptors.
-        cv::Mat r_descs_; //!> Right descriptors.
+            ros::Time stamp_; //!> Store the frame timestamp.
 
-        std::vector<cv::Point2f> l_kpts_; //!> Left keypoints.
-        std::vector<cv::Point2f> r_kpts_; //!> Right keypoints.
+            cv::Mat l_img_; //!> Left image.
+            cv::Mat r_img_; //!> Right image.
 
-        std::vector<cv::Point3f> obj_pts_; //!> Stereo 3D points in camera frame.
+            cv::Mat l_descs_; //!> Left descriptors.
+            cv::Mat r_descs_; //!> Right descriptors.
 
-        tf::Transform camera_pose_; //!> Camera world position for this frame.
+            std::vector<cv::Point2f> l_kpts_; //!> Left keypoints.
+            std::vector<cv::Point2f> r_kpts_; //!> Right keypoints.
 
-        // std::vector<std::vector<int>> clusters_; //!> Keypoints clustering.
+            std::vector<cv::Point3f> obj_pts_; //!> Stereo 3D points in camera frame.
 
-        // std::vector<Eigen::Vector4f> cluster_centroids_; //!> Central point for every cluster.
-};
+            tf::Transform camera_pose_; //!> Camera world position for this frame.
+
+            // std::vector<std::vector<int>> clusters_; //!> Keypoints clustering.
+
+            // std::vector<Eigen::Vector4f> cluster_centroids_; //!> Central point for every cluster.
+    };
+}
 
 #endif // FRAME_H

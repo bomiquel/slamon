@@ -1,9 +1,9 @@
-slamon:
+vo_slamon:
   lowe_ratio: 0.85 # 0.7/0.9, good 0.85
   min_inliers: 30 # 20
   working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/test
   matching_type: ratio_matching 
   robot_frame_id: /robot_0/base_link
   origin_frame_id: /odom
-  enable_debugging: true
+  enable_debugging: false
   motion_estimation_type: ap3p

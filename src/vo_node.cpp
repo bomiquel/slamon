@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <thread>
 
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -88,10 +89,11 @@ void readParams(int& min_inliers,
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "slamon");
+    // Init ROS.
+    ros::init(argc, argv, "vo_slamon");
     ros::start();
 
-    // Read parameters
+    // Read parameters.
     int min_inliers;
     double lowe_ratio;
     bool enable_debugging;
@@ -99,8 +101,8 @@ int main(int argc, char **argv)
     readParams(min_inliers, lowe_ratio, enable_debugging, working_path, matching_type,
                robot_frame_id, origin_frame_id, motion_estimation_type);
 
-    // Threads
-    VisualOdometry visual_odometer(lowe_ratio, 
+    // Declare threads.
+    slam::VisualOdometry visual_odometer(lowe_ratio, 
                                    min_inliers, 
                                    enable_debugging, 
                                    working_path, 
@@ -109,10 +111,10 @@ int main(int argc, char **argv)
                                    robot_frame_id, 
                                    origin_frame_id);
 
-    // Launch threads
-    std::thread visual_odometer_thread(&VisualOdometry::run, &visual_odometer);
+    // Launch threads.
+    std::thread visual_odometer_thread(&slam::VisualOdometry::run, &visual_odometer);
 
-    // ROS spin
+    // ROS wait
     ros::Rate r(10);
     while (ros::ok())
     {

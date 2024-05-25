@@ -102,12 +102,20 @@ add_executable(vo_slamon
                src/publisher.cpp
                src/stereo_modules.cpp
                src/visual_odometry.cpp)
+add_executable(map_slamon
+               src/graph.cpp
+               src/frame.cpp
+               src/caster.cpp
+               src/map_node.cpp
+               src/publisher.cpp)
 add_executable(initial_pose_server src/initial_pose_server)
 
 # Dependencies
 add_dependencies(vo_slamon ${catkin_EXPORTED_TARGETS})
+add_dependencies(map_slamon ${catkin_EXPORTED_TARGETS})
 add_dependencies(initial_pose_server ${catkin_EXPORTED_TARGETS})
 
 # Linking
 target_link_libraries(vo_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(map_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(initial_pose_server ${catkin_LIBRARIES})

@@ -21,6 +21,7 @@
 #include "slamon/VOInfo.h"
 #include "slamon/Keypoint.h"
 
+
 class Publisher
 {
     public:
