@@ -57,6 +57,36 @@ bool Caster::fromMatToTf(const cv::Mat& r_vec,
 }
 
 
+void Caster::fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
+                                       Frame& frame)
+{
+    cv::Point2f kpt;
+    cv::Point3f obj_pt;
+    std::vector<float> desc;
+    cv::Mat l_descs, r_descs;
+    std::vector<cv::Point3f> obj_pts;
+    std::vector<cv::Point2f> l_kpts, r_kpts;
+    for (uint i = 0; i < msg->l_kpts.size(); i++)
+    {
+        kpt.x = msg->l_kpts[i].pt.x;
+        kpt.y = msg->l_kpts[i].pt.y;
+        l_kpts.push_back(kpt);
+        kpt.x = msg->r_kpts[i].pt.x;
+        kpt.y = msg->r_kpts[i].pt.y;
+        r_kpts.push_back(kpt);
+        desc = msg->l_kpts[i].desc;
+        l_descs.push_back(cv::Mat(1, desc.size(), CV_32F, desc.data()));
+        desc = msg->r_kpts[i].desc;
+        r_descs.push_back(cv::Mat(1, desc.size(), CV_32F, desc.data()));
+        obj_pt.x = msg->obj_pts[i].x;
+        obj_pt.y = msg->obj_pts[i].y;
+        obj_pt.z = msg->obj_pts[i].z;
+    }
+
+    frame = Frame(l_descs, r_descs, msg->header.stamp, l_kpts, r_kpts, obj_pts);
+}
+
+
 std::string Caster::convertTo5Digits(int in)
 {
     uint val = (uint)in;

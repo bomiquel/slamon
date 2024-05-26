@@ -55,6 +55,7 @@ class Graph: protected Caster, protected Publisher
 
     private:
 
+        bool init_graph_; 
 
         bool enable_debugging_;
 

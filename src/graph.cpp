@@ -3,6 +3,7 @@
 
 Graph::Graph(const bool enable_debugging) 
 {
+    init_graph_ = false;
     enable_debugging_ = enable_debugging;
 }
 
@@ -29,8 +30,28 @@ void Graph::run()
 
 
 void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
-                            const nav_msgs::OdometryConstPtr& odom_msg)
+                          const nav_msgs::OdometryConstPtr& odom_msg)
 {
     ROS_INFO_STREAM("I Will Do What I Must");
+
+    Frame c_frame;
+    tf::Transform c_robot_pose;
+    fromFrameMsgToFrameObject(frame_msg, c_frame);
+    tf::poseMsgToTF(odom_msg->pose.pose, c_robot_pose);
+
+    ROS_INFO_STREAM("You Will Try");
+    
+    // if (!init_graph_)
+    // {
+
+    // } 
+    // else if (needNewKeyFrame())
+    // {
+
+    // }
+    // else
+    // {
+
+    // }
 }
 

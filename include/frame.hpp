@@ -27,7 +27,18 @@ class Frame
         Frame() {};
 
 
-        /** \brief Class constructor
+        /** \brief Class constructor without images.
+         * 
+         */
+        Frame(const cv::Mat& l_descs,
+              const cv::Mat& r_descs,
+              const ros::Time& stamp,
+              const std::vector<cv::Point2f>& l_kpts,
+              const std::vector<cv::Point2f>& r_kpts,
+              const std::vector<cv::Point3f>& obj_pts);
+
+
+        /** \brief Full class constructor
          */
         Frame(const cv::Mat& l_img,
               const cv::Mat& r_img,

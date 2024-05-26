@@ -16,6 +16,9 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "frame.hpp" // Frame class
+#include "slamon/Frame.h" // Frame ROS msg
+
 
 class Caster
 {
@@ -44,6 +47,14 @@ class Caster
         bool fromMatToTf(const cv::Mat& r_vec,
                          const cv::Mat& t_vec,
                          tf::Transform& tf);
+
+
+        /** Convert custom ROS frame msg to frame object (slam::Frame)
+         *  \param msg ROS message with relevant visual information (input).
+         *  \param frame Will contain the relevant visual information (output).
+         */
+        void fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
+                                       Frame& frame);
 
 
         /** \brief Converts an integer to a string containing a
