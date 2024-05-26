@@ -17,10 +17,10 @@ int main(int argc, char **argv)
     bool enable_debugging = true;
 
     // Declare threads.
-    slam::Graph graph(enable_debugging);
+    Graph graph(enable_debugging);
 
     // Launch threads.
-    std::thread graph_thread(&slam::Graph::run, &graph);
+    std::thread graph_thread(&Graph::run, &graph);
 
     // ROS wait
     ros::Rate r(10);

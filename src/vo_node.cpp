@@ -102,7 +102,7 @@ int main(int argc, char **argv)
                robot_frame_id, origin_frame_id, motion_estimation_type);
 
     // Declare threads.
-    slam::VisualOdometry visual_odometer(lowe_ratio, 
+    VisualOdometry visual_odometer(lowe_ratio, 
                                    min_inliers, 
                                    enable_debugging, 
                                    working_path, 
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
                                    origin_frame_id);
 
     // Launch threads.
-    std::thread visual_odometer_thread(&slam::VisualOdometry::run, &visual_odometer);
+    std::thread visual_odometer_thread(&VisualOdometry::run, &visual_odometer);
 
     // ROS wait
     ros::Rate r(10);

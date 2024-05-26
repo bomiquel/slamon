@@ -27,46 +27,44 @@
 #include "slamon/Keypoint.h"
 
 
-namespace slam
-{
-    class Graph: protected Caster, protected Publisher
-    {   
-        public:
+class Graph: protected Caster, protected Publisher
+{   
+    public:
 
-            /** \brief Class constructor
-             */
-            Graph(const bool enable_debugging);
+        /** \brief Class constructor
+         */
+        Graph(const bool enable_debugging);
 
 
-            /** \brief Starts graph
-             */
-            void run();
+        /** \brief Starts graph
+         */
+        void run();
 
 
-        protected:
+    protected:
 
 
-            /** \brief Messages callback. This function is called when synchronized frame
-             *  and odom messages are received.
-             *  \param frame_msg Custom ROS message containing current stereo pair image
-             *  relevant information (input).
-             *  \param odom_msg ROS message containing current robot odometry (input).
-             */  
-            void frameCallback(const slamon::FrameConstPtr& frame_msg,
-                               const nav_msgs::OdometryConstPtr& odom_msg);
+        /** \brief Messages callback. This function is called when synchronized frame
+         *  and odom messages are received.
+         *  \param frame_msg Custom ROS message containing current stereo pair image
+         *  relevant information (input).
+         *  \param odom_msg ROS message containing current robot odometry (input).
+         */  
+        void frameCallback(const slamon::FrameConstPtr& frame_msg,
+                           const nav_msgs::OdometryConstPtr& odom_msg);
 
-        private:
+    private:
 
 
-            bool enable_debugging_;
+        bool enable_debugging_;
 
-            // Topic sync
-            typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,
-                                                                    nav_msgs::Odometry> SyncPolicy_;
+        // Topic sync
+        typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,
+                                                                nav_msgs::Odometry> SyncPolicy_;
 
-            typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
+        typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
 
-    };
-}
+};
+
 
 #endif // GRAPH_HPP
