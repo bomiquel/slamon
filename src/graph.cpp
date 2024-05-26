@@ -22,8 +22,8 @@ void Graph::run()
 
     // Message sync.
     boost::shared_ptr<Sync_> sync;
-    frame_sub.subscribe(nh, "frame", 1);
-    odom_sub.subscribe(nh, "odom", 1);
+    frame_sub.subscribe(nh, "frame", 5);
+    odom_sub.subscribe(nh, "odom", 5);
     sync.reset(new Sync_(SyncPolicy_(10), frame_sub, odom_sub));
     sync->registerCallback(boost::bind(&Graph::frameCallback, this, _1, _2));
 

@@ -26,6 +26,9 @@ void VisualOdometry::run()
     // Set frame id counter
     c_frame_id_ = 0;
 
+    // Set false to initialised pose flag.
+    initialised_pose_ = false;
+
     // Create debugging directories
     if (enable_debugging_)
     {
@@ -81,26 +84,22 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     // Create current frame object.
     Frame c_frame; 
 
-    // Valid motion flag
+    // Valid motion flag.
     bool valid_motion = false;
 
-    // From id to name
-    std::string c_frame_name = convertTo5Digits(c_frame_id_);
-
-    // Create current frame path
-    if (enable_debugging_)
-        std::filesystem::create_directory(f_path_ + c_frame_name + "/");
+    // Current camera motion.
+    tf::Transform c_camera_motion;
 
     // Different actions depending on the state.
     switch (status_)
     {
         case UNINITIALISED:
+        {
             ROS_INFO_STREAM("UNINITIALIZED");
             if (!initialisation(l_info_msg, r_info_msg))
                 break;
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
             {
-                getInitialPose();
                 status_ = RUNNING;
             }
             else
@@ -110,12 +109,12 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                 run_times_.motion_estimation = 0.0;
             }
             break;
-
+        }
         case SEMI_INITIALISED:
+        {
             ROS_INFO_STREAM("SEMI-INITIALISED");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
             {
-                getInitialPose();
                 status_ = RUNNING;
             }
             else
@@ -124,41 +123,51 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                 run_times_.motion_estimation = 0.0;
             }
             break;
-
+        }
         case RUNNING:
-            tf::Transform c_robot_motion;
+        {
             ROS_INFO_STREAM("RUNNING");
             if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
             {
-                valid_motion = computeMotionSuccessiveFrames(c_frame, c_robot_motion);          
+                valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);
+                if (valid_motion)
+                {
+                    if (!initialised_pose_)
+                    {
+                        initialised_pose_ = getInitialPose();
+
+                        publishFrame(p_frame_.getTimestamp(), p_frame_.getLeftDescs(), p_frame_.getRightDescs(),
+                                     p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getObjectPoints(),
+                                     frame_pub_);
+                        publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_robot_pose_,
+                                               tf::Transform(), odom_pub_, "map", robot_frame_id_);
+                    }
+
+                    // From {c2}^T_{c1} to {c1}^T_{c2}.
+                    c_camera_motion = c_camera_motion.inverse();
+
+                    // Changes the coordinate axis of the movement. From camera to robot. 
+                    // {r1}^T_{r2} = {r1}^T_{c1} * {c1}^T_{c2} * {c2}^T_{r2}
+                    tf::Transform c_robot_motion = robot2camera_ * c_camera_motion * robot2camera_.inverse();
+
+                    // Calculates the robot's current pose by accumulating its movement.
+                    // {o}^T_{r2} = {0}^T_{r1} * {r1}^T_{r2}
+                    c_robot_pose_ *= c_robot_motion;
+
+                    publishFrame(c_frame.getTimestamp(), c_frame.getLeftDescs(), c_frame.getRightDescs(),
+                                 c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints(),
+                                 frame_pub_);
+                    publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_robot_pose_,
+                                           c_robot_motion, odom_pub_, "map", robot_frame_id_);
+                }
             }
             else
             {
                 run_times_.successive_matching = 0.0;
                 run_times_.motion_estimation = 0.0;
             }
-            if (valid_motion)
-            {
-                // ekf.predict();
-                // ekf.correct();
-                if (enable_debugging_)
-                {
-                    cv::imwrite(f_path_ + c_frame_name + "/" + c_frame_name + "_left.png", c_frame.getLeftImg());
-                    cv::imwrite(f_path_ + c_frame_name + "/" + c_frame_name + "_right.png", c_frame.getRightImg());
-                }
-                publishFrame(c_frame.getTimestamp(), c_frame.getLeftDescs(), c_frame.getRightDescs(),
-                             c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints(),
-                             frame_pub_);
-                publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_robot_pose_,
-                                       c_robot_motion, odom_pub_, "map", robot_frame_id_);
-                // if(needNewKeyFrame())
-                //      addNewKeyFrame();
-            }
-            else
-            {
-                // ekf.predict();
-                // publishPose();
-            }
+            break;
+        }
     }
 
     // Store current frame as previous.
@@ -308,7 +317,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 
 
 bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
-                                                    tf::Transform& c_robot_motion)
+                                                   tf::Transform& c_camera_motion)
 {
     // Auxilary variable to set the start time of a process
     double start_time;
@@ -374,26 +383,14 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
     }
 
     // Build a TF
-    tf::Transform c_camera_motion;
     if(!fromMatToTf(r_camera_motion, t_camera_motion, c_camera_motion))
         return false;
-
-    // From {c2}^T_{c1} to {c1}^T_{c2}.
-    c_camera_motion = c_camera_motion.inverse();
-
-    // Changes the coordinate axis of the movement. From camera to robot. 
-    // {r1}^T_{r2} = {r1}^T_{c1} * {c1}^T_{c2} * {c2}^T_{r2}
-    c_robot_motion = robot2camera_ * c_camera_motion * robot2camera_.inverse();
-
-    // Calculates the robot's current pose by accumulating its movement.
-    // {o}^T_{r2} = {0}^T_{r1} * {r1}^T_{r2}
-    c_robot_pose_ *= c_robot_motion;
 
     return true;
 }
 
 
-void VisualOdometry::getInitialPose()
+bool VisualOdometry::getInitialPose()
 {
     slamon::GetPose srv;
     if (initial_pose_client_.call(srv))
@@ -425,6 +422,8 @@ void VisualOdometry::getInitialPose()
         ROS_WARN_STREAM("[Initial pose:] Failed to call GetPose service. The initial pose will be assumed as the identity.");
         c_robot_pose_.setIdentity();
     }
+
+    return true;
 }
 
 

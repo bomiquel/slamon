@@ -122,8 +122,9 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
          *  it calls a service and waits for another part of the system to respond.
          *  If there is a response, the received pose is assigned, otherwise the pose
          *  is initialised to 0 (identity).
+         *  @return If the robot's pose has been initialised.
          */                        
-        void getInitialPose();
+        bool getInitialPose();
 
 
         /** \brief Decodes the enum type StereoResults into a boolean and a message
@@ -147,6 +148,8 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
         VOStatus status_; //!> Visual odometer state.
 
         bool enable_debugging_; //!> Enabling or disabling debugging messages.
+
+        bool initialised_pose_; //!> Flag that indicates if the robot's pose has been initialised.
 
         std::string w_path_; //!> Path to working directory.
 

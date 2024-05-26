@@ -148,16 +148,28 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
 
     // Set linear velocity
     double delta_t = (c_stamp - p_stamp).toSec();
-    msg.twist.twist.linear.x = motion.getOrigin().getX() / delta_t;
-    msg.twist.twist.linear.y = motion.getOrigin().getY() / delta_t;
-    msg.twist.twist.linear.z = motion.getOrigin().getZ() / delta_t;
-    tf::Quaternion delta_rot = motion.getRotation();
-    tfScalar angle = delta_rot.getAngle();
-    tf::Vector3 axis = delta_rot.getAxis();
-    tf::Vector3 angular_velocity = (axis * angle) / delta_t;
-    msg.twist.twist.angular.x = angular_velocity.x();
-    msg.twist.twist.angular.y = angular_velocity.y();
-    msg.twist.twist.angular.z = angular_velocity.z();
+    if (delta_t == 0.0)
+    {
+        msg.twist.twist.linear.x = 0.0;
+        msg.twist.twist.linear.y = 0.0;
+        msg.twist.twist.linear.z = 0.0;
+        msg.twist.twist.angular.x = 0.0;
+        msg.twist.twist.angular.y = 0.0;
+        msg.twist.twist.angular.z = 0.0;
+    }
+    else
+    {
+        msg.twist.twist.linear.x = motion.getOrigin().getX() / delta_t;
+        msg.twist.twist.linear.y = motion.getOrigin().getY() / delta_t;
+        msg.twist.twist.linear.z = motion.getOrigin().getZ() / delta_t;
+        tf::Quaternion delta_rot = motion.getRotation();
+        tfScalar angle = delta_rot.getAngle();
+        tf::Vector3 axis = delta_rot.getAxis();
+        tf::Vector3 angular_velocity = (axis * angle) / delta_t;
+        msg.twist.twist.angular.x = angular_velocity.x();
+        msg.twist.twist.angular.y = angular_velocity.y();
+        msg.twist.twist.angular.z = angular_velocity.z();
+    }
 
     // Publish pose and velocity
     publisher.publish(msg);
