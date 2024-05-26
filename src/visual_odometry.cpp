@@ -291,6 +291,15 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     if (stereo_matches_img_pub_.getNumSubscribers() > 0)
         publishMatches(false, l_img, r_img, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, stereo_matches_img_pub_);
 
+    ROS_INFO_STREAM("--------------------------------------------------------------");
+    ROS_INFO_STREAM("[processCurrentFrame]:" << std::endl <<
+                    "Left keypoints: " << f_l_kpts.size() << std::endl <<
+                    "Right keypoints: " << f_r_kpts.size() << std::endl <<
+                    "Left descriptors: " << f_l_descs.rows << std::endl <<
+                    "Right descriptors: " << f_r_descs.rows << std::endl <<
+                    "3D points: " << f_obj_pts.size());
+     ROS_INFO_STREAM("--------------------------------------------------------------");
+
     // Fill Frame object
     c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_obj_pts);
 

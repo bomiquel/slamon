@@ -33,7 +33,8 @@ class Graph: protected Caster, protected Publisher
 
         /** \brief Class constructor
          */
-        Graph(const bool enable_debugging);
+        Graph(bool enable_debugging,
+              const std::string& w_path);
 
 
         /** \brief Starts graph
@@ -55,9 +56,11 @@ class Graph: protected Caster, protected Publisher
 
     private:
 
-        bool init_graph_; 
+        bool init_graph_; //!> Graph state.
 
-        bool enable_debugging_;
+        bool enable_debugging_; //!> Enabling or disabling debugging messages.
+
+        std::string w_path_; //!> Path to working directory.
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,

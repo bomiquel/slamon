@@ -1,11 +1,14 @@
 #include "graph.hpp"
 
 
-Graph::Graph(const bool enable_debugging) 
+Graph::Graph(bool enable_debugging,
+             const std::string& w_path) 
 {
+    w_path_ = w_path;
     init_graph_ = false;
     enable_debugging_ = enable_debugging;
 }
+
 
 void Graph::run()
 {
@@ -32,14 +35,19 @@ void Graph::run()
 void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
                           const nav_msgs::OdometryConstPtr& odom_msg)
 {
-    ROS_INFO_STREAM("I Will Do What I Must");
-
     Frame c_frame;
     tf::Transform c_robot_pose;
     fromFrameMsgToFrameObject(frame_msg, c_frame);
     tf::poseMsgToTF(odom_msg->pose.pose, c_robot_pose);
 
-    ROS_INFO_STREAM("You Will Try");
+    ROS_INFO_STREAM("--------------------------------------------------------------");
+    ROS_INFO_STREAM("[frameCallback]:" << std::endl <<
+                    "Left keypoints: " << c_frame.getLeftKpts().size() << std::endl <<
+                    "Right keypoints: " << c_frame.getRightKpts().size() << std::endl <<
+                    "Left descriptors: " << c_frame.getLeftDescs().rows << std::endl <<
+                    "Right descriptors: " << c_frame.getRightDescs().rows << std::endl <<
+                    "3D points: " << c_frame.getObjectPoints().size());
+     ROS_INFO_STREAM("--------------------------------------------------------------");
     
     // if (!init_graph_)
     // {

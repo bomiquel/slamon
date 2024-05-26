@@ -81,6 +81,7 @@ void Caster::fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
         obj_pt.x = msg->obj_pts[i].x;
         obj_pt.y = msg->obj_pts[i].y;
         obj_pt.z = msg->obj_pts[i].z;
+        obj_pts.push_back(obj_pt);
     }
 
     frame = Frame(l_descs, r_descs, msg->header.stamp, l_kpts, r_kpts, obj_pts);

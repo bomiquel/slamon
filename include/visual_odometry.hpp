@@ -48,13 +48,13 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
          *  \param origin_frame_id Origin coordinate axis identficator.
          */
         VisualOdometry(double ratio,
-                        int min_inliers,
-                        bool enable_debugging,
-                        const std::string& w_path,
-                        std::string& matching_type,
-                        std::string& motion_estimation_type,
-                        const std::string& robot_frame_id,
-                        const std::string& origin_frame_id);
+                       int min_inliers,
+                       bool enable_debugging,
+                       const std::string& w_path,
+                       std::string& matching_type,
+                       std::string& motion_estimation_type,
+                       const std::string& robot_frame_id,
+                       const std::string& origin_frame_id);
 
 
         /** \brief Starts tracking
