@@ -56,6 +56,18 @@ class Frame
         inline void setId(const int id){id_ = id;}
 
 
+        /** \brief Set left image.
+         *  \param l_img Left image.
+         */
+        inline void setLeftImg(const cv::Mat l_img){l_img_ = l_img;}
+
+
+        /** \brief Set right image.
+         *  \param r_img Right image.
+         */
+        inline void setRightImg(const cv::Mat r_img){r_img_ = r_img;}
+
+
         /** \brief Get keyframe id.
          *  @return keyframe id.
          */

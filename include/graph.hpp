@@ -62,6 +62,10 @@ class Graph: protected Caster, protected Publisher
 
         std::string w_path_; //!> Path to working directory.
 
+        std::string f_path_; //!> Path to store frames with debugging purpose.
+
+        std::string kf_path_; //!> Path to store keyframes with debugging purpose.
+
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,
                                                                 nav_msgs::Odometry> SyncPolicy_;

@@ -23,13 +23,13 @@ void VisualOdometry::run()
     // Set "uninitialised" status to visual odometer.
     status_ = UNINITIALISED;
 
-    // Set frame id counter
+    // Set frame id counter.
     c_frame_id_ = 0;
 
     // Set false to initialised pose flag.
     initialised_pose_ = false;
 
-    // Create debugging directories
+    // Create debugging directories.
     if (enable_debugging_)
     {
         f_path_ = w_path_ + "frames/";
@@ -132,16 +132,29 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                 valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);
                 if (valid_motion)
                 {
+                    std::string c_f_path;
+                    std::string c_frame_name;
                     if (!initialised_pose_)
                     {
                         initialised_pose_ = getInitialPose();
 
+                        if (enable_debugging_)
+                        {
+                            c_frame_name = convertTo5Digits(c_frame_id_);
+                            c_f_path = f_path_ + c_frame_name + "/";
+                            std::filesystem::create_directory(c_f_path);
+                            cv::imwrite(c_f_path + c_frame_name + "_left.png", p_frame_.getLeftImg());
+                            cv::imwrite(c_f_path + c_frame_name + "_right.png", p_frame_.getRightImg());
+                            writeStereoKeypoints(p_frame_.getLeftImg(), p_frame_.getRightImg(), c_f_path + "keypoints.png",
+                                                 p_frame_.getLeftKpts(), p_frame_.getRightKpts());
+                        }
                         publishFrame(p_frame_.getTimestamp(), p_frame_.getLeftDescs(), p_frame_.getRightDescs(),
                                      p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getObjectPoints(),
                                      frame_pub_);
                         publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_robot_pose_,
                                                tf::Transform(), odom_pub_, "map", robot_frame_id_);
                     }
+                    c_frame_id_++;
 
                     // From {c2}^T_{c1} to {c1}^T_{c2}.
                     c_camera_motion = c_camera_motion.inverse();
@@ -154,6 +167,16 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                     // {o}^T_{r2} = {0}^T_{r1} * {r1}^T_{r2}
                     c_robot_pose_ *= c_robot_motion;
 
+                    if (enable_debugging_)
+                    {
+                        c_frame_name = convertTo5Digits(c_frame_id_);
+                        c_f_path = f_path_ + c_frame_name + "/";
+                        std::filesystem::create_directory(c_f_path);
+                        cv::imwrite(c_f_path + c_frame_name + "_left.png", c_frame.getLeftImg());
+                        cv::imwrite(c_f_path + c_frame_name + "_right.png", c_frame.getRightImg());
+                        writeStereoKeypoints(c_frame.getLeftImg(), c_frame.getRightImg(), c_f_path + "keypoints.png",
+                                             c_frame.getLeftKpts(), c_frame.getRightKpts());
+                    }
                     publishFrame(c_frame.getTimestamp(), c_frame.getLeftDescs(), c_frame.getRightDescs(),
                                  c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints(),
                                  frame_pub_);
@@ -176,8 +199,6 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     // Publishes last iteration performance
     run_times_.total = ros::Time::now().toSec() - start_time;
     publishInfo(l_img_msg->header.stamp, valid_motion, run_times_, info_pub_);
-
-    c_frame_id_++;
 }
 
 

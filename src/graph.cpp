@@ -12,6 +12,16 @@ Graph::Graph(bool enable_debugging,
 
 void Graph::run()
 {
+    // Create debugging directories.
+    if (enable_debugging_)
+    {
+        f_path_ = w_path_ + "frames/";
+        kf_path_ = w_path_ + "keyframes/";
+        if (std::filesystem::exists(kf_path_))
+            std::filesystem::remove_all(kf_path_);
+        std::filesystem::create_directory(kf_path_);
+    }
+
     // Create ROS node.
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
@@ -48,6 +58,22 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
                     "Right descriptors: " << c_frame.getRightDescs().rows << std::endl <<
                     "3D points: " << c_frame.getObjectPoints().size());
      ROS_INFO_STREAM("--------------------------------------------------------------");
+
+    if (enable_debugging_)
+    {
+        std::string c_frame_name = convertTo5Digits(frame_msg->header.seq);
+        std::string c_f_path = f_path_ + c_frame_name + "/";
+        c_frame.setLeftImg(cv::imread(c_f_path + c_frame_name + "_left.png"));
+        c_frame.setRightImg(cv::imread(c_f_path + c_frame_name + "_right.png"));
+        std::string c_kf_path = kf_path_ + c_frame_name + "/";
+        std::filesystem::create_directory(c_kf_path);
+        cv::imwrite(c_kf_path + c_frame_name + "_left.png", c_frame.getLeftImg());
+        cv::imwrite(c_kf_path + c_frame_name + "_right.png", c_frame.getRightImg());
+        writeStereoKeypoints(c_frame.getLeftImg(), c_frame.getRightImg(), c_kf_path + "keypoints.png",
+                             c_frame.getLeftKpts(), c_frame.getRightKpts());
+    }
+
+
     
     // if (!init_graph_)
     // {
