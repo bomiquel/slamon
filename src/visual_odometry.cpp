@@ -132,7 +132,6 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                 valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);
                 if (valid_motion)
                 {
-                    std::string c_f_path;
                     std::string c_frame_name;
                     if (!initialised_pose_)
                     {
@@ -141,12 +140,8 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                         if (enable_debugging_)
                         {
                             c_frame_name = convertTo5Digits(c_frame_id_);
-                            c_f_path = f_path_ + c_frame_name + "/";
-                            std::filesystem::create_directory(c_f_path);
-                            cv::imwrite(c_f_path + c_frame_name + "_left.png", p_frame_.getLeftImg());
-                            cv::imwrite(c_f_path + c_frame_name + "_right.png", p_frame_.getRightImg());
-                            writeStereoKeypoints(p_frame_.getLeftImg(), p_frame_.getRightImg(), c_f_path + "keypoints",
-                                                 p_frame_.getLeftKpts(), p_frame_.getRightKpts());
+                            cv::imwrite(f_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
+                            cv::imwrite(f_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                         }
                         publishFrame(p_frame_.getTimestamp(), p_frame_.getLeftDescs(), p_frame_.getRightDescs(),
                                      p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getObjectPoints(),
@@ -170,32 +165,8 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                     if (enable_debugging_)
                     {
                         c_frame_name = convertTo5Digits(c_frame_id_);
-                        c_f_path = f_path_ + c_frame_name + "/";
-                        std::filesystem::create_directory(c_f_path);
-                        cv::imwrite(c_f_path + c_frame_name + "_left.png", c_frame.getLeftImg());
-                        cv::imwrite(c_f_path + c_frame_name + "_right.png", c_frame.getRightImg());
-                        writeStereoKeypoints(c_frame.getLeftImg(), c_frame.getRightImg(), c_f_path + "keypoints",
-                                             c_frame.getLeftKpts(), c_frame.getRightKpts());
-                        std::vector<cv::Point3f> f_c_obj_pts, f_p_obj_pts;
-                        std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
-                        StereoResult result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
-                                                                      p_frame_.getLeftDescs(), p_frame_.getLeftDescs(),
-                                                                      c_frame.getLeftKpts(), c_frame.getRightKpts(), 
-                                                                      p_frame_.getLeftKpts(), p_frame_.getRightKpts(),
-                                                                      c_frame.getObjectPoints(), p_frame_.getObjectPoints(),
-                                                                      f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, 
-                                                                      f_c_obj_pts, f_p_obj_pts);
-                        writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_f_path + "successive_matches",
-                                     f_c_l_kpts, f_p_l_kpts);
-
-                        cv::Mat r_camera_motion, t_camera_motion;
-                        std::vector<cv::Point3f> i_c_obj_pts, i_p_obj_pts;
-                        std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
-                        result = estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
-                                                r_camera_motion, t_camera_motion,
-                                                i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
-                        writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_f_path + "inliers",
-                                     i_c_l_kpts, i_p_l_kpts);
+                        cv::imwrite(f_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
+                        cv::imwrite(f_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                     }
                     publishFrame(c_frame.getTimestamp(), c_frame.getLeftDescs(), c_frame.getRightDescs(),
                                  c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints(),
@@ -340,15 +311,6 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     // Stereo matching keypoints debugging.
     if (stereo_matches_img_pub_.getNumSubscribers() > 0)
         publishMatches(false, l_img, r_img, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, stereo_matches_img_pub_);
-
-    ROS_INFO_STREAM("--------------------------------------------------------------");
-    ROS_INFO_STREAM("[processCurrentFrame]:" << std::endl <<
-                    "Left keypoints: " << f_l_kpts.size() << std::endl <<
-                    "Right keypoints: " << f_r_kpts.size() << std::endl <<
-                    "Left descriptors: " << f_l_descs.rows << std::endl <<
-                    "Right descriptors: " << f_r_descs.rows << std::endl <<
-                    "3D points: " << f_obj_pts.size());
-     ROS_INFO_STREAM("--------------------------------------------------------------");
 
     // Fill Frame object
     c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_obj_pts);
