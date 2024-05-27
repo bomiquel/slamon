@@ -371,7 +371,7 @@ StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::
     std::vector<int> inliers;
     cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
     cv::solvePnPRansac(p_obj_pts, c_l_kpts, K, cv::Mat(), r_vec, t_vec, 
-                       false, 10000, 2.0, 0.99, inliers, motion_estimation_type_);
+                       false, 2000, 2.0, 0.99, inliers, motion_estimation_type_);
 
     // Filter keypoints and 3D points.
     if (c_r_kpts.size() > 0)

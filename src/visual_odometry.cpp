@@ -187,6 +187,15 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                                                                       f_c_obj_pts, f_p_obj_pts);
                         writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_f_path + "successive_matches",
                                      f_c_l_kpts, f_p_l_kpts);
+
+                        cv::Mat r_camera_motion, t_camera_motion;
+                        std::vector<cv::Point3f> i_c_obj_pts, i_p_obj_pts;
+                        std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
+                        result = estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
+                                                r_camera_motion, t_camera_motion,
+                                                i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
+                        writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_f_path + "inliers",
+                                     i_c_l_kpts, i_p_l_kpts);
                     }
                     publishFrame(c_frame.getTimestamp(), c_frame.getLeftDescs(), c_frame.getRightDescs(),
                                  c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints(),

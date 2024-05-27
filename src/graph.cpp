@@ -27,6 +27,14 @@ void Graph::run()
         std::filesystem::create_directory(kf_path_);
     }
 
+    double f_x = 497.1427825;
+    double f_y = 497.1427825;
+    double b = -0.1445690806;
+    double c_x = 242.86462;
+    double c_y = 178.5136075;
+    r_proj_mat_ = computeProjectionMatrix(b, f_x, f_x, c_x, c_y);
+    l_proj_mat_ = computeProjectionMatrix(0.0, f_x, f_x, c_x, c_y);
+
     // Create ROS node.
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
@@ -89,6 +97,14 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
                                                           f_c_obj_pts, f_p_obj_pts);
             writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_kf_path + "successive_matches",
                          f_c_l_kpts, f_p_l_kpts);
+            cv::Mat r_camera_motion, t_camera_motion;
+            std::vector<cv::Point3f> i_c_obj_pts, i_p_obj_pts;
+            std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
+            result = estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
+                                    r_camera_motion, t_camera_motion,
+                                    i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
+            writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_kf_path + "inliers",
+                         i_c_l_kpts, i_p_l_kpts);
         }
     }
 
