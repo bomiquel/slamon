@@ -22,19 +22,30 @@
 #include "frame.hpp"
 #include "caster.hpp"
 #include "publisher.hpp"
+#include "stereo_modules.hpp"
 
 #include "slamon/Frame.h"
 #include "slamon/Keypoint.h"
 
 
-class Graph: protected Caster, protected Publisher
+class Graph: protected Caster, protected Publisher, protected StereoModules 
 {   
     public:
 
         /** \brief Class constructor
+         *  \param ratio The ratio for Lowe's ratio test.
+         *  \param min_inliers The minimum number of keypoints to estimate the movement.
+         *  \param enable_debugging Enabling or disabling debugging.
+         *  \param w_path Working path for debugging purpose.
+         *  \param matching_type Matching type.
+         *  \param motion_estimation_type Motion estimation type.
          */
-        Graph(bool enable_debugging,
-              const std::string& w_path);
+        Graph(double ratio,
+              int min_inliers,
+              bool enable_debugging,
+              const std::string& w_path,
+              std::string& matching_type,
+              std::string& motion_estimation_type);
 
 
         /** \brief Starts graph
@@ -57,6 +68,8 @@ class Graph: protected Caster, protected Publisher
     private:
 
         bool init_graph_; //!> Graph state.
+
+        Frame p_frame_; //!> Previous frame.
 
         bool enable_debugging_; //!> Enabling or disabling debugging messages.
 

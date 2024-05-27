@@ -1,8 +1,13 @@
 #include "graph.hpp"
 
 
-Graph::Graph(bool enable_debugging,
-             const std::string& w_path) 
+Graph::Graph(double ratio,
+             int min_inliers,
+             bool enable_debugging,
+             const std::string& w_path,
+             std::string& matching_type,
+             std::string& motion_estimation_type):
+             StereoModules(ratio, min_inliers, matching_type, motion_estimation_type)
 {
     w_path_ = w_path;
     init_graph_ = false;
@@ -69,10 +74,25 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
         std::filesystem::create_directory(c_kf_path);
         cv::imwrite(c_kf_path + c_frame_name + "_left.png", c_frame.getLeftImg());
         cv::imwrite(c_kf_path + c_frame_name + "_right.png", c_frame.getRightImg());
-        writeStereoKeypoints(c_frame.getLeftImg(), c_frame.getRightImg(), c_kf_path + "keypoints.png",
+        writeStereoKeypoints(c_frame.getLeftImg(), c_frame.getRightImg(), c_kf_path + "keypoints",
                              c_frame.getLeftKpts(), c_frame.getRightKpts());
+        if (frame_msg->header.seq > 0)
+        {
+            std::vector<cv::Point3f> f_c_obj_pts, f_p_obj_pts;
+            std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
+            StereoResult result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
+                                                          p_frame_.getLeftDescs(), p_frame_.getLeftDescs(),
+                                                          c_frame.getLeftKpts(), c_frame.getRightKpts(), 
+                                                          p_frame_.getLeftKpts(), p_frame_.getRightKpts(),
+                                                          c_frame.getObjectPoints(), p_frame_.getObjectPoints(),
+                                                          f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, 
+                                                          f_c_obj_pts, f_p_obj_pts);
+            writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_kf_path + "successive_matches",
+                         f_c_l_kpts, f_p_l_kpts);
+        }
     }
 
+    p_frame_ = c_frame;
 
     
     // if (!init_graph_)

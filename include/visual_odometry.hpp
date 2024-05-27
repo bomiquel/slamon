@@ -42,8 +42,10 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
         /** \brief Class constructor.
          *  \param ratio The ratio for Lowe's ratio test.
          *  \param min_inliers The minimum number of keypoints to estimate the movement.
-         *  \param enable_debugging Enabling or disabling debugging messages.
+         *  \param enable_debugging Enabling or disabling debugging.
+         *  \param w_path Working path for debugging purpose.
          *  \param matching_type Matching type.
+         *  \param motion_estimation_type Motion estimation type.
          *  \param robot_frame_id Robot coordinate axis identficator (base link).
          *  \param origin_frame_id Origin coordinate axis identficator.
          */

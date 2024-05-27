@@ -145,7 +145,7 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                             std::filesystem::create_directory(c_f_path);
                             cv::imwrite(c_f_path + c_frame_name + "_left.png", p_frame_.getLeftImg());
                             cv::imwrite(c_f_path + c_frame_name + "_right.png", p_frame_.getRightImg());
-                            writeStereoKeypoints(p_frame_.getLeftImg(), p_frame_.getRightImg(), c_f_path + "keypoints.png",
+                            writeStereoKeypoints(p_frame_.getLeftImg(), p_frame_.getRightImg(), c_f_path + "keypoints",
                                                  p_frame_.getLeftKpts(), p_frame_.getRightKpts());
                         }
                         publishFrame(p_frame_.getTimestamp(), p_frame_.getLeftDescs(), p_frame_.getRightDescs(),
@@ -174,8 +174,19 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                         std::filesystem::create_directory(c_f_path);
                         cv::imwrite(c_f_path + c_frame_name + "_left.png", c_frame.getLeftImg());
                         cv::imwrite(c_f_path + c_frame_name + "_right.png", c_frame.getRightImg());
-                        writeStereoKeypoints(c_frame.getLeftImg(), c_frame.getRightImg(), c_f_path + "keypoints.png",
+                        writeStereoKeypoints(c_frame.getLeftImg(), c_frame.getRightImg(), c_f_path + "keypoints",
                                              c_frame.getLeftKpts(), c_frame.getRightKpts());
+                        std::vector<cv::Point3f> f_c_obj_pts, f_p_obj_pts;
+                        std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
+                        StereoResult result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
+                                                                      p_frame_.getLeftDescs(), p_frame_.getLeftDescs(),
+                                                                      c_frame.getLeftKpts(), c_frame.getRightKpts(), 
+                                                                      p_frame_.getLeftKpts(), p_frame_.getRightKpts(),
+                                                                      c_frame.getObjectPoints(), p_frame_.getObjectPoints(),
+                                                                      f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, 
+                                                                      f_c_obj_pts, f_p_obj_pts);
+                        writeMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_f_path + "successive_matches",
+                                     f_c_l_kpts, f_p_l_kpts);
                     }
                     publishFrame(c_frame.getTimestamp(), c_frame.getLeftDescs(), c_frame.getRightDescs(),
                                  c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints(),
