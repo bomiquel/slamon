@@ -133,6 +133,38 @@ class Frame
         inline tf::Transform getCameraPose() const {return camera_pose_;}
 
 
+        /** \brief Get the clustering for the current frame.
+         *  @return The keypoints clustering.
+         */
+        inline std::vector< std::vector<int> > getClusters() const {return clusters_;}
+
+
+        /** \brief Cluster keypoints
+         */
+        void regionClustering();
+
+
+    protected:
+
+
+        /** \brief Search keypoints into region
+         *  \param eps maximum distance to considerate a keypoint into the region.
+         *  \param keypoint query keypoint.
+         *  \param keypoints list of keypoints.
+         *  @return the list of keypoints into a certain region
+         */
+        std::vector<int> regionQuery(float eps, 
+                                     cv::Point2f *keypoint, 
+                                     std::vector<cv::Point2f> *keypoints);
+
+
+        /** \brief Given a 3D point vector, calculate its centroid.
+         *  \param pts The 3D points.
+         *  @return The 3D centroid.
+         */
+        cv::Point3f compute3DCentroid(const std::vector<cv::Point3f>& pts);
+
+
     private:
 
         int id_; //!> Frame id.
@@ -152,9 +184,9 @@ class Frame
 
         tf::Transform camera_pose_; //!> Camera world position for this frame.
 
-        // std::vector<std::vector<int>> clusters_; //!> Keypoints clustering.
+        std::vector<std::vector<int>> clusters_; //!> Keypoints clustering.
 
-        // std::vector<Eigen::Vector4f> cluster_centroids_; //!> Central point for every cluster.
+        std::vector<cv::Point3f> cluster_centroids_; //!> Central point for every cluster.
 };
 
 
