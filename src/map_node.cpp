@@ -8,18 +8,24 @@
 #include "graph.hpp"
 
 
-void readParams(bool& enable_debugging,
+void readParams(int& min_lc_inliers,
+                double& min_dist_kf,
+                bool& enable_debugging,
                 std::string& working_path)
 {
     // Getting parameters from parameter server.
     ros::NodeHandle nh;
-    nh.param("slamon/working_path",              working_path,           ros::package::getPath("slamon") + "/output/");
-    nh.param("slamon/enable_debugging",          enable_debugging,       true);
+    nh.param("slamon/working_path",       working_path,     ros::package::getPath("slamon") + "/output/");
+    nh.param("slamon/enable_debugging",   enable_debugging, true);
+    nh.param("slamon/map/min_dist_kf",    min_dist_kf,      0.5);
+    nh.param("slamon/map/min_lc_inliers", min_lc_inliers,   40);
 
     // Printing parameters values.
-    ROS_INFO_STREAM("Parameter setting: " << std::endl <<
-                    "Working path           = " << working_path << std::endl <<
-                    "Enable debugging       = " << enable_debugging);
+    ROS_INFO_STREAM("[GRAPH]: Parameter setting: " << std::endl <<
+                    "Working path               = " << working_path << std::endl <<
+                    "Enable debugging           = " << enable_debugging << std::endl <<
+                    "Min dist between keyframes = " << min_dist_kf << std::endl <<
+                    "Min loop closing inliers   = " << min_lc_inliers);
 
     // Checking the validity of the parameters
     bool invalid_parameter = false;
@@ -33,12 +39,24 @@ void readParams(bool& enable_debugging,
         working_path += "/";
         invalid_parameter = true;
     }
+    if (min_dist_kf < 0.2 || min_dist_kf > 1.0)
+    {
+        min_dist_kf = 0.5;
+        invalid_parameter = true;
+    }
+    if (min_lc_inliers < 30)
+    {
+        min_lc_inliers = 30;
+        invalid_parameter = true;
+    }
     if (invalid_parameter)
     {
-        ROS_INFO_STREAM("Some parameter was invalid and has been assigned its default value." << std::endl <<
+        ROS_INFO_STREAM("[GRAPH]: Some parameter was invalid and has been assigned its default value." << std::endl <<
                         "Current parameter values are: " << std::endl <<
-                        "Working path     = " << working_path << std::endl <<
-                        "Enable debugging = " << enable_debugging);
+                        "Working path               = " << working_path << std::endl <<
+                        "Enable debugging           = " << enable_debugging << std::endl <<
+                        "Min dist between keyframes = " << min_dist_kf << std::endl <<
+                        "Min loop closing inliers   = " << min_lc_inliers);
     }
 }
 
@@ -50,13 +68,14 @@ int main(int argc, char **argv)
     ros::start();
 
     // Read parameters.
+    int min_lc_inliers;
+    double min_dist_kf;
     bool enable_debugging;
     std::string working_path;
-    readParams(enable_debugging, working_path);
+    readParams(min_lc_inliers, min_dist_kf, enable_debugging, working_path);
 
     // Declare threads.
-    Graph graph(enable_debugging, 
-                working_path);
+    Graph graph(min_lc_inliers, min_dist_kf, enable_debugging, working_path);
 
     // Launch threads.
     std::thread graph_thread(&Graph::run, &graph);

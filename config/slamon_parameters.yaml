@@ -8,3 +8,6 @@ slamon:
     robot_frame_id: /robot_0/base_link
     origin_frame_id: /odom
     motion_estimation_type: ap3p
+  map:
+    min_dist_kf: 0.25
+    min_lc_inliers: 50

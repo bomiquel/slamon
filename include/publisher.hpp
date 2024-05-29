@@ -49,16 +49,16 @@ class Publisher
          *  \param l_img The left image (input). 
          *  \param r_img The right image (input).
          *  \param stamp The ROS timestamp (input).
+         *  \param publisher The ROS publisher (input).
          *  \param l_kpts The left image keypoints (input).
          *  \param r_kpts The left image keypoints (input).
-         *  \param publisher The ROS publisher (input).
          */
         void publishStereoKeypoints(const cv::Mat& l_img,
                                     const cv::Mat& r_img,
                                     const ros::Time& stamp,
+                                    const ros::Publisher& publisher,
                                     const std::vector<cv::Point2f>& l_kpts,
-                                    const std::vector<cv::Point2f>& r_kpts,
-                                    const ros::Publisher& publisher);
+                                    const std::vector<cv::Point2f>& r_kpts);
 
 
         /** \brief Writes on disk the stereoscopic images with their
@@ -87,17 +87,17 @@ class Publisher
          *  \param img_1 In the case of successive images, it is the previous image.
          *  In the stereo case, it is the right image (input).
          *  \param stamp The ROS timestamp (input).
+         *  \param publisher The ROS publisher (input).
          *  \param f_kpts_0 Filtered and sorted current/left keypoints (input).
          *  \param f_kpts_1 Filtered and sorted previous/right keypoints (input).
-         *  \param publisher The ROS publisher (input).
          */
         void publishMatches(const bool vertical, 
                             const cv::Mat& img_0,
                             const cv::Mat& img_1,
                             const ros::Time& stamp,
+                            const ros::Publisher& publisher,
                             const std::vector<cv::Point2f>& f_kpts_0,
-                            const std::vector<cv::Point2f>& f_kpts_1,
-                            const ros::Publisher& publisher);
+                            const std::vector<cv::Point2f>& f_kpts_1);
 
 
         /** \brief Draws and writes on disk vertical (successive) or horizontal (stereo)
@@ -128,22 +128,22 @@ class Publisher
          *  \param p_l_img Previous left image (input).
          *  \param p_r_img Previous right image (input).
          *  \param stamp The ROS timestamp (input).
+         *  \param publisher The ROS publisher (input).
          *  \param f_c_l_kpts Filtered and sorted current left keypoints (input).
          *  \param f_c_r_kpts Filtered and sorted current right keypoints (input).
          *  \param f_p_l_kpts Filtered and sorted previous left keypoints (input).
          *  \param f_p_r_kpts Filtered and sorted previous right keypoints (input).
-         *  \param publisher The ROS publisher (input).
          */
         void publishCircularMatches(const cv::Mat& c_l_img,                                    
                                     const cv::Mat& c_r_img,
                                     const cv::Mat& p_l_img,
                                     const cv::Mat& p_r_img,
                                     const ros::Time& stamp,
+                                    const ros::Publisher& publisher,
                                     const std::vector<cv::Point2f>& f_c_l_kpts,
                                     const std::vector<cv::Point2f>& f_c_r_kpts,
                                     const std::vector<cv::Point2f>& f_p_l_kpts,
-                                    const std::vector<cv::Point2f>& f_p_r_kpts,
-                                    const ros::Publisher& publisher);
+                                    const std::vector<cv::Point2f>& f_p_r_kpts);
 
 
         /** \brief Draws and writes on disk circular matches.
@@ -169,33 +169,50 @@ class Publisher
                                   const std::vector<cv::Point2f>& f_p_r_kpts);
 
 
-        /** \brief Publishes images.
-         *  \param img The image (input).
+        /** \brief Draws and publishes keypoints clustering.
+         *  \param l_img Left image (input).
          *  \param stamp The ROS timestamp (input).
          *  \param publisher The ROS publisher (input).
+         *  \param l_kpts Left keypoints (input).
+         *  \param clusters Keypoints clustering (input).
          */
-        void publishImage(const cv::Mat& img,
-                          const ros::Time& stamp,
-                          const ros::Publisher& publisher);
+        void publishKeypointsClustering(const cv::Mat& l_img,
+                                        const ros::Time& stamp,
+                                        const ros::Publisher& publisher,
+                                        const std::vector<cv::Point2f>& l_kpts,
+                                        const std::vector<std::vector<int>>& clusters);
+
+
+        /** \brief Draws and writes on disk keypoints clustering.
+         *  \param l_img Left image (input).
+         *  \param l_kpts Left keypoints (input).
+         *  \param o_path Image output path. The name of the final
+         *  file must be included (input).
+         *  \param clusters Keypoints clustering (input).
+        */
+        void writeKeypointsClustering(const cv::Mat& l_img,
+                                      const std::string& o_path,
+                                      const std::vector<cv::Point2f>& l_kpts,
+                                      const std::vector<std::vector<int>>& clusters);
 
 
         /** \brief Publishes current robot pose and velocity.
          *  \param c_stamp Current frame ROS timestamp (input).
          *  \param p_stamp Previous ROS timestamp (input).
-         *  \param pose The current robot pose to be published (input).
-         *  \param motion The robot movement between current and previous frames.
-         *  Used to calculate robot velocity (input).
          *  \param publisher The ROS publisher (input).
          *  \param world_frame_id World coordinate axis id (input).
          *  \param robot_frame_id Robot coordinate axis id (input).
+         *  \param c_robot_pose The current robot pose to be published (input).
+         *  \param c_robot_motion The robot movement between current and previous frames.
+         *  Used to calculate robot velocity (input).
          */
         void publishPoseAndVelocity(const ros::Time& c_stamp,
                                     const ros::Time& p_stamp,
-                                    const tf::Transform& pose,
-                                    const tf::Transform& motion,
                                     const ros::Publisher& publisher,
                                     const std::string& world_frame_id,
-                                    const std::string& robot_frame_id);
+                                    const std::string& robot_frame_id,
+                                    const tf::Transform& c_robot_pose,
+                                    const tf::Transform& c_robot_motion);
 
 
         /** \brief Publishes current visual odometer internal performance.
@@ -219,13 +236,13 @@ class Publisher
          *  \param obj_pts 3D points of the scene obtained from the stereo data (input).
          *  \param publisher The ROS publisher (input).
         */
-        void publishFrame(const ros::Time& stamp,
-                          const cv::Mat& l_descs,
+        void publishFrame(const cv::Mat& l_descs,
                           const cv::Mat& r_descs,
+                          const ros::Time& stamp,
+                          const ros::Publisher& publisher,
                           const std::vector<cv::Point2f>& l_kpts,
                           const std::vector<cv::Point2f>& r_kpts,
-                          const std::vector<cv::Point3f>& obj_pts, 
-                          const ros::Publisher& publisher);
+                          const std::vector<cv::Point3f>& obj_pts);
 
 
     private:
@@ -309,6 +326,26 @@ class Publisher
                                     const std::vector<cv::Point2f>& f_c_r_kpts,
                                     const std::vector<cv::Point2f>& f_p_l_kpts,
                                     const std::vector<cv::Point2f>& f_p_r_kpts);
+
+
+        /** \brief Draws keypoints clustering.
+         *  \param img The image where draw the keypoints clusters (input).
+         *  \param kpts The keypoints (input).
+         *  \param clusters Keypoints clustering (input).
+         */
+        cv::Mat drawKeypointsClustering(const cv::Mat& img,
+                                        const std::vector<cv::Point2f>& kpts,
+                                        const std::vector<std::vector<int>>& clusters);
+
+
+        /** \brief Publishes images.
+         *  \param img The image (input).
+         *  \param stamp The ROS timestamp (input).
+         *  \param publisher The ROS publisher (input).
+         */
+        void publishImage(const cv::Mat& img,
+                          const ros::Time& stamp,
+                          const ros::Publisher& publisher);
 };
 
 

@@ -143,11 +143,10 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                             cv::imwrite(f_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
                             cv::imwrite(f_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                         }
-                        publishFrame(p_frame_.getTimestamp(), p_frame_.getLeftDescs(), p_frame_.getRightDescs(),
-                                     p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getObjectPoints(),
-                                     frame_pub_);
-                        publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_robot_pose_,
-                                               tf::Transform(), odom_pub_, "map", robot_frame_id_);
+                        publishFrame( p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
+                                     frame_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getObjectPoints());
+                        publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, "map", 
+                                               robot_frame_id_, c_robot_pose_, tf::Transform());
                     }
                     c_frame_id_++;
 
@@ -168,11 +167,10 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                         cv::imwrite(f_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
                         cv::imwrite(f_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                     }
-                    publishFrame(c_frame.getTimestamp(), c_frame.getLeftDescs(), c_frame.getRightDescs(),
-                                 c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints(),
-                                 frame_pub_);
-                    publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_robot_pose_,
-                                           c_robot_motion, odom_pub_, "map", robot_frame_id_);
+                    publishFrame(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
+                                 frame_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints());
+                    publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, "map", 
+                                           robot_frame_id_, c_robot_pose_, c_robot_motion);
                 }
             }
             else
@@ -204,7 +202,7 @@ bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_inf
     }
     catch (const tf::TransformException& e)
     {
-        ROS_WARN_STREAM("[Initialiser:] TF listener exception: " << e.what());
+        ROS_WARN_STREAM("[VO->Initialiser:] TF listener exception: " << e.what());
         return false;
     }
 
@@ -221,7 +219,7 @@ bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_inf
     }
     if (counter == 0.0)
     {
-        ROS_WARN_STREAM("[Initialiser:] Left projection matrix is full of 0s");
+        ROS_WARN_STREAM("[VO->Initialiser:] Left projection matrix is full of 0s");
         return false;
     }
     counter = 0.0; 
@@ -232,7 +230,7 @@ bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_inf
     }
     if (counter == 0.0)
     {
-        ROS_WARN_STREAM("[Initialiser:] Right projection matrix is full of 0s");
+        ROS_WARN_STREAM("[VO->Initialiser:] Right projection matrix is full of 0s");
         return false;
     }
 
@@ -284,7 +282,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
 
     // Keypoint detection debugging.
     if (stereo_kps_img_pub_.getNumSubscribers() > 0)
-        publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, l_kpts, r_kpts, stereo_kps_img_pub_);
+        publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kps_img_pub_, l_kpts, r_kpts);
 
     // Matching keypoints.
     start_time = ros::Time::now().toSec();
@@ -292,7 +290,7 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     std::vector<cv::Point2f> h_f_l_kpts, h_f_r_kpts;
     StereoResult result = matchStereoKeypoints(l_descs, r_descs, l_kpts, r_kpts, h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts);
     run_times_.stereo_matching = ros::Time::now().toSec() - start_time;
-    if(!decodeStereoResult("[Stereo matcher:] ", result))
+    if(!decodeStereoResult("[VO->Stereo matcher:] ", result))
     {
         run_times_.triangulation = 0;
         return false; 
@@ -305,12 +303,12 @@ bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img
     std::vector<cv::Point2f> f_l_kpts, f_r_kpts;
     result = compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_obj_pts);
     run_times_.stereo_matching = ros::Time::now().toSec() - start_time;
-    if(!decodeStereoResult("[Triangulator:] ", result))
+    if(!decodeStereoResult("[VO->Triangulator:] ", result))
         return false; 
 
     // Stereo matching keypoints debugging.
     if (stereo_matches_img_pub_.getNumSubscribers() > 0)
-        publishMatches(false, l_img, r_img, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, stereo_matches_img_pub_);
+        publishMatches(false, l_img, r_img, l_img_msg->header.stamp, stereo_matches_img_pub_, f_l_kpts, f_r_kpts);
 
     // Fill Frame object
     c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_obj_pts);
@@ -337,7 +335,7 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
                                                   f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, 
                                                   f_c_obj_pts, f_p_obj_pts);
     run_times_.successive_matching = ros::Time::now().toSec() - start_time;
-    if(!decodeStereoResult("[Non-stereo matcher:] ", result))
+    if(!decodeStereoResult("[VO->Non-stereo matcher:] ", result))
     {
         run_times_.motion_estimation = 0.0;
         return false;
@@ -348,14 +346,14 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
     {
         if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
             publishMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
-                           f_c_l_kpts, f_p_l_kpts, successive_matches_img_pub_);
+                           successive_matches_img_pub_, f_c_l_kpts, f_p_l_kpts);
 
         else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
             publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                   c_frame.getTimestamp(), f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, successive_matches_img_pub_);
+                                   c_frame.getTimestamp(), successive_matches_img_pub_, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts);
 
         else
-            ROS_ERROR_STREAM("[Non-stereo matcher debugger:] Unforeseen type of matching!");
+            ROS_ERROR_STREAM("[VO->Non-stereo matcher debugger:] Unforeseen type of matching!");
     }
 
     // Estimate the motion.
@@ -367,7 +365,7 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
                             r_camera_motion, t_camera_motion,
                             i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
     run_times_.motion_estimation = ros::Time::now().toSec() - start_time;
-    if(!decodeStereoResult("[Motion estimator:] ", result))
+    if(!decodeStereoResult("[VO->Motion estimator:] ", result))
         return false; 
 
     // Inliers debugging.
@@ -375,14 +373,14 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
     {
         if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
             publishMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
-                           i_c_l_kpts, i_p_l_kpts, inliers_img_pub_);
+                           inliers_img_pub_, i_c_l_kpts, i_p_l_kpts);
 
         else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
             publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                   c_frame.getTimestamp(), i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, inliers_img_pub_);
+                                   c_frame.getTimestamp(), inliers_img_pub_, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts);
 
         else
-            ROS_ERROR_STREAM("[Motion estimator debugger:] Unforeseen type of matching!");
+            ROS_ERROR_STREAM("[VO->Motion estimator debugger:] Unforeseen type of matching!");
     }
 
     // Build a TF
@@ -406,7 +404,7 @@ bool VisualOdometry::getInitialPose()
         double qz = srv.response.pose.pose.pose.orientation.z;
         double qw = srv.response.pose.pose.pose.orientation.w;
 
-        ROS_WARN_STREAM("[Initial pose:] GetPose service call successful. The initial position is as follows:" << std::endl <<
+        ROS_WARN_STREAM("[VO->Initial pose:] GetPose service call successful. The initial position is as follows:" << std::endl <<
                         "tx: " << tx << std::endl << 
                         "ty: " << ty << std::endl << 
                         "tz: " << tz << std::endl << 
@@ -422,7 +420,7 @@ bool VisualOdometry::getInitialPose()
     }
     else
     {
-        ROS_WARN_STREAM("[Initial pose:] Failed to call GetPose service. The initial pose will be assumed as the identity.");
+        ROS_WARN_STREAM("[VO->Initial pose:] Failed to call GetPose service. The initial pose will be assumed as the identity.");
         c_robot_pose_.setIdentity();
     }
 

@@ -4,9 +4,9 @@
 void Publisher::publishStereoKeypoints(const cv::Mat& l_img,
                                        const cv::Mat& r_img,
                                        const ros::Time& stamp,
+                                       const ros::Publisher& publisher,
                                        const std::vector<cv::Point2f>& l_kpts,
-                                       const std::vector<cv::Point2f>& r_kpts,
-                                       const ros::Publisher& publisher)
+                                       const std::vector<cv::Point2f>& r_kpts)
 {
     // Concatenates stereo images and draws their keypoints.
     cv::Scalar color(0.0, 0.0, 255);
@@ -36,11 +36,11 @@ void Publisher::publishMatches(const bool vertical,
                                const cv::Mat& img_0,
                                const cv::Mat& img_1,
                                const ros::Time& stamp,
+                               const ros::Publisher& publisher,
                                const std::vector<cv::Point2f>& f_kpts_0,
-                               const std::vector<cv::Point2f>& f_kpts_1,
-                               const ros::Publisher& publisher)
+                               const std::vector<cv::Point2f>& f_kpts_1)
 {
-    // Draws matches,
+    // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
     cv::Mat drawn_img = drawMatches(vertical, img_0, img_1, color, f_kpts_0, f_kpts_1);
 
@@ -61,7 +61,7 @@ void Publisher::writeMatches(const bool vertical,
                              const std::vector<cv::Point2f>& f_kpts_0,
                              const std::vector<cv::Point2f>& f_kpts_1)
 {
-    // Draws matches,
+    // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
     cv::Mat drawn_img = drawMatches(vertical, img_0, img_1, color, f_kpts_0, f_kpts_1);
 
@@ -80,13 +80,13 @@ void Publisher::publishCircularMatches(const cv::Mat& c_l_img,
                                        const cv::Mat& p_l_img,
                                        const cv::Mat& p_r_img,
                                        const ros::Time& stamp,
+                                       const ros::Publisher& publisher,
                                        const std::vector<cv::Point2f>& f_c_l_kpts,
                                        const std::vector<cv::Point2f>& f_c_r_kpts,
                                        const std::vector<cv::Point2f>& f_p_l_kpts,
-                                       const std::vector<cv::Point2f>& f_p_r_kpts,
-                                       const ros::Publisher& publisher)
+                                       const std::vector<cv::Point2f>& f_p_r_kpts)
 {
-    // Draws matches,
+    // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
     cv::Mat o_img = drawCircularMatches(c_l_img, c_r_img, p_l_img, p_r_img, color,
                                         f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts);
@@ -106,7 +106,7 @@ void Publisher::writeCircularMatches(const cv::Mat& c_l_img,
                                      const std::vector<cv::Point2f>& f_p_l_kpts,
                                      const std::vector<cv::Point2f>& f_p_r_kpts)
 {
-    // Draws matches,
+    // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
     cv::Mat o_img = drawCircularMatches(c_l_img, c_r_img, p_l_img, p_r_img, color,
                                         f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts);
@@ -116,25 +116,41 @@ void Publisher::writeCircularMatches(const cv::Mat& c_l_img,
 }
 
 
-void Publisher::publishImage(const cv::Mat& img,
-                             const ros::Time& stamp,
-                             const ros::Publisher& publisher)
+void Publisher::publishKeypointsClustering(const cv::Mat& l_img,
+                                           const ros::Time& stamp,
+                                           const ros::Publisher& publisher,
+                                           const std::vector<cv::Point2f>& l_kpts,
+                                           const std::vector<std::vector<int>>& clusters)
 {
-    cv_bridge::CvImage ros_image;
-    ros_image.image = img;
-    ros_image.header.stamp = stamp;
-    ros_image.encoding = "bgr8";
-    publisher.publish(ros_image.toImageMsg());
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawKeypointsClustering(l_img, l_kpts, clusters);
+
+    // Publishes image.
+    publishImage(o_img, stamp, publisher);
 }
+
+
+void Publisher::writeKeypointsClustering(const cv::Mat& l_img,
+                                         const std::string& o_path,
+                                         const std::vector<cv::Point2f>& l_kpts,
+                                         const std::vector<std::vector<int>>& clusters)
+{
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawKeypointsClustering(l_img, l_kpts, clusters);
+
+    // Writes image.
+    cv::imwrite(o_path + ".png", o_img);
+}
+                                            
 
 
 void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
                                        const ros::Time& p_stamp,
-                                       const tf::Transform& pose,
-                                       const tf::Transform& motion,
                                        const ros::Publisher& publisher,
                                        const std::string& world_frame_id,
-                                       const std::string& robot_frame_id)
+                                       const std::string& robot_frame_id,
+                                       const tf::Transform& c_robot_pose,
+                                       const tf::Transform& c_robot_motion)
 {
     nav_msgs::Odometry msg;
 
@@ -144,7 +160,7 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
     msg.child_frame_id = robot_frame_id;
 
     // Set pose
-    tf::poseTFToMsg(pose, msg.pose.pose);
+    tf::poseTFToMsg(c_robot_pose, msg.pose.pose);
 
     // Set linear velocity
     double delta_t = (c_stamp - p_stamp).toSec();
@@ -159,10 +175,10 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
     }
     else
     {
-        msg.twist.twist.linear.x = motion.getOrigin().getX() / delta_t;
-        msg.twist.twist.linear.y = motion.getOrigin().getY() / delta_t;
-        msg.twist.twist.linear.z = motion.getOrigin().getZ() / delta_t;
-        tf::Quaternion delta_rot = motion.getRotation();
+        msg.twist.twist.linear.x = c_robot_motion.getOrigin().getX() / delta_t;
+        msg.twist.twist.linear.y = c_robot_motion.getOrigin().getY() / delta_t;
+        msg.twist.twist.linear.z = c_robot_motion.getOrigin().getZ() / delta_t;
+        tf::Quaternion delta_rot = c_robot_motion.getRotation();
         tfScalar angle = delta_rot.getAngle();
         tf::Vector3 axis = delta_rot.getAxis();
         tf::Vector3 angular_velocity = (axis * angle) / delta_t;
@@ -200,13 +216,13 @@ void Publisher::publishInfo(const ros::Time& stamp,
 }   
 
 
-void Publisher::publishFrame(const ros::Time& stamp,
-                             const cv::Mat& l_descs,
+void Publisher::publishFrame(const cv::Mat& l_descs,
                              const cv::Mat& r_descs,
+                             const ros::Time& stamp,
+                             const ros::Publisher& publisher,
                              const std::vector<cv::Point2f>& l_kpts,
                              const std::vector<cv::Point2f>& r_kpts,
-                             const std::vector<cv::Point3f>& obj_pts,
-                             const ros::Publisher& publisher)
+                             const std::vector<cv::Point3f>& obj_pts)
 {
     // Create and fill frame msg
     slamon::Frame frame_msg;
@@ -377,4 +393,43 @@ cv::Mat Publisher::drawCircularMatches(const cv::Mat& c_l_img,
     cv::Mat o_img = writeTxtInImage(drawn_stereo_img, s);
 
     return o_img;
+}
+
+
+cv::Mat Publisher::drawKeypointsClustering(const cv::Mat& img,
+                                           const std::vector<cv::Point2f>& kpts,
+                                           const std::vector<std::vector<int>>& clusters)
+{
+    cv::Mat drawn_img;
+    img.copyTo(drawn_img);
+
+    if (clusters.size() == 0)
+        return drawn_img;
+
+    cv::RNG rng(12345);
+    for (uint i = 0; i < clusters.size(); i++)
+    {
+        cv::Scalar color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
+        for (uint j = 0; j < clusters[i].size(); j++)
+            cv::circle(drawn_img, kpts[clusters[i][j]], 2, color, -1);
+    }
+
+    // Writes text
+    std::stringstream s;
+    s << " Number of clusters: " << clusters.size();
+    cv::Mat o_img = writeTxtInImage(drawn_img, s);
+
+    return o_img;
+}
+
+
+void Publisher::publishImage(const cv::Mat& img,
+                             const ros::Time& stamp,
+                             const ros::Publisher& publisher)
+{
+    cv_bridge::CvImage ros_image;
+    ros_image.image = img;
+    ros_image.header.stamp = stamp;
+    ros_image.encoding = "bgr8";
+    publisher.publish(ros_image.toImageMsg());
 }
