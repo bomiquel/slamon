@@ -62,9 +62,10 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
     fromFrameMsgToFrameObject(frame_msg, c_frame);
     tf::poseMsgToTF(odom_msg->pose.pose, c_robot_pose);
 
+    std::string c_frame_name;
     if (enable_debugging_)
     {
-        std::string c_frame_name = convertTo5Digits(frame_msg->header.seq);
+        c_frame_name = convertTo5Digits(frame_msg->header.seq);
         c_frame.setLeftImg(cv::imread(f_path_ + c_frame_name + "_left.png"));
         c_frame.setRightImg(cv::imread(f_path_ + c_frame_name + "_right.png"));
     }
@@ -91,6 +92,12 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
             ROS_INFO_STREAM("[GRAPH->addFrameToMap]: Adding keyframe: " << kf_counter_);
         }
         kf_counter_++;
+    }
+
+    if (enable_debugging_)
+    {
+        std::filesystem::remove(f_path_ + c_frame_name + "_left.png");
+        std::filesystem::remove(f_path_ + c_frame_name + "_right.png");
     }
 }
 
