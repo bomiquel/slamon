@@ -7,7 +7,7 @@ Graph::Graph(int min_lc_inliers,
              const std::string& w_path)
 {
     w_path_ = w_path;
-    kf_counter_ = 0;
+    kf_counter_ = -1;
     init_graph_ = false;
     min_dist_kf_ = min_dist_kf;
     min_lc_inliers_ = min_lc_inliers;
@@ -35,6 +35,9 @@ void Graph::run()
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
 
+    // Client serives.
+    robot2camera_client_ = nh.serviceClient<slamon::GetTransform>("get_robot_to_camera_tf");
+
     // Publishers.
     clustering_img_pub_ = nhp.advertise<sensor_msgs::Image>("keypoints_clustering_img", 1);
 
@@ -57,11 +60,13 @@ void Graph::run()
 void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
                           const nav_msgs::OdometryConstPtr& odom_msg)
 {
+    // From ROS messages to local objects.
     Frame c_frame;
     tf::Transform c_robot_pose;
     fromFrameMsgToFrameObject(frame_msg, c_frame);
     tf::poseMsgToTF(odom_msg->pose.pose, c_robot_pose);
 
+    // If enable debugging gets images from disk.
     std::string c_frame_name;
     if (enable_debugging_)
     {
@@ -70,28 +75,45 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
         c_frame.setRightImg(cv::imread(f_path_ + c_frame_name + "_right.png"));
     }
 
+    // Include a keyframe to the map if necessary.
     if (needNewKeyFrame(c_frame, c_robot_pose))
     {
         // Updates global variables.
+        kf_counter_++;
         init_graph_ = true;
         l_kf_robot_pose_ = c_robot_pose;
+        
+        // Get frame visual information.
+        ros::Time stamp = c_frame.getTimestamp();
+        cv::Mat l_descs = c_frame.getLeftDescs();
+        cv::Mat r_descs = c_frame.getRightDescs();
+        std::vector<cv::Point2f> l_kpts = c_frame.getLeftKpts();
+        std::vector<cv::Point2f> r_kpts = c_frame.getRightKpts();
+        std::vector<cv::Point3f> obj_pts = c_frame.getObjectPoints();
+        std::vector<cv::Point3f> cluster_centroids = c_frame.getClustersCentroids();
+        std::vector<std::vector<int>> clusters = c_frame.getClusters();
 
-        // Converting frame to keyframe
-        c_frame.setId(kf_counter_);
-
+        // Debug keyframe.
         if (enable_debugging_)
         {
-            std::string c_keyframe_name = convertTo5Digits(c_frame.getId());
+            std::string c_keyframe_name = convertTo5Digits(kf_counter_);
             cv::imwrite(kf_path_ + c_keyframe_name + "_left.png", c_frame.getLeftImg());
             cv::imwrite(kf_path_ + c_keyframe_name + "_right.png", c_frame.getRightImg());
             if (clustering_img_pub_.getNumSubscribers() > 0)
-                publishKeypointsClustering(c_frame.getLeftImg(), c_frame.getTimestamp(), clustering_img_pub_,
-                                           c_frame.getLeftKpts(), c_frame.getClusters());
-            writeKeypointsClustering(c_frame.getLeftImg(), clusters_path_ + c_keyframe_name,
-                                     c_frame.getLeftKpts(), c_frame.getClusters());
-            ROS_INFO_STREAM("[GRAPH->addFrameToMap]: Adding keyframe: " << kf_counter_);
+                publishKeypointsClustering(c_frame.getLeftImg(), stamp, clustering_img_pub_, l_kpts, clusters);
+            writeKeypointsClustering(c_frame.getLeftImg(), clusters_path_ + c_keyframe_name, l_kpts, clusters);
+            ROS_INFO_STREAM("[GRAPH->Map includer]: Adding keyframe: " << kf_counter_);
         }
-        kf_counter_++;
+
+        // Save the frame timestamp
+        frame_stamps_.push_back(stamp.toSec());
+        
+        // Loop of frame clusters.
+        for (uint i = 0; i < clusters.size(); i++)
+        {
+            
+        }
+        
     }
 
     if (enable_debugging_)
@@ -105,11 +127,25 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
 bool Graph::needNewKeyFrame(Frame& c_frame, const tf::Transform& c_robot_pose)
 {
     if (!init_graph_)
-        return addFrameToMap(c_frame);
+    {
+        if (addFrameToMap(c_frame))
+        {
+            getRobot2Camera();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
     else if (poseDiff2D(l_kf_robot_pose_, c_robot_pose) > min_dist_kf_)
+    {
         return addFrameToMap(c_frame);
-    else 
+    }
+    else
+    {
         return false;
+    }
 }
 
 
@@ -127,13 +163,48 @@ bool Graph::addFrameToMap(Frame& c_frame)
         }
         else
         {
-            ROS_WARN_STREAM("[GRAPH->addFrameToMap]: Image produces 0 clusters.");
+            ROS_WARN_STREAM("[GRAPH->Map includer]: Image produces 0 clusters.");
             return false;
         }
     }
     else
     {
-        ROS_WARN_STREAM("[GRAPH->addFrameToMap]: Not enough keypoints in this frame (" << c_frame.getLeftKpts().size() << ")");
+        ROS_WARN_STREAM("[GRAPH->Map includer]: Not enough keypoints in this frame (" << c_frame.getLeftKpts().size() << ")");
         return false;
+    }
+}
+
+
+void Graph::getRobot2Camera()
+{
+    slamon::GetTransform srv;
+    if (robot2camera_client_.call(srv))
+    {
+        double tx = srv.response.tf.position.x;
+        double ty = srv.response.tf.position.y;
+        double tz = srv.response.tf.position.z;
+        double qx = srv.response.tf.orientation.x;
+        double qy = srv.response.tf.orientation.y;
+        double qz = srv.response.tf.orientation.z;
+        double qw = srv.response.tf.orientation.w;
+
+        ROS_WARN_STREAM("[GRAPH->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
+                        "tx: " << tx << std::endl << 
+                        "ty: " << ty << std::endl << 
+                        "tz: " << tz << std::endl << 
+                        "qx: " << qx << std::endl << 
+                        "qy: " << qy << std::endl << 
+                        "qz: " << qz << std::endl << 
+                        "qw: " << qw);
+
+        tf::Vector3 translation(tx, ty, tz);
+        tf::Quaternion rotation(qx, qy, qz, qw);
+        robot2camera_.setOrigin(translation);
+        robot2camera_.setRotation(rotation);
+    }
+    else
+    {
+        ROS_WARN_STREAM("[GRAPH->Static transform:] Failed to call GetTransform service. The robot2camera transform will be assumed as the identity.");
+        robot2camera_.setIdentity();
     }
 }

@@ -1,21 +1,21 @@
 #include <ros/ros.h>
 
-#include "slamon/GetPose.h"
+#include "slamon/GetTransform.h"
 
 
 double tx_, ty_, tz_, qx_, qy_, qz_, qw_;
 
-bool getPoseCallback(slamon::GetPose::Request  &req,
-                     slamon::GetPose::Response &res)
+bool getPoseCallback(slamon::GetTransform::Request  &req,
+                     slamon::GetTransform::Response &res)
 {
     ROS_WARN_STREAM("Hello there");
-    res.pose.pose.pose.position.x = tx_;
-    res.pose.pose.pose.position.y = ty_;
-    res.pose.pose.pose.position.z = tz_;
-    res.pose.pose.pose.orientation.x = qx_;
-    res.pose.pose.pose.orientation.y = qy_;
-    res.pose.pose.pose.orientation.z = qz_;
-    res.pose.pose.pose.orientation.w = qw_;
+    res.tf.position.x = tx_;
+    res.tf.position.y = ty_;
+    res.tf.position.z = tz_;
+    res.tf.orientation.x = qx_;
+    res.tf.orientation.y = qy_;
+    res.tf.orientation.z = qz_;
+    res.tf.orientation.w = qw_;
     
     return true;
 }

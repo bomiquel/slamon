@@ -69,7 +69,7 @@ add_service_files(
     DIRECTORY
         srv
     FILES
-        GetPose.srv
+        GetTransform.srv
 )
 
 # Generate custom ROS messages & services                    

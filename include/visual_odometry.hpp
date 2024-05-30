@@ -24,7 +24,7 @@
 #include "publisher.hpp"
 #include "stereo_modules.hpp"
 
-#include "slamon/GetPose.h"
+#include "slamon/GetTransform.h"
 
 
 class VisualOdometry: protected Caster, protected Publisher, protected StereoModules 
@@ -80,6 +80,16 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
                            const sensor_msgs::CameraInfoConstPtr& r_info_msg);
 
 
+        /** \brief Service callback. This function is called when another part of the
+         *  system requests the transform between the robot centre (base_link) and the
+         *  sensor (camera).
+         *  \param req The service request (input).
+         *  \param res The service response (output).
+         */
+        bool getRobot2CameraCallback(slamon::GetTransform::Request& req,
+                                     slamon::GetTransform::Response& res);
+
+
         /** \brief Initialise the visual odometer by setting the transform between the camera
          *  and the centre of the robot and the projection matrices.
          *  \param l_info_msg ROS message containing the info of the left image (input).
@@ -124,9 +134,8 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
          *  it calls a service and waits for another part of the system to respond.
          *  If there is a response, the received pose is assigned, otherwise the pose
          *  is initialised to 0 (identity).
-         *  @return If the robot's pose has been initialised.
          */                        
-        bool getInitialPose();
+        void getInitialPose();
 
 
         /** \brief Decodes the enum type StereoResults into a boolean and a message
@@ -182,6 +191,8 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
         ros::Publisher successive_matches_img_pub_; // !> Publisher for the image with drawn successive matches.
 
         ros::ServiceClient initial_pose_client_; //!> Service client to assign the initial position to the SLAM.
+        
+        ros::ServiceServer robot2camera_server_; // !> Service server to send robot2camera transform to service client.
 
         VORunTimes run_times_; // !> Internal times of the visual odometer.
 

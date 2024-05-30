@@ -44,7 +44,10 @@ void VisualOdometry::run()
     image_transport::ImageTransport it(nh);
 
     // Client services.
-    initial_pose_client_ = nh.serviceClient<slamon::GetPose>("get_first_pose");
+    initial_pose_client_ = nhp.serviceClient<slamon::GetTransform>("get_first_pose");
+
+    // Server servives.
+    robot2camera_server_ = nhp.advertiseService("get_robot_to_camera_tf", &VisualOdometry::getRobot2CameraCallback, this);
 
     // Publishers.
     info_pub_ = nhp.advertise<slamon::VOInfo>("vo_info", 1);
@@ -135,7 +138,8 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
                     std::string c_frame_name;
                     if (!initialised_pose_)
                     {
-                        initialised_pose_ = getInitialPose();
+                        getInitialPose();
+                        initialised_pose_ = true;
 
                         if (enable_debugging_)
                         {
@@ -188,6 +192,21 @@ void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
     // Publishes last iteration performance
     run_times_.total = ros::Time::now().toSec() - start_time;
     publishInfo(l_img_msg->header.stamp, valid_motion, run_times_, info_pub_);
+}
+
+
+bool VisualOdometry::getRobot2CameraCallback(slamon::GetTransform::Request& req,
+                                             slamon::GetTransform::Response& res)
+{
+    res.tf.position.x = robot2camera_.getOrigin().getX();
+    res.tf.position.y = robot2camera_.getOrigin().getY();
+    res.tf.position.z = robot2camera_.getOrigin().getZ();
+    res.tf.orientation.x = robot2camera_.getRotation().getX();
+    res.tf.orientation.y = robot2camera_.getRotation().getY();
+    res.tf.orientation.z = robot2camera_.getRotation().getZ();
+    res.tf.orientation.w = robot2camera_.getRotation().getW();
+
+    return true;
 }
 
 
@@ -391,20 +410,20 @@ bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
 }
 
 
-bool VisualOdometry::getInitialPose()
+void VisualOdometry::getInitialPose()
 {
-    slamon::GetPose srv;
+    slamon::GetTransform srv;
     if (initial_pose_client_.call(srv))
     {
-        double tx = srv.response.pose.pose.pose.position.x;
-        double ty = srv.response.pose.pose.pose.position.y;
-        double tz = srv.response.pose.pose.pose.position.z;
-        double qx = srv.response.pose.pose.pose.orientation.x;
-        double qy = srv.response.pose.pose.pose.orientation.y;
-        double qz = srv.response.pose.pose.pose.orientation.z;
-        double qw = srv.response.pose.pose.pose.orientation.w;
+        double tx = srv.response.tf.position.x;
+        double ty = srv.response.tf.position.y;
+        double tz = srv.response.tf.position.z;
+        double qx = srv.response.tf.orientation.x;
+        double qy = srv.response.tf.orientation.y;
+        double qz = srv.response.tf.orientation.z;
+        double qw = srv.response.tf.orientation.w;
 
-        ROS_WARN_STREAM("[VO->Initial pose:] GetPose service call successful. The initial position is as follows:" << std::endl <<
+        ROS_WARN_STREAM("[VO->Initial pose:] GetTransform service call successful. The initial position is as follows:" << std::endl <<
                         "tx: " << tx << std::endl << 
                         "ty: " << ty << std::endl << 
                         "tz: " << tz << std::endl << 
@@ -413,18 +432,16 @@ bool VisualOdometry::getInitialPose()
                         "qz: " << qz << std::endl << 
                         "qw: " << qw);
 
-        tf::Vector3 tf_t(tx, ty, tz);
-        tf::Quaternion tf_q(qx, qy, qz, qw);
-        c_robot_pose_.setOrigin(tf_t);
-        c_robot_pose_.setRotation(tf_q);
+        tf::Vector3 translation(tx, ty, tz);
+        tf::Quaternion rotation(qx, qy, qz, qw);
+        c_robot_pose_.setOrigin(translation);
+        c_robot_pose_.setRotation(rotation);
     }
     else
     {
-        ROS_WARN_STREAM("[VO->Initial pose:] Failed to call GetPose service. The initial pose will be assumed as the identity.");
+        ROS_WARN_STREAM("[VO->Initial pose:] Failed to call GetTransform service. The initial pose will be assumed as the identity.");
         c_robot_pose_.setIdentity();
     }
-
-    return true;
 }
 
 

@@ -50,12 +50,6 @@ class Frame
               const std::vector<cv::Point3f>& obj_pts);
 
 
-        /** \brief Set keyframe id.
-         *  \param id of the keyframe.
-         */
-        inline void setId(const int id){id_ = id;}
-
-
         /** \brief Set left image.
          *  \param l_img Left image.
          */
@@ -66,12 +60,6 @@ class Frame
          *  \param r_img Right image.
          */
         inline void setRightImg(const cv::Mat r_img){r_img_ = r_img;}
-
-
-        /** \brief Get keyframe id.
-         *  @return keyframe id.
-         */
-        inline int getId() const {return id_;}
 
 
         /** \brief Get keyframe timestamp
@@ -136,7 +124,13 @@ class Frame
         /** \brief Get the clustering for the current frame.
          *  @return The keypoints clustering.
          */
-        inline std::vector< std::vector<int> > getClusters() const {return clusters_;}
+        inline std::vector<std::vector<int>> getClusters() const {return clusters_;}
+
+
+        /** \brief Get the clustering centroids.
+         *  @return The centroids.
+         */
+        inline std::vector<cv::Point3f> getClustersCentroids() const {return cluster_centroids_;}
 
 
         /** \brief Cluster keypoints
@@ -166,8 +160,6 @@ class Frame
 
 
     private:
-
-        int id_; //!> Frame id.
 
         ros::Time stamp_; //!> Store the frame timestamp.
 

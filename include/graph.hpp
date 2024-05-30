@@ -23,8 +23,7 @@
 #include "caster.hpp"
 #include "publisher.hpp"
 
-#include "slamon/Frame.h"
-#include "slamon/Keypoint.h"
+#include "slamon/GetTransform.h"
 
 
 class Graph: protected Caster, protected Publisher
@@ -61,7 +60,7 @@ class Graph: protected Caster, protected Publisher
                            const nav_msgs::OdometryConstPtr& odom_msg);
 
 
-        /** \brief Decide if new keyframe is needed.
+        /** \brief Decides if new keyframe is needed.
          *  \param c_frame Current frame (input).
          *  \param c_robot_pose Current robot pose (input).
          *  @return True if new keyframe will be inserted into the graph.
@@ -69,14 +68,14 @@ class Graph: protected Caster, protected Publisher
         bool needNewKeyFrame(Frame& c_frame, const tf::Transform& c_robot_pose);
 
 
-        /** \brief Add a frame to the graph if enough inliers
+        /** \brief Adds a frame to the graph if enough inliers
          *  \param c_frame Current frame (input).
          *  @return True if new keyframe will be inserted into the map
          */
         bool addFrameToMap(Frame& c_frame);
 
 
-        /** \brief compute the absolute diference between 2 poses (omitting z).
+        /** \brief Computes the absolute diference between 2 poses (omitting z).
          *  \param pose_0 transformation matrix of pose 0
          *  \param pose_1 transformation matrix of pose 1
          *  @return the norm between two poses
@@ -86,6 +85,23 @@ class Graph: protected Caster, protected Publisher
             tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
             return sqrt(d.x()*d.x() + d.y()*d.y());
         }
+
+
+        /** \brief Computes the absolute diference between 2 poses.
+         *  \param pose_0 transformation matrix of pose 0
+         *  \param pose_1 transformation matrix of pose 1
+         *  @return the norm between two poses
+         */
+        static inline double poseDiff3D(tf::Transform pose_0, tf::Transform pose_1)
+        {
+            tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
+            return sqrt(d.x()*d.x() + d.y()*d.y() + d.z()*d.z());
+        }
+
+        /** \brief Obtains, from the VO and through a service, the transformation
+         *  between the centre of the robot (base_link) and the sensor (camera).
+         */
+        void getRobot2Camera();
 
 
     private:
@@ -108,9 +124,15 @@ class Graph: protected Caster, protected Publisher
 
         std::string clusters_path_; //!> Path to store keypoints clustering with debugging purpose.
 
+        tf::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
+
         tf::Transform l_kf_robot_pose_; //!> The robot's pose the last time a keyframe was inserted.
 
+        std::vector<double> frame_stamps_; //> Stores the frame timestamps
+
         ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering
+
+        ros::ServiceClient robot2camera_client_; //!> Service client to assign the robot2camera static transform.
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,
