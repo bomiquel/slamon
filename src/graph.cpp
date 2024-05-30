@@ -116,18 +116,47 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
         frame_stamps_.push_back(stamp.toSec());
         
         // Loop of frame clusters.
+        int id, idx;
         std::vector<int> vertex_ids;
+        cv::Mat cluster_l_descs, cluster_r_descs;
+        std::vector<cv::Point3f> cluster_obj_pts;
+        std::vector<cv::Point2f> cluster_l_kpts, cluster_r_kpts;
         std::vector<Cluster> clusters_to_close_loop;
-        tf::Transform camera_pose = c_robot_pose * robot2camera_;
+        tf::Transform local_cluster_pose, c_cluster_pose;
+        tf::Transform c_camera_pose = c_robot_pose * robot2camera_;
         for (uint i = 0; i < clusters.size(); i++)
         {
-            tf::Transform cluster_pose = fromPoint3DToTf(cluster_centroids[i]);
-            cluster_pose = camera_pose * cluster_pose;
-            initial_cluster_pose_history_.push_back(cluster_pose);
+            local_cluster_pose = fromPoint3DToTf(cluster_centroids[i]);
+            c_cluster_pose = c_camera_pose * local_cluster_pose;
+            initial_cluster_pose_history_.push_back(c_cluster_pose);
 
-            // Add cluster to the graph
-            int id = addVertex(cluster_pose);
+            // Add cluster to the graph.
+            id = addVertex(c_cluster_pose);
 
+            // Store information.
+            vertex_ids.push_back(id);
+            local_cluster_poses_.push_back(local_cluster_pose);
+            cluster_frame_relation_.push_back(std::make_pair(id, kf_counter_));
+
+            // Build cluster
+            for (uint j = 0; j < clusters[i].size(); j++)
+            {
+                idx = clusters[i][j];
+                cluster_l_kpts.push_back(l_kpts[idx]);
+                cluster_r_kpts.push_back(r_kpts[idx]);
+                cluster_obj_pts.push_back(obj_pts[idx]);
+                cluster_l_descs.push_back(l_descs.row(idx));
+                cluster_r_descs.push_back(r_descs.row(idx));
+            }
+            Cluster cluster(id, kf_counter_, cluster_l_descs, cluster_r_descs, c_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_obj_pts);
+            clusters_to_close_loop.push_back(cluster);
+
+            // Clear variables
+            cluster_l_kpts.clear();
+            cluster_r_kpts.clear();
+            cluster_obj_pts.clear();
+            cluster_l_descs.release();
+            cluster_r_descs.release();
         }
         
     }
@@ -228,7 +257,7 @@ void Graph::getRobot2Camera()
 
 int Graph::addVertex(tf::Transform pose)
 {
-    // Lock graph
+    // Lock graph.
     mutex_graph_.lock();
 
     // Convert pose for graph
@@ -237,6 +266,20 @@ int Graph::addVertex(tf::Transform pose)
     // Set node id equal to graph size
     int id = graph_optimizer_.vertices().size();
 
+    // Build the vertex
+    g2o::VertexSE3* c_vertex = new g2o::VertexSE3();
+    c_vertex->setId(id);
+    c_vertex->setEstimate(vertex_pose);
+    
+    // First time, no edges.
+    if (id == 0)
+        c_vertex->setFixed(true);
 
+    // Add vertex.
+    graph_optimizer_.addVertex(c_vertex);
 
+    // Unlock graph.
+    mutex_graph_.unlock();
+
+    return id;
 }

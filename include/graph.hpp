@@ -147,7 +147,11 @@ class Graph: protected Caster, protected Publisher
 
         ros::ServiceClient robot2camera_client_; //!> Service client to assign the robot2camera static transform.
 
+        std::vector<tf::Transform> local_cluster_poses_; //!> Stores the cluster poses relative to camera frame
+
         std::vector<tf::Transform> initial_cluster_pose_history_; //!> Stores the initial cluster poses, before graph update.
+
+        std::vector<std::pair<int, int>> cluster_frame_relation_; //!> Stores the cluster/frame relation (cluster_id, frame_id)
 
         std::mutex mutex_graph_; //!> Mutex for the graph manipulation.
 
