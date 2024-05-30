@@ -45,8 +45,22 @@ find_package(
         message_generation
 )
 
+# Dependencies - G2O:
+# Use script to find g2o. If it's not installed, set G2O_INCLUDE_DIRS manually
+# using -DG2O_INCLUDE_DIRS.
+find_package(G2O REQUIRED)
+
+# Dependencies - OpenCV:
 find_package(OpenCV REQUIRED)
+
+# Dependencies - Eigen:
+find_package(Eigen3 REQUIRED)
+
+# Dependencies - Threads:
 find_package(Threads REQUIRED)
+
+# Dependencies - Suitesparse:
+find_package(SuiteSparse REQUIRED)
 
 
 ###################################
@@ -91,7 +105,12 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+include_directories(include 
+                    ${catkin_INCLUDE_DIRS} 
+                    ${OpenCV_INCLUDE_DIRS}
+                    ${EIGEN3_INCLUDE_DIRS}
+                    ${SUITESPARSE_INCLUDE_DIRS}
+                    ${G2O_INCLUDE_DIRS})
 link_directories(${OpenCV_INCLUDE_DIRS})
 
 # Executables
@@ -116,6 +135,6 @@ add_dependencies(map_slamon ${catkin_EXPORTED_TARGETS})
 add_dependencies(initial_pose_server ${catkin_EXPORTED_TARGETS})
 
 # Linking
-target_link_libraries(vo_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(map_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(vo_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(map_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(initial_pose_server ${catkin_LIBRARIES})

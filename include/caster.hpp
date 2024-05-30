@@ -14,6 +14,8 @@
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
 
+#include <Eigen/Eigen>
+
 #include <opencv2/opencv.hpp>
 
 #include "frame.hpp" // Frame class
@@ -49,7 +51,7 @@ class Caster
                          tf::Transform& tf);
 
 
-        /** Convert custom ROS frame msg to frame object (slam::Frame)
+        /** \brief Convert custom ROS frame msg to frame object (slam::Frame)
          *  \param msg ROS message with relevant visual information (input).
          *  \param frame Will contain the relevant visual information (output).
          */
@@ -57,11 +59,25 @@ class Caster
                                        Frame& frame);
 
 
+        /** \brief Convert cv::Point3f to tf::Transform.
+         *  \param pt 3D point (input).
+         *  @return 3D point converted into a transform.
+         */
+        tf::Transform fromPoint3DToTf(const cv::Point3f& pt);
+
+
+        /** \brief Convert a tf::Transform to Eigen::Isometry3d
+         *  \param tf The tf::Transform (input).
+         *  @return The Eigen::Isometry3d matrix.
+         */
+        Eigen::Isometry3d fromTfToIsometry(const tf::Transform& tf);
+
+
         /** \brief Converts an integer to a string containing a
          *  five-digit number.
          *  \param in Input integer (input).
          *  @return The string containing the five-digit number.
-        */
+         */
         std::string convertTo5Digits(int in);
 };
 

@@ -6,12 +6,19 @@ Graph::Graph(int min_lc_inliers,
              bool enable_debugging,
              const std::string& w_path)
 {
+    // Inilitialises Graph class attributes
     w_path_ = w_path;
     kf_counter_ = -1;
     init_graph_ = false;
     min_dist_kf_ = min_dist_kf;
     min_lc_inliers_ = min_lc_inliers;
     enable_debugging_ = enable_debugging;
+
+    // Inilitialises the g2o graph optimizer
+    std::unique_ptr<g2o::BlockSolverX::LinearSolverType> linear_solver_ptr (new g2o::LinearSolverCholmod<g2o::BlockSolverX::PoseMatrixType>());
+    std::unique_ptr<g2o::BlockSolverX> solver_ptr (new g2o::BlockSolverX(std::move(linear_solver_ptr)));
+    g2o::OptimizationAlgorithmLevenberg * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
+    graph_optimizer_.setAlgorithm(solver);
 }
 
 
@@ -109,9 +116,18 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
         frame_stamps_.push_back(stamp.toSec());
         
         // Loop of frame clusters.
+        std::vector<int> vertex_ids;
+        std::vector<Cluster> clusters_to_close_loop;
+        tf::Transform camera_pose = c_robot_pose * robot2camera_;
         for (uint i = 0; i < clusters.size(); i++)
         {
-            
+            tf::Transform cluster_pose = fromPoint3DToTf(cluster_centroids[i]);
+            cluster_pose = camera_pose * cluster_pose;
+            initial_cluster_pose_history_.push_back(cluster_pose);
+
+            // Add cluster to the graph
+            int id = addVertex(cluster_pose);
+
         }
         
     }
@@ -207,4 +223,20 @@ void Graph::getRobot2Camera()
         ROS_WARN_STREAM("[GRAPH->Static transform:] Failed to call GetTransform service. The robot2camera transform will be assumed as the identity.");
         robot2camera_.setIdentity();
     }
+}
+
+
+int Graph::addVertex(tf::Transform pose)
+{
+    // Lock graph
+    mutex_graph_.lock();
+
+    // Convert pose for graph
+    Eigen::Isometry3d vertex_pose = fromTfToIsometry(pose);
+
+    // Set node id equal to graph size
+    int id = graph_optimizer_.vertices().size();
+
+
+
 }

@@ -14,13 +14,19 @@
 #include <filesystem>
 
 #include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+#include <g2o/core/sparse_optimizer.h>
+#include <g2o/core/block_solver.h>
+#include <g2o/types/slam3d/edge_se3.h>
+#include <g2o/solvers/cholmod/linear_solver_cholmod.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
+
 #include "frame.hpp"
 #include "caster.hpp"
+#include "cluster.hpp"
 #include "publisher.hpp"
 
 #include "slamon/GetTransform.h"
@@ -104,6 +110,13 @@ class Graph: protected Caster, protected Publisher
         void getRobot2Camera();
 
 
+        /** \brief Adds a vertex to the graph
+         *  \param pose Vertex pose
+         *  @return the vertex id
+         */
+        int addVertex(tf::Transform pose);
+
+
     private:
 
         bool init_graph_; //!> Graph state.
@@ -133,6 +146,12 @@ class Graph: protected Caster, protected Publisher
         ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering
 
         ros::ServiceClient robot2camera_client_; //!> Service client to assign the robot2camera static transform.
+
+        std::vector<tf::Transform> initial_cluster_pose_history_; //!> Stores the initial cluster poses, before graph update.
+
+        std::mutex mutex_graph_; //!> Mutex for the graph manipulation.
+
+        g2o::SparseOptimizer graph_optimizer_; //!> G2O graph optimizer.
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,

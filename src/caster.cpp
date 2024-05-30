@@ -88,6 +88,33 @@ void Caster::fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
 }
 
 
+tf::Transform Caster::fromPoint3DToTf(const cv::Point3f& pt)
+{
+    tf::Transform out;
+    out.setIdentity();
+    tf::Vector3 translation(pt.x, pt.y, pt.z);
+    out.setOrigin(translation);
+    return out;
+}
+
+
+Eigen::Isometry3d Caster::fromTfToIsometry(const tf::Transform& tf)
+{
+    tf::Vector3 t_in = tf.getOrigin();
+    tf::Quaternion q_in = tf.getRotation();
+    Eigen::Vector3d t_out(t_in.getX(), t_in.getY(), t_in.getZ());
+    Eigen::Quaterniond q_out;
+    q_out.setIdentity();
+    q_out.x() = q_in.getX();
+    q_out.y() = q_in.getY();
+    q_out.z() = q_in.getZ();
+    q_out.w() = q_in.getW();
+    Eigen::Isometry3d out = (Eigen::Isometry3d)q_out;
+    out.translation() = t_out;
+    return out;
+}
+
+
 std::string Caster::convertTo5Digits(int in)
 {
     uint val = (uint)in;
