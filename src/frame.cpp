@@ -1,12 +1,12 @@
 #include "frame.hpp"
 
 
-Frame::Frame(const cv::Mat& l_descs,
-             const cv::Mat& r_descs,
-             const ros::Time& stamp,
-             const std::vector<cv::Point2f>& l_kpts,
-             const std::vector<cv::Point2f>& r_kpts,
-             const std::vector<cv::Point3f>& obj_pts)
+Frame::Frame(cv::Mat l_descs,
+             cv::Mat r_descs,
+             ros::Time stamp,
+             std::vector<cv::Point2f> l_kpts,
+             std::vector<cv::Point2f> r_kpts,
+             std::vector<cv::Point3f> obj_pts)
 {
     stamp_ = stamp;
     l_kpts_ = l_kpts;
@@ -17,14 +17,14 @@ Frame::Frame(const cv::Mat& l_descs,
 }
 
 
-Frame::Frame(const cv::Mat& l_img,
-             const cv::Mat& r_img,
-             const cv::Mat& l_descs,
-             const cv::Mat& r_descs,
-             const ros::Time& stamp,
-             const std::vector<cv::Point2f>& l_kpts,
-             const std::vector<cv::Point2f>& r_kpts,
-             const std::vector<cv::Point3f>& obj_pts)
+Frame::Frame(cv::Mat l_img,
+             cv::Mat r_img,
+             cv::Mat l_descs,
+             cv::Mat r_descs,
+             ros::Time stamp,
+             std::vector<cv::Point2f> l_kpts,
+             std::vector<cv::Point2f> r_kpts,
+             std::vector<cv::Point3f> obj_pts)
 {
     l_img_ = l_img;
     r_img_ = r_img;

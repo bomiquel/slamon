@@ -30,24 +30,24 @@ class Frame
         /** \brief Class constructor without images.
          * 
          */
-        Frame(const cv::Mat& l_descs,
-              const cv::Mat& r_descs,
-              const ros::Time& stamp,
-              const std::vector<cv::Point2f>& l_kpts,
-              const std::vector<cv::Point2f>& r_kpts,
-              const std::vector<cv::Point3f>& obj_pts);
+        Frame(cv::Mat l_descs,
+              cv::Mat r_descs,
+              ros::Time stamp,
+              std::vector<cv::Point2f> l_kpts,
+              std::vector<cv::Point2f> r_kpts,
+              std::vector<cv::Point3f> obj_pts);
 
 
         /** \brief Full class constructor
          */
-        Frame(const cv::Mat& l_img,
-              const cv::Mat& r_img,
-              const cv::Mat& l_descs,
-              const cv::Mat& r_descs,
-              const ros::Time& stamp,
-              const std::vector<cv::Point2f>& l_kpts,
-              const std::vector<cv::Point2f>& r_kpts,
-              const std::vector<cv::Point3f>& obj_pts);
+        Frame(cv::Mat l_img,
+              cv::Mat r_img,
+              cv::Mat l_descs,
+              cv::Mat r_descs,
+              ros::Time stamp,
+              std::vector<cv::Point2f> l_kpts,
+              std::vector<cv::Point2f> r_kpts,
+              std::vector<cv::Point3f> obj_pts);
 
 
         /** \brief Set left image.
