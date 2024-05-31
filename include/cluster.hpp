@@ -28,7 +28,14 @@ class Cluster
 
 
         /** \brief Class constructor
-         * 
+         *  \param id Cluster id.
+         *  \param frame_id Frame id.
+         *  \param l_descs Cluster left descriptors.
+         *  \param r_descs Cluster right descriptors.
+         *  \param camera_pose World camera pose when the cluster was obtained.
+         *  \param l_kpts Cluster left keypoints.
+         *  \param r_kpts Cluster right keypoints.
+         *  \param obj_pts Cluster 3D points.
          */
         Cluster(int id,
                 int frame_id,
@@ -98,7 +105,7 @@ class Cluster
 
         cv::Mat r_descs_; //!> Cluster right descriptors.
 
-        tf::Transform camera_pose_; //!> Camera world position
+        tf::Transform camera_pose_; //!> World camera pose when the cluster was obtained.
 
         std::vector<cv::Point2f> l_kpts_; //!> Cluster left keypoints.
 

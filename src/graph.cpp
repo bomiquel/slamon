@@ -4,13 +4,15 @@
 Graph::Graph(int min_lc_inliers,
              double min_dist_kf,
              bool enable_debugging,
-             const std::string& w_path)
+             const std::string& w_path,
+             LoopClosing* loop_closing)
 {
     // Inilitialises Graph class attributes
     w_path_ = w_path;
     kf_counter_ = -1;
     init_graph_ = false;
     min_dist_kf_ = min_dist_kf;
+    loop_closing_ = loop_closing;
     min_lc_inliers_ = min_lc_inliers;
     enable_debugging_ = enable_debugging;
 
@@ -158,6 +160,10 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
             cluster_l_descs.release();
             cluster_r_descs.release();
         }
+
+        // Send the new clusters to the loop closing thread.
+        for (uint i = 0; i < clusters_to_close_loop.size(); i++)
+            ROS_INFO("");
         
     }
 

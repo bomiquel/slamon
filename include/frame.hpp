@@ -28,7 +28,12 @@ class Frame
 
 
         /** \brief Class constructor without images.
-         * 
+         *  \param l_descs Left descriptors.
+         *  \param r_descs Right descriptors.
+         *  \param stamp Time stamp in which the frame was obtained.
+         *  \param l_kpts Left keypoints.
+         *  \param r_kpts Right keypoints.
+         *  \param obk_pts 3D points.
          */
         Frame(cv::Mat l_descs,
               cv::Mat r_descs,
@@ -39,6 +44,14 @@ class Frame
 
 
         /** \brief Full class constructor
+         *  \param l_img Left image.
+         *  \param r_img Right image.
+         *  \param l_descs Left descriptors.
+         *  \param r_descs Right descriptors.
+         *  \param stamp Time stamp in which the frame was obtained.
+         *  \param l_kpts Left keypoints.
+         *  \param r_kpts Right keypoints.
+         *  \param obk_pts 3D points.
          */
         Frame(cv::Mat l_img,
               cv::Mat r_img,

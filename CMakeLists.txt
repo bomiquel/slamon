@@ -127,7 +127,9 @@ add_executable(map_slamon
                src/caster.cpp
                src/cluster.cpp
                src/map_node.cpp
-               src/publisher.cpp)
+               src/publisher.cpp
+               src/loop_closing.cpp
+               src/stereo_modules.cpp)
 add_executable(initial_pose_server src/initial_pose_server)
 
 # Dependencies

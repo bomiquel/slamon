@@ -21,7 +21,7 @@ void readParams(int& min_lc_inliers,
     nh.param("slamon/map/min_lc_inliers", min_lc_inliers,   40);
 
     // Printing parameters values.
-    ROS_INFO_STREAM("[GRAPH]: Parameter setting: " << std::endl <<
+    ROS_INFO_STREAM("[MAP]: Parameter setting: " << std::endl <<
                     "Working path               = " << working_path << std::endl <<
                     "Enable debugging           = " << enable_debugging << std::endl <<
                     "Min dist between keyframes = " << min_dist_kf << std::endl <<
@@ -51,7 +51,7 @@ void readParams(int& min_lc_inliers,
     }
     if (invalid_parameter)
     {
-        ROS_INFO_STREAM("[GRAPH]: Some parameter was invalid and has been assigned its default value." << std::endl <<
+        ROS_INFO_STREAM("[MAP]: Some parameter was invalid and has been assigned its default value." << std::endl <<
                         "Current parameter values are: " << std::endl <<
                         "Working path               = " << working_path << std::endl <<
                         "Enable debugging           = " << enable_debugging << std::endl <<
@@ -75,7 +75,8 @@ int main(int argc, char **argv)
     readParams(min_lc_inliers, min_dist_kf, enable_debugging, working_path);
 
     // Declare threads.
-    Graph graph(min_lc_inliers, min_dist_kf, enable_debugging, working_path);
+    LoopClosing loop_closing(min_lc_inliers, enable_debugging, working_path);
+    Graph graph(min_lc_inliers, min_dist_kf, enable_debugging, working_path, &loop_closing);
 
     // Launch threads.
     std::thread graph_thread(&Graph::run, &graph);

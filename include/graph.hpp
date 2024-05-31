@@ -9,6 +9,7 @@
 #ifndef GRAPH_HPP
 #define GRAPH_HPP
 
+
 #include <string>
 #include <vector>
 #include <filesystem>
@@ -28,6 +29,7 @@
 #include "caster.hpp"
 #include "cluster.hpp"
 #include "publisher.hpp"
+#include "loop_closing.hpp"
 
 #include "slamon/GetTransform.h"
 
@@ -41,11 +43,13 @@ class Graph: protected Caster, protected Publisher
          *  \param min_dist_kf Minimum distance between keyframes.
          *  \param enable_debugging Enabling or disabling debugging.
          *  \param w_path Working path for debugging purpose.
+         *  \param loop_closing Loop closing object pointer.
          */
         Graph(int min_lc_inliers,
               double min_dist_kf,
               bool enable_debugging,
-              const std::string& w_path);
+              const std::string& w_path,
+              LoopClosing* loop_closing);
 
 
         /** \brief Starts graph
@@ -156,6 +160,8 @@ class Graph: protected Caster, protected Publisher
         std::mutex mutex_graph_; //!> Mutex for the graph manipulation.
 
         g2o::SparseOptimizer graph_optimizer_; //!> G2O graph optimizer.
+
+        LoopClosing* loop_closing_; // Loop closing object pointer.
 
         // Topic sync
         typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,
