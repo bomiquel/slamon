@@ -125,6 +125,7 @@ add_executable(map_slamon
                src/graph.cpp
                src/frame.cpp
                src/caster.cpp
+               src/cluster.cpp
                src/map_node.cpp
                src/publisher.cpp)
 add_executable(initial_pose_server src/initial_pose_server)

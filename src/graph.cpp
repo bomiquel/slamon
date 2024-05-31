@@ -116,7 +116,7 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
         frame_stamps_.push_back(stamp.toSec());
         
         // Loop of frame clusters.
-        int id, idx;
+        int cluster_id, idx;
         std::vector<int> vertex_ids;
         cv::Mat cluster_l_descs, cluster_r_descs;
         std::vector<cv::Point3f> cluster_obj_pts;
@@ -131,12 +131,12 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
             initial_cluster_pose_history_.push_back(c_cluster_pose);
 
             // Add cluster to the graph.
-            id = addVertex(c_cluster_pose);
+            cluster_id = addVertex(c_cluster_pose);
 
             // Store information.
-            vertex_ids.push_back(id);
+            vertex_ids.push_back(cluster_id);
             local_cluster_poses_.push_back(local_cluster_pose);
-            cluster_frame_relation_.push_back(std::make_pair(id, kf_counter_));
+            cluster_frame_relation_.push_back(std::make_pair(cluster_id, kf_counter_)); // Cluster and Frame id.
 
             // Build cluster
             for (uint j = 0; j < clusters[i].size(); j++)
@@ -148,7 +148,7 @@ void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
                 cluster_l_descs.push_back(l_descs.row(idx));
                 cluster_r_descs.push_back(r_descs.row(idx));
             }
-            Cluster cluster(id, kf_counter_, cluster_l_descs, cluster_r_descs, c_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_obj_pts);
+            Cluster cluster(cluster_id, kf_counter_, cluster_l_descs, cluster_r_descs, c_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_obj_pts);
             clusters_to_close_loop.push_back(cluster);
 
             // Clear variables
