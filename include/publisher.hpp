@@ -45,6 +45,19 @@ class Publisher
         };
 
 
+        /** \brief Writes on disk a image with its keypoints drawn.
+         *  \param img The image (input).
+         *  \param color The keypoints color (input).
+         *  \param o_path Image output path. The name of the final 
+         *  file must be included (input).
+         *  \param kpts The keypoints (input).
+         */
+        void writeKeypoints(const cv::Mat& img,
+                            const cv::Scalar& color,
+                            const std::string& o_path,
+                            const std::vector<cv::Point2f> kpts);
+
+
         /** \brief Publishes stereo images with its keypoints drawn.
          *  \param l_img The left image (input). 
          *  \param r_img The right image (input).

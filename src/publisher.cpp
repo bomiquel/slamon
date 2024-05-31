@@ -1,6 +1,19 @@
 #include "publisher.hpp"
 
 
+void Publisher::writeKeypoints(const cv::Mat& img,
+                               const cv::Scalar& color,
+                               const std::string& o_path,
+                               const std::vector<cv::Point2f> kpts)
+{
+    // Draws keypoints.
+    cv::Mat o_img = drawPoints(img, color, kpts);
+
+    // Writes image.
+    cv::imwrite(o_path + ".png", o_img);
+}
+
+
 void Publisher::publishStereoKeypoints(const cv::Mat& l_img,
                                        const cv::Mat& r_img,
                                        const ros::Time& stamp,

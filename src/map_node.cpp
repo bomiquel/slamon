@@ -77,9 +77,11 @@ int main(int argc, char **argv)
     // Declare threads.
     slam::LoopClosing loop_closing(min_lc_inliers, enable_debugging, working_path);
     slam::Graph graph(min_lc_inliers, min_dist_kf, enable_debugging, working_path, &loop_closing);
+    loop_closing.setGraph(&graph);
 
     // Launch threads.
     std::thread graph_thread(&slam::Graph::run, &graph);
+    std::thread loop_closing_thread(&slam::LoopClosing::run, &loop_closing);
 
     // ROS wait
     ros::Rate r(10);

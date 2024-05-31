@@ -38,142 +38,146 @@ namespace slam
 {
 
 
-class Graph: protected Caster, protected Publisher
-{   
-    public:
-
-        /** \brief Class constructor
-         *  \param min_lc_inliers Minimum number of inliers for loop closing.
-         *  \param min_dist_kf Minimum distance between keyframes.
-         *  \param enable_debugging Enabling or disabling debugging.
-         *  \param w_path Working path for debugging purpose.
-         *  \param loop_closing Loop closing object pointer.
-         */
-        Graph(int min_lc_inliers,
-              double min_dist_kf,
-              bool enable_debugging,
-              const std::string& w_path,
-              LoopClosing* loop_closing);
+    class LoopClosing;
 
 
-        /** \brief Starts graph
-         */
-        void run();
+    class Graph: protected Caster, protected Publisher
+    {   
+        public:
 
 
-    protected:
+            /** \brief Class constructor
+             *  \param min_lc_inliers Minimum number of inliers for loop closing.
+             *  \param min_dist_kf Minimum distance between keyframes.
+             *  \param enable_debugging Enabling or disabling debugging.
+             *  \param w_path Working path for debugging purpose.
+             *  \param loop_closing Loop closing object pointer.
+             */
+            Graph(int min_lc_inliers,
+                  double min_dist_kf,
+                  bool enable_debugging,
+                  const std::string& w_path,
+                  LoopClosing* loop_closing);
 
 
-        /** \brief Messages callback. This function is called when synchronized frame
-         *  and odom messages are received.
-         *  \param frame_msg Custom ROS message containing current stereo pair image
-         *  relevant information (input).
-         *  \param odom_msg ROS message containing current robot odometry (input).
-         */  
-        void frameCallback(const slamon::FrameConstPtr& frame_msg,
-                           const nav_msgs::OdometryConstPtr& odom_msg);
+            /** \brief Starts graph
+             */
+            void run();
 
 
-        /** \brief Decides if new keyframe is needed.
-         *  \param c_frame Current frame (input).
-         *  \param c_robot_pose Current robot pose (input).
-         *  @return True if new keyframe will be inserted into the graph.
-         */
-        bool needNewKeyFrame(Frame& c_frame, const tf::Transform& c_robot_pose);
+        protected:
 
 
-        /** \brief Adds a frame to the graph if enough inliers
-         *  \param c_frame Current frame (input).
-         *  @return True if new keyframe will be inserted into the map
-         */
-        bool addFrameToMap(Frame& c_frame);
+            /** \brief Messages callback. This function is called when synchronized frame
+             *  and odom messages are received.
+             *  \param frame_msg Custom ROS message containing current stereo pair image
+             *  relevant information (input).
+             *  \param odom_msg ROS message containing current robot odometry (input).
+             */  
+            void frameCallback(const slamon::FrameConstPtr& frame_msg,
+                               const nav_msgs::OdometryConstPtr& odom_msg);
 
 
-        /** \brief Computes the absolute diference between 2 poses (omitting z).
-         *  \param pose_0 transformation matrix of pose 0
-         *  \param pose_1 transformation matrix of pose 1
-         *  @return the norm between two poses
-         */
-        static inline double poseDiff2D(tf::Transform pose_0, tf::Transform pose_1)
-        {
-            tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
-            return sqrt(d.x()*d.x() + d.y()*d.y());
-        }
+            /** \brief Decides if new keyframe is needed.
+             *  \param c_frame Current frame (input).
+             *  \param c_robot_pose Current robot pose (input).
+             *  @return True if new keyframe will be inserted into the graph.
+             */
+            bool needNewKeyFrame(Frame& c_frame, const tf::Transform& c_robot_pose);
 
 
-        /** \brief Computes the absolute diference between 2 poses.
-         *  \param pose_0 transformation matrix of pose 0
-         *  \param pose_1 transformation matrix of pose 1
-         *  @return the norm between two poses
-         */
-        static inline double poseDiff3D(tf::Transform pose_0, tf::Transform pose_1)
-        {
-            tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
-            return sqrt(d.x()*d.x() + d.y()*d.y() + d.z()*d.z());
-        }
-
-        /** \brief Obtains, from the VO and through a service, the transformation
-         *  between the centre of the robot (base_link) and the sensor (camera).
-         */
-        void getRobot2Camera();
+            /** \brief Adds a frame to the graph if enough inliers
+             *  \param c_frame Current frame (input).
+             *  @return True if new keyframe will be inserted into the map
+             */
+            bool addFrameToMap(Frame& c_frame);
 
 
-        /** \brief Adds a vertex to the graph
-         *  \param pose Vertex pose
-         *  @return the vertex id
-         */
-        int addVertex(tf::Transform pose);
+            /** \brief Computes the absolute diference between 2 poses (omitting z).
+             *  \param pose_0 transformation matrix of pose 0
+             *  \param pose_1 transformation matrix of pose 1
+             *  @return the norm between two poses
+             */
+            static inline double poseDiff2D(tf::Transform pose_0, tf::Transform pose_1)
+            {
+                tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
+                return sqrt(d.x()*d.x() + d.y()*d.y());
+            }
 
 
-    private:
+            /** \brief Computes the absolute diference between 2 poses.
+             *  \param pose_0 transformation matrix of pose 0
+             *  \param pose_1 transformation matrix of pose 1
+             *  @return the norm between two poses
+             */
+            static inline double poseDiff3D(tf::Transform pose_0, tf::Transform pose_1)
+            {
+                tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
+                return sqrt(d.x()*d.x() + d.y()*d.y() + d.z()*d.z());
+            }
 
-        bool init_graph_; //!> Graph state.
+            /** \brief Obtains, from the VO and through a service, the transformation
+             *  between the centre of the robot (base_link) and the sensor (camera).
+             */
+            void getRobot2Camera();
 
-        bool enable_debugging_; //!> Enabling or disabling debugging messages.
-        
-        int kf_counter_; //!> Keyframe counter. 
 
-        int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
+            /** \brief Adds a vertex to the graph
+             *  \param pose Vertex pose
+             *  @return the vertex id
+             */
+            int addVertex(tf::Transform pose);
 
-        double min_dist_kf_; //!> Minimum distance between keyframes.
 
-        std::string w_path_; //!> Path to working directory.
+        private:
 
-        std::string f_path_; //!> Path to store frames with debugging purpose.
+            bool init_graph_; //!> Graph state.
 
-        std::string kf_path_; //!> Path to store keyframes with debugging purpose.
+            bool enable_debugging_; //!> Enabling or disabling debugging messages.
+            
+            int kf_counter_; //!> Keyframe counter. 
 
-        std::string clusters_path_; //!> Path to store keypoints clustering with debugging purpose.
+            int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
 
-        tf::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
+            double min_dist_kf_; //!> Minimum distance between keyframes.
 
-        tf::Transform l_kf_robot_pose_; //!> The robot's pose the last time a keyframe was inserted.
+            std::string w_path_; //!> Path to working directory.
 
-        std::vector<double> frame_stamps_; //> Stores the frame timestamps
+            std::string f_path_; //!> Path to store frames with debugging purpose.
 
-        ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering
+            std::string kf_path_; //!> Path to store keyframes with debugging purpose.
 
-        ros::ServiceClient robot2camera_client_; //!> Service client to assign the robot2camera static transform.
+            std::string clusters_path_; //!> Path to store keypoints clustering with debugging purpose.
 
-        std::vector<tf::Transform> local_cluster_poses_; //!> Stores the cluster poses relative to camera frame
+            tf::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
-        std::vector<tf::Transform> initial_cluster_pose_history_; //!> Stores the initial cluster poses, before graph update.
+            tf::Transform l_kf_robot_pose_; //!> The robot's pose the last time a keyframe was inserted.
 
-        std::vector<std::pair<int, int>> cluster_frame_relation_; //!> Stores the cluster/frame relation (cluster_id, frame_id)
+            std::vector<double> frame_stamps_; //> Stores the frame timestamps
 
-        std::mutex mutex_graph_; //!> Mutex for the graph manipulation.
+            ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering
 
-        g2o::SparseOptimizer graph_optimizer_; //!> G2O graph optimizer.
+            ros::ServiceClient robot2camera_client_; //!> Service client to assign the robot2camera static transform.
 
-        LoopClosing* loop_closing_; // Loop closing object pointer.
+            std::vector<tf::Transform> local_cluster_poses_; //!> Stores the cluster poses relative to camera frame
 
-        // Topic sync
-        typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,
-                                                                nav_msgs::Odometry> SyncPolicy_;
+            std::vector<tf::Transform> initial_cluster_pose_history_; //!> Stores the initial cluster poses, before graph update.
 
-        typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
+            std::vector<std::pair<int, int>> cluster_frame_relation_; //!> Stores the cluster/frame relation (cluster_id, frame_id)
 
-};
+            std::mutex mutex_graph_; //!> Mutex for the graph manipulation.
+
+            g2o::SparseOptimizer graph_optimizer_; //!> G2O graph optimizer.
+
+            LoopClosing* loop_closing_; // Loop closing object pointer.
+
+            // Topic sync
+            typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,
+                                                                    nav_msgs::Odometry> SyncPolicy_;
+
+            typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
+
+    };
 
 
 } // End namespace

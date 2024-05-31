@@ -22,6 +22,6 @@ Cluster::Cluster(int id,
     obj_pts_ = obj_pts;
     l_descs_ = l_descs;
     r_descs_ = r_descs;
-    frame_id_ = frame_id_;
+    frame_id_ = frame_id;
     camera_pose_ = camera_pose;
 }
