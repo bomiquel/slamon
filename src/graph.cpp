@@ -1,6 +1,9 @@
 #include "graph.hpp"
 
 
+namespace slam
+{
+
 Graph::Graph(int min_lc_inliers,
              double min_dist_kf,
              bool enable_debugging,
@@ -288,4 +291,7 @@ int Graph::addVertex(tf::Transform pose)
     mutex_graph_.unlock();
 
     return id;
+}
+
+
 }

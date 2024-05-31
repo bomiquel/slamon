@@ -1,6 +1,10 @@
 #include "visual_odometry.hpp"
 
 
+namespace slam
+{
+
+
 VisualOdometry::VisualOdometry(double ratio,
                                int min_inliers,
                                bool enable_debugging,
@@ -523,3 +527,6 @@ bool VisualOdometry::decodeStereoResult(const std::string& title,
     }
     return successful;
 }   
+
+
+}

@@ -34,6 +34,10 @@
 #include "slamon/GetTransform.h"
 
 
+namespace slam
+{
+
+
 class Graph: protected Caster, protected Publisher
 {   
     public:
@@ -170,6 +174,9 @@ class Graph: protected Caster, protected Publisher
         typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
 
 };
+
+
+} // End namespace
 
 
 #endif // GRAPH_HPP

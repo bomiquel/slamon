@@ -27,6 +27,10 @@
 #include "slamon/GetTransform.h"
 
 
+namespace slam
+{
+
+
 class VisualOdometry: protected Caster, protected Publisher, protected StereoModules 
 {
     public:
@@ -204,6 +208,9 @@ class VisualOdometry: protected Caster, protected Publisher, protected StereoMod
 
         typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
 };
+
+
+} // End namespace.
 
 
 #endif // VISUAL_ODOMETRY_HPP

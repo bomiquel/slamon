@@ -22,6 +22,10 @@
 #include "stereo_modules.hpp"
 
 
+namespace slam
+{
+    
+
 class LoopClosing: protected Caster, protected Publisher
 {
     public:
@@ -47,5 +51,8 @@ class LoopClosing: protected Caster, protected Publisher
 
         std::string w_path_; //!> Path to working directory.
 };
+
+
+} // End namespace
 
 #endif // LOOP_CLOSING_HPP
