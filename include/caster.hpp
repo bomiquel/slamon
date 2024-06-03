@@ -18,6 +18,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <g2o/types/slam3d/vertex_se3.h>
+
 #include "frame.hpp" // Frame class
 #include "slamon/Frame.h" // Frame ROS msg
 
@@ -71,6 +73,20 @@ class Caster
          *  @return The Eigen::Isometry3d matrix.
          */
         Eigen::Isometry3d fromTfToIsometry(const tf::Transform& tf);
+
+
+        /** \brief Convert an Eigen::Isometry3d to tf::Transform.
+         *  \param iso The Eigen::Isometry3d matrix (input).
+         *  @return The tf::Transform.
+         */
+        tf::Transform fromIsometryToTf(const Eigen::Isometry3d& iso);
+
+
+        /** \brief Convert g2o::VertexSE3 to tf::Transform.
+         *  \param vertex The g2o::VertexSE3 (input).
+         *  @return The tf::Transform.
+         */ 
+        tf::Transform fromVertexToTf(const g2o::VertexSE3* vertex);
 
 
         /** \brief Converts an integer to a string containing a

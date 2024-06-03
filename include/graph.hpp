@@ -46,6 +46,24 @@ namespace slam
         public:
 
 
+            struct InformationEdge
+            {
+                int info_inliers;
+                int info_vertex_0;
+                int info_vertex_1;
+
+                InformationEdge() {};
+
+                // Default settings.
+                InformationEdge (int vertex_0, int vertex_1, int inliers)
+                {
+                    info_inliers = inliers;
+                    info_vertex_0 = vertex_0;
+                    info_vertex_1 = vertex_1;
+                }
+            };
+
+
             /** \brief Class constructor
              *  \param min_lc_inliers Minimum number of inliers for loop closing.
              *  \param min_dist_kf Minimum distance between keyframes.
@@ -63,6 +81,33 @@ namespace slam
             /** \brief Starts graph
              */
             void run();
+
+
+            /** \brief Get the frame id of some specific vertex.
+             *  \param vertex_id The vertex id (input).
+             *  @return The frame id.
+             */
+            int getVertexFrameId(int vertex_id);
+
+
+            /** \brief Get the graph vertex pose
+             *  \param vertex_id The ID of the vertex for which the pose is desired (input).
+             *  \param lock Set to true if graph locking is required (input/optional).
+             *  @return Tf with the graph pose.
+             */
+            tf::Transform getVertexPose(int vertex_id, bool lock);
+
+
+            /** \brief Add an edge to the graph.
+             *  \param inliers Inliers between (input).
+             *  \param vertex_0_id Index of graph vertex 0 (input).
+             *  \param vertex_1_id Index of graph vertex 1 (input).
+             *  \param transformation Transformation between graph vertices (input).
+             */
+            void addEdge(int inliers,
+                         int vertex_0_id, 
+                         int vertex_1_id, 
+                         const tf::Transform& tf_edge);
 
 
         protected:
@@ -98,7 +143,8 @@ namespace slam
              *  \param pose_1 transformation matrix of pose 1
              *  @return the norm between two poses
              */
-            static inline double poseDiff2D(tf::Transform pose_0, tf::Transform pose_1)
+            static inline double poseDiff2D(const tf::Transform& pose_0, 
+                                            const tf::Transform& pose_1)
             {
                 tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
                 return sqrt(d.x()*d.x() + d.y()*d.y());
@@ -110,7 +156,8 @@ namespace slam
              *  \param pose_1 transformation matrix of pose 1
              *  @return the norm between two poses
              */
-            static inline double poseDiff3D(tf::Transform pose_0, tf::Transform pose_1)
+            static inline double poseDiff3D(const tf::Transform& pose_0,
+                                            const tf::Transform& pose_1)
             {
                 tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
                 return sqrt(d.x()*d.x() + d.y()*d.y() + d.z()*d.z());
@@ -122,11 +169,18 @@ namespace slam
             void getRobot2Camera();
 
 
-            /** \brief Adds a vertex to the graph
-             *  \param pose Vertex pose
-             *  @return the vertex id
+            /** \brief Adds a vertex to the graph.
+             *  \param pose Vertex pose.
+             *  @return the vertex id.
              */
             int addVertex(tf::Transform pose);
+
+
+            /** \brief Return all possible combinations of 2 elements of the input vector.
+             *  \param Vec Input vector with all values.
+             *  @return the list of combinations.
+             */
+            std::vector<std::vector<int>> createComb(const std::vector<int>& vec);
 
 
         private:
@@ -164,6 +218,8 @@ namespace slam
             std::vector<tf::Transform> initial_cluster_pose_history_; //!> Stores the initial cluster poses, before graph update.
 
             std::vector<std::pair<int, int>> cluster_frame_relation_; //!> Stores the cluster/frame relation (cluster_id, frame_id)
+
+            std::vector<InformationEdge> info_edges_; // Information edges.
 
             std::mutex mutex_graph_; //!> Mutex for the graph manipulation.
 

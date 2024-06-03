@@ -70,6 +70,102 @@ namespace slam
     }
 
 
+    int Graph::getVertexFrameId(int vertex_id)
+    {
+        int frame_id = -1;
+        for (uint i = 0; i < cluster_frame_relation_.size(); i++)
+        {
+            if (cluster_frame_relation_[i].first == vertex_id)
+            {
+                frame_id = cluster_frame_relation_[i].second;
+                break;
+            }
+        }
+        return frame_id;
+    }
+
+
+    tf::Transform Graph::getVertexPose(int vertex_id, bool lock = true)
+    {
+        tf::Transform vertex_pose;
+        if (lock)
+        {
+            mutex_graph_.lock();
+            if (vertex_id >= 0)
+            {
+                g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_id]);
+                vertex_pose = fromVertexToTf(vertex);
+            }
+            else
+            {
+                vertex_pose.setIdentity();
+            }
+            mutex_graph_.unlock();
+        }
+        else
+        {
+            if (vertex_id >= 0)
+            {
+                g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_id]);
+                vertex_pose = fromVertexToTf(vertex);
+            }
+            else
+            {
+                vertex_pose.setIdentity();
+            }
+        }
+        return vertex_pose;
+    }
+
+
+    void Graph::addEdge(int inliers,
+                        int vertex_0_id,
+                        int vertex_1_id,
+                        const tf::Transform& tf_edge)
+    {
+        mutex_graph_.lock();
+
+        // Store information edge.
+        bool lc_found = false;
+        InformationEdge info_edge; 
+        int frame_0_id = Graph::getVertexFrameId(vertex_0_id);
+        int frame_1_id = Graph::getVertexFrameId(vertex_1_id);
+        for (uint i = 0; i < info_edges_.size(); i++) // TODO: Check
+        {
+            info_edge = info_edges_[i];
+            if ((info_edge.info_vertex_0 == frame_0_id && info_edge.info_vertex_1 == frame_1_id) ||
+                (info_edge.info_vertex_0 == frame_1_id && info_edge.info_vertex_1 == frame_0_id))
+            {
+                lc_found = true;
+                info_edges_[i].info_inliers += inliers;
+                break;
+            }
+        }
+        if (!lc_found)
+        {
+            info_edge.info_inliers = inliers;
+            info_edge.info_vertex_0 = frame_0_id;
+            info_edge.info_vertex_1 = frame_1_id;
+            info_edges_.push_back(info_edge);
+        }
+
+        // Get the graph vertices.
+        g2o::VertexSE3* vertex_0 = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_0_id]);
+        g2o::VertexSE3* vertex_1 = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_1_id]);
+
+        // Add graph edge to graph.
+        g2o::EdgeSE3* graph_edge = new g2o::EdgeSE3();
+        Eigen::Isometry3d iso_edge = fromTfToIsometry(tf_edge);
+        graph_edge->setVertex(0, vertex_0);
+        graph_edge->setVertex(1, vertex_1);
+        graph_edge->setMeasurement(iso_edge);
+
+        graph_optimizer_.addEdge(graph_edge);
+
+        mutex_graph_.unlock();
+    }
+
+
     void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
                               const nav_msgs::OdometryConstPtr& odom_msg)
     {
@@ -168,6 +264,27 @@ namespace slam
             // Send the new clusters to the loop closing thread.
             for (uint i = 0; i < clusters_to_close_loop.size(); i++)
                 loop_closing_->addClusterToQueue(clusters_to_close_loop[i]);
+
+            // Add edges between clusters of the same frame.
+            if (clusters.size() > 1)
+            {
+                // Retrieve all possible combinations.
+                std::vector<std::vector<int>> combinations = createComb(vertex_ids);
+
+                int vertex_0_id, vertex_1_id;
+                tf::Transform edge, vertex_0_pose, vertex_1_pose;
+                for (uint i = 0; i < combinations.size(); i++)
+                {
+                    vertex_0_id = vertex_ids[combinations[i][0]];
+                    vertex_1_id = vertex_ids[combinations[i][1]];
+
+                    vertex_0_pose = getVertexPose(vertex_0_id);
+                    vertex_1_pose = getVertexPose(vertex_1_id);
+
+                    edge = vertex_0_pose.inverse() * vertex_1_pose;
+                    addEdge(0, vertex_0_id, vertex_1_id, edge);
+                }
+            }
                 
             
         }
@@ -293,6 +410,29 @@ namespace slam
         mutex_graph_.unlock();
 
         return id;
+    }
+
+
+    std::vector<std::vector<int>> Graph::createComb(const std::vector<int>& vec)
+    {
+        std::string bitmask(2, 1);
+        bitmask.resize(vec.size(), 0);
+
+        std::vector<int> comb;
+        std::vector<std::vector<int>> combinations;
+        do
+        {
+            for (uint i = 0; i < vec.size(); i++)
+            {
+                if (bitmask[i])
+                    comb.push_back(i);
+            }
+            combinations.push_back(comb);
+            comb.clear();
+        }
+        while (std::prev_permutation(bitmask.begin(), bitmask.end()));
+
+        return combinations;
     }
 
 

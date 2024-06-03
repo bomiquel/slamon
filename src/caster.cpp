@@ -115,6 +115,25 @@ Eigen::Isometry3d Caster::fromTfToIsometry(const tf::Transform& tf)
 }
 
 
+tf::Transform Caster::fromIsometryToTf(const Eigen::Isometry3d& iso)
+{
+    Eigen::Vector3d t_in = iso.translation();
+    Eigen::Quaterniond q_in = (Eigen::Quaterniond)iso.rotation();
+    tf::Vector3 t_out(t_in.x(), t_in.y(), t_in.z());
+    tf::Quaternion q_out(q_in.x(), q_in.y(), q_in.z(), q_in.w());
+    tf::Transform out(q_out, t_out);
+    return out;
+}
+
+
+tf::Transform Caster::fromVertexToTf(const g2o::VertexSE3* vertex)
+{
+    Eigen::Isometry3d iso = vertex->estimate();
+    tf::Transform tf = fromIsometryToTf(iso);
+    return tf;
+}
+
+
 std::string Caster::convertTo5Digits(int in)
 {
     uint val = (uint)in;
