@@ -23,7 +23,7 @@ namespace slam
         // Create debugging directories.
         if (enable_debugging_)
         {
-            kf_path_ = w_path_ + "keyframes/";
+            keyframe_path_ = w_path_ + "keyframes/";
             clusters_path_ = w_path_ + "lc_clusters/";
             loop_closures_path_ = w_path_ + "loop_closures/";
             if (std::filesystem::exists(clusters_path_))
@@ -88,8 +88,8 @@ namespace slam
             }
             else
             {
-                ROS_INFO_STREAM(kf_path_ + c_keyframe_name + "_left.png");
-                l_img = cv::imread(kf_path_ + c_keyframe_name + "_left.png");
+                ROS_INFO_STREAM(keyframe_path_ + c_keyframe_name + "_left.png");
+                l_img = cv::imread(keyframe_path_ + c_keyframe_name + "_left.png");
             }
 
             if (p_frame_id_ == c_cluster_.getFrameId())

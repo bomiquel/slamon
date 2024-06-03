@@ -168,7 +168,7 @@ namespace slam
 
             std::string w_path_; //!> Path to working directory.
 
-            std::string f_path_; //!> Path to store frames with debugging purpose.
+            std::string frame_path_; //!> Path to store frames with debugging purpose.
 
             std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 

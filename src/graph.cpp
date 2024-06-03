@@ -6,19 +6,19 @@ namespace slam
 
 
     Graph::Graph(int min_lc_inliers,
-                 double min_dist_kf,
                  bool enable_debugging,
+                 double min_dist_keyframe,
                  const std::string& w_path,
                  LoopClosing* loop_closing)
     {
         // Inilitialises Graph class attributes
         w_path_ = w_path;
-        kf_counter_ = -1;
         init_graph_ = false;
-        min_dist_kf_ = min_dist_kf;
+        keyframe_counter_ = -1;
         loop_closing_ = loop_closing;
         min_lc_inliers_ = min_lc_inliers;
         enable_debugging_ = enable_debugging;
+        min_dist_keyframe_ = min_dist_keyframe;
 
         // Inilitialises the g2o graph optimizer
         std::unique_ptr<g2o::BlockSolverX::LinearSolverType> linear_solver_ptr (new g2o::LinearSolverCholmod<g2o::BlockSolverX::PoseMatrixType>());
@@ -33,14 +33,14 @@ namespace slam
         // Create debugging directories.
         if (enable_debugging_)
         {
-            f_path_ = w_path_ + "frames/";
-            kf_path_ = w_path_ + "keyframes/";
+            frame_path_ = w_path_ + "frames/";
+            keyframe_path_ = w_path_ + "keyframes/";
             clusters_path_ = w_path_ + "clusters/";
-            if (std::filesystem::exists(kf_path_))
-                std::filesystem::remove_all(kf_path_);
+            if (std::filesystem::exists(keyframe_path_))
+                std::filesystem::remove_all(keyframe_path_);
             if (std::filesystem::exists(clusters_path_))
                 std::filesystem::remove_all(clusters_path_);
-            std::filesystem::create_directory(kf_path_);
+            std::filesystem::create_directory(keyframe_path_);
             std::filesystem::create_directory(clusters_path_);
         }
 
@@ -70,7 +70,7 @@ namespace slam
     }
 
 
-    int Graph::getVertexFrameId(int vertex_id)
+    int Graph::getVertexKeyframeId(int vertex_id)
     {
         int frame_id = -1;
         for (uint i = 0; i < cluster_frame_relation_.size(); i++)
@@ -82,6 +82,17 @@ namespace slam
             }
         }
         return frame_id;
+    }
+
+
+    void Graph::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
+    {
+        vertices.clear();
+        for (uint i = 0; i < cluster_frame_relation_.size(); i++)
+        {
+            if (cluster_frame_relation_[i].second == keyframe_id)
+                vertices.push_back(cluster_frame_relation_[i].first);
+        }
     }
 
 
@@ -118,36 +129,11 @@ namespace slam
     }
 
 
-    void Graph::addEdge(int inliers,
-                        int vertex_0_id,
+    void Graph::addEdge(int vertex_0_id,
                         int vertex_1_id,
                         const tf::Transform& tf_edge)
     {
         mutex_graph_.lock();
-
-        // Store information edge.
-        bool lc_found = false;
-        InformationEdge info_edge; 
-        int frame_0_id = Graph::getVertexFrameId(vertex_0_id);
-        int frame_1_id = Graph::getVertexFrameId(vertex_1_id);
-        for (uint i = 0; i < info_edges_.size(); i++) // TODO: Check
-        {
-            info_edge = info_edges_[i];
-            if ((info_edge.info_vertex_0 == frame_0_id && info_edge.info_vertex_1 == frame_1_id) ||
-                (info_edge.info_vertex_0 == frame_1_id && info_edge.info_vertex_1 == frame_0_id))
-            {
-                lc_found = true;
-                info_edges_[i].info_inliers += inliers;
-                break;
-            }
-        }
-        if (!lc_found)
-        {
-            info_edge.info_inliers = inliers;
-            info_edge.info_vertex_0 = frame_0_id;
-            info_edge.info_vertex_1 = frame_1_id;
-            info_edges_.push_back(info_edge);
-        }
 
         // Get the graph vertices.
         g2o::VertexSE3* vertex_0 = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_0_id]);
@@ -180,17 +166,17 @@ namespace slam
         if (enable_debugging_)
         {
             c_frame_name = convertTo5Digits(frame_msg->header.seq);
-            c_frame.setLeftImg(cv::imread(f_path_ + c_frame_name + "_left.png"));
-            c_frame.setRightImg(cv::imread(f_path_ + c_frame_name + "_right.png"));
+            c_frame.setLeftImg(cv::imread(frame_path_ + c_frame_name + "_left.png"));
+            c_frame.setRightImg(cv::imread(frame_path_ + c_frame_name + "_right.png"));
         }
 
         // Include a keyframe to the map if necessary.
         if (needNewKeyFrame(c_frame, c_robot_pose))
         {
             // Updates global variables.
-            kf_counter_++;
+            keyframe_counter_++;
             init_graph_ = true;
-            l_kf_robot_pose_ = c_robot_pose;
+            l_keyframe_robot_pose_ = c_robot_pose;
             
             // Get frame visual information.
             ros::Time stamp = c_frame.getTimestamp();
@@ -205,13 +191,13 @@ namespace slam
             // Debug keyframe.
             if (enable_debugging_)
             {
-                std::string c_keyframe_name = convertTo5Digits(kf_counter_);
-                cv::imwrite(kf_path_ + c_keyframe_name + "_left.png", c_frame.getLeftImg());
-                cv::imwrite(kf_path_ + c_keyframe_name + "_right.png", c_frame.getRightImg());
+                std::string c_keyframe_name = convertTo5Digits(keyframe_counter_);
+                cv::imwrite(keyframe_path_ + c_keyframe_name + "_left.png", c_frame.getLeftImg());
+                cv::imwrite(keyframe_path_ + c_keyframe_name + "_right.png", c_frame.getRightImg());
                 if (clustering_img_pub_.getNumSubscribers() > 0)
                     publishKeypointsClustering(c_frame.getLeftImg(), stamp, clustering_img_pub_, l_kpts, clusters);
                 writeKeypointsClustering(c_frame.getLeftImg(), clusters_path_ + c_keyframe_name, l_kpts, clusters);
-                ROS_INFO_STREAM("[GRAPH->Map includer]: Adding keyframe: " << kf_counter_);
+                ROS_INFO_STREAM("[GRAPH->Map includer]: Adding keyframe: " << keyframe_counter_);
             }
 
             // Save the frame timestamp
@@ -219,7 +205,7 @@ namespace slam
             
             // Loop of frame clusters.
             int cluster_id, idx;
-            std::vector<int> vertex_ids;
+            std::vector<int> c_vertex_ids;
             cv::Mat cluster_l_descs, cluster_r_descs;
             std::vector<cv::Point3f> cluster_obj_pts;
             std::vector<cv::Point2f> cluster_l_kpts, cluster_r_kpts;
@@ -236,9 +222,9 @@ namespace slam
                 cluster_id = addVertex(c_cluster_pose);
 
                 // Store information.
-                vertex_ids.push_back(cluster_id);
+                c_vertex_ids.push_back(cluster_id);
                 local_cluster_poses_.push_back(local_cluster_pose);
-                cluster_frame_relation_.push_back(std::make_pair(cluster_id, kf_counter_)); // Cluster and Frame id.
+                cluster_frame_relation_.push_back(std::make_pair(cluster_id, keyframe_counter_)); // Cluster and Frame id.
 
                 // Build cluster
                 for (uint j = 0; j < clusters[i].size(); j++)
@@ -250,7 +236,7 @@ namespace slam
                     cluster_l_descs.push_back(l_descs.row(idx));
                     cluster_r_descs.push_back(r_descs.row(idx));
                 }
-                Cluster cluster(cluster_id, kf_counter_, cluster_l_descs, cluster_r_descs, c_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_obj_pts);
+                Cluster cluster(cluster_id, keyframe_counter_, cluster_l_descs, cluster_r_descs, c_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_obj_pts);
                 clusters_to_close_loop.push_back(cluster);
 
                 // Clear variables
@@ -269,30 +255,78 @@ namespace slam
             if (clusters.size() > 1)
             {
                 // Retrieve all possible combinations.
-                std::vector<std::vector<int>> combinations = createComb(vertex_ids);
+                std::vector<std::vector<int>> combinations = createComb(c_vertex_ids);
 
                 int vertex_0_id, vertex_1_id;
                 tf::Transform edge, vertex_0_pose, vertex_1_pose;
                 for (uint i = 0; i < combinations.size(); i++)
                 {
-                    vertex_0_id = vertex_ids[combinations[i][0]];
-                    vertex_1_id = vertex_ids[combinations[i][1]];
+                    vertex_0_id = c_vertex_ids[combinations[i][0]];
+                    vertex_1_id = c_vertex_ids[combinations[i][1]];
 
                     vertex_0_pose = getVertexPose(vertex_0_id);
                     vertex_1_pose = getVertexPose(vertex_1_id);
 
                     edge = vertex_0_pose.inverse() * vertex_1_pose;
-                    addEdge(0, vertex_0_id, vertex_1_id, edge);
+                    addEdge(vertex_0_id, vertex_1_id, edge);
                 }
             }
                 
+            // Connect this keyframe with the previous
+            if (keyframe_counter_ > 0)
+            {
+                // Retrieves the vertices of the previous keyframe.
+                std::vector<int> p_vertex_ids;
+                getKeyframeVertices(keyframe_counter_ - 1, p_vertex_ids);
+
+                // Connect only the closest vertices between the two keyframes.
+                std::vector<int> closest_vertices;
+                std::vector<tf::Transform> closest_poses;
+                tf::Transform c_vertex_pose, p_vertex_pose;
+                double dist, min_dist = std::numeric_limits<double>::max();
+                for (uint i = 0; i < c_vertex_ids.size(); i++)
+                {
+                    // Current ith vertex pose. 
+                    c_vertex_pose = getVertexPose(c_vertex_ids[i]);
+
+                    for (uint j = 0; j < p_vertex_ids.size(); j++)
+                    {
+                        // Previous ith vertex pose. 
+                        p_vertex_pose = getVertexPose(p_vertex_ids[j]);
+
+                        dist = poseDiff3D(c_vertex_pose, p_vertex_pose);
+                        if (dist < min_dist)
+                        {
+                            min_dist = dist;
+
+                            closest_vertices.clear();
+                            closest_vertices.push_back(c_vertex_ids[i]);
+                            closest_vertices.push_back(p_vertex_ids[j]);
+
+                            closest_poses.clear();
+                            closest_poses.push_back(c_vertex_pose);
+                            closest_poses.push_back(p_vertex_pose);
+                        }
+                    }
+                }
+
+                if (closest_vertices.size() > 0)
+                {
+                    tf::Transform edge = closest_poses[0].inverse() * closest_poses[1];
+                    addEdge(closest_vertices[0], closest_vertices[1], edge);
+                }
+                else
+                {
+                    ROS_ERROR("[GRAPH->Map includer]: Impossible to connect current and previous keyframes. Graph will have non-connected parts!");
+                }
+            }
             
         }
 
         if (enable_debugging_)
         {
-            std::filesystem::remove(f_path_ + c_frame_name + "_left.png");
-            std::filesystem::remove(f_path_ + c_frame_name + "_right.png");
+            std::filesystem::remove(frame_path_ + c_frame_name + "_left.png");
+            std::filesystem::remove(frame_path_ + c_frame_name + "_right.png");
         }
     }
 
@@ -311,7 +345,7 @@ namespace slam
                 return false;
             }
         }
-        else if (poseDiff2D(l_kf_robot_pose_, c_robot_pose) > min_dist_kf_)
+        else if (poseDiff2D(l_keyframe_robot_pose_, c_robot_pose) > min_dist_keyframe_)
         {
             return addFrameToMap(c_frame);
         }

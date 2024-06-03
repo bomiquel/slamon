@@ -90,7 +90,7 @@ namespace slam
 
             std::string w_path_; //!> Path to working directory.
 
-            std::string kf_path_; //!> Path to keyframes directories.
+            std::string keyframe_path_; //!> Path to keyframes directories.
 
             std::string clusters_path_; //!> Path to store keypoints clustering with debugging purpose.
 

@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <limits>
 #include <filesystem>
 
 #include <ros/ros.h>
@@ -46,34 +47,16 @@ namespace slam
         public:
 
 
-            struct InformationEdge
-            {
-                int info_inliers;
-                int info_vertex_0;
-                int info_vertex_1;
-
-                InformationEdge() {};
-
-                // Default settings.
-                InformationEdge (int vertex_0, int vertex_1, int inliers)
-                {
-                    info_inliers = inliers;
-                    info_vertex_0 = vertex_0;
-                    info_vertex_1 = vertex_1;
-                }
-            };
-
-
             /** \brief Class constructor
              *  \param min_lc_inliers Minimum number of inliers for loop closing.
-             *  \param min_dist_kf Minimum distance between keyframes.
              *  \param enable_debugging Enabling or disabling debugging.
+             *  \param min_dist_keyframe Minimum distance between keyframes.
              *  \param w_path Working path for debugging purpose.
              *  \param loop_closing Loop closing object pointer.
              */
             Graph(int min_lc_inliers,
-                  double min_dist_kf,
                   bool enable_debugging,
+                  double min_dist_keyframe,
                   const std::string& w_path,
                   LoopClosing* loop_closing);
 
@@ -87,7 +70,7 @@ namespace slam
              *  \param vertex_id The vertex id (input).
              *  @return The frame id.
              */
-            int getVertexFrameId(int vertex_id);
+            int getVertexKeyframeId(int vertex_id);
 
 
             /** \brief Get the graph vertex pose
@@ -98,14 +81,20 @@ namespace slam
             tf::Transform getVertexPose(int vertex_id, bool lock);
 
 
+            /** \brief Retrieve the list of the vertices/clusters of a corresponding keyframe.
+             *  \param keyframe_id The corresponding keyframe id (input).
+             *  \param vertices Will contain the list of vertices for this keyframe (output).
+             */
+            void getKeyframeVertices(int keyframe_id, 
+                                     std::vector<int>& vertices);
+
+
             /** \brief Add an edge to the graph.
-             *  \param inliers Inliers between (input).
              *  \param vertex_0_id Index of graph vertex 0 (input).
              *  \param vertex_1_id Index of graph vertex 1 (input).
              *  \param transformation Transformation between graph vertices (input).
              */
-            void addEdge(int inliers,
-                         int vertex_0_id, 
+            void addEdge(int vertex_0_id, 
                          int vertex_1_id, 
                          const tf::Transform& tf_edge);
 
@@ -189,23 +178,23 @@ namespace slam
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
             
-            int kf_counter_; //!> Keyframe counter. 
+            int keyframe_counter_; //!> Keyframe counter. 
 
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
 
-            double min_dist_kf_; //!> Minimum distance between keyframes.
+            double min_dist_keyframe_; //!> Minimum distance between keyframes.
 
             std::string w_path_; //!> Path to working directory.
 
-            std::string f_path_; //!> Path to store frames with debugging purpose.
+            std::string frame_path_; //!> Path to store frames with debugging purpose.
 
-            std::string kf_path_; //!> Path to store keyframes with debugging purpose.
+            std::string keyframe_path_; //!> Path to store keyframes with debugging purpose.
 
             std::string clusters_path_; //!> Path to store keypoints clustering with debugging purpose.
 
             tf::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
-            tf::Transform l_kf_robot_pose_; //!> The robot's pose the last time a keyframe was inserted.
+            tf::Transform l_keyframe_robot_pose_; //!> The robot's pose the last time a keyframe was inserted.
 
             std::vector<double> frame_stamps_; //> Stores the frame timestamps
 
@@ -218,8 +207,6 @@ namespace slam
             std::vector<tf::Transform> initial_cluster_pose_history_; //!> Stores the initial cluster poses, before graph update.
 
             std::vector<std::pair<int, int>> cluster_frame_relation_; //!> Stores the cluster/frame relation (cluster_id, frame_id)
-
-            std::vector<InformationEdge> info_edges_; // Information edges.
 
             std::mutex mutex_graph_; //!> Mutex for the graph manipulation.
 

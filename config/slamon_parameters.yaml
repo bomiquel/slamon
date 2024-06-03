@@ -9,5 +9,5 @@ slamon:
     origin_frame_id: /odom
     motion_estimation_type: ap3p
   map:
-    min_dist_kf: 0.25
+    min_dist_keyframe: 0.25
     min_lc_inliers: 50

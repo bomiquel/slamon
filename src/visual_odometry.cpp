@@ -36,10 +36,10 @@ namespace slam
         // Create debugging directories.
         if (enable_debugging_)
         {
-            f_path_ = w_path_ + "frames/";
-            if (std::filesystem::exists(f_path_))
-                std::filesystem::remove_all(f_path_);
-            std::filesystem::create_directory(f_path_);
+            frame_path_ = w_path_ + "frames/";
+            if (std::filesystem::exists(frame_path_))
+                std::filesystem::remove_all(frame_path_);
+            std::filesystem::create_directory(frame_path_);
         }
 
         // Create ROS node.
@@ -148,8 +148,8 @@ namespace slam
                             if (enable_debugging_)
                             {
                                 c_frame_name = convertTo5Digits(c_frame_id_);
-                                cv::imwrite(f_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
-                                cv::imwrite(f_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
+                                cv::imwrite(frame_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
+                                cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                             }
                             publishFrame(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
                                          frame_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getObjectPoints());
@@ -172,8 +172,8 @@ namespace slam
                         if (enable_debugging_)
                         {
                             c_frame_name = convertTo5Digits(c_frame_id_);
-                            cv::imwrite(f_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
-                            cv::imwrite(f_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
+                            cv::imwrite(frame_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
+                            cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                         }
                         publishFrame(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
                                      frame_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints());
