@@ -75,7 +75,7 @@ namespace slam
         sync.reset(new Sync_(SyncPolicy_(10), l_img_sub, r_img_sub, l_info_sub, r_info_sub));
         sync->registerCallback(boost::bind(&VisualOdometry::imageCallback, this, _1, _2, _3, _4));
         
-        // 
+        // Calls callback when synchronised messages arrive
         ros::spin();
     }
 
@@ -153,7 +153,7 @@ namespace slam
                             }
                             publishFrame(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
                                          frame_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getObjectPoints());
-                            publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, "map", 
+                            publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, origin_frame_id_, 
                                                    robot_frame_id_, c_robot_pose_, tf::Transform());
                         }
                         c_frame_id_++;
@@ -177,7 +177,7 @@ namespace slam
                         }
                         publishFrame(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
                                      frame_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints());
-                        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, "map", 
+                        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, origin_frame_id_, 
                                                robot_frame_id_, c_robot_pose_, c_robot_motion);
                     }
                 }

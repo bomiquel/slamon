@@ -20,18 +20,18 @@ void readParams(int& min_inliers,
     // Getting parameters from parameter server.
     ros::NodeHandle nh;
     nh.param("slamon/working_path",              working_path,           ros::package::getPath("slamon") + "/output/");
+    nh.param("slamon/robot_frame_id",            robot_frame_id,         std::string("base_link"));
     nh.param("slamon/enable_debugging",          enable_debugging,       true);
     nh.param("slamon/vo/min_inliers",            min_inliers,            20);
     nh.param("slamon/vo/lowe_ratio",             lowe_ratio,             0.8);
     nh.param("slamon/vo/matching_type",          matching_type,          std::string("ratio_matching"));
-    nh.param("slamon/vo/robot_frame_id",         robot_frame_id,         std::string("base_link"));
     nh.param("slamon/vo/origin_frame_id",        origin_frame_id,        std::string("odom"));
     nh.param("slamon/vo/motion_estimation_type", motion_estimation_type, std::string("p3p"));
 
     // Printing parameters values.
     ROS_INFO_STREAM("[VO]: Parameter setting: " << std::endl <<
-                    "Minimum kpts           = " << min_inliers << std::endl << 
                     "Lowe's ratio           = " << lowe_ratio << std::endl <<
+                    "Minimum kpts           = " << min_inliers << std::endl << 
                     "Working path           = " << working_path << std::endl <<
                     "Matching type          = " << matching_type << std::endl <<
                     "Robot frame id         = " << robot_frame_id << std::endl <<
@@ -75,8 +75,8 @@ void readParams(int& min_inliers,
     {
         ROS_INFO_STREAM("[VO]: Some parameter was invalid and has been assigned its default value." << std::endl <<
                         "Current parameter values are: " << std::endl <<
-                        "Minimum kpts           = " << min_inliers << std::endl << 
                         "Lowe's ratio           = " << lowe_ratio << std::endl <<
+                        "Minimum kpts           = " << min_inliers << std::endl << 
                         "Working path           = " << working_path << std::endl <<
                         "Matching type          = " << matching_type << std::endl <<
                         "Robot frame id         = " << robot_frame_id << std::endl <<

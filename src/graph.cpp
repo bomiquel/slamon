@@ -9,7 +9,8 @@ namespace slam
                  bool enable_debugging,
                  double min_dist_keyframe,
                  const std::string& w_path,
-                 LoopClosing* loop_closing)
+                 LoopClosing* loop_closing,
+                 const std::string& robot_frame_id)
     {
         // Inilitialises Graph class attributes
         w_path_ = w_path;
@@ -17,6 +18,7 @@ namespace slam
         keyframe_counter_ = -1;
         loop_closing_ = loop_closing;
         min_lc_inliers_ = min_lc_inliers;
+        robot_frame_id_ = robot_frame_id;
         enable_debugging_ = enable_debugging;
         min_dist_keyframe_ = min_dist_keyframe;
 
@@ -36,6 +38,9 @@ namespace slam
             frame_path_ = w_path_ + "frames/";
             keyframe_path_ = w_path_ + "keyframes/";
             clusters_path_ = w_path_ + "clusters/";
+            std::string lock_file = w_path_ + ".poses.lock";
+            if (std::filesystem::exists(lock_file))
+                std::filesystem::remove(lock_file.c_str());
             if (std::filesystem::exists(keyframe_path_))
                 std::filesystem::remove_all(keyframe_path_);
             if (std::filesystem::exists(clusters_path_))
@@ -52,6 +57,7 @@ namespace slam
         robot2camera_client_ = nh.serviceClient<slamon::GetTransform>("get_robot_to_camera_tf");
 
         // Publishers.
+        map_pub_ = nhp.advertise<nav_msgs::Odometry>("map", 1);
         clustering_img_pub_ = nhp.advertise<sensor_msgs::Image>("keypoints_clustering_img", 1);
 
         // Subscribers.
@@ -65,7 +71,7 @@ namespace slam
         sync.reset(new Sync_(SyncPolicy_(10), frame_sub, odom_sub));
         sync->registerCallback(boost::bind(&Graph::frameCallback, this, _1, _2));
 
-        //
+        // Calls callback when synchronised messages arrive
         ros::spin();
     }
 
@@ -83,18 +89,7 @@ namespace slam
         }
         return frame_id;
     }
-
-
-    void Graph::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
-    {
-        vertices.clear();
-        for (uint i = 0; i < cluster_frame_relation_.size(); i++)
-        {
-            if (cluster_frame_relation_[i].second == keyframe_id)
-                vertices.push_back(cluster_frame_relation_[i].first);
-        }
-    }
-
+    
 
     tf::Transform Graph::getVertexPose(int vertex_id, bool lock = true)
     {
@@ -126,6 +121,61 @@ namespace slam
             }
         }
         return vertex_pose;
+    }
+
+
+    tf::Transform Graph::getVertexCameraPose(int vertex_id, bool lock = true)
+    {
+        tf::Transform vertex_pose = getVertexPose(vertex_id, lock);
+        return vertex_pose * local_cluster_poses_[vertex_id].inverse();
+    }
+
+
+    void Graph::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
+    {
+        vertices.clear();
+        for (uint i = 0; i < cluster_frame_relation_.size(); i++)
+        {
+            if (cluster_frame_relation_[i].second == keyframe_id)
+                vertices.push_back(cluster_frame_relation_[i].first);
+        }
+    }
+
+
+    void Graph::getKeyframePoses(std::vector<double>& stamps,
+                                 std::vector<tf::Transform>& keyframe_poses)
+    {
+        // Locks graph
+        mutex_graph_.lock();
+
+        // Get keyframe poses
+        bool found;
+        int keyframe_id;
+        std::vector<int> processed_keyframes;
+        for (uint vertex_id = 0; vertex_id < graph_optimizer_.vertices().size(); vertex_id++)
+        {
+            // Is this keyframe processed?
+            found = false;
+            keyframe_id = getVertexKeyframeId(vertex_id);
+            // for (uint processed_keyframe_id = processed_keyframes.size() - 1; processed_keyframe_id >= 0; processed_keyframe_id--)
+            for (uint processed_keyframe_id = 0; processed_keyframe_id < processed_keyframes.size(); processed_keyframe_id++)
+            {
+                if (processed_keyframes[processed_keyframe_id] == keyframe_id)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (found)
+                continue;
+
+            processed_keyframes.push_back(keyframe_id);
+            stamps.push_back(keyframe_stamps_[keyframe_id]);
+            keyframe_poses.push_back(getVertexCameraPose(vertex_id, false) * robot2camera_.inverse());
+        }
+        
+        // Unlocks graph
+        mutex_graph_.unlock();
     }
 
 
@@ -173,10 +223,12 @@ namespace slam
         // Include a keyframe to the map if necessary.
         if (needNewKeyFrame(c_frame, c_robot_pose))
         {
+            ROS_INFO_STREAM("[GRAPH->needNewKeyFrame]: ok");
+
             // Updates global variables.
-            keyframe_counter_++;
             init_graph_ = true;
-            l_keyframe_robot_pose_ = c_robot_pose;
+            keyframe_counter_++;
+            p_keyframe_robot_pose_ = c_robot_pose;
             
             // Get frame visual information.
             ros::Time stamp = c_frame.getTimestamp();
@@ -201,7 +253,7 @@ namespace slam
             }
 
             // Save the frame timestamp
-            frame_stamps_.push_back(stamp.toSec());
+            keyframe_stamps_.push_back(stamp.toSec());
             
             // Loop of frame clusters.
             int cluster_id, idx;
@@ -251,6 +303,8 @@ namespace slam
             for (uint i = 0; i < clusters_to_close_loop.size(); i++)
                 loop_closing_->addClusterToQueue(clusters_to_close_loop[i]);
 
+            ROS_INFO_STREAM("[GRAPH->Loop of frame clusters]: ok");
+
             // Add edges between clusters of the same frame.
             if (clusters.size() > 1)
             {
@@ -271,6 +325,8 @@ namespace slam
                     addEdge(vertex_0_id, vertex_1_id, edge);
                 }
             }
+
+            ROS_INFO_STREAM("[GRAPH->Add edges between clusters of the same frame]: ok");
                 
             // Connect this keyframe with the previous
             if (keyframe_counter_ > 0)
@@ -317,10 +373,32 @@ namespace slam
                 }
                 else
                 {
-                    ROS_ERROR("[GRAPH->Map includer]: Impossible to connect current and previous keyframes. Graph will have non-connected parts!");
+                    ROS_ERROR("[GRAPH->Map includer]: Impossible to connect current and previous keyframe. Graph will have non-connected parts!");
                 }
             }
-            
+
+            ROS_INFO_STREAM("[GRAPH->Connect this keyframe with the previous]: ok");
+
+            // Save graph poses to file.
+            if (enable_debugging_)
+            {
+                std::vector<double> stamps;
+                std::vector<tf::Transform> keyframe_poses;
+                getKeyframePoses(stamps, keyframe_poses);
+                ROS_INFO_STREAM("[GRAPH->getKeyframePoses]: ok");
+                writePoses(w_path_ + "keyframes_poses.txt", stamps, keyframe_poses);
+            }
+
+            ROS_INFO_STREAM("[GRAPH->writePoses]: ok");
+
+            // Publish updated robot pose.
+            mutex_graph_.lock();
+            int c_vertex_id = graph_optimizer_.vertices().size() - 1;
+            mutex_graph_.unlock();
+            tf::Transform updated_robot_pose = getVertexCameraPose(c_vertex_id, true) * robot2camera_.inverse();
+            publishPose(stamp, map_pub_, "map", robot_frame_id_, updated_robot_pose);
+
+            ROS_INFO_STREAM("[GRAPH->Publish updated robot pose]: ok");
         }
 
         if (enable_debugging_)
@@ -345,7 +423,7 @@ namespace slam
                 return false;
             }
         }
-        else if (poseDiff2D(l_keyframe_robot_pose_, c_robot_pose) > min_dist_keyframe_)
+        else if (poseDiff2D(p_keyframe_robot_pose_, c_robot_pose) > min_dist_keyframe_)
         {
             return addFrameToMap(c_frame);
         }

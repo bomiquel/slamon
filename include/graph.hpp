@@ -53,12 +53,14 @@ namespace slam
              *  \param min_dist_keyframe Minimum distance between keyframes.
              *  \param w_path Working path for debugging purpose.
              *  \param loop_closing Loop closing object pointer.
+             *  \param robot_frame_id Robot coordinate axis identficator (base link).
              */
             Graph(int min_lc_inliers,
                   bool enable_debugging,
                   double min_dist_keyframe,
                   const std::string& w_path,
-                  LoopClosing* loop_closing);
+                  LoopClosing* loop_closing,
+                  const std::string& robot_frame_id);
 
 
             /** \brief Starts graph
@@ -73,12 +75,20 @@ namespace slam
             int getVertexKeyframeId(int vertex_id);
 
 
-            /** \brief Get the graph vertex pose
+            /** \brief Get the graph vertex pose.
              *  \param vertex_id The ID of the vertex for which the pose is desired (input).
              *  \param lock Set to true if graph locking is required (input/optional).
              *  @return Tf with the graph pose.
              */
             tf::Transform getVertexPose(int vertex_id, bool lock);
+
+
+            /** \brief Get the camera pose of some specific vertex.
+             *  \param vertex_id The ID of the vertex for which the pose is desired (input).
+             *  \param lock Set to true if graph locking is required (input/optional).
+             *  @return Tf with the graph vertex camera pose.
+             */
+            tf::Transform getVertexCameraPose(int vertex_id, bool lock);
 
 
             /** \brief Retrieve the list of the vertices/clusters of a corresponding keyframe.
@@ -87,6 +97,14 @@ namespace slam
              */
             void getKeyframeVertices(int keyframe_id, 
                                      std::vector<int>& vertices);
+
+
+            /** \brief Gets the poses of each keyframe in the graph.
+             *  \param stamps The timestamp of each pose (output).
+             *  \param keyframe_poses A list containing the poses of each keyframe (output).
+             */
+            void getKeyframePoses(std::vector<double>& stamps,
+                                  std::vector<tf::Transform>& keyframe_poses);
 
 
             /** \brief Add an edge to the graph.
@@ -194,11 +212,15 @@ namespace slam
 
             tf::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
-            tf::Transform l_keyframe_robot_pose_; //!> The robot's pose the last time a keyframe was inserted.
+            std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 
-            std::vector<double> frame_stamps_; //> Stores the frame timestamps
+            tf::Transform p_keyframe_robot_pose_; //!> The robot's pose the last time a keyframe was inserted.
 
-            ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering
+            std::vector<double> keyframe_stamps_; //> Stores the frame timestamps
+
+            ros::Publisher map_pub_; //!> Updated robot pose publisher.
+
+            ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering.
 
             ros::ServiceClient robot2camera_client_; //!> Service client to assign the robot2camera static transform.
 

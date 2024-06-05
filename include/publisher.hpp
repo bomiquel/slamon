@@ -9,6 +9,10 @@
 #ifndef PUBLISHER_HPP
 #define PUBLISHER_HPP
 
+#include <string>
+#include <vector>
+#include <filesystem>
+
 #include <opencv2/opencv.hpp>
 
 #include <ros/ros.h>
@@ -209,6 +213,20 @@ class Publisher
                                       const std::vector<std::vector<int>>& clusters);
 
 
+        /** \brief Publishes current robot pose.
+         *  \param c_stamp Current pose timestamp (input).
+         *  \param publisher The ROS publisher (input).
+         *  \param world_frame_id World coordinate axis id (input).
+         *  \param robot_frame_id Robot coordinate axis id (input).
+         *  \param c_robot_pose The current robot pose to be published (input).
+         */
+        void publishPose(const ros::Time& c_stamp,
+                         const ros::Publisher& publisher,
+                         const std::string& world_frame_id,
+                         const std::string& robot_frame_id,
+                         const tf::Transform& c_robot_pose);
+
+
         /** \brief Publishes current robot pose and velocity.
          *  \param c_stamp Current frame ROS timestamp (input).
          *  \param p_stamp Previous ROS timestamp (input).
@@ -256,6 +274,17 @@ class Publisher
                           const std::vector<cv::Point2f>& l_kpts,
                           const std::vector<cv::Point2f>& r_kpts,
                           const std::vector<cv::Point3f>& obj_pts);
+
+
+        /** \brief Writes a list of poses.
+         *  \param o_path File output path. The name of the final 
+         *  file must be included (input).
+         *  \param stamps Poses timestamps (input).
+         *  \param poses The list of poses to be written in the file (input).
+         */
+        void writePoses(const std::string& o_path,
+                        const std::vector<double>& stamps,
+                        const std::vector<tf::Transform>& poses);
 
 
     private:
@@ -351,6 +380,18 @@ class Publisher
                                         const std::vector<std::vector<int>>& clusters);
 
 
+        /** \brief Builds nav_msgs::Odometry msg with current robot pose.
+         *  \param c_stamp Current pose timestamp (input).
+         *  \param world_frame_id World coordinate axis id (input).
+         *  \param robot_frame_id Robot coordinate axis id (input).
+         *  \param c_robot_pose The current robot pose to be published (input).
+         */
+        nav_msgs::Odometry buildPoseMsg(const ros::Time& c_stamp,
+                                        const std::string& world_frame_id,
+                                        const std::string& robot_frame_id,
+                                        const tf::Transform& c_robot_pose);
+
+
         /** \brief Publishes images.
          *  \param img The image (input).
          *  \param stamp The ROS timestamp (input).
@@ -363,3 +404,5 @@ class Publisher
 
 
 #endif // PUBLISHER_HPP
+
+// 469

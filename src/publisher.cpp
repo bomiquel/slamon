@@ -154,6 +154,19 @@ void Publisher::writeKeypointsClustering(const cv::Mat& l_img,
     // Writes image.
     cv::imwrite(o_path + ".png", o_img);
 }
+
+
+void Publisher::publishPose(const ros::Time& c_stamp,
+                            const ros::Publisher& publisher,
+                            const std::string& world_frame_id,
+                            const std::string& robot_frame_id,
+                            const tf::Transform& c_robot_pose)
+{
+    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, world_frame_id, robot_frame_id, c_robot_pose);
+
+    // Publish pose
+    publisher.publish(msg);
+}
                                             
 
 
@@ -165,15 +178,7 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
                                        const tf::Transform& c_robot_pose,
                                        const tf::Transform& c_robot_motion)
 {
-    nav_msgs::Odometry msg;
-
-    // Set header
-    msg.header.stamp = c_stamp;
-    msg.header.frame_id = world_frame_id;
-    msg.child_frame_id = robot_frame_id;
-
-    // Set pose
-    tf::poseTFToMsg(c_robot_pose, msg.pose.pose);
+    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, world_frame_id, robot_frame_id, c_robot_pose);
 
     // Set linear velocity
     double delta_t = (c_stamp - p_stamp).toSec();
@@ -263,6 +268,50 @@ void Publisher::publishFrame(const cv::Mat& l_descs,
 
     // Publishes 
     publisher.publish(frame_msg);
+}
+
+
+void Publisher::writePoses(const std::string& o_path,
+                           const std::vector<double>& stamps,
+                           const std::vector<tf::Transform>& poses)
+{
+    std::string l_path = o_path + ".lock";
+
+    // Wait until lock file has been released.
+    while(std::filesystem::exists(l_path));
+
+    // Create a locking element.
+    std::fstream lock_file(l_path.c_str(), std::ios::out | std::ios::trunc);
+
+    // Open to append.
+    std::fstream poses_file(o_path.c_str(), std::ios::out | std::ios::trunc);
+
+    // First line
+    poses_file << std::fixed << std::setprecision(9) << "timestamp,x,y,z,qx,qy,qz,qw" << std::endl;
+
+    // Write poses and timestamps
+    tf::Transform pose;
+    for (uint i = 0; i < poses.size(); i++)
+    {
+        pose = poses[i];
+        poses_file << 
+        stamps[i] << "," <<
+        pose.getOrigin().getX() << "," <<
+        pose.getOrigin().getY() << "," <<
+        pose.getOrigin().getZ() << "," <<
+        pose.getRotation().getX() << "," <<
+        pose.getRotation().getY() << "," <<
+        pose.getRotation().getZ() << "," <<
+        pose.getRotation().getW() << std::endl;
+    }
+
+    poses_file.close();
+
+    // Unlock
+    poses_file.close();
+    bool ok = std::filesystem::remove(l_path.c_str());
+    if (!ok)
+        ROS_ERROR("[Publisher->writePoses]: Error deleting the locking file!");
 }
 
 
@@ -433,6 +482,25 @@ cv::Mat Publisher::drawKeypointsClustering(const cv::Mat& img,
     cv::Mat o_img = writeTxtInImage(drawn_img, s);
 
     return o_img;
+}
+
+
+nav_msgs::Odometry Publisher::buildPoseMsg(const ros::Time& c_stamp,
+                                           const std::string& world_frame_id,
+                                           const std::string& robot_frame_id,
+                                           const tf::Transform& c_robot_pose)
+{
+    nav_msgs::Odometry msg;
+
+    // Set header
+    msg.header.stamp = c_stamp;
+    msg.header.frame_id = world_frame_id;
+    msg.child_frame_id = robot_frame_id;
+
+    // Set pose
+    tf::poseTFToMsg(c_robot_pose, msg.pose.pose);
+
+    return msg;
 }
 
 
