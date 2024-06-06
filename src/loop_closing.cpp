@@ -14,22 +14,20 @@ namespace slam
         min_lc_inliers_ = min_lc_inliers;
         enable_debugging_ = enable_debugging;
 
-        cluster_counter_ = 0;
-        
-        p_frame_id_ = 0;
+        // Creates execution directory
+        execution_path_ = w_path_ + "haloc/";
+        if (std::filesystem::exists(execution_path_))
+            std::filesystem::remove_all(execution_path_);
+        std::filesystem::create_directory(execution_path_);
 
-        // Create debugging directories.
+        // Creates debugging directories.
         if (enable_debugging_)
         {
             keyframe_path_ = w_path_ + "keyframes/";
-            clusters_path_ = w_path_ + "lc_clusters/";
-            loop_closures_path_ = w_path_ + "loop_closures/";
-            if (std::filesystem::exists(clusters_path_))
-                std::filesystem::remove_all(clusters_path_);
-            if (std::filesystem::exists(loop_closures_path_))
-                std::filesystem::remove_all(loop_closures_path_);
-            std::filesystem::create_directory(clusters_path_);
-            std::filesystem::create_directory(loop_closures_path_);
+            lc_path_ = w_path_ + "loop_closures/";
+            if (std::filesystem::exists(lc_path_))
+                std::filesystem::remove_all(lc_path_);
+            std::filesystem::create_directory(lc_path_);
         }
     }
 
@@ -40,8 +38,7 @@ namespace slam
         ros::Rate r(2);
         while (ros::ok())
         {
-            ROS_INFO_STREAM("[LOOP_CLOSING->run]: HELLO THERE");
-            // Process new cluster
+            // Search loop closing in the new cluster.
             if (checkNewClusterInQueue())
             {
                 processNewCluster();
@@ -65,7 +62,6 @@ namespace slam
         mutex_cluster_queue_.lock();
         bool full = !cluster_queue_.empty();
         mutex_cluster_queue_.unlock();
-        ROS_INFO_STREAM("[LOOP_CLOSING->checkNewClusterInQueue]: Full: " << full);
         return full;   
     }
 
@@ -77,37 +73,24 @@ namespace slam
         cluster_queue_.pop_front();
         mutex_cluster_queue_.unlock();
 
-        ROS_INFO_STREAM("[LOOP_CLOSING->processNewCluster]: General Kenobi");
+        // Initialise hash
+        if (!hash_.isInitialized())
+            hash_.init(c_cluster_.getLeftDescs());
 
-        if (enable_debugging_)
-        {
-            cv::Mat l_img;
-            std::string c_keyframe_name = convertTo5Digits(c_cluster_.getFrameId());
-            if (std::filesystem::exists(clusters_path_ + c_keyframe_name + ".png"))
-            {
-                ROS_INFO_STREAM(clusters_path_ + c_keyframe_name + ".png");
-                l_img = cv::imread(clusters_path_ + c_keyframe_name + ".png");
-            }
-            else
-            {
-                ROS_INFO_STREAM(keyframe_path_ + c_keyframe_name + "_left.png");
-                l_img = cv::imread(keyframe_path_ + c_keyframe_name + "_left.png");
-            }
+        // Save hash to table
+        hash_table_.push_back(std::make_pair(c_cluster_.getId(), hash_.getHash(c_cluster_.getLeftDescs())));
 
-            if (p_frame_id_ == c_cluster_.getFrameId())
-                cluster_counter_++;
-            else
-                cluster_counter_ = 1;
+        // Store
+        cv::FileStorage fs(execution_path_ + convertTo5Digits(c_cluster_.getId()) + ".yml", cv::FileStorage::WRITE);
+        cv::write(fs, "frame_id", c_cluster_.getFrameId());
+        cv::write(fs, "l_kpts", c_cluster_.getLeftKpts());
+        cv::write(fs, "r_kpts", c_cluster_.getRightKpts());
+        cv::write(fs, "l_descs", c_cluster_.getLeftDescs());
+        cv::write(fs, "r_descs", c_cluster_.getRightDescs());
+        cv::write(fs, "obj_pts", c_cluster_.getObjectPoints());
+        fs.release();
 
-            cv::Scalar color;
-            cv::RNG rng(12345);
-            for (int i = 0; i < cluster_counter_; i++)
-            {
-                color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
-                writeKeypoints(l_img, color, clusters_path_ + c_keyframe_name, c_cluster_.getLeftKpts());
-            }
-            p_frame_id_ = c_cluster_.getFrameId();
-        }
+        cluster_id_ = c_cluster_.getId();
     }
 
 

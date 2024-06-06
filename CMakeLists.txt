@@ -122,6 +122,7 @@ add_executable(vo_slamon
                src/stereo_modules.cpp
                src/visual_odometry.cpp)
 add_executable(map_slamon
+               src/hash.cpp
                src/graph.cpp
                src/frame.cpp
                src/caster.cpp

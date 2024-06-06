@@ -16,6 +16,7 @@
 
 #include <ros/ros.h>
 
+#include "hash.hpp"
 #include "graph.hpp"
 #include "caster.hpp"
 #include "cluster.hpp"
@@ -78,11 +79,9 @@ namespace slam
 
         private:
 
-            int p_frame_id_; 
-
-            int cluster_counter_; 
-
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
+
+            int cluster_id_; //!> Processed cluster counter.
 
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
 
@@ -90,17 +89,21 @@ namespace slam
 
             std::string w_path_; //!> Path to working directory.
 
-            std::string keyframe_path_; //!> Path to keyframes directories.
+            std::string lc_path_; //!> Path to store loop closures images with debugging purpose.
 
-            std::string clusters_path_; //!> Path to store keypoints clustering with debugging purpose.
+            std::string keyframe_path_; //!> Path to keyframes directories with debugging purpose.
 
-            std::string loop_closures_path_; //!> Path to store loop closures images.
+            std::string execution_path_; //!> Path to store cluster data with execution purpose.
 
             std::mutex mutex_cluster_queue_; //!> Mutex for the insertion of new clusters.
 
             Graph* graph_; //!> Graph object pointer.
 
             Cluster c_cluster_; //!> Current cluster.
+
+            haloc::Hash hash_; //!> Has object.
+
+            std::vector<std::pair<int, std::vector<float>>> hash_table_; //!> Hash table: stores a hash for every cluster. This is the unique variable that grows with the robot trajectory.
     };
 
 
