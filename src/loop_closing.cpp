@@ -9,17 +9,15 @@ namespace slam
                              bool enable_debugging,
                              const std::string& w_path)
     {
+        // Initialises parameters.
         w_path_ = w_path;
         min_lc_inliers_ = min_lc_inliers;
         enable_debugging_ = enable_debugging;
 
-        p_frame_id_ = 0;
         cluster_counter_ = 0;
-    }
+        
+        p_frame_id_ = 0;
 
-
-    void LoopClosing::run()
-    {
         // Create debugging directories.
         if (enable_debugging_)
         {
@@ -33,7 +31,11 @@ namespace slam
             std::filesystem::create_directory(clusters_path_);
             std::filesystem::create_directory(loop_closures_path_);
         }
+    }
 
+
+    void LoopClosing::run()
+    {
         // Loop
         ros::Rate r(2);
         while (ros::ok())

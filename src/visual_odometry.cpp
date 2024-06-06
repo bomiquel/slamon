@@ -15,15 +15,12 @@ namespace slam
                                    const std::string& origin_frame_id):
                                    StereoModules(ratio, min_inliers, matching_type, motion_estimation_type)
     {
+        // Inilitialises parameters.
         w_path_ = w_path;
         robot_frame_id_ = robot_frame_id;
         origin_frame_id_ = origin_frame_id;
         enable_debugging_ = enable_debugging;
-    }
 
-
-    void VisualOdometry::run()
-    {
         // Set "uninitialised" status to visual odometer.
         status_ = UNINITIALISED;
 
@@ -41,7 +38,11 @@ namespace slam
                 std::filesystem::remove_all(frame_path_);
             std::filesystem::create_directory(frame_path_);
         }
+    }
 
+
+    void VisualOdometry::run()
+    {
         // Create ROS node.
         ros::NodeHandle nh;
         ros::NodeHandle nhp("~");
@@ -75,7 +76,7 @@ namespace slam
         sync.reset(new Sync_(SyncPolicy_(10), l_img_sub, r_img_sub, l_info_sub, r_info_sub));
         sync->registerCallback(boost::bind(&VisualOdometry::imageCallback, this, _1, _2, _3, _4));
         
-        // Calls callback when synchronised messages arrive
+        // Calls callback when synchronised messages arrives.
         ros::spin();
     }
 

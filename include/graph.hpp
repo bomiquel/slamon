@@ -196,7 +196,7 @@ namespace slam
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
             
-            int keyframe_counter_; //!> Keyframe counter. 
+            int c_keyframe_id_; //!> Keyframe counter. 
 
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
 
