@@ -246,10 +246,6 @@ namespace slam
         // Sorts the neighbours from sleast to furthest distance to the query neighbour.
         std::sort(neighbors.begin(), neighbors.end(), sortByDistance);
 
-        ROS_INFO_STREAM("[Graph->findClosestVertices]: c_cluster id: " << vertex_id);
-        for (uint i = 0; i < neighbors.size(); i++)
-            ROS_INFO_STREAM("[Graph->findClosestVertices]: neighbor " << i << ": " << neighbors[i].first << " dist: " << neighbors[i].second);
-
         // Gets closest vertices (minnor distance)
         if (num_closest_neighbors > neighbors.size())
             num_closest_neighbors = neighbors.size();

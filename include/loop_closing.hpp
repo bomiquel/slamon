@@ -119,6 +119,13 @@ namespace slam
             }
 
 
+            /** \brief Reads cluster data from file.
+             *  \param id Cluster id (input).
+             *  @return The cluster.
+             */
+            Cluster readCluster(int id);
+            
+
         private:
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.

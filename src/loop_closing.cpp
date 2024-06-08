@@ -116,10 +116,15 @@ namespace slam
             return;
 
         // Loop over candidates.
-        ROS_INFO_STREAM("[LC->searchByProximity]: c_cluster.getId(): " << c_cluster.getId());
+        Cluster cand_cluster;
         for (uint i = 0; i < candidates.size(); i++)
         {
-
+            cand_cluster = readCluster(candidates[i]);
+            if (cand_cluster.getLeftDescs().rows == 0)
+            {
+                ROS_WARN_STREAM("[LC->searchByProximity->readCluster:] It is not possible to read the cluster " << candidates[i] << " from the disk!");
+                continue;
+            }
         }
     }
 
@@ -133,9 +138,15 @@ namespace slam
             return;
         
         // Loop over candidates.
+        Cluster cand_cluster;
         for (uint i = 0; i < candidates.size(); i++)
         {
-
+            cand_cluster = readCluster(candidates[i]);
+            if (cand_cluster.getLeftDescs().rows == 0)
+            {
+                ROS_WARN_STREAM("[LC->searchByHash->readCluster:] It is not possible to read the cluster " << candidates[i] << " from the disk!");
+                continue;
+            }
         }
     }
 
@@ -206,4 +217,39 @@ namespace slam
     }
 
 
-}
+    Cluster LoopClosing::readCluster(int id)
+    {
+        Cluster cluster_tmp;
+        std::string cluster_path = execution_path_ + convertTo5Digits(id) + ".yml";
+
+        // Sanity check
+        if (!std::filesystem::exists(cluster_path))
+            return cluster_tmp;
+
+        // Opens cluster file.
+        cv::FileStorage fs;
+        fs.open(cluster_path, cv::FileStorage::READ);
+
+        // Sanity check x2
+        if (!fs.isOpened())
+            return cluster_tmp;
+
+        int frame_id;
+        cv::Mat l_descs, r_descs;
+        std::vector<cv::Point3f> obj_pts;
+        std::vector<cv::Point2f> l_kpts, r_kpts;
+        fs["l_kpts"] >> l_kpts;
+        fs["r_kpts"] >> r_kpts;
+        fs["obj_pts"] >> obj_pts;
+        fs["l_descs"] >> l_descs;
+        fs["r_descs"] >> r_descs;
+        fs["frame_id"] >> frame_id;
+
+        // Sets the properties of the cluster.
+        tf::Transform camera_pose = graph_->getVertexCameraPose(id, true);
+        Cluster cluster(id, frame_id, l_descs, r_descs, camera_pose, l_kpts, r_kpts, obj_pts);
+        return cluster;
+    }
+
+
+} // End namespace
