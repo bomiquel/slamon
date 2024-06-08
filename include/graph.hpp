@@ -76,7 +76,7 @@ namespace slam
 
 
             /** \brief Get the graph vertex pose.
-             *  \param vertex_id The ID of the vertex for which the pose is desired (input).
+             *  \param vertex_id The id of the vertex for which the pose is desired (input).
              *  \param lock Set to true if graph locking is required (input/optional).
              *  @return Tf with the graph pose.
              */
@@ -84,7 +84,7 @@ namespace slam
 
 
             /** \brief Get the camera pose of some specific vertex.
-             *  \param vertex_id The ID of the vertex for which the pose is desired (input).
+             *  \param vertex_id The id of the vertex for which the pose is desired (input).
              *  \param lock Set to true if graph locking is required (input/optional).
              *  @return Tf with the graph vertex camera pose.
              */
@@ -115,6 +115,20 @@ namespace slam
             void addEdge(int vertex_0_id, 
                          int vertex_1_id, 
                          const tf::Transform& tf_edge);
+
+
+            /** \brief Gets nearest neighbour vertices by distance.
+             *  \param vertex_id The vertex id to retrieve its neighbors (input).
+             *  \param window_center The vertex where discard window will be centered (input).
+             *  \param discard_window The number of discarded vertices (input).
+             *  \param num_closest_neighbors The number of neighbors to be retrieved (input).
+             *  \param closest_neighbors Will contain the list of closest neighbors by distance (output).
+             */
+            void findClosestVertices(int vertex_id,
+                                     int window_center,
+                                     int discard_window,
+                                     uint num_closest_neighbors,
+                                     std::vector<int>& closest_neighbors);
 
 
         protected:
@@ -188,6 +202,18 @@ namespace slam
              *  @return the list of combinations.
              */
             std::vector<std::vector<int>> createComb(const std::vector<int>& vec);
+
+
+            /** \brief Returns whether the second element of the first
+             *  std::pair is less than the second element of the second std::pair
+             *  \param d_0 First pair (input).
+             *  \param d_1 Second pair (input).
+             *  @return true if first pair is smaller than second pair.
+             */
+            static inline bool sortByDistance(const std::pair<int, double> d_0, const std::pair<int, double> d_1)
+            {
+                return (d_0.second < d_1.second);
+            }
 
 
         private:

@@ -84,6 +84,13 @@ namespace slam
 
 
             /** \brief Searches a loop closing between current
+             *  cluster and its closest neighbors
+             *  \param c_cluster The current clusters (input).
+             */
+            void searchByProximity(const Cluster& c_cluster);
+
+
+            /** \brief Searches a loop closing between current
              *  cluster and all other clusters using the hash
              *  \param c_cluster The current clusters (input).
              */
@@ -91,19 +98,22 @@ namespace slam
 
 
             /** \brief Get the best candidates to close a loop by hash.
-             *  \param c_cluster_id The current cluster id.
-             *  \param candidates The list of best candidates.
+             *  \param c_cluster_id The current cluster id (input).
+             *  \param num_closest_candidates The number of best candidates to be retrieved (input).
+             *  \param candidates The list of best candidates (output).
              */
             void getHashCandidates(int c_cluster_id, 
-                                   std::vector<std::pair<int, float>>& candidates);
+                                   uint num_closest_candidates,
+                                   std::vector<int>& closest_candidates);
 
 
-            /** \brief Sort 2 std::pairs by size.
-             *  \param d_0 First pair.
-             *  \param d_1 Second pair.
+            /** \brief Returns whether the second element of the first
+             *  std::pair is less than the second element of the second std::pair.
+             *  \param d_0 First pair (input).
+             *  \param d_1 Second pair (input).
              *  @return true if first pair is smaller than second pair.
              */
-            static inline bool sortByDistance(const std::pair<int, double> d_0, const std::pair<int, double> d_1)
+            static inline bool sortByMatching(const std::pair<int, float> d_0, const std::pair<int, float> d_1)
             {
                 return (d_0.second < d_1.second);
             }

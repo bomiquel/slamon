@@ -209,6 +209,55 @@ namespace slam
     }
 
 
+    void Graph::findClosestVertices(int vertex_id,
+                                    int window_center,
+                                    int discard_window,
+                                    uint num_closest_neighbors,
+                                    std::vector<int>& closest_neighbors)
+    {
+        // Init.
+        closest_neighbors.clear();
+        tf::Transform q_vertex_pose = getVertexPose(vertex_id);
+
+        // Loop thought all the other nodes.
+        double dist;
+        tf::Transform neighbor_vertex_pose;
+        std::vector<std::pair<int, double>> neighbors;
+        for (int i = 0; i < (int)graph_optimizer_.vertices().size(); i++)
+        {
+            // Avoids itself.
+            if (i == vertex_id)
+                continue;
+
+            // Discards window.
+            if ((i > window_center - discard_window) && (i < window_center + discard_window))
+                continue;
+
+            // Gets the distance between the queried vertex and the ith vertex.
+            neighbor_vertex_pose = getVertexPose(i);
+            dist = poseDiff2D(neighbor_vertex_pose, q_vertex_pose);
+            neighbors.push_back(std::make_pair(i, dist));
+        }
+
+        // Exits if no neighbors.
+        if (neighbors.size() == 0)
+            return;
+
+        // Sorts the neighbours from sleast to furthest distance to the query neighbour.
+        std::sort(neighbors.begin(), neighbors.end(), sortByDistance);
+
+        ROS_INFO_STREAM("[Graph->findClosestVertices]: c_cluster id: " << vertex_id);
+        for (uint i = 0; i < neighbors.size(); i++)
+            ROS_INFO_STREAM("[Graph->findClosestVertices]: neighbor " << i << ": " << neighbors[i].first << " dist: " << neighbors[i].second);
+
+        // Gets closest vertices (minnor distance)
+        if (num_closest_neighbors > neighbors.size())
+            num_closest_neighbors = neighbors.size();
+        for (uint i = 0; i < num_closest_neighbors; i++)
+            closest_neighbors.push_back(neighbors[i].first);
+    }
+
+
     void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
                               const nav_msgs::OdometryConstPtr& odom_msg)
     {

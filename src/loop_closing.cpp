@@ -50,9 +50,9 @@ namespace slam
 
                 ROS_INFO_STREAM("[LC->run]: Cluster id: " << c_cluster.getId());
 
-                searchByHash(c_cluster);
+                searchByProximity(c_cluster);
 
-                // searchByProximity();
+                searchByHash(c_cluster);
             }
             
             r.sleep();
@@ -105,21 +105,49 @@ namespace slam
     }
 
 
+    // TODO: no_candidates?
+    void LoopClosing::searchByProximity(const Cluster& c_cluster)
+    {
+        // Get the candidates to close loop
+        std::vector<int> candidates;
+        graph_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), 
+                                    lc_discard_window_, 5, candidates);
+        if (candidates.size() == 0)
+            return;
+
+        // Loop over candidates.
+        ROS_INFO_STREAM("[LC->searchByProximity]: c_cluster.getId(): " << c_cluster.getId());
+        for (uint i = 0; i < candidates.size(); i++)
+        {
+
+        }
+    }
+
+
     void LoopClosing::searchByHash(const Cluster& c_cluster)
     {
         // Get the candidates to close loop
-        std::vector<std::pair<int, float>> candidates;
-        getHashCandidates(c_cluster.getId(), candidates);
+        std::vector<int> candidates;
+        getHashCandidates(c_cluster.getId(), 5, candidates);
+        if (candidates.size() == 0)
+            return;
+        
+        // Loop over candidates.
+        for (uint i = 0; i < candidates.size(); i++)
+        {
+
+        }
     }
 
 
     void LoopClosing::getHashCandidates(int c_cluster_id,
-                                        std::vector<std::pair<int, float>>& best_candidates)
+                                        uint num_closest_candidates,
+                                        std::vector<int>& closest_candidates)
     {
-        // Init
-        best_candidates.clear();
+        // Init.
+        closest_candidates.clear();
 
-        // Check if enough neighbors
+        // Check if enough neighbors.
         if ((int)hash_table_.size() <= lc_discard_window_)
             return;
 
@@ -145,12 +173,12 @@ namespace slam
         {
             cand_id = hash_table_[i].first;
 
-            // Discard window.
-            if (cand_id > c_cluster_id - lc_discard_window_ && cand_id < c_cluster_id + lc_discard_window_)
-                continue;
-
             // Do not compute the hash matching with itself.
             if (cand_id == c_cluster_id)
+                continue;
+
+            // Discards window.
+            if ((cand_id > c_cluster_id - lc_discard_window_) && (cand_id < c_cluster_id + lc_discard_window_))
                 continue;
 
             // Continue if candidate is in the no_candidates list.
@@ -163,15 +191,18 @@ namespace slam
             candidates.push_back(std::make_pair(cand_id, match_dist));
         }
         
-        // Sort the hash matchings
-        std::sort(candidates.begin(), candidates.end(), sortByDistance);
+        // Exit if no candidates.
+        if (candidates.size() == 0)
+            return;
 
-        // Get best matches (minnor distance)
-        uint max_size = 5;
-        if (max_size > candidates.size())
-            max_size = candidates.size();
-        for (uint i = 0; i < max_size; i++)
-            best_candidates.push_back(candidates[i]);
+        // Sorts the candidates from least to furthest matching distance to the query neighbour.
+        std::sort(candidates.begin(), candidates.end(), sortByMatching);
+
+        // Gets closest matches (minnor mmatching distance)
+        if (num_closest_candidates > candidates.size())
+            num_closest_candidates = candidates.size();
+        for (uint i = 0; i < num_closest_candidates; i++)
+            closest_candidates.push_back(candidates[i].first);
     }
 
 
