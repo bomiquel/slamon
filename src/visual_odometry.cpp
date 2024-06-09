@@ -52,7 +52,8 @@ namespace slam
         initial_pose_client_ = nhp.serviceClient<slamon::GetTransform>("get_first_pose");
 
         // Server servives.
-        robot2camera_server_ = nhp.advertiseService("get_robot_to_camera_tf", &VisualOdometry::getRobot2CameraCallback, this);
+        robot2camera_server_ = nhp.advertiseService("send_robot_to_camera_tf", &VisualOdometry::sendRobot2Camera, this);
+        proj_mat_server_ = nhp.advertiseService("send_projection_matrices", &VisualOdometry::sendProjectionMatrices, this);
 
         // Publishers.
         info_pub_ = nhp.advertise<slamon::VOInfo>("vo_info", 1);
@@ -200,8 +201,8 @@ namespace slam
     }
 
 
-    bool VisualOdometry::getRobot2CameraCallback(slamon::GetTransform::Request& req,
-                                                 slamon::GetTransform::Response& res)
+    bool VisualOdometry::sendRobot2Camera(slamon::GetTransform::Request& req,
+                                          slamon::GetTransform::Response& res)
     {
         res.tf.position.x = robot2camera_.getOrigin().getX();
         res.tf.position.y = robot2camera_.getOrigin().getY();
@@ -210,7 +211,21 @@ namespace slam
         res.tf.orientation.y = robot2camera_.getRotation().getY();
         res.tf.orientation.z = robot2camera_.getRotation().getZ();
         res.tf.orientation.w = robot2camera_.getRotation().getW();
+        return true;
+    }
 
+
+    bool VisualOdometry::sendProjectionMatrices(slamon::GetProjectionMatrices::Request& req,
+                                                slamon::GetProjectionMatrices::Response& res)
+    {
+        for (int row = 0; row < l_proj_mat_.rows; row++)
+        {
+            for (int col = 0; col < l_proj_mat_.cols; col++)
+            {
+                res.l_proj_mat[l_proj_mat_.cols * row + col] = l_proj_mat_.at<double>(row, col);
+                res.r_proj_mat[r_proj_mat_.cols * row + col] = r_proj_mat_.at<double>(row, col);
+            }
+        }
         return true;
     }
 

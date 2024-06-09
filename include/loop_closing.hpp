@@ -23,6 +23,8 @@
 #include "publisher.hpp"
 #include "stereo_modules.hpp"
 
+#include "slamon/GetProjectionMatrices.h"
+
 
 namespace slam
 {
@@ -81,6 +83,12 @@ namespace slam
              *  @return True if clusters queue is not empty.
              */
             bool checkNewClusterInQueue();
+
+
+            /** \brief Obtains, from the VO and through a service, 
+             *  the stereo camera projection matrices. 
+             */
+            void getProjectionMatrices();
 
 
             /** \brief Processes the new cluster.

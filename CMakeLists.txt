@@ -75,7 +75,6 @@ add_message_files(
         Frame.msg
         VOInfo.msg
         Keypoint.msg
-        GraphPoses.msg
 )
 
 # Declare custom ROS services
@@ -84,6 +83,7 @@ add_service_files(
         srv
     FILES
         GetTransform.srv
+        GetProjectionMatrices.srv
 )
 
 # Generate custom ROS messages & services                    

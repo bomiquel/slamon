@@ -25,6 +25,7 @@
 #include "stereo_modules.hpp"
 
 #include "slamon/GetTransform.h"
+#include "slamon/GetProjectionMatrices.h"
 
 
 namespace slam
@@ -90,8 +91,17 @@ namespace slam
              *  \param req The service request (input).
              *  \param res The service response (output).
              */
-            bool getRobot2CameraCallback(slamon::GetTransform::Request& req,
-                                         slamon::GetTransform::Response& res);
+            bool sendRobot2Camera(slamon::GetTransform::Request& req,
+                                  slamon::GetTransform::Response& res);
+
+
+            /** \brief Service callback. This function is called when another part of the
+             *  system requests the stereo camera projection matrices.
+             *  \param req The service request (input).
+             *  \param res The service response (output).
+             */
+            bool sendProjectionMatrices(slamon::GetProjectionMatrices::Request& req,
+                                        slamon::GetProjectionMatrices::Response& res);
 
 
             /** \brief Initialise the visual odometer by setting the transform between the camera
@@ -194,9 +204,11 @@ namespace slam
 
             ros::Publisher successive_matches_img_pub_; // !> Publisher for the image with drawn successive matches.
 
-            ros::ServiceClient initial_pose_client_; //!> Service client to assign the initial position to the SLAM.
+            ros::ServiceClient initial_pose_client_; //!> Service for requesting the initial position to the SLAM.
             
-            ros::ServiceServer robot2camera_server_; // !> Service server to send robot2camera transform to service client.
+            ros::ServiceServer robot2camera_server_; // !> Service for sending robot2camera transform.
+
+            ros::ServiceServer proj_mat_server_; // !> Service for sending projection matrices.
 
             VORunTimes run_times_; // !> Internal times of the visual odometer.
 

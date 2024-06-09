@@ -248,7 +248,7 @@ namespace slam
 
             ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering.
 
-            ros::ServiceClient robot2camera_client_; //!> Service client to assign the robot2camera static transform.
+            ros::ServiceClient robot2camera_client_; //!> Service for requesting robot2camera static transform.
 
             std::vector<tf::Transform> local_cluster_poses_; //!> Stores the cluster poses relative to camera frame
 

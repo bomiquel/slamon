@@ -60,7 +60,7 @@ namespace slam
         ros::NodeHandle nh;
         ros::NodeHandle nhp("~");
 
-        // Client serives.
+        // Client services.
         robot2camera_client_ = nh.serviceClient<slamon::GetTransform>("get_robot_to_camera_tf");
 
         // Publishers.

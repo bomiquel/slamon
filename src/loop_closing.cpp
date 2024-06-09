@@ -49,7 +49,7 @@ namespace slam
         ros::NodeHandle nh;
 
         // Client services.
-        // proj_mat_client_ = nh.serviceClient<slamon::
+        proj_mat_client_ = nh.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
 
         // Loop
         ros::Rate r(5);
@@ -59,8 +59,8 @@ namespace slam
             // Search loop closing in the new cluster.
             if (checkNewClusterInQueue())
             {
-                // if (init_loop_closing_)
-
+                if (!init_loop_closing_)
+                    getProjectionMatrices();
 
                 processNewCluster(c_cluster);
 
@@ -90,6 +90,35 @@ namespace slam
         bool full = !cluster_queue_.empty();
         mutex_cluster_queue_.unlock();
         return full;   
+    }
+
+
+    void LoopClosing::getProjectionMatrices()
+    {
+        slamon::GetProjectionMatrices srv;
+        if (proj_mat_client_.call(srv))
+        {
+            // Gets projection matrix
+            l_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(srv.response.l_proj_mat.data())).clone();
+            r_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(srv.response.r_proj_mat.data())).clone();
+
+            ROS_WARN_STREAM("[LC->Projection matrices:] GetProjectionMatrices service call successful." << std::endl <<
+                            "The left projection is as follow:" << std::endl <<
+                            l_proj_mat_.at<double>(0, 0) << " " << l_proj_mat_.at<double>(0, 1) << " " << l_proj_mat_.at<double>(0, 2) << " " << l_proj_mat_.at<double>(0, 3) << std::endl <<
+                            l_proj_mat_.at<double>(1, 0) << " " << l_proj_mat_.at<double>(1, 1) << " " << l_proj_mat_.at<double>(1, 2) << " " << l_proj_mat_.at<double>(1, 3) << std::endl <<
+                            l_proj_mat_.at<double>(2, 0) << " " << l_proj_mat_.at<double>(2, 1) << " " << l_proj_mat_.at<double>(2, 2) << " " << l_proj_mat_.at<double>(2, 3) << std::endl <<
+                            "The right projection is as follow:" << std::endl <<
+                            r_proj_mat_.at<double>(0, 0) << " " << r_proj_mat_.at<double>(0, 1) << " " << r_proj_mat_.at<double>(0, 2) << " " << r_proj_mat_.at<double>(0, 3) << std::endl <<
+                            r_proj_mat_.at<double>(1, 0) << " " << r_proj_mat_.at<double>(1, 1) << " " << r_proj_mat_.at<double>(1, 2) << " " << r_proj_mat_.at<double>(1, 3) << std::endl <<
+                            r_proj_mat_.at<double>(2, 0) << " " << r_proj_mat_.at<double>(2, 1) << " " << r_proj_mat_.at<double>(2, 2) << " " << r_proj_mat_.at<double>(2, 3));
+        }
+        else
+        {
+            ROS_WARN_STREAM("[LC->Projection matrices:] Failed to call GetProjectionMatrices service. It is assumed that the projection matrices are the identity!");
+            l_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1);
+            r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1);
+        }
+        init_loop_closing_ = true;
     }
 
 
