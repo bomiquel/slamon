@@ -9,35 +9,54 @@
 
 
 void readParams(int& lc_neighbors,
+                double& lowe_ratio,
                 int& min_lc_inliers,
                 int& lc_discard_window,
                 bool& enable_debugging,
                 double& min_dist_keyframe,
                 std::string& working_path,
-                std::string& robot_frame_id)
+                std::string& matching_type,
+                std::string& robot_frame_id,
+                std::string& motion_estimation_type)
 {
     // Getting parameters from parameter server.
     ros::NodeHandle nh;
-    nh.param("slamon/working_path",          working_path,      ros::package::getPath("slamon") + "/output/");
-    nh.param("slamon/robot_frame_id",        robot_frame_id,    std::string("base_link"));
-    nh.param("slamon/enable_debugging",      enable_debugging,  true);
-    nh.param("slamon/map/lc_neighbors",      lc_neighbors,      4);
-    nh.param("slamon/map/min_lc_inliers",    min_lc_inliers,    40);
-    nh.param("slamon/map/lc_discard_window", lc_discard_window, 20);
-    nh.param("slamon/map/min_dist_keyframe", min_dist_keyframe, 0.5);
+    nh.param("slamon/lowe_ratio",             lowe_ratio,             0.8);
+    nh.param("slamon/lc_neighbors",           lc_neighbors,           4);
+    nh.param("slamon/working_path",           working_path,           ros::package::getPath("slamon") + "/output/");
+    nh.param("slamon/matching_type",          matching_type,          std::string("ratio_matching"));
+    nh.param("slamon/min_lc_inliers",         min_lc_inliers,         40);
+    nh.param("slamon/robot_frame_id",         robot_frame_id,         std::string("base_link"));
+    nh.param("slamon/enable_debugging",       enable_debugging,       true);
+    nh.param("slamon/lc_discard_window",      lc_discard_window,      20);
+    nh.param("slamon/min_dist_keyframe",      min_dist_keyframe,      0.5);
+    nh.param("slamon/motion_estimation_type", motion_estimation_type, std::string("p3p"));
 
     // Printing parameters values.
     ROS_INFO_STREAM("[MAP]: Parameter setting: " << std::endl <<
-                    "Working path                    = " << working_path << std::endl <<
+                    "Lowe's ratio                    = " << lowe_ratio << std::endl <<
                     "Num loop closing neighbors      = " << lc_neighbors << std::endl <<
+                    "Working path                    = " << working_path << std::endl <<
+                    "Matching type                   = " << matching_type << std::endl <<
                     "Min loop closing inliers        = " << min_lc_inliers << std::endl <<
                     "Robot frame id                  = " << robot_frame_id << std::endl <<
                     "Enable debugging                = " << enable_debugging << std::endl <<
                     "Num loop closing discard window = " << lc_discard_window << std::endl <<
-                    "Min dist between keyframes      = " << min_dist_keyframe);
+                    "Min dist between keyframes      = " << min_dist_keyframe << std::endl <<
+                    "Motion estimation type          = " << motion_estimation_type);
 
     // Checking the validity of the parameters
     bool invalid_parameter = false;
+    if (lowe_ratio < 0.40 || lowe_ratio > 0.95)
+    {
+        lowe_ratio = 0.85;
+        invalid_parameter = true;
+    }
+    if (lc_neighbors <= 0)
+    {
+        lc_neighbors = 4;
+        invalid_parameter = true;
+    }
     if (working_path == "")
     {
         working_path = ros::package::getPath("slamon") + "/output/";
@@ -48,24 +67,14 @@ void readParams(int& lc_neighbors,
         working_path += "/";
         invalid_parameter = true;
     }
-    if (robot_frame_id == "")
-    {
-        robot_frame_id = "base_link";
-        invalid_parameter = true;
-    }
-    if (min_dist_keyframe < 0.2 || min_dist_keyframe > 1.0)
-    {
-        min_dist_keyframe = 0.5;
-        invalid_parameter = true;
-    }
     if (min_lc_inliers < 30)
     {
         min_lc_inliers = 30;
         invalid_parameter = true;
     }
-    if (lc_neighbors <= 0)
+    if (robot_frame_id == "")
     {
-        lc_neighbors = 4;
+        robot_frame_id = "base_link";
         invalid_parameter = true;
     }
     if (lc_discard_window < 10)
@@ -73,16 +82,24 @@ void readParams(int& lc_neighbors,
         lc_discard_window = 10;
         invalid_parameter = true;
     }
+    if (min_dist_keyframe < 0.15 || min_dist_keyframe > 1.0)
+    {
+        min_dist_keyframe = 0.5;
+        invalid_parameter = true;
+    }
     if (invalid_parameter)
     {
         ROS_INFO_STREAM("[MAP]: Some parameter was invalid and has been assigned its default value." << std::endl <<
-                        "Working path                    = " << working_path << std::endl <<
+                        "Lowe's ratio                    = " << lowe_ratio << std::endl <<
                         "Num loop closing neighbors      = " << lc_neighbors << std::endl <<
+                        "Working path                    = " << working_path << std::endl <<
+                        "Matching type                   = " << matching_type << std::endl <<
                         "Min loop closing inliers        = " << min_lc_inliers << std::endl <<
                         "Robot frame id                  = " << robot_frame_id << std::endl <<
                         "Enable debugging                = " << enable_debugging << std::endl <<
                         "Num loop closing discard window = " << lc_discard_window << std::endl <<
-                        "Min dist between keyframes      = " << min_dist_keyframe);
+                        "Min dist between keyframes      = " << min_dist_keyframe << std::endl <<
+                        "Motion estimation type          = " << motion_estimation_type);
     }
 }
 
@@ -94,24 +111,30 @@ int main(int argc, char **argv)
     ros::start();
 
     // Read parameters.
-    double min_dist_keyframe;
     bool enable_debugging;
-    std::string working_path, robot_frame_id;
+    double min_dist_keyframe, lowe_ratio;
+    std::string working_path, matching_type, robot_frame_id, motion_estimation_type;
     int lc_neighbors, min_lc_inliers, lc_discard_window;
     readParams(lc_neighbors, 
+               lowe_ratio,
                min_lc_inliers,
                lc_discard_window,
                enable_debugging,
                min_dist_keyframe,
                working_path,
-               robot_frame_id);
+               matching_type,
+               robot_frame_id,
+               motion_estimation_type);
 
     // Declare threads.
-    slam::LoopClosing loop_closing(lc_neighbors, 
+    slam::LoopClosing loop_closing(lowe_ratio,
+                                   lc_neighbors, 
                                    min_lc_inliers,
                                    lc_discard_window,
                                    enable_debugging,
-                                   working_path);
+                                   working_path,
+                                   matching_type,
+                                   motion_estimation_type);
     slam::Graph graph(min_lc_inliers, 
                       enable_debugging, 
                       min_dist_keyframe, 

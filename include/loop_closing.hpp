@@ -31,28 +31,34 @@ namespace slam
     class Graph;
 
 
-    class LoopClosing: protected Caster, protected Publisher
+    class LoopClosing: protected Caster, protected Publisher, protected StereoModules
     {
         public:
 
 
             /** \brief Class constructor
+             *  \param ratio The ratio for Lowe's ratio test (input).
              *  \param lc_neighbors Number of neighbours to recover in order to 
-             *  increase the possibility of closing a loop.
-             *  \param min_lc_inliers Minimum number of inliers for loop closing.
-             *  \param lc_discard_window Window size of discarded graph vertices.
-             *  \param enable_debugging Enabling or disabling debugging.
-             *  \param w_path Working path for debugging purpose.
+             *  increase the possibility of closing a loop (input).
+             *  \param min_lc_inliers Minimum number of inliers for loop closing (input).
+             *  \param lc_discard_window Window size of discarded graph vertices (input).
+             *  \param enable_debugging Enabling or disabling debugging (input).
+             *  \param w_path Working path for debugging purpose (input).
+             *  \param matching_type Desired matching type name (input).
+             *  \param motion_estimation_type Desired motion type name (input).
              */
-            LoopClosing(int lc_neighbors,
+            LoopClosing(double ratio,
+                        int lc_neighbors,
                         int min_lc_inliers,
                         int lc_discard_window,
                         bool enable_debugging,
-                        const std::string& w_path);
+                        const std::string& w_path,
+                        std::string& matching_type,
+                        std::string& motion_estimation_type);
 
 
-            /** \brief Set the graph object
-             *  \param graph The object pointer
+            /** \brief Set the graph object.
+             *  \param graph The object pointer (input).
              */
             inline void setGraph(Graph *graph) {graph_ = graph;}
 
@@ -63,7 +69,7 @@ namespace slam
 
 
             /** \brief Add a cluster to the queue of clusters.
-             *  \param Cluster The cluster to be inserted.
+             *  \param Cluster The cluster to be inserted (input).
              */
             void addClusterToQueue(Cluster cluster);
 
@@ -124,13 +130,13 @@ namespace slam
              *  @return The cluster.
              */
             Cluster readCluster(int id);
-            
+
 
         private:
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
-            int cluster_id_; //!> Processed cluster counter.
+            bool init_loop_closing_; //!> Loop closing state.
 
             int lc_neighbors_; //!> Number of neighbours to recover in order to increase the possibility of closing the loop.
 
@@ -157,6 +163,8 @@ namespace slam
             std::vector<std::pair<int, int>> cluster_lc_found_; //!> Stores all the loop closures (between clusters) found in order to do not repeat them.
 
             std::vector<std::pair<int, std::vector<float>>> hash_table_; //!> Hash table: stores a hash for every cluster. This is the unique variable that grows with the robot trajectory.
+
+            ros::ServiceClient proj_mat_client_; //!> Service for requesting projection matrices.
     };
 
 

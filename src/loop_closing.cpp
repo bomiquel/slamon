@@ -5,11 +5,15 @@ namespace slam
 {
 
 
-    LoopClosing::LoopClosing(int lc_neighbors,
+    LoopClosing::LoopClosing(double ratio,
+                             int lc_neighbors,
                              int min_lc_inliers,
                              int lc_discard_window,
                              bool enable_debugging,
-                             const std::string& w_path)
+                             const std::string& w_path,
+                             std::string& matching_type,
+                             std::string& motion_estimation_type):
+                             StereoModules(ratio, min_lc_inliers, matching_type, motion_estimation_type)
     {
         // Initialises parameters.
         w_path_ = w_path;
@@ -17,6 +21,9 @@ namespace slam
         min_lc_inliers_ = min_lc_inliers;
         enable_debugging_ = enable_debugging;
         lc_discard_window_ = lc_discard_window;
+
+        // Set "uninitialised" to the loop closing.
+        init_loop_closing_ = false;
 
         // Creates execution directory
         execution_path_ = w_path_ + "haloc/";
@@ -37,15 +44,24 @@ namespace slam
 
 
     void LoopClosing::run()
-    {
+    { 
+        // Create ROS node.
+        ros::NodeHandle nh;
+
+        // Client services.
+        // proj_mat_client_ = nh.serviceClient<slamon::
+
         // Loop
-        ros::Rate r(2);
+        ros::Rate r(5);
         Cluster c_cluster;
         while (ros::ok())
         {
             // Search loop closing in the new cluster.
             if (checkNewClusterInQueue())
             {
+                // if (init_loop_closing_)
+
+
                 processNewCluster(c_cluster);
 
                 ROS_INFO_STREAM("[LC->run]: Cluster id: " << c_cluster.getId());
@@ -100,8 +116,6 @@ namespace slam
         cv::write(fs, "r_descs", c_cluster.getRightDescs());
         cv::write(fs, "obj_pts", c_cluster.getObjectPoints());
         fs.release();
-
-        cluster_id_ = c_cluster.getId();
     }
 
 
@@ -173,7 +187,7 @@ namespace slam
         }
 
         // Query hash.
-        std::vector<float> q_hash = hash_table_[cluster_id_].second;
+        std::vector<float> q_hash = hash_table_[c_cluster_id].second;
 
         // Loop over all the hashes stored.
         int cand_id;
@@ -234,6 +248,7 @@ namespace slam
         if (!fs.isOpened())
             return cluster_tmp;
 
+        // Reads cluster data.
         int frame_id;
         cv::Mat l_descs, r_descs;
         std::vector<cv::Point3f> obj_pts;

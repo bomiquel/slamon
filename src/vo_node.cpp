@@ -19,14 +19,14 @@ void readParams(int& min_inliers,
 {
     // Getting parameters from parameter server.
     ros::NodeHandle nh;
-    nh.param("slamon/working_path",              working_path,           ros::package::getPath("slamon") + "/output/");
-    nh.param("slamon/robot_frame_id",            robot_frame_id,         std::string("base_link"));
-    nh.param("slamon/enable_debugging",          enable_debugging,       true);
-    nh.param("slamon/vo/min_inliers",            min_inliers,            20);
-    nh.param("slamon/vo/lowe_ratio",             lowe_ratio,             0.8);
-    nh.param("slamon/vo/matching_type",          matching_type,          std::string("ratio_matching"));
-    nh.param("slamon/vo/origin_frame_id",        origin_frame_id,        std::string("odom"));
-    nh.param("slamon/vo/motion_estimation_type", motion_estimation_type, std::string("p3p"));
+    nh.param("slamon/lowe_ratio",             lowe_ratio,             0.8);
+    nh.param("slamon/min_inliers",            min_inliers,            20);
+    nh.param("slamon/working_path",           working_path,           ros::package::getPath("slamon") + "/output/");
+    nh.param("slamon/matching_type",          matching_type,          std::string("ratio_matching"));
+    nh.param("slamon/robot_frame_id",         robot_frame_id,         std::string("base_link"));
+    nh.param("slamon/origin_frame_id",        origin_frame_id,        std::string("odom"));
+    nh.param("slamon/enable_debugging",       enable_debugging,       true);
+    nh.param("slamon/motion_estimation_type", motion_estimation_type, std::string("p3p"));
 
     // Printing parameters values.
     ROS_INFO_STREAM("[VO]: Parameter setting: " << std::endl <<
@@ -41,14 +41,14 @@ void readParams(int& min_inliers,
 
     // Checking the validity of the parameters
     bool invalid_parameter = false;
+    if (lowe_ratio < 0.40 || lowe_ratio > 0.95)
+    {
+        lowe_ratio = 0.85;
+        invalid_parameter = true;
+    }
     if (min_inliers < 10)
     {
         min_inliers = 10;
-        invalid_parameter = true;
-    }
-    if (lowe_ratio < 0.01 || lowe_ratio > 0.99)
-    {
-        lowe_ratio = 0.85;
         invalid_parameter = true;
     }
     if (working_path == "")
