@@ -33,33 +33,16 @@ class StereoModules
             CIRCULAR_ESSENTIAL_MATCHING  = 4,
             CIRCULAR_HOMOGRAPHY_MATCHING = 5
         };
-
-
-        // Possible modules results.
-        enum StereoResult
-        {
-            SUCCESSFUL          = 0,
-            NOT_ENOUGH_KPTS     = 1,
-            NOT_ENOUGH_F_KPTS   = 2,
-            NOT_ENOUGH_E_KPTS   = 3,
-            NOT_ENOUGH_3D_PTS   = 4,
-            GEOMETRIC_PROBLEM   = 5,
-            DIFFERENT_PROBLEMS  = 6,
-            NOT_ENOUGH_CIRCLES  = 7,
-            NOT_ENOUGH_INLIERS  = 8
-        };
         
 
         /** \brief Class constructor. Projection matrices are not set.
          *  This constructor will be used only if is inheriting StereoModules
          *  class.
          *  \param ratio The ratio for Lowe's ratio test (input).
-         *  \param min_inliers The minimum number of keypoints to estimate the movement (input).
          *  \param matching_type Desired matching type name (input).
          *  \param motion_estimation_type Desired motion type name (input).
          */
         StereoModules(const double ratio,
-                      const int min_inliers,
                       std::string& matching_type,
                       std::string& motion_estimation_type);
 
@@ -67,14 +50,12 @@ class StereoModules
         /** \brief Class constructor. Sets projection matrices.
          *  Assumes that left camera is the master.
          *  \param ratio The ratio for Lowe's ratio test (input).
-         *  \param min_inliers The minimum number of keypoints to estimate the movement (input).
          *  \param l_proj_mat Left camera projection matrix (input).
          *  \param r_proj_mat Right camera projection matrix (input).
          *  \param matching_type Desired matching type name (input).
          *  \param motion_estimation_type Desired motion type name (input).
          */
         StereoModules(const double ratio,
-                      const int min_inliers,
                       const cv::Mat& l_proj_mat,
                       const cv::Mat& r_proj_mat,
                       std::string& matching_type,
@@ -89,7 +70,6 @@ class StereoModules
          *  \param c_x Principal point x (input).
          *  \param c_y Principal point y (input).
          *  \param ratio The ratio for Lowe's ratio test (input).
-         *  \param min_inliers The minimum number of keypoints to estimate the movement (input).
          *  \param matching_type Desired matching type name (input).
          *  \param motion_estimation_type Desired motion type name (input).
          */
@@ -99,7 +79,6 @@ class StereoModules
                       const double c_x,
                       const double c_y,
                       const double ratio,
-                      const int min_inliers,
                       std::string& matching_type,
                       std::string& motion_estimation_type);
 
@@ -147,16 +126,15 @@ class StereoModules
          *  \param f_r_descs Filtered right image descriptors (output).
          *  \param f_l_kpts Filtered left image keypoints (output).
          *  \param f_r_kpts Filtered right image keypoints (output).
-         *  @return an enumerated type (StereoResult) encoding matching result.
          */
-        StereoModules::StereoResult matchStereoKeypoints(const cv::Mat& l_descs,
-                                                         const cv::Mat& r_descs,
-                                                         const std::vector<cv::Point2f>& l_kpts,
-                                                         const std::vector<cv::Point2f>& r_kpts,
-                                                         cv::Mat& f_l_descs,
-                                                         cv::Mat& f_r_descs,
-                                                         std::vector<cv::Point2f>& f_l_kpts,
-                                                         std::vector<cv::Point2f>& f_r_kpts);
+        void matchStereoKeypoints(const cv::Mat& l_descs,
+                                  const cv::Mat& r_descs,
+                                  const std::vector<cv::Point2f>& l_kpts,
+                                  const std::vector<cv::Point2f>& r_kpts,
+                                  cv::Mat& f_l_descs,
+                                  cv::Mat& f_r_descs,
+                                  std::vector<cv::Point2f>& f_l_kpts,
+                                  std::vector<cv::Point2f>& f_r_kpts);
 
 
         /** \brief Computes 3D points using OpenCV functions. It then removes 
@@ -175,17 +153,16 @@ class StereoModules
          *  \param f_r_kpts Filtered right image keypoints (output).
          *  \param f_obj_pts Filtered 3D points of the scene obtained from
          *  the stereo data (output).
-         *  @return an enumerated type (StereoResult) encoding the result.
          */
-        StereoModules::StereoResult compute3DPoints(const cv::Mat& l_descs,
-                                                    const cv::Mat& r_descs,
-                                                    const std::vector<cv::Point2f>& l_kpts,
-                                                    const std::vector<cv::Point2f>& r_kpts,
-                                                    cv::Mat& f_l_descs,
-                                                    cv::Mat& f_r_descs,
-                                                    std::vector<cv::Point2f>& f_l_kpts,
-                                                    std::vector<cv::Point2f>& f_r_kpts,
-                                                    std::vector<cv::Point3f>& f_obj_pts);
+        void compute3DPoints(const cv::Mat& l_descs,
+                             const cv::Mat& r_descs,
+                             const std::vector<cv::Point2f>& l_kpts,
+                             const std::vector<cv::Point2f>& r_kpts,
+                             cv::Mat& f_l_descs,
+                             cv::Mat& f_r_descs,
+                             std::vector<cv::Point2f>& f_l_kpts,
+                             std::vector<cv::Point2f>& f_r_kpts,
+                             std::vector<cv::Point3f>& f_obj_pts);
 
 
         /** \brief Matches keypoints of differents stereo pairs and removes outliers.
@@ -215,24 +192,23 @@ class StereoModules
          *  \param f_p_r_kpts Previous right image keypoints filtered out (output).
          *  \param f_c_obj_pts Current image 3D points filtered out (output).
          *  \param f_p_obj_pts Previous image 3D points filtered out (output).
-         *  @return an enumerated type (StereoResult) encoding matching result.
          */
-        StereoModules::StereoResult matchNonStereoKeypoints(const cv::Mat& c_l_descs,
-                                                            const cv::Mat& c_r_descs,
-                                                            const cv::Mat& p_l_descs,
-                                                            const cv::Mat& p_r_descs,
-                                                            const std::vector<cv::Point2f>& c_l_kpts,
-                                                            const std::vector<cv::Point2f>& c_r_kpts,
-                                                            const std::vector<cv::Point2f>& p_l_kpts,
-                                                            const std::vector<cv::Point2f>& p_r_kpts,
-                                                            const std::vector<cv::Point3f>& c_obj_pts,
-                                                            const std::vector<cv::Point3f>& p_obj_pts,
-                                                            std::vector<cv::Point2f>& f_c_l_kpts,
-                                                            std::vector<cv::Point2f>& f_c_r_kpts,
-                                                            std::vector<cv::Point2f>& f_p_l_kpts,
-                                                            std::vector<cv::Point2f>& f_p_r_kpts,
-                                                            std::vector<cv::Point3f>& f_c_obj_pts,
-                                                            std::vector<cv::Point3f>& f_p_obj_pts);
+        void matchNonStereoKeypoints(const cv::Mat& c_l_descs,
+                                     const cv::Mat& c_r_descs,
+                                     const cv::Mat& p_l_descs,
+                                     const cv::Mat& p_r_descs,
+                                     const std::vector<cv::Point2f>& c_l_kpts,
+                                     const std::vector<cv::Point2f>& c_r_kpts,
+                                     const std::vector<cv::Point2f>& p_l_kpts,
+                                     const std::vector<cv::Point2f>& p_r_kpts,
+                                     const std::vector<cv::Point3f>& c_obj_pts,
+                                     const std::vector<cv::Point3f>& p_obj_pts,
+                                     std::vector<cv::Point2f>& f_c_l_kpts,
+                                     std::vector<cv::Point2f>& f_c_r_kpts,
+                                     std::vector<cv::Point2f>& f_p_l_kpts,
+                                     std::vector<cv::Point2f>& f_p_r_kpts,
+                                     std::vector<cv::Point3f>& f_c_obj_pts,
+                                     std::vector<cv::Point3f>& f_p_obj_pts);
 
 
         /** \brief Estimate motion between frames using 3D-to-2D method.
@@ -248,16 +224,15 @@ class StereoModules
          *  RANSAC scheme (output).
          *  \param f_p_obj_pts Previous image 3D points filtered by the 
          *  RANSAC scheme (output).
-         *  @return an enumerated type (StereoResult) encoding motion estimation result.
          */
-        StereoModules::StereoResult estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
-                                                   const std::vector<cv::Point2f>& c_r_kpts,
-                                                   const std::vector<cv::Point3f>& p_obj_pts,
-                                                   cv::Mat& r_vec,
-                                                   cv::Mat& t_vec,
-                                                   std::vector<cv::Point2f>& f_c_l_kpts,
-                                                   std::vector<cv::Point2f>& f_c_r_kpts,
-                                                   std::vector<cv::Point3f>& f_p_obj_pts);
+        void estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
+                            const std::vector<cv::Point2f>& c_r_kpts,
+                            const std::vector<cv::Point3f>& p_obj_pts,
+                            cv::Mat& r_vec,
+                            cv::Mat& t_vec,
+                            std::vector<cv::Point2f>& f_c_l_kpts,
+                            std::vector<cv::Point2f>& f_c_r_kpts,
+                            std::vector<cv::Point3f>& f_p_obj_pts);
 
 
         /** \brief Estimate motion between frames using 3D-to-2D method.
@@ -282,22 +257,21 @@ class StereoModules
          *  RANSAC scheme (output).
          *  \param f_p_obj_pts Previous image 3D points filtered by the 
          *  RANSAC scheme (output).
-         *  @return an enumerated type (StereoResult) encoding motion estimation result.
          */
-        StereoModules::StereoResult estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
-                                                   const std::vector<cv::Point2f>& c_r_kpts,
-                                                   const std::vector<cv::Point2f>& p_l_kpts,
-                                                   const std::vector<cv::Point2f>& p_r_kpts,
-                                                   const std::vector<cv::Point3f>& c_obj_pts,
-                                                   const std::vector<cv::Point3f>& p_obj_pts,
-                                                   cv::Mat& r_vec,
-                                                   cv::Mat& t_vec,
-                                                   std::vector<cv::Point2f>& f_c_l_kpts,
-                                                   std::vector<cv::Point2f>& f_c_r_kpts,
-                                                   std::vector<cv::Point2f>& f_p_l_kpts,
-                                                   std::vector<cv::Point2f>& f_p_r_kpts,
-                                                   std::vector<cv::Point3f>& f_c_obj_pts,
-                                                   std::vector<cv::Point3f>& f_p_obj_pts);
+        void estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
+                            const std::vector<cv::Point2f>& c_r_kpts,
+                            const std::vector<cv::Point2f>& p_l_kpts,
+                            const std::vector<cv::Point2f>& p_r_kpts,
+                            const std::vector<cv::Point3f>& c_obj_pts,
+                            const std::vector<cv::Point3f>& p_obj_pts,
+                            cv::Mat& r_vec,
+                            cv::Mat& t_vec,
+                            std::vector<cv::Point2f>& f_c_l_kpts,
+                            std::vector<cv::Point2f>& f_c_r_kpts,
+                            std::vector<cv::Point2f>& f_p_l_kpts,
+                            std::vector<cv::Point2f>& f_p_r_kpts,
+                            std::vector<cv::Point3f>& f_c_obj_pts,
+                            std::vector<cv::Point3f>& f_p_obj_pts);
 
 
     protected:
@@ -354,20 +328,19 @@ class StereoModules
          *  \param f_kpts_1 Second image keypoints filtered out (output).
          *  \param f_obj_pts_0 First image 3D points filtered out (output).
          *  \param f_obj_pts_1 Second image 3D points filtered out (output).
-         *  @return an enumerated type (StereoResult) encoding matching result.
          */
-        StereoResult ratioMatching(const cv::Mat& descs_0, 
-                                   const cv::Mat& descs_1,
-                                   const std::vector<cv::Point2f>& kpts_0,
-                                   const std::vector<cv::Point2f>& kpts_1,
-                                   const std::vector<cv::Point3f>& obj_pts_0,
-                                   const std::vector<cv::Point3f>& obj_pts_1,
-                                   cv::Mat& f_descs_0,
-                                   cv::Mat& f_descs_1,
-                                   std::vector<cv::Point2f>& f_kpts_0,
-                                   std::vector<cv::Point2f>& f_kpts_1,
-                                   std::vector<cv::Point3f>& f_obj_pts_0,
-                                   std::vector<cv::Point3f>& f_obj_pts_1);
+        void ratioMatching(const cv::Mat& descs_0, 
+                           const cv::Mat& descs_1,
+                           const std::vector<cv::Point2f>& kpts_0,
+                           const std::vector<cv::Point2f>& kpts_1,
+                           const std::vector<cv::Point3f>& obj_pts_0,
+                           const std::vector<cv::Point3f>& obj_pts_1,
+                           cv::Mat& f_descs_0,
+                           cv::Mat& f_descs_1,
+                           std::vector<cv::Point2f>& f_kpts_0,
+                           std::vector<cv::Point2f>& f_kpts_1,
+                           std::vector<cv::Point3f>& f_obj_pts_0,
+                           std::vector<cv::Point3f>& f_obj_pts_1);
 
 
         /** \brief Matches visual keypoints and applies a geometrical restriction 
@@ -389,21 +362,20 @@ class StereoModules
          *  \param f_kpts_1 Previous image keypoints filtered out (output).
          *  \param f_obj_pts_0 Current image 3D points filtered out (output).
          *  \param f_obj_pts_1 Previous image 3D points filtered out (output).
-         *  @return an enumerated type (StereoResult) encoding matching result.
          */
-        StereoResult geometricalMatching(bool coplanar_pts,
-                                         const cv::Mat& descs_0, 
-                                         const cv::Mat& descs_1,
-                                         const std::vector<cv::Point2f>& kpts_0,
-                                         const std::vector<cv::Point2f>& kpts_1,
-                                         const std::vector<cv::Point3f>& obj_pts_0,
-                                         const std::vector<cv::Point3f>& obj_pts_1,
-                                         cv::Mat& f_descs_0,
-                                         cv::Mat& f_descs_1,
-                                         std::vector<cv::Point2f>& f_kpts_0,
-                                         std::vector<cv::Point2f>& f_kpts_1,
-                                         std::vector<cv::Point3f>& f_obj_pts_0,
-                                         std::vector<cv::Point3f>& f_obj_pts_1);
+        void geometricalMatching(bool coplanar_pts,
+                                 const cv::Mat& descs_0, 
+                                 const cv::Mat& descs_1,
+                                 const std::vector<cv::Point2f>& kpts_0,
+                                 const std::vector<cv::Point2f>& kpts_1,
+                                 const std::vector<cv::Point3f>& obj_pts_0,
+                                 const std::vector<cv::Point3f>& obj_pts_1,
+                                 cv::Mat& f_descs_0,
+                                 cv::Mat& f_descs_1,
+                                 std::vector<cv::Point2f>& f_kpts_0,
+                                 std::vector<cv::Point2f>& f_kpts_1,
+                                 std::vector<cv::Point3f>& f_obj_pts_0,
+                                 std::vector<cv::Point3f>& f_obj_pts_1);
 
 
         /** \brief Assemble the four matchings to build circular matches.
@@ -443,31 +415,29 @@ class StereoModules
          *  \param f_p_obj_pts Fultered camera points of previous stereo image.
          *  @return an enumerated type (StereoResult) encoding matching result.
          */
-        StereoResult assembleCircularMatchings(const std::vector<cv::Point2f>& c_0_stereo_kpts,
-                                               const std::vector<cv::Point2f>& c_1_stereo_kpts,
-                                               const std::vector<cv::Point2f>& p_0_stereo_kpts,
-                                               const std::vector<cv::Point2f>& p_1_stereo_kpts,
-                                               const std::vector<cv::Point2f>& c_0_successive_kpts,
-                                               const std::vector<cv::Point2f>& c_1_successive_kpts,
-                                               const std::vector<cv::Point2f>& p_0_successive_kpts,
-                                               const std::vector<cv::Point2f>& p_1_successive_kpts,
-                                               const std::vector<cv::Point3f>& c_successive_obj_pts,
-                                               const std::vector<cv::Point3f>& p_successive_obj_pts,
-                                               std::vector<cv::Point2f>& f_c_0_kpts,
-                                               std::vector<cv::Point2f>& f_c_1_kpts,
-                                               std::vector<cv::Point2f>& f_p_0_kpts,
-                                               std::vector<cv::Point2f>& f_p_1_kpts,
-                                               std::vector<cv::Point3f>& f_c_obj_pts,
-                                               std::vector<cv::Point3f>& f_p_obj_pts);
+        void assembleCircularMatchings(const std::vector<cv::Point2f>& c_0_stereo_kpts,
+                                       const std::vector<cv::Point2f>& c_1_stereo_kpts,
+                                       const std::vector<cv::Point2f>& p_0_stereo_kpts,
+                                       const std::vector<cv::Point2f>& p_1_stereo_kpts,
+                                       const std::vector<cv::Point2f>& c_0_successive_kpts,
+                                       const std::vector<cv::Point2f>& c_1_successive_kpts,
+                                       const std::vector<cv::Point2f>& p_0_successive_kpts,
+                                       const std::vector<cv::Point2f>& p_1_successive_kpts,
+                                       const std::vector<cv::Point3f>& c_successive_obj_pts,
+                                       const std::vector<cv::Point3f>& p_successive_obj_pts,
+                                       std::vector<cv::Point2f>& f_c_0_kpts,
+                                       std::vector<cv::Point2f>& f_c_1_kpts,
+                                       std::vector<cv::Point2f>& f_p_0_kpts,
+                                       std::vector<cv::Point2f>& f_p_1_kpts,
+                                       std::vector<cv::Point3f>& f_c_obj_pts,
+                                       std::vector<cv::Point3f>& f_p_obj_pts);
 
 
         double ratio_; //!> Lowe's ratio.
-
-        int min_inliers_; //!> The minimum number of inliers to estimate the movement.
         
-        cv::Mat l_proj_mat_ = cv::Mat::eye(3, 3, CV_64F); //!> Left camera projection matrix.
+        cv::Mat l_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Left camera projection matrix.
         
-        cv::Mat r_proj_mat_ = cv::Mat::eye(3, 3, CV_64F); //!> Right camera projection matrix.
+        cv::Mat r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Right camera projection matrix.
 
         MatchingType matching_type_; //!> Matching type.
 

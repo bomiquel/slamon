@@ -13,10 +13,11 @@ namespace slam
                                    std::string& motion_estimation_type,
                                    const std::string& robot_frame_id, 
                                    const std::string& origin_frame_id):
-                                   StereoModules(ratio, min_inliers, matching_type, motion_estimation_type)
+                                   StereoModules(ratio, matching_type, motion_estimation_type)
     {
         // Inilitialises parameters.
         w_path_ = w_path;
+        min_inliers_ = min_inliers;
         robot_frame_id_ = robot_frame_id;
         origin_frame_id_ = origin_frame_id;
         enable_debugging_ = enable_debugging;
@@ -323,16 +324,30 @@ namespace slam
         if (stereo_kps_img_pub_.getNumSubscribers() > 0)
             publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kps_img_pub_, l_kpts, r_kpts);
 
+        // Sanity check.
+        if (l_kpts.size() < (uint)(1.5 * min_inliers_))
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Stereo keypoints detector:] There are not enough keypoints to match and filter!");
+            run_times_.stereo_matching = 0.0;
+            run_times_.triangulation = 0.0;
+            return false;
+        }
+
         // Matching keypoints.
         start_time = ros::Time::now().toSec();
         cv::Mat h_f_l_descs, h_f_r_descs;
         std::vector<cv::Point2f> h_f_l_kpts, h_f_r_kpts;
-        StereoResult result = matchStereoKeypoints(l_descs, r_descs, l_kpts, r_kpts, h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts);
+        matchStereoKeypoints(l_descs, r_descs, l_kpts, r_kpts, h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts);
         run_times_.stereo_matching = ros::Time::now().toSec() - start_time;
-        if(!decodeStereoResult("[VO->Stereo matcher:] ", result))
+
+        // Sanity check.
+        if (h_f_l_kpts.size() < (uint)(1.5 * min_inliers_))
         {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
             run_times_.triangulation = 0;
-            return false; 
+            return false;
         }
             
         // Compute 3D keypoints. 
@@ -340,10 +355,16 @@ namespace slam
         cv::Mat f_l_descs, f_r_descs;
         std::vector<cv::Point3f> f_obj_pts;
         std::vector<cv::Point2f> f_l_kpts, f_r_kpts;
-        result = compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_obj_pts);
-        run_times_.stereo_matching = ros::Time::now().toSec() - start_time;
-        if(!decodeStereoResult("[VO->Triangulator:] ", result))
-            return false; 
+        compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_obj_pts);
+        run_times_.triangulation = ros::Time::now().toSec() - start_time;
+
+        // Sanity check.
+        if (f_l_kpts.size() < (uint)(1.5 * min_inliers_))
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Triangulator:] There are not enough 3D points after triangulation!");
+            return false;
+        }
 
         // Stereo matching keypoints debugging.
         if (stereo_matches_img_pub_.getNumSubscribers() > 0)
@@ -351,6 +372,9 @@ namespace slam
 
         // Fill Frame object
         c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_obj_pts);
+
+        if (enable_debugging_)
+            ROS_INFO_STREAM("[VO->Stereo frame processor:] Stereoscopic image processed successfully!");
 
         return true;
     }
@@ -366,18 +390,24 @@ namespace slam
         start_time = ros::Time::now().toSec();
         std::vector<cv::Point3f> f_c_obj_pts, f_p_obj_pts;
         std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
-        StereoResult result = matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), 
-                                                      p_frame_.getLeftDescs(), p_frame_.getLeftDescs(),
-                                                      c_frame.getLeftKpts(), c_frame.getRightKpts(), 
-                                                      p_frame_.getLeftKpts(), p_frame_.getRightKpts(),
-                                                      c_frame.getObjectPoints(), p_frame_.getObjectPoints(),
-                                                      f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, 
-                                                      f_c_obj_pts, f_p_obj_pts);
+        matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(),
+                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(),
+                                c_frame.getObjectPoints(), p_frame_.getObjectPoints(), f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, 
+                                f_c_obj_pts, f_p_obj_pts);
         run_times_.successive_matching = ros::Time::now().toSec() - start_time;
-        if(!decodeStereoResult("[VO->Non-stereo matcher:] ", result))
+
+        // Sanity check.
+        if (f_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
         {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
             run_times_.motion_estimation = 0.0;
             return false;
+        }
+        else
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Non-stereo matcher:] Succesful matching!");
         }
 
         // Non stereo matching keypoints debugging.
@@ -400,12 +430,21 @@ namespace slam
         cv::Mat r_camera_motion, t_camera_motion;
         std::vector<cv::Point3f> i_c_obj_pts, i_p_obj_pts;
         std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
-        result = estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
-                                r_camera_motion, t_camera_motion,
-                                i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
+        estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
+                       r_camera_motion, t_camera_motion,
+                       i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
         run_times_.motion_estimation = ros::Time::now().toSec() - start_time;
-        if(!decodeStereoResult("[VO->Motion estimator:] ", result))
-            return false; 
+        if (i_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Motion estimator:] There are not enough inliers after motion estimation!");
+            return false;
+        }
+        else
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Motion estimator:] Succesful motion estimation!");
+        }
 
         // Inliers debugging.
         if (inliers_img_pub_.getNumSubscribers() > 0)
@@ -463,86 +502,6 @@ namespace slam
             c_robot_pose_.setIdentity();
         }
     }
-
-
-    bool VisualOdometry::decodeStereoResult(const std::string& title,
-                                            const StereoResult& result)
-    {
-        bool successful; 
-        switch (result)
-        {
-            case SUCCESSFUL:
-            {
-                if (enable_debugging_)
-                    ROS_INFO_STREAM(title << "Successful matching!");
-                successful = true;
-                break;
-            }
-            case NOT_ENOUGH_KPTS:
-            {
-                if (enable_debugging_)
-                    ROS_INFO_STREAM(title << "There are not enough keypoints to match and filter!");
-                successful = false;
-                break;
-            }
-            case NOT_ENOUGH_F_KPTS:
-            {
-                if (enable_debugging_)
-                    ROS_INFO_STREAM(title << "There are not enough keypoints after outlier filtering!");
-                successful = false;
-                break;
-            }
-            case NOT_ENOUGH_E_KPTS:
-            {
-                if (enable_debugging_)
-                    ROS_INFO_STREAM(title << "There are not enough keypoints after epipolar filtering!");
-                successful = false;
-                break;
-            }
-            case NOT_ENOUGH_3D_PTS:
-            {
-                if (enable_debugging_)
-                    ROS_INFO_STREAM(title << "There are not enough 3D points after triangulation!");
-                successful = false;
-                break;
-            }
-            case GEOMETRIC_PROBLEM:
-            {
-                if (enable_debugging_)
-                    ROS_INFO_STREAM(title << "Problems in applying the selected geometric constraint. Probably not enough keypoints!");
-                successful = false;
-                break;
-            }
-            case DIFFERENT_PROBLEMS:
-            {
-                if (enable_debugging_)
-                    ROS_INFO_STREAM(title << "In the parallel matches there have been different problems.");
-                successful = false;
-                break;
-            }
-            case NOT_ENOUGH_CIRCLES:
-            {
-                if (enable_debugging_)
-                    ROS_INFO_STREAM(title << "There are not enough matching circles!");
-                successful = false;
-                break;
-            }
-            case NOT_ENOUGH_INLIERS:
-            {
-                if (enable_debugging_)
-                    ROS_INFO_STREAM(title << "There are not enough inliers after motion estimation!");
-                successful = false;
-                break;
-            }
-            default:
-            {
-                ROS_ERROR_STREAM(title << "Unforeseen result of matching!");
-                successful = false;
-                break;
-            }
-        }
-        return successful;
-    }   
 
 
 }

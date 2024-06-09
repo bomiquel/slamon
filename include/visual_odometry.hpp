@@ -152,21 +152,12 @@ namespace slam
             void getInitialPose();
 
 
-            /** \brief Decodes the enum type StereoResults into a boolean and a message
-             *  printed to the console (optional).
-             *  \param title Extra info to know which module sends the result (input).
-             *  \param result The stereo module result (input).
-             *  @return Whether keypoint matching and filtering has been performed correctly
-             *  and if there are enough filtered points.
-             */
-            bool decodeStereoResult(const std::string& title,
-                                    const StereoResult& result);
-
-
         private:
             
             // Atributes
             int c_frame_id_; //!> Current frame id.
+
+            int min_inliers_; //!> The minimum number of inliers to estimate the movement.
 
             Frame p_frame_; //!> Previous frame.
             

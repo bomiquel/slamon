@@ -2,19 +2,16 @@
 
 
 StereoModules::StereoModules(const double ratio,
-                             const int min_inliers,
                              std::string& matching_type,
                              std::string& motion_estimation_type)
 {
     ratio_ = ratio;
-    min_inliers_ = min_inliers;
     matching_type_ = selectMatchingType(matching_type);
     motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
 }
 
 
 StereoModules::StereoModules(const double ratio,
-                             const int min_inliers,
                              const cv::Mat& l_proj_mat,
                              const cv::Mat& r_proj_mat,
                              std::string& matching_type,
@@ -23,7 +20,6 @@ StereoModules::StereoModules(const double ratio,
     ratio_ = ratio;
     l_proj_mat_ = l_proj_mat;
     r_proj_mat_ = r_proj_mat;
-    min_inliers_ = min_inliers;
     matching_type_ = selectMatchingType(matching_type);
     motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
 }
@@ -35,12 +31,10 @@ StereoModules::StereoModules(const double b,
                              const double c_x,
                              const double c_y,
                              const double ratio,
-                             const int min_inliers,
                              std::string& matching_type,
                              std::string& motion_estimation_type)
 {
     ratio_ = ratio;
-    min_inliers_ = min_inliers;
     matching_type_ = selectMatchingType(matching_type);
     r_proj_mat_ = computeProjectionMatrix(b, f_x, f_x, c_x, c_y);
     l_proj_mat_ = computeProjectionMatrix(0.0, f_x, f_x, c_x, c_y);
@@ -104,14 +98,14 @@ void StereoModules::detectStereoKeypoints(const cv::Mat &l_img,
 }
 
 
-StereoModules::StereoResult StereoModules::matchStereoKeypoints(const cv::Mat &l_descs,
-                                                                const cv::Mat &r_descs,
-                                                                const std::vector<cv::Point2f> &l_kpts,
-                                                                const std::vector<cv::Point2f> &r_kpts,
-                                                                cv::Mat &f_l_descs,
-                                                                cv::Mat &f_r_descs,
-                                                                std::vector<cv::Point2f> &f_l_kpts,
-                                                                std::vector<cv::Point2f> &f_r_kpts)
+void StereoModules::matchStereoKeypoints(const cv::Mat &l_descs,
+                                         const cv::Mat &r_descs,
+                                         const std::vector<cv::Point2f> &l_kpts,
+                                         const std::vector<cv::Point2f> &r_kpts,
+                                         cv::Mat &f_l_descs,
+                                         cv::Mat &f_r_descs,
+                                         std::vector<cv::Point2f> &f_l_kpts,
+                                         std::vector<cv::Point2f> &f_r_kpts)
 {
     // Sanity check
     f_l_kpts.clear();
@@ -123,15 +117,10 @@ StereoModules::StereoResult StereoModules::matchStereoKeypoints(const cv::Mat &l
     std::vector<cv::Point3f> points_3d_0, points_3d_1, f_points_3d_0, f_points_3d_1;
 
     // Perform keypoint matching and Lowe's ratio
-    StereoResult match_result;
     cv::Mat h_f_l_descs, h_f_r_descs;
     std::vector<cv::Point2f> h_f_l_kpts, h_f_r_kpts;
-    match_result = ratioMatching(l_descs, r_descs, l_kpts, r_kpts, points_3d_0, points_3d_1,
-                                 h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_points_3d_0, f_points_3d_1);
-
-    // Check match result
-    if (match_result != SUCCESSFUL)
-        return match_result;
+    ratioMatching(l_descs, r_descs, l_kpts, r_kpts, points_3d_0, points_3d_1,
+                  h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_points_3d_0, f_points_3d_1);
 
     // Epipolar filtering
     for (uint i = 0; i < h_f_l_kpts.size(); i++)
@@ -144,23 +133,18 @@ StereoModules::StereoResult StereoModules::matchStereoKeypoints(const cv::Mat &l
             f_r_descs.push_back(h_f_r_descs.row(i));
         }
     }
-
-    if (f_l_kpts.size() < (uint)(1.5 * min_inliers_))
-        return NOT_ENOUGH_E_KPTS;
-    else
-        return SUCCESSFUL;
 }
 
 
-StereoModules::StereoResult StereoModules::compute3DPoints(const cv::Mat& l_descs,
-                                                           const cv::Mat& r_descs,
-                                                           const std::vector<cv::Point2f>& l_kpts,
-                                                           const std::vector<cv::Point2f>& r_kpts,
-                                                           cv::Mat& f_l_descs,
-                                                           cv::Mat& f_r_descs,
-                                                           std::vector<cv::Point2f>& f_l_kpts,
-                                                           std::vector<cv::Point2f>& f_r_kpts,
-                                                           std::vector<cv::Point3f>& f_obj_pts)
+void StereoModules::compute3DPoints(const cv::Mat& l_descs,
+                                    const cv::Mat& r_descs,
+                                    const std::vector<cv::Point2f>& l_kpts,
+                                    const std::vector<cv::Point2f>& r_kpts,
+                                    cv::Mat& f_l_descs,
+                                    cv::Mat& f_r_descs,
+                                    std::vector<cv::Point2f>& f_l_kpts,
+                                    std::vector<cv::Point2f>& f_r_kpts,
+                                    std::vector<cv::Point3f>& f_obj_pts)
 {
     // Triangulates keypoints.
     cv::Mat pts_4d, obj_pts;
@@ -194,47 +178,41 @@ StereoModules::StereoResult StereoModules::compute3DPoints(const cv::Mat& l_desc
             f_r_descs.push_back(r_descs.row(i));
         }
     }
-    
-    if (f_obj_pts.size() < (uint)(1.5 * min_inliers_))
-        return NOT_ENOUGH_3D_PTS;
-    else
-        return SUCCESSFUL;
 }
 
 
-StereoModules::StereoResult StereoModules::matchNonStereoKeypoints(const cv::Mat &c_l_descs,
-                                                                   const cv::Mat &c_r_descs,
-                                                                   const cv::Mat &p_l_descs,
-                                                                   const cv::Mat &p_r_descs,
-                                                                   const std::vector<cv::Point2f> &c_l_kpts,
-                                                                   const std::vector<cv::Point2f> &c_r_kpts,
-                                                                   const std::vector<cv::Point2f> &p_l_kpts,
-                                                                   const std::vector<cv::Point2f> &p_r_kpts,
-                                                                   const std::vector<cv::Point3f> &c_obj_pts,
-                                                                   const std::vector<cv::Point3f> &p_obj_pts,
-                                                                   std::vector<cv::Point2f> &f_c_l_kpts,
-                                                                   std::vector<cv::Point2f> &f_c_r_kpts,
-                                                                   std::vector<cv::Point2f> &f_p_l_kpts,
-                                                                   std::vector<cv::Point2f> &f_p_r_kpts,
-                                                                   std::vector<cv::Point3f> &f_c_obj_pts,
-                                                                   std::vector<cv::Point3f> &f_p_obj_pts)
+void StereoModules::matchNonStereoKeypoints(const cv::Mat &c_l_descs,
+                                            const cv::Mat &c_r_descs,
+                                            const cv::Mat &p_l_descs,
+                                            const cv::Mat &p_r_descs,
+                                            const std::vector<cv::Point2f> &c_l_kpts,
+                                            const std::vector<cv::Point2f> &c_r_kpts,
+                                            const std::vector<cv::Point2f> &p_l_kpts,
+                                            const std::vector<cv::Point2f> &p_r_kpts,
+                                            const std::vector<cv::Point3f> &c_obj_pts,
+                                            const std::vector<cv::Point3f> &p_obj_pts,
+                                            std::vector<cv::Point2f> &f_c_l_kpts,
+                                            std::vector<cv::Point2f> &f_c_r_kpts,
+                                            std::vector<cv::Point2f> &f_p_l_kpts,
+                                            std::vector<cv::Point2f> &f_p_r_kpts,
+                                            std::vector<cv::Point3f> &f_c_obj_pts,
+                                            std::vector<cv::Point3f> &f_p_obj_pts)
 {
-    StereoResult match_result, aux_result;
     cv::Mat f_c_l_descs, f_c_r_descs, f_p_l_descs, f_p_r_descs;
     if (matching_type_ == RATIO_MATCHING)
     {
-        match_result = ratioMatching(c_l_descs, p_l_descs, c_l_kpts, p_l_kpts, c_obj_pts, p_obj_pts,
-                                     f_c_l_descs, f_p_l_descs, f_c_l_kpts, f_p_l_kpts, f_c_obj_pts, f_p_obj_pts);
+        ratioMatching(c_l_descs, p_l_descs, c_l_kpts, p_l_kpts, c_obj_pts, p_obj_pts,
+                      f_c_l_descs, f_p_l_descs, f_c_l_kpts, f_p_l_kpts, f_c_obj_pts, f_p_obj_pts);
     }
     else if (matching_type_ == ESSENTIAL_MATCHING)
     {
-        match_result = geometricalMatching(false, c_l_descs, p_l_descs, c_l_kpts, p_l_kpts, c_obj_pts, p_obj_pts,
-                                           f_c_l_descs, f_p_l_descs, f_c_l_kpts, f_p_l_kpts, f_c_obj_pts, f_p_obj_pts);
+        geometricalMatching(false, c_l_descs, p_l_descs, c_l_kpts, p_l_kpts, c_obj_pts, p_obj_pts,
+                            f_c_l_descs, f_p_l_descs, f_c_l_kpts, f_p_l_kpts, f_c_obj_pts, f_p_obj_pts);
     }
     else if (matching_type_ == HOMOGRAPHY_MATCHING)
     {
-        match_result = geometricalMatching(true, c_l_descs, p_l_descs, c_l_kpts, p_l_kpts, c_obj_pts, p_obj_pts,
-                                           f_c_l_descs, f_p_l_descs, f_c_l_kpts, f_p_l_kpts, f_c_obj_pts, f_p_obj_pts);
+        geometricalMatching(true, c_l_descs, p_l_descs, c_l_kpts, p_l_kpts, c_obj_pts, p_obj_pts,
+                            f_c_l_descs, f_p_l_descs, f_c_l_kpts, f_p_l_kpts, f_c_obj_pts, f_p_obj_pts);
     }
     else if (matching_type_ == CIRCULAR_RATIO_MATCHING ||
              matching_type_ == CIRCULAR_ESSENTIAL_MATCHING ||
@@ -246,73 +224,72 @@ StereoModules::StereoResult StereoModules::matchNonStereoKeypoints(const cv::Mat
         std::vector<cv::Point3f> h_f_c_l_camera_points, h_f_c_r_camera_points, h_f_p_l_camera_points, h_f_p_r_camera_points;
         if (matching_type_ == CIRCULAR_RATIO_MATCHING)
         {
-            std::thread l_matcher([&] { match_result = ratioMatching(c_l_descs, p_l_descs, c_l_kpts, p_l_kpts, c_l_camera_points, p_l_camera_points,
-                                                                     f_c_l_descs, f_p_l_descs, h_f_c_l_kpts, h_f_p_l_kpts, h_f_c_l_camera_points, h_f_p_l_camera_points); });
-            std::thread r_matcher([&] { aux_result = ratioMatching(c_r_descs, p_r_descs, c_r_kpts, p_r_kpts, c_r_camera_points, p_r_camera_points,
-                                                                   f_c_r_descs, f_p_r_descs, h_f_c_r_kpts, h_f_p_r_kpts, h_f_c_r_camera_points, h_f_p_r_camera_points); });
+            std::thread l_matcher(&StereoModules::ratioMatching, this, std::ref(c_l_descs), std::ref(p_l_descs), 
+                                  std::ref(c_l_kpts), std::ref(p_l_kpts), std::ref(c_l_camera_points), std::ref(p_l_camera_points),
+                                  std::ref(f_c_l_descs), std::ref(f_p_l_descs), std::ref(h_f_c_l_kpts), std::ref(h_f_p_l_kpts),
+                                  std::ref(h_f_c_l_camera_points), std::ref(h_f_p_l_camera_points));
+            std::thread r_matcher(&StereoModules::ratioMatching, this, std::ref(c_r_descs), std::ref(p_r_descs), 
+                                  std::ref(c_r_kpts), std::ref(p_r_kpts), std::ref(c_r_camera_points), std::ref(p_r_camera_points),
+                                  std::ref(f_c_r_descs), std::ref(f_p_r_descs), std::ref(h_f_c_r_kpts), std::ref(h_f_p_r_kpts),
+                                  std::ref(h_f_c_r_camera_points), std::ref(h_f_p_r_camera_points));
             l_matcher.join();
             r_matcher.join();
         }
         else if (matching_type_ == CIRCULAR_ESSENTIAL_MATCHING)
         {
-            std::thread l_matcher([&] { match_result = geometricalMatching(false, c_l_descs, p_l_descs, c_l_kpts, p_l_kpts, c_l_camera_points, p_l_camera_points,
-                                                                           f_c_l_descs, f_p_l_descs, h_f_c_l_kpts, h_f_p_l_kpts, h_f_c_l_camera_points, h_f_p_l_camera_points); });
-            std::thread r_matcher([&] { aux_result = geometricalMatching(false, c_r_descs, p_r_descs, c_r_kpts, p_r_kpts, c_r_camera_points, p_r_camera_points,
-                                                                         f_c_r_descs, f_p_r_descs, h_f_c_r_kpts, h_f_p_r_kpts, h_f_c_r_camera_points, h_f_p_r_camera_points); });
+            std::thread l_matcher(&StereoModules::geometricalMatching, this, false, std::ref(c_l_descs), std::ref(p_l_descs), 
+                                  std::ref(c_l_kpts), std::ref(p_l_kpts), std::ref(c_l_camera_points), std::ref(p_l_camera_points),
+                                  std::ref(f_c_l_descs), std::ref(f_p_l_descs), std::ref(h_f_c_l_kpts), std::ref(h_f_p_l_kpts),
+                                  std::ref(h_f_c_l_camera_points), std::ref(h_f_p_l_camera_points));
+            std::thread r_matcher(&StereoModules::geometricalMatching, this, false, std::ref(c_r_descs), std::ref(p_r_descs), 
+                                  std::ref(c_r_kpts), std::ref(p_r_kpts), std::ref(c_r_camera_points), std::ref(p_r_camera_points),
+                                  std::ref(f_c_r_descs), std::ref(f_p_r_descs), std::ref(h_f_c_r_kpts), std::ref(h_f_p_r_kpts),
+                                  std::ref(h_f_c_r_camera_points), std::ref(h_f_p_r_camera_points));
             l_matcher.join();
             r_matcher.join();
         }
         else
         {
-            std::thread l_matcher([&] { match_result = geometricalMatching(true, c_l_descs, p_l_descs, c_l_kpts, p_l_kpts, c_l_camera_points, p_l_camera_points,
-                                                                           f_c_l_descs, f_p_l_descs, h_f_c_l_kpts, h_f_p_l_kpts, h_f_c_l_camera_points, h_f_p_l_camera_points); });
-            std::thread r_matcher([&] { aux_result = geometricalMatching(true, c_r_descs, p_r_descs, c_r_kpts, p_r_kpts, c_r_camera_points, p_r_camera_points,
-                                                                         f_c_r_descs, f_p_r_descs, h_f_c_r_kpts, h_f_p_r_kpts, h_f_c_r_camera_points, h_f_p_r_camera_points); });
+            std::thread l_matcher(&StereoModules::geometricalMatching, this, true, std::ref(c_l_descs), std::ref(p_l_descs), 
+                                  std::ref(c_l_kpts), std::ref(p_l_kpts), std::ref(c_l_camera_points), std::ref(p_l_camera_points),
+                                  std::ref(f_c_l_descs), std::ref(f_p_l_descs), std::ref(h_f_c_l_kpts), std::ref(h_f_p_l_kpts),
+                                  std::ref(h_f_c_l_camera_points), std::ref(h_f_p_l_camera_points));
+            std::thread r_matcher(&StereoModules::geometricalMatching, this, true, std::ref(c_r_descs), std::ref(p_r_descs), 
+                                  std::ref(c_r_kpts), std::ref(p_r_kpts), std::ref(c_r_camera_points), std::ref(p_r_camera_points),
+                                  std::ref(f_c_r_descs), std::ref(f_p_r_descs), std::ref(h_f_c_r_kpts), std::ref(h_f_p_r_kpts),
+                                  std::ref(h_f_c_r_camera_points), std::ref(h_f_p_r_camera_points));
             l_matcher.join();
             r_matcher.join();
         }
 
-        if (match_result == SUCCESSFUL && aux_result == SUCCESSFUL)
+        if (h_f_c_r_kpts.size() < h_f_c_l_kpts.size())
         {
-            if (h_f_c_r_kpts.size() < h_f_c_l_kpts.size())
-            {
-                match_result = assembleCircularMatchings(c_r_kpts, c_l_kpts, p_r_kpts, p_l_kpts,
-                                                         h_f_c_r_kpts, h_f_c_l_kpts, h_f_p_r_kpts, h_f_p_l_kpts,
-                                                         h_f_c_r_camera_points, h_f_p_r_camera_points,
-                                                         f_c_r_kpts, f_c_l_kpts, f_p_r_kpts, f_p_l_kpts,
-                                                         f_c_obj_pts, f_p_obj_pts);
-            }
-            else
-            {
-                match_result = assembleCircularMatchings(c_l_kpts, c_r_kpts, p_l_kpts, p_r_kpts,
-                                                         h_f_c_l_kpts, h_f_c_r_kpts, h_f_p_l_kpts, h_f_p_r_kpts,
-                                                         h_f_c_l_camera_points, h_f_p_l_camera_points,
-                                                         f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts,
-                                                         f_c_obj_pts, f_p_obj_pts);
-            }
+            assembleCircularMatchings(c_r_kpts, c_l_kpts, p_r_kpts, p_l_kpts, h_f_c_r_kpts, h_f_c_l_kpts, h_f_p_r_kpts, h_f_p_l_kpts,
+                                        h_f_c_r_camera_points, h_f_p_r_camera_points, f_c_r_kpts, f_c_l_kpts, f_p_r_kpts, f_p_l_kpts,
+                                        f_c_obj_pts, f_p_obj_pts);
         }
-        else if (match_result != aux_result)
+        else
         {
-            match_result = DIFFERENT_PROBLEMS;
+            assembleCircularMatchings(c_l_kpts, c_r_kpts, p_l_kpts, p_r_kpts, h_f_c_l_kpts, h_f_c_r_kpts, h_f_p_l_kpts, h_f_p_r_kpts,
+                                        h_f_c_l_camera_points, h_f_p_l_camera_points, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts,
+                                        f_c_obj_pts, f_p_obj_pts);
         }
     }
     else
     {
         std::cerr << "Unforeseen type of matching!" << std::endl;
     }
-
-    return match_result;
 }
 
 
-StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
-                                                          const std::vector<cv::Point2f>& c_r_kpts,
-                                                          const std::vector<cv::Point3f>& p_obj_pts,
-                                                          cv::Mat& r_vec,
-                                                          cv::Mat& t_vec,
-                                                          std::vector<cv::Point2f>& f_c_l_kpts,
-                                                          std::vector<cv::Point2f>& f_c_r_kpts,
-                                                          std::vector<cv::Point3f>& f_p_obj_pts)
+void StereoModules::estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
+                                   const std::vector<cv::Point2f>& c_r_kpts,
+                                   const std::vector<cv::Point3f>& p_obj_pts,
+                                   cv::Mat& r_vec,
+                                   cv::Mat& t_vec,
+                                   std::vector<cv::Point2f>& f_c_l_kpts,
+                                   std::vector<cv::Point2f>& f_c_r_kpts,
+                                   std::vector<cv::Point3f>& f_p_obj_pts)
 {
     // Sanity check.
     r_vec.release();
@@ -322,7 +299,7 @@ StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::
     std::vector<int> inliers;
     cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
     cv::solvePnPRansac(p_obj_pts, c_l_kpts, K, cv::Mat(), r_vec, t_vec, 
-                       false, 10000, 2.0, 0.99, inliers, motion_estimation_type_); 
+                       false, 2000, 2.0, 0.99, inliers, motion_estimation_type_); 
 
     // Filter keypoints and 3D points.
     if (c_r_kpts.size() > 0)
@@ -340,28 +317,23 @@ StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::
             f_p_obj_pts.push_back(p_obj_pts[inliers[i]]);
         }
     }
-
-    if (inliers.size() >= (uint)min_inliers_)
-        return SUCCESSFUL;
-    else
-        return NOT_ENOUGH_INLIERS;   
 }
 
 
-StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
-                                                          const std::vector<cv::Point2f>& c_r_kpts,
-                                                          const std::vector<cv::Point2f>& p_l_kpts,
-                                                          const std::vector<cv::Point2f>& p_r_kpts,
-                                                          const std::vector<cv::Point3f>& c_obj_pts,
-                                                          const std::vector<cv::Point3f>& p_obj_pts,
-                                                          cv::Mat& r_vec,
-                                                          cv::Mat& t_vec,
-                                                          std::vector<cv::Point2f>& f_c_l_kpts,
-                                                          std::vector<cv::Point2f>& f_c_r_kpts,
-                                                          std::vector<cv::Point2f>& f_p_l_kpts,
-                                                          std::vector<cv::Point2f>& f_p_r_kpts,
-                                                          std::vector<cv::Point3f>& f_c_obj_pts,
-                                                          std::vector<cv::Point3f>& f_p_obj_pts)
+void StereoModules::estimateMotion(const std::vector<cv::Point2f>& c_l_kpts,
+                                   const std::vector<cv::Point2f>& c_r_kpts,
+                                   const std::vector<cv::Point2f>& p_l_kpts,
+                                   const std::vector<cv::Point2f>& p_r_kpts,
+                                   const std::vector<cv::Point3f>& c_obj_pts,
+                                   const std::vector<cv::Point3f>& p_obj_pts,
+                                   cv::Mat& r_vec,
+                                   cv::Mat& t_vec,
+                                   std::vector<cv::Point2f>& f_c_l_kpts,
+                                   std::vector<cv::Point2f>& f_c_r_kpts,
+                                   std::vector<cv::Point2f>& f_p_l_kpts,
+                                   std::vector<cv::Point2f>& f_p_r_kpts,
+                                   std::vector<cv::Point3f>& f_c_obj_pts,
+                                   std::vector<cv::Point3f>& f_p_obj_pts)
 {
     // Sanity check.
     r_vec.release();
@@ -394,11 +366,6 @@ StereoModules::StereoResult StereoModules::estimateMotion(const std::vector<cv::
             f_p_obj_pts.push_back(p_obj_pts[inliers[i]]);
         }
     }
-
-    if (inliers.size() >= (uint)min_inliers_)
-        return SUCCESSFUL;
-    else
-        return NOT_ENOUGH_INLIERS;   
 }
 
 
@@ -497,18 +464,18 @@ std::vector<std::vector<cv::DMatch>> StereoModules::matching(const cv::Mat &desc
 }
 
 
-StereoModules::StereoResult StereoModules::ratioMatching(const cv::Mat &descs_0,
-                                                         const cv::Mat &descs_1,
-                                                         const std::vector<cv::Point2f> &kpts_0,
-                                                         const std::vector<cv::Point2f> &kpts_1,
-                                                         const std::vector<cv::Point3f> &obj_pts_0,
-                                                         const std::vector<cv::Point3f> &obj_pts_1,
-                                                         cv::Mat &f_descs_0,
-                                                         cv::Mat &f_descs_1,
-                                                         std::vector<cv::Point2f> &f_kpts_0,
-                                                         std::vector<cv::Point2f> &f_kpts_1,
-                                                         std::vector<cv::Point3f> &f_obj_pts_0,
-                                                         std::vector<cv::Point3f> &f_obj_pts_1)
+void StereoModules::ratioMatching(const cv::Mat &descs_0,
+                                  const cv::Mat &descs_1,
+                                  const std::vector<cv::Point2f> &kpts_0,
+                                  const std::vector<cv::Point2f> &kpts_1,
+                                  const std::vector<cv::Point3f> &obj_pts_0,
+                                  const std::vector<cv::Point3f> &obj_pts_1,
+                                  cv::Mat &f_descs_0,
+                                  cv::Mat &f_descs_1,
+                                  std::vector<cv::Point2f> &f_kpts_0,
+                                  std::vector<cv::Point2f> &f_kpts_1,
+                                  std::vector<cv::Point3f> &f_obj_pts_0,
+                                  std::vector<cv::Point3f> &f_obj_pts_1)
 {
     // Sanity check
     f_kpts_0.clear();
@@ -517,8 +484,8 @@ StereoModules::StereoResult StereoModules::ratioMatching(const cv::Mat &descs_0,
     f_descs_1.release();
     f_obj_pts_0.clear();
     f_obj_pts_1.clear();
-    if (descs_0.rows < (int)(1.5 * min_inliers_) || descs_1.rows < (int)(1.5 * min_inliers_))
-        return NOT_ENOUGH_KPTS;
+    if (descs_0.rows < 10 || descs_1.rows < 10)
+        return;
 
     // During feature matching of the same stereo pair there are no 3D points.
     bool fill_3d;
@@ -554,28 +521,22 @@ StereoModules::StereoResult StereoModules::ratioMatching(const cv::Mat &descs_0,
             }
         }
     }
-
-    // Sanity check
-    if (f_kpts_0.size() < (uint)(1.5 * min_inliers_))
-        return NOT_ENOUGH_F_KPTS;
-    else
-        return SUCCESSFUL;
 }
 
 
-StereoModules::StereoResult StereoModules::geometricalMatching(bool coplanar_pts,
-                                                               const cv::Mat &descs_0,
-                                                               const cv::Mat &descs_1,
-                                                               const std::vector<cv::Point2f> &kpts_0,
-                                                               const std::vector<cv::Point2f> &kpts_1,
-                                                               const std::vector<cv::Point3f> &obj_pts_0,
-                                                               const std::vector<cv::Point3f> &obj_pts_1,
-                                                               cv::Mat &f_descs_0,
-                                                               cv::Mat &f_descs_1,
-                                                               std::vector<cv::Point2f> &f_kpts_0,
-                                                               std::vector<cv::Point2f> &f_kpts_1,
-                                                               std::vector<cv::Point3f> &f_obj_pts_0,
-                                                               std::vector<cv::Point3f> &f_obj_pts_1)
+void StereoModules::geometricalMatching(bool coplanar_pts,
+                                        const cv::Mat &descs_0,
+                                        const cv::Mat &descs_1,
+                                        const std::vector<cv::Point2f> &kpts_0,
+                                        const std::vector<cv::Point2f> &kpts_1,
+                                        const std::vector<cv::Point3f> &obj_pts_0,
+                                        const std::vector<cv::Point3f> &obj_pts_1,
+                                        cv::Mat &f_descs_0,
+                                        cv::Mat &f_descs_1,
+                                        std::vector<cv::Point2f> &f_kpts_0,
+                                        std::vector<cv::Point2f> &f_kpts_1,
+                                        std::vector<cv::Point3f> &f_obj_pts_0,
+                                        std::vector<cv::Point3f> &f_obj_pts_1)
 {
     // Sanity check
     f_kpts_0.clear();
@@ -584,10 +545,10 @@ StereoModules::StereoResult StereoModules::geometricalMatching(bool coplanar_pts
     f_descs_1.release();
     f_obj_pts_0.clear();
     f_obj_pts_1.clear();
-    if (descs_0.rows < (int)(1.5 * min_inliers_) || descs_1.rows < (int)(1.5 * min_inliers_))
-        return NOT_ENOUGH_KPTS;
+    if (descs_0.rows < 10 || descs_1.rows < 10)
+        return;
 
-    // // Visual keypoint matching
+    // Visual keypoint matching
     std::vector<std::vector<cv::DMatch>> matches = matching(descs_0, descs_1);
 
     int c_idx, p_idx;
@@ -617,7 +578,9 @@ StereoModules::StereoResult StereoModules::geometricalMatching(bool coplanar_pts
     }
     catch (cv::Exception &e)
     {
-        return GEOMETRIC_PROBLEM;
+        const char* err_msg = e.what();
+        std::cerr << "Exception caught: " << err_msg << std::endl;
+        return;
     }
 
     // Filter outliers using homography or essential matrix
@@ -633,31 +596,25 @@ StereoModules::StereoResult StereoModules::geometricalMatching(bool coplanar_pts
             f_obj_pts_1.push_back(m_obj_pts_1[i]);
         }
     }
-
-    // Sanity check
-    if (f_kpts_0.size() < (uint)(1.5 * min_inliers_))
-        return NOT_ENOUGH_F_KPTS;
-    else
-        return SUCCESSFUL;
 }
 
 
-StereoModules::StereoResult StereoModules::assembleCircularMatchings(const std::vector<cv::Point2f> &c_0_stereo_kpts,
-                                                                     const std::vector<cv::Point2f> &c_1_stereo_kpts,
-                                                                     const std::vector<cv::Point2f> &p_0_stereo_kpts,
-                                                                     const std::vector<cv::Point2f> &p_1_stereo_kpts,
-                                                                     const std::vector<cv::Point2f> &c_0_successive_kpts,
-                                                                     const std::vector<cv::Point2f> &c_1_successive_kpts,
-                                                                     const std::vector<cv::Point2f> &p_0_successive_kpts,
-                                                                     const std::vector<cv::Point2f> &p_1_successive_kpts,
-                                                                     const std::vector<cv::Point3f>& c_successive_obj_pts,
-                                                                     const std::vector<cv::Point3f>& p_successive_obj_pts,
-                                                                     std::vector<cv::Point2f> &f_c_0_kpts,
-                                                                     std::vector<cv::Point2f> &f_c_1_kpts,
-                                                                     std::vector<cv::Point2f> &f_p_0_kpts,
-                                                                     std::vector<cv::Point2f> &f_p_1_kpts,
-                                                                     std::vector<cv::Point3f>& f_c_obj_pts,
-                                                                     std::vector<cv::Point3f>& f_p_obj_pts)
+void StereoModules::assembleCircularMatchings(const std::vector<cv::Point2f> &c_0_stereo_kpts,
+                                              const std::vector<cv::Point2f> &c_1_stereo_kpts,
+                                              const std::vector<cv::Point2f> &p_0_stereo_kpts,
+                                              const std::vector<cv::Point2f> &p_1_stereo_kpts,
+                                              const std::vector<cv::Point2f> &c_0_successive_kpts,
+                                              const std::vector<cv::Point2f> &c_1_successive_kpts,
+                                              const std::vector<cv::Point2f> &p_0_successive_kpts,
+                                              const std::vector<cv::Point2f> &p_1_successive_kpts,
+                                              const std::vector<cv::Point3f>& c_successive_obj_pts,
+                                              const std::vector<cv::Point3f>& p_successive_obj_pts,
+                                              std::vector<cv::Point2f> &f_c_0_kpts,
+                                              std::vector<cv::Point2f> &f_c_1_kpts,
+                                              std::vector<cv::Point2f> &f_p_0_kpts,
+                                              std::vector<cv::Point2f> &f_p_1_kpts,
+                                              std::vector<cv::Point3f>& f_c_obj_pts,
+                                              std::vector<cv::Point3f>& f_p_obj_pts)
 {
     uint j;
     uint k;
@@ -695,10 +652,4 @@ StereoModules::StereoResult StereoModules::assembleCircularMatchings(const std::
             }
         }
     }
-
-    // Sanity check
-    if (f_c_0_kpts.size() < (uint)(1.5 * min_inliers_))
-        return NOT_ENOUGH_CIRCLES;
-    else
-        return SUCCESSFUL;
 }
