@@ -22,7 +22,7 @@
 #include "frame.hpp"
 #include "caster.hpp"
 #include "publisher.hpp"
-#include "stereo_modules.hpp"
+#include "vision_motion_modules.hpp"
 
 #include "slamon/GetTransform.h"
 #include "slamon/GetProjectionMatrices.h"
@@ -32,7 +32,7 @@ namespace slam
 {
 
 
-    class VisualOdometry: protected Caster, protected Publisher, protected StereoModules 
+    class VisualOdometry: protected Caster, protected Publisher, protected VisionMotionModules 
     {
         public:
 

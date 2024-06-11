@@ -119,7 +119,7 @@ add_executable(vo_slamon
                src/caster.cpp
                src/vo_node.cpp
                src/publisher.cpp
-               src/stereo_modules.cpp
+               src/vision_motion_modules.cpp
                src/visual_odometry.cpp)
 add_executable(map_slamon
                src/hash.cpp
@@ -130,7 +130,7 @@ add_executable(map_slamon
                src/map_node.cpp
                src/publisher.cpp
                src/loop_closing.cpp
-               src/stereo_modules.cpp)
+               src/vision_motion_modules.cpp)
 add_executable(initial_pose_server src/initial_pose_server)
 
 # Dependencies

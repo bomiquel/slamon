@@ -13,7 +13,7 @@ namespace slam
                                    std::string& motion_estimation_type,
                                    const std::string& robot_frame_id, 
                                    const std::string& origin_frame_id):
-                                   StereoModules(ratio, matching_type, motion_estimation_type)
+                                   VisionMotionModules(ratio, matching_type, motion_estimation_type)
     {
         // Inilitialises parameters.
         w_path_ = w_path;
@@ -386,14 +386,16 @@ namespace slam
         // Auxilary variable to set the start time of a process
         double start_time;
 
+        // Creates dummy variables.
+        std::vector<int> c_cluster_ids, p_cluster_ids, f_c_cluster_ids, f_p_cluster_ids; 
+
         // Search for matches of keypoints between successive frames or pairs of frames.
         start_time = ros::Time::now().toSec();
         std::vector<cv::Point3f> f_c_obj_pts, f_p_obj_pts;
         std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
-        matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(),
-                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(),
-                                c_frame.getObjectPoints(), p_frame_.getObjectPoints(), f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, 
-                                f_c_obj_pts, f_p_obj_pts);
+        matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), c_cluster_ids, p_cluster_ids, 
+                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), c_frame.getObjectPoints(), p_frame_.getObjectPoints(),
+                                f_c_cluster_ids, f_p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts);
         run_times_.successive_matching = ros::Time::now().toSec() - start_time;
 
         // Sanity check.
@@ -430,9 +432,9 @@ namespace slam
         cv::Mat r_camera_motion, t_camera_motion;
         std::vector<cv::Point3f> i_c_obj_pts, i_p_obj_pts;
         std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
-        estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
-                       r_camera_motion, t_camera_motion,
-                       i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
+        estimateMotion(c_cluster_ids, p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
+                       r_camera_motion, t_camera_motion, 
+                       f_c_cluster_ids, f_p_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
         run_times_.motion_estimation = ros::Time::now().toSec() - start_time;
         if (i_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
         {
