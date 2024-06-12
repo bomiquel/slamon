@@ -132,18 +132,3 @@ tf::Transform Caster::fromVertexToTf(const g2o::VertexSE3* vertex)
     tf::Transform tf = fromIsometryToTf(iso);
     return tf;
 }
-
-
-std::string Caster::convertTo5Digits(int in)
-{
-    uint val = (uint)in;
-    std::string output;
-    int digits = 5;
-    while (digits-- > 0) 
-    {
-        output += ('0' + val % 10);
-        val /= 10;
-    }
-    std::reverse(output.begin(), output.end());
-    return output;
-}

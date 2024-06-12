@@ -1,6 +1,6 @@
 /**
  *  @file
- *  @brief The Publisher class is responsive to publish the image visualizations for debugging purposes (presentation).
+ *  @brief The Publisher class is responsive to publish the image visualizations for debugging purposes.
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
  *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
@@ -206,11 +206,90 @@ class Publisher
          *  \param o_path Image output path. The name of the final
          *  file must be included (input).
          *  \param clusters Keypoints clustering (input).
-        */
+         */
         void writeKeypointsClustering(const cv::Mat& l_img,
                                       const std::string& o_path,
                                       const std::vector<cv::Point2f>& l_kpts,
                                       const std::vector<std::vector<int>>& clusters);
+
+
+        /** \brief Draws and publishes a loop closure image with all the correspondences
+         *  between query keyframe and all the loop closing keyframes.
+         *  \param stamp The ROS timestamp (input).
+         *  \param publisher The ROS publisher (input).
+         *  \param q_keyframe_id Keyframe identifier to which the query cluster belongs
+         *  (input).
+         *  \param i_path Path to keyframes saved on disk.
+         *  \param q_cluster_ids Identifiers of the query clusters that have 
+         *  closed the loop (input).
+         *  \param cand_cluster_ids Identifiers of the candidate clusters that have 
+         *  closed the loop (input).
+         *  \param cand_keyframe_ids Identifiers of keyframes containing candidate 
+         *  clusters that have closed loops (input).
+         *  \param f_q_l_kpts Filtered query left keypoints (input).
+         *  \param f_q_r_kpts Filtered query right keypoints (input).
+         *  \param f_cand_l_kpts Filtered candidate left keypoints (input).
+         *  \param f_cand_r_kpts Filtered candidate right keypoints (input).
+         *  \param definitive_inliers_per_pair The number of inliers for every loop
+         *  closure cluster pair (input).
+         *  \param definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id)
+         *  (input).
+         *  \param cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
+         *  relation (cand_cluster_id, cand_keyframe_id) (input).
+         */
+        void publishLoopClosure(const ros::Time& stamp,
+                                const ros::Publisher& publisher,
+                                const int q_keyframe_id,
+                                const std::string& i_path,
+                                const std::vector<int>& q_cluster_ids,
+                                const std::vector<int>& cand_cluster_ids,
+                                const std::vector<int>& cand_keyframe_ids,
+                                const std::vector<cv::Point2f>& f_q_l_kpts,
+                                const std::vector<cv::Point2f>& f_q_r_kpts,
+                                const std::vector<cv::Point2f>& f_cand_l_kpts,
+                                const std::vector<cv::Point2f>& f_cand_r_kpts,
+                                const std::vector<int>& definitive_inliers_per_pair,
+                                const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
+                                const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
+
+
+        /** \brief Draws and writes on disk a loop closure image with all the correspondences
+         *  between query keyframe and all the loop closing keyframes.
+         *  \param o_path Image output path. The name of the final
+         *  file must be included (input).
+         *  \param q_keyframe_id Keyframe identifier to which the query cluster belongs
+         *  (input).
+         *  \param i_path Path to keyframes saved on disk.
+         *  \param q_cluster_ids Identifiers of the query clusters that have 
+         *  closed the loop (input).
+         *  \param cand_cluster_ids Identifiers of the candidate clusters that have 
+         *  closed the loop (input).
+         *  \param cand_keyframe_ids Identifiers of keyframes containing candidate 
+         *  clusters that have closed loops (input).
+         *  \param f_q_l_kpts Filtered query left keypoints (input).
+         *  \param f_q_r_kpts Filtered query right keypoints (input).
+         *  \param f_cand_l_kpts Filtered candidate left keypoints (input).
+         *  \param f_cand_r_kpts Filtered candidate right keypoints (input).
+         *  \param definitive_inliers_per_pair The number of inliers for every loop
+         *  closure cluster pair (input).
+         *  \param definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id)
+         *  (input).
+         *  \param cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
+         *  relation (cand_cluster_id, cand_keyframe_id) (input).
+         */
+        void writeLoopClosure(const std::string& o_path,
+                              const int q_keyframe_id,
+                              const std::string& i_path,
+                              const std::vector<int>& q_cluster_ids,
+                              const std::vector<int>& cand_cluster_ids,
+                              const std::vector<int>& cand_keyframe_ids,
+                              const std::vector<cv::Point2f>& f_q_l_kpts,
+                              const std::vector<cv::Point2f>& f_q_r_kpts,
+                              const std::vector<cv::Point2f>& f_cand_l_kpts,
+                              const std::vector<cv::Point2f>& f_cand_r_kpts,
+                              const std::vector<int>& definitive_inliers_per_pair,
+                              const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
+                              const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
 
 
         /** \brief Publishes current robot pose.
@@ -287,6 +366,14 @@ class Publisher
                         const std::vector<tf::Transform>& poses);
 
 
+        /** \brief Converts an integer to a string containing a
+         *  five-digit number.
+         *  \param in Input integer (input).
+         *  @return The string containing the five-digit number.
+         */
+        std::string convertTo5Digits(int in);
+
+
     private:
 
 
@@ -301,13 +388,19 @@ class Publisher
                            const std::vector<cv::Point2f>& pts);
 
 
-        /** \brief Writes text at the bottom of the image.
+        /** \brief Writes text at the bottom of the image. 
+         *  \param caption If true, the text is written in the caption.
+         *  Otherwise it is written as a caption (input).
          *  \param img The image (input).
-         *  \param s The text (input).
+         *  \param extra_vertical_space Extra vertical space to keep
+         *  the text from touching the margins (input).
+         *  \param text The text (input).
          *  @return An image with the txt at the bottom.
          */
-        cv::Mat writeTxtInImage(const cv::Mat& img,
-                                const std::stringstream& s);
+        cv::Mat writeTxtInImage(const bool caption,
+                                const cv::Mat& img,
+                                const std::stringstream& text,
+                                const int extra_vertical_space);
 
 
         /** \brief Concatenates the stereo images and draw their keypoints. 
@@ -380,6 +473,42 @@ class Publisher
                                         const std::vector<std::vector<int>>& clusters);
 
 
+        /** \brief Draws a loop closure image with all the correspondences
+         *  between query keyframe and all the loop closing keyframes.
+         *  \param q_keyframe_id Keyframe identifier to which the query cluster belongs
+         *  (input).
+         *  \param i_path Path to keyframes saved on disk.
+         *  \param q_cluster_ids Identifiers of the query clusters that have 
+         *  closed the loop (input).
+         *  \param cand_cluster_ids Identifiers of the candidate clusters that have 
+         *  closed the loop (input).
+         *  \param cand_keyframe_ids Identifiers of keyframes containing candidate 
+         *  clusters that have closed loops (input).
+         *  \param f_q_l_kpts Filtered query left keypoints (input).
+         *  \param f_q_r_kpts Filtered query right keypoints (input).
+         *  \param f_cand_l_kpts Filtered candidate left keypoints (input).
+         *  \param f_cand_r_kpts Filtered candidate right keypoints (input).
+         *  \param definitive_inliers_per_pair The number of inliers for every loop
+         *  closure cluster pair (input).
+         *  \param definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id)
+         *  (input).
+         *  \param cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
+         *  relation (cand_cluster_id, cand_keyframe_id) (input).
+         */
+        cv::Mat drawLoopClosure(const int q_keyframe_id,
+                                const std::string& i_path,
+                                const std::vector<int>& q_cluster_ids,
+                                const std::vector<int>& cand_cluster_ids,
+                                const std::vector<int>& cand_keyframe_ids,
+                                const std::vector<cv::Point2f>& f_q_l_kpts,
+                                const std::vector<cv::Point2f>& f_q_r_kpts,
+                                const std::vector<cv::Point2f>& f_cand_l_kpts,
+                                const std::vector<cv::Point2f>& f_cand_r_kpts,
+                                const std::vector<int>& definitive_inliers_per_pair,
+                                const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
+                                const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
+
+
         /** \brief Builds nav_msgs::Odometry msg with current robot pose.
          *  \param c_stamp Current pose timestamp (input).
          *  \param world_frame_id World coordinate axis id (input).
@@ -404,5 +533,3 @@ class Publisher
 
 
 #endif // PUBLISHER_HPP
-
-// 469

@@ -47,6 +47,12 @@ class Cluster
                 std::vector<cv::Point3f> obj_pts);
 
 
+        /** \brief Computes the 3D points in world coordinates.
+         *  @return 3D points in world coordinates.
+         */
+        std::vector<cv::Point3f> getWorldPoints();
+
+
         /** \brief Get the cluster id.
          *  @return The cluster id.
          */

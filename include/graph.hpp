@@ -75,18 +75,25 @@ namespace slam
             int getVertexKeyframeId(int vertex_id);
 
 
-            /** \brief Get the graph vertex pose.
+            /** \brief Get the world vertex pose from the graph.
              *  \param vertex_id The id of the vertex for which the pose is desired (input).
              *  \param lock Set to true if graph locking is required (input/optional).
-             *  @return Tf with the graph pose.
+             *  @return Tf with world vertex pose.
              */
             tf::Transform getVertexPose(int vertex_id, bool lock);
 
 
-            /** \brief Get the camera pose of some specific vertex.
+            /** \brief Get the graph vertex pose relative to camera.
+             *  \param vertex_id The id of the vertex for which the pose is desired (input).
+             *  @return Tf with vertex pose relative to camera.
+             */
+            tf::Transform getVertexPoseRelativeToCamera(int vertex_id);
+
+
+            /** \brief Get the world camera pose of some specific vertex.
              *  \param vertex_id The id of the vertex for which the pose is desired (input).
              *  \param lock Set to true if graph locking is required (input/optional).
-             *  @return Tf with the graph vertex camera pose.
+             *  @return Tf with the world camera pose.
              */
             tf::Transform getVertexCameraPose(int vertex_id, bool lock);
 
@@ -129,6 +136,11 @@ namespace slam
                                      int discard_window,
                                      uint num_closest_neighbors,
                                      std::vector<int>& closest_neighbors);
+
+
+            /** \brief Optimitzes the graph. 
+             */
+            void update();
 
 
         protected:
@@ -254,7 +266,7 @@ namespace slam
 
             std::vector<tf::Transform> initial_cluster_pose_history_; //!> Stores the initial cluster poses, before graph update.
 
-            std::vector<std::pair<int, int>> cluster_frame_relation_; //!> Stores the cluster/frame relation (cluster_id, frame_id)
+            std::vector<std::pair<int, int>> cluster_keyframe_relation_; //!> Stores the cluster-keyframe relation (cluster_id, frame_id).
 
             std::mutex mutex_graph_; //!> Mutex for the graph manipulation.
 

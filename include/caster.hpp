@@ -89,12 +89,6 @@ class Caster
         tf::Transform fromVertexToTf(const g2o::VertexSE3* vertex);
 
 
-        /** \brief Converts an integer to a string containing a
-         *  five-digit number.
-         *  \param in Input integer (input).
-         *  @return The string containing the five-digit number.
-         */
-        std::string convertTo5Digits(int in);
 };
 
 

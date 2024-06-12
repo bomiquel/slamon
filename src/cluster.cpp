@@ -25,3 +25,22 @@ Cluster::Cluster(int id,
     frame_id_ = frame_id;
     camera_pose_ = camera_pose;
 }
+
+
+std::vector<cv::Point3f> Cluster::getWorldPoints()
+{
+    tf::Vector3 p_tf;
+    tf::Vector3 p_tf_world;
+    std::vector<cv::Point3f> world_pts;
+    for (uint i = 0; i < obj_pts_.size(); i++)
+    { 
+        p_tf.setX(obj_pts_[i].x);
+        p_tf.setY(obj_pts_[i].y);
+        p_tf.setZ(obj_pts_[i].z);
+        p_tf_world = camera_pose_ * p_tf;
+        world_pts.push_back(cv::Point3f(p_tf_world.getX(),
+                                        p_tf_world.getY(),
+                                        p_tf_world.getZ()));
+    }
+    return world_pts;
+}

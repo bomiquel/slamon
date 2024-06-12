@@ -86,11 +86,11 @@ namespace slam
     int Graph::getVertexKeyframeId(int vertex_id)
     {
         int frame_id = -1;
-        for (uint i = 0; i < cluster_frame_relation_.size(); i++)
+        for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
         {
-            if (cluster_frame_relation_[i].first == vertex_id)
+            if (cluster_keyframe_relation_[i].first == vertex_id)
             {
-                frame_id = cluster_frame_relation_[i].second;
+                frame_id = cluster_keyframe_relation_[i].second;
                 break;
             }
         }
@@ -131,6 +131,12 @@ namespace slam
     }
 
 
+    tf::Transform Graph::getVertexPoseRelativeToCamera(int vertex_id)
+    {
+        return local_cluster_poses_[vertex_id];
+    }
+
+
     tf::Transform Graph::getVertexCameraPose(int vertex_id, bool lock = true)
     {
         tf::Transform vertex_pose = getVertexPose(vertex_id, lock);
@@ -141,10 +147,10 @@ namespace slam
     void Graph::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
     {
         vertices.clear();
-        for (uint i = 0; i < cluster_frame_relation_.size(); i++)
+        for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
         {
-            if (cluster_frame_relation_[i].second == keyframe_id)
-                vertices.push_back(cluster_frame_relation_[i].first);
+            if (cluster_keyframe_relation_[i].second == keyframe_id)
+                vertices.push_back(cluster_keyframe_relation_[i].first);
         }
     }
 
@@ -254,6 +260,20 @@ namespace slam
     }
 
 
+    void Graph::update()
+    {
+        mutex_graph_.lock();
+
+        // Optimize!
+        graph_optimizer_.initializeOptimization();
+        graph_optimizer_.optimize(20);
+
+        mutex_graph_.unlock();
+
+        ROS_INFO_STREAM("[Graph->updater:] Optimization done in graph with: " << graph_optimizer_.vertices().size() << " vertices.");
+    }
+
+
     void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
                               const nav_msgs::OdometryConstPtr& odom_msg)
     {
@@ -268,8 +288,8 @@ namespace slam
         if (enable_debugging_)
         {
             c_frame_name = convertTo5Digits(frame_msg->header.seq);
-            c_frame.setLeftImg(cv::imread(frame_path_ + c_frame_name + "_left.png"));
-            c_frame.setRightImg(cv::imread(frame_path_ + c_frame_name + "_right.png"));
+            c_frame.setLeftImg(cv::imread(frame_path_ + c_frame_name + "_left.png", cv::IMREAD_COLOR));
+            c_frame.setRightImg(cv::imread(frame_path_ + c_frame_name + "_right.png", cv::IMREAD_COLOR));
         }
 
         // Include a keyframe to the map if necessary.
@@ -313,11 +333,11 @@ namespace slam
             std::vector<cv::Point2f> cluster_l_kpts, cluster_r_kpts;
             std::vector<Cluster> clusters_to_close_loop;
             tf::Transform local_cluster_pose, c_cluster_pose;
-            tf::Transform c_camera_pose = c_robot_pose * robot2camera_;
+            tf::Transform c_camera_pose = c_robot_pose * robot2camera_; // {o}^T_{c} = {o}^T_{r} * {r}^T_{c}
             for (uint i = 0; i < clusters.size(); i++)
             {
-                local_cluster_pose = fromPoint3DToTf(cluster_centroids[i]);
-                c_cluster_pose = c_camera_pose * local_cluster_pose;
+                local_cluster_pose = fromPoint3DToTf(cluster_centroids[i]); // {c}^T_{cluster}
+                c_cluster_pose = c_camera_pose * local_cluster_pose; // {o}^T_{cluster} = {o}^T_{c} * {c}^T_{cluster}
                 initial_cluster_pose_history_.push_back(c_cluster_pose);
 
                 // Add cluster to the graph.
@@ -326,7 +346,7 @@ namespace slam
                 // Store information.
                 c_vertex_ids.push_back(cluster_id);
                 local_cluster_poses_.push_back(local_cluster_pose);
-                cluster_frame_relation_.push_back(std::make_pair(cluster_id, c_keyframe_id_)); // Cluster and Frame id.
+                cluster_keyframe_relation_.push_back(std::make_pair(cluster_id, c_keyframe_id_)); // Cluster and Frame id.
 
                 // Build cluster
                 for (uint j = 0; j < clusters[i].size(); j++)

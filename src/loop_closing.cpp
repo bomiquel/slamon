@@ -13,7 +13,7 @@ namespace slam
                              const std::string& w_path,
                              std::string& matching_type,
                              std::string& motion_estimation_type):
-                             StereoModules(ratio, min_lc_inliers, matching_type, motion_estimation_type)
+                             VisionMotionModules(ratio, matching_type, motion_estimation_type)
     {
         // Initialises parameters.
         w_path_ = w_path;
@@ -47,9 +47,15 @@ namespace slam
     { 
         // Create ROS node.
         ros::NodeHandle nh;
+        ros::NodeHandle nhp("~");
 
         // Client services.
         proj_mat_client_ = nh.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
+
+        // Publishers
+        // num_clusters_pub_ = nhp.advertise<std_msgs::Int32>("num_clusters", 1);
+        // num_loop_closure_pub_ = nhp.advertise<std_msgs::Int32>("num_loop_closure", 1);
+        loop_closure_img_pub_ = nhp.advertise<sensor_msgs::Image>("loop_closure_img", 1);
 
         // Loop
         ros::Rate r(5);
@@ -168,6 +174,8 @@ namespace slam
                 ROS_WARN_STREAM("[LC->searchByProximity->readCluster:] It is not possible to read the cluster " << candidates[i] << " from the disk!");
                 continue;
             }
+
+            closeLoopBetween(c_cluster, cand_cluster, "proximity");
         }
     }
 
@@ -181,6 +189,7 @@ namespace slam
             return;
         
         // Loop over candidates.
+        bool valid;
         Cluster cand_cluster;
         for (uint i = 0; i < candidates.size(); i++)
         {
@@ -190,6 +199,10 @@ namespace slam
                 ROS_WARN_STREAM("[LC->searchByHash->readCluster:] It is not possible to read the cluster " << candidates[i] << " from the disk!");
                 continue;
             }
+
+            valid = closeLoopBetween(c_cluster, cand_cluster, "hash");
+            if (valid)
+                break;
         }
     }
 
@@ -293,6 +306,334 @@ namespace slam
         tf::Transform camera_pose = graph_->getVertexCameraPose(id, true);
         Cluster cluster(id, frame_id, l_descs, r_descs, camera_pose, l_kpts, r_kpts, obj_pts);
         return cluster;
+    }
+
+
+    bool LoopClosing::closeLoopBetween(Cluster q_cluster,
+                                       Cluster cand_cluster,
+                                       const std::string& search_method)
+    {
+        ROS_INFO_STREAM("Hello there");
+
+
+        
+        // Cluster ids list.
+        std::vector<int> q_cluster_ids, cand_cluster_ids, f_q_cluster_ids, f_cand_cluster_ids;
+
+        // First descriptor matching.
+        std::vector<cv::Point3f> f_q_obj_pts, f_cand_obj_pts;
+        std::vector<cv::Point2f> f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts;
+        matchNonStereoKeypoints(q_cluster.getLeftDescs(), q_cluster.getRightDescs(), 
+                                cand_cluster.getLeftDescs(), cand_cluster.getRightDescs(),
+                                q_cluster_ids, cand_cluster_ids, 
+                                q_cluster.getLeftKpts(), q_cluster.getRightKpts(),
+                                cand_cluster.getLeftKpts(), cand_cluster.getRightKpts(),
+                                q_cluster.getObjectPoints(), cand_cluster.getObjectPoints(),
+                                f_q_cluster_ids, f_cand_cluster_ids,
+                                f_q_l_kpts, f_q_r_kpts, 
+                                f_cand_l_kpts, f_cand_r_kpts,
+                                f_q_obj_pts, f_cand_obj_pts);
+                                
+        // Gets the neighbor clusters if enough matching percentage.
+        if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_ / 2))
+        {
+            ROS_INFO_STREAM("General Kenobi");
+            // Inits accumulated data. Sanity check.
+            q_cluster_ids.clear();
+            f_q_cluster_ids.clear();
+            cand_cluster_ids.clear();
+            f_cand_cluster_ids.clear();
+
+            // Inits accumulated data. Candidate data.
+            cv::Mat all_cand_l_descs = cand_cluster.getLeftDescs();
+            cv::Mat all_cand_r_descs = cand_cluster.getRightDescs();
+            std::vector<cv::Point2f> all_cand_l_kpts = cand_cluster.getLeftKpts();
+            std::vector<cv::Point2f> all_cand_r_kpts = cand_cluster.getRightKpts();
+            std::vector<cv::Point3f> all_cand_world_pts = cand_cluster.getWorldPoints();
+
+            // Inits accumulated data. Query data.
+            cv::Mat all_q_l_descs = q_cluster.getLeftDescs();
+            cv::Mat all_q_r_descs = q_cluster.getRightDescs();
+            std::vector<cv::Point2f> all_q_l_kpts = q_cluster.getLeftKpts();
+            std::vector<cv::Point2f> all_q_r_kpts = q_cluster.getRightKpts();
+            std::vector<cv::Point3f> all_q_obj_pts = q_cluster.getObjectPoints();
+
+            // Temporal variables.
+            Cluster tmp_cluster;
+            cv::Mat tmp_l_descs, tmp_r_descs;
+            std::vector<cv::Point3f> tmp_3d_pts;
+            std::vector<cv::Point2f> tmp_l_kpts, tmp_r_kpts;
+
+            // Inits the cluster candidate list.
+            for (uint i = 0; i < all_cand_l_kpts.size(); i++)
+                cand_cluster_ids.push_back(cand_cluster.getId());
+
+            // Increases the probability to close loop by extracting the candidate neighbors.
+            std::vector<int> cand_cluster_neighbours;
+            graph_->findClosestVertices(cand_cluster.getId(), q_cluster.getId(), lc_discard_window_, lc_neighbors_, cand_cluster_neighbours);
+            for (uint i = 0; i < cand_cluster_neighbours.size(); i++)
+            {
+                // Reads from the disk the candidate cluster's ith neighbour.
+                tmp_cluster = readCluster(cand_cluster_neighbours[i]);
+
+                // Sanity check.
+                tmp_l_descs = tmp_cluster.getLeftDescs();
+                if (tmp_l_descs.rows == 0)
+                    continue;
+
+                // Gets data from the candidate cluster's ith neighbour.
+                tmp_l_kpts = tmp_cluster.getLeftKpts();
+                tmp_r_kpts = tmp_cluster.getRightKpts();
+                tmp_r_descs = tmp_cluster.getRightDescs();
+                tmp_3d_pts = tmp_cluster.getWorldPoints();
+
+                // Concatenates candidate data.
+                cv::vconcat(all_cand_l_descs, tmp_l_descs, all_cand_l_descs);
+                cv::vconcat(all_cand_r_descs, tmp_r_descs, all_cand_r_descs);
+                all_cand_l_kpts.insert(all_cand_l_kpts.end(), tmp_l_kpts.begin(), tmp_l_kpts.end());
+                all_cand_r_kpts.insert(all_cand_r_kpts.end(), tmp_r_kpts.begin(), tmp_r_kpts.end());
+                all_cand_world_pts.insert(all_cand_world_pts.end(), tmp_3d_pts.begin(), tmp_3d_pts.end());
+
+                // Save the candidate cluster's ith neighbour id for these points.
+                for (uint j = 0; j < tmp_l_kpts.size(); j++)
+                    cand_cluster_ids.push_back(tmp_cluster.getId());
+
+                // Sanity check.
+                tmp_l_kpts.clear();
+                tmp_r_kpts.clear();
+                tmp_3d_pts.clear();
+                tmp_l_descs.release();
+                tmp_r_descs.release();
+            }
+
+            // Inits the query cluster frame list.
+            for (uint i = 0; i < all_q_l_kpts.size(); i++)
+                q_cluster_ids.push_back(q_cluster.getId());
+
+            // Extracts all the clusters corresponding to the current cluster frame
+            std::vector<int> q_cluster_neighbours;
+            graph_->getKeyframeVertices(q_cluster.getFrameId(), q_cluster_neighbours);
+            for (uint i = 0; i < q_cluster_neighbours.size(); i++)
+            {
+                // Avoids itself.
+                if (q_cluster.getId() == q_cluster_neighbours[i])
+                    continue;
+
+                // Reads from the disk the query cluster's ith neighbour.
+                tmp_cluster = readCluster(q_cluster_neighbours[i]);
+
+                // Sanity check.
+                tmp_l_descs = tmp_cluster.getLeftDescs();
+                if (tmp_l_descs.rows == 0)
+                    continue;
+
+                // Gets data from the query cluster's ith neighbour.
+                tmp_l_kpts = tmp_cluster.getLeftKpts();
+                tmp_r_kpts = tmp_cluster.getRightKpts();
+                tmp_r_descs = tmp_cluster.getRightDescs();
+                tmp_3d_pts = tmp_cluster.getObjectPoints();
+
+                // Concatenates query data.
+                cv::vconcat(all_q_l_descs, tmp_l_descs, all_q_l_descs);
+                cv::vconcat(all_q_r_descs, tmp_r_descs, all_q_r_descs);
+                all_q_l_kpts.insert(all_q_l_kpts.end(), tmp_l_kpts.begin(), tmp_l_kpts.end());
+                all_q_r_kpts.insert(all_q_r_kpts.end(), tmp_r_kpts.begin(), tmp_r_kpts.end());
+                all_q_obj_pts.insert(all_q_obj_pts.end(), tmp_3d_pts.begin(), tmp_3d_pts.end());
+
+                // Save the query cluster's ith neighbour id for these points.
+                for (uint j = 0; j < tmp_l_kpts.size(); j++)
+                    q_cluster_ids.push_back(tmp_cluster.getId());
+
+                // Sanity check.
+                tmp_l_kpts.clear();
+                tmp_r_kpts.clear();
+                tmp_3d_pts.clear();
+                tmp_l_descs.release();
+                tmp_r_descs.release();
+            }
+
+            // Reuses variables.
+            f_q_l_kpts.clear();
+            f_q_r_kpts.clear();
+            f_q_obj_pts.clear();
+            f_cand_l_kpts.clear();
+            f_cand_r_kpts.clear();
+            f_cand_obj_pts.clear();
+
+            // Second descriptor matching.
+            matchNonStereoKeypoints(all_q_l_descs, all_q_r_descs, 
+                                    all_cand_l_descs, all_cand_r_descs,
+                                    q_cluster_ids, cand_cluster_ids,
+                                    all_q_l_kpts, all_q_r_kpts, 
+                                    all_cand_l_kpts, all_cand_r_kpts,
+                                    all_q_obj_pts, all_cand_world_pts,
+                                    f_q_cluster_ids, f_cand_cluster_ids,
+                                    f_q_l_kpts, f_q_r_kpts,
+                                    f_cand_l_kpts, f_cand_r_kpts,
+                                    f_q_obj_pts, f_cand_obj_pts);
+
+            if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_))
+            {
+                ROS_INFO_STREAM("I HATE SAND");
+                // Estimates motion.
+                cv::Mat estimated_rotation, estimated_translation;
+                std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
+                std::vector<cv::Point3f> i_q_obj_pts, i_cand_obj_pts;
+                std::vector<cv::Point2f> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
+                estimateMotion(f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_obj_pts, f_cand_obj_pts,
+                               estimated_rotation, estimated_translation,
+                               i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_obj_pts, i_cand_obj_pts);
+
+                // Loop found!
+                if (i_q_l_kpts.size() >= (uint)(min_lc_inliers_))
+                {
+                    ROS_INFO_STREAM("MAY THE FORCE BE WITH YOU");
+                    tf::Transform estimated_motion;
+                    fromMatToTf(estimated_rotation, estimated_translation, estimated_motion);
+                    
+                    // From {q_cam}^T_{O} to {O}^T_{q_cam}.
+                    estimated_motion = estimated_motion.inverse();
+
+                    // Gets the inliers per cluster pair.
+                    std::pair<int, int> relation;
+                    bool cluster_pair_found, cand_keyframe_found;
+                    std::vector<int> inliers_per_pair, cand_keyframe_ids;
+                    std::vector<std::pair<int, int>> cluster_pairs, cand_cluster_keyframe_relation;
+                    int q_cluster_id, cand_cluster_id, cand_keyframe_id, last_keyframe_id = -1, last_cluster_id = -1;
+                    for (uint i = 0; i < i_q_l_kpts.size(); i++)
+                    {
+                        q_cluster_id = i_q_cluster_ids[i];
+                        cand_cluster_id = i_cand_cluster_ids[i];
+                        cand_keyframe_id = graph_->getVertexKeyframeId(cand_cluster_id);
+
+                        // Builds the unique candidate keyframe vector.
+                        cand_keyframe_found = false;
+                        for (uint j = 0; j < cand_keyframe_ids.size(); j++)
+                        {
+                            if (cand_keyframe_ids[j] == cand_keyframe_id)
+                            {
+                                cand_keyframe_found = true;
+                                break;
+                            }
+                        }
+                        if (!cand_keyframe_found)
+                            cand_keyframe_ids.push_back(cand_keyframe_id);
+
+                        // Builds candidate keyframe-cluster relation.
+                        if ((last_keyframe_id != cand_keyframe_id) || (last_cluster_id != cand_cluster_id))
+                        {
+                            last_cluster_id = cand_cluster_id;
+                            last_keyframe_id = cand_keyframe_id;
+                            cand_cluster_keyframe_relation.push_back(std::make_pair(cand_cluster_id, cand_keyframe_id));
+                        }
+
+                        // Searches if this pair already exists.
+                        cluster_pair_found = false;
+                        for (uint j = 0; j < cluster_pairs.size(); j++)
+                        {
+                            if ((cluster_pairs[j].first == q_cluster_id) && (cluster_pairs[j].second == cand_cluster_id))
+                            {
+                                inliers_per_pair[j]++;
+                                cluster_pair_found = true;
+                                break;
+                            }
+                        }
+                        if (!cluster_pair_found)
+                        {
+                            cluster_pairs.push_back(std::make_pair(q_cluster_id, cand_cluster_id));
+                            inliers_per_pair.push_back(1);
+                        }
+                    }
+
+                    // Adds the corresponding edges.
+                    bool lc_already_exists, some_edge_added = false;
+                    std::vector<int> definitive_inliers_per_pair;
+                    std::vector<std::pair<int, int>> definitive_cluster_pairs; // q_cluster_id - cand_cluster_id
+                    tf::Transform edge, cand_cluster_pose, q_cluster_pose_relative_to_camera;
+                    for (uint i = 0; i < inliers_per_pair.size(); i++)
+                    {
+                        if (inliers_per_pair[i] >= 5)
+                        {
+                            // Checks if this loop closure exists.
+                            lc_already_exists = false;
+                            for (uint j = 0; j < cluster_lc_found_.size(); j++)
+                            {
+                                if ((cluster_lc_found_[j].first == cluster_pairs[i].first && cluster_lc_found_[j].second == cluster_pairs[i].second) ||
+                                    (cluster_lc_found_[j].first == cluster_pairs[i].second && cluster_lc_found_[j].second == cluster_pairs[i].first))
+                                {
+                                    lc_already_exists = true;
+                                    break;
+                                }
+                            }
+                            if (lc_already_exists)
+                                continue;
+                            
+                            // Computes correct transform between edges.
+                            cand_cluster_pose = graph_->getVertexPose(cluster_pairs[i].second, true); // {O}^T_{cand_cluster}
+                            q_cluster_pose_relative_to_camera = graph_->getVertexPoseRelativeToCamera(cluster_pairs[i].first); // {q_cam}^T_{q_cluster}
+                            edge = cand_cluster_pose.inverse() * estimated_motion * q_cluster_pose_relative_to_camera; // {cand_cluster}^T_{q_cluster} = {cand_cluster}^T_{O} * {O}^T_{q_cam} * {q_cam}^T_{q_cluster}
+
+                            // Adds this edge to the graph.
+                            some_edge_added = true;
+                            graph_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, edge);                           
+                            definitive_inliers_per_pair.push_back(inliers_per_pair[i]);
+                            definitive_cluster_pairs.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second)); // q_cluster_id - cand_cluster_id
+
+                            // Adds this edge to the cluster list of loop closings found.
+                            cluster_lc_found_.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second));
+                        }
+                    }
+
+                    if (some_edge_added)
+                    {
+                        num_loop_closures_++;
+
+                        graph_->update();
+
+                        ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------" << std::endl << 
+                                                            " LOOP CLOSURE: " << num_loop_closures_ << std::endl << 
+                                        "Between keyframe " << q_cluster.getFrameId() << " and " << cand_cluster.getFrameId() << std::endl <<
+                                        "Method: " << search_method << std::endl <<
+                                        "Inliers: " << i_q_l_kpts.size());
+
+                        if (enable_debugging_)
+                        {
+                            if (loop_closure_img_pub_.getNumSubscribers() > 0)
+                                publishLoopClosure(ros::Time::now(), 
+                                                   loop_closure_img_pub_,
+                                                   q_cluster.getFrameId(),
+                                                   keyframe_path_,
+                                                   i_q_cluster_ids,
+                                                   i_cand_cluster_ids,
+                                                   cand_keyframe_ids,
+                                                   i_q_l_kpts,
+                                                   i_q_r_kpts,
+                                                   i_cand_l_kpts,
+                                                   i_cand_r_kpts,
+                                                   definitive_inliers_per_pair,
+                                                   definitive_cluster_pairs,
+                                                   cand_cluster_keyframe_relation);
+
+                            writeLoopClosure(lc_path_,
+                                             q_cluster.getFrameId(),
+                                             keyframe_path_,
+                                             i_q_cluster_ids,
+                                             i_cand_cluster_ids,
+                                             cand_keyframe_ids,
+                                             i_q_l_kpts,
+                                             i_q_r_kpts,
+                                             i_cand_l_kpts,
+                                             i_cand_r_kpts,
+                                             definitive_inliers_per_pair,
+                                             definitive_cluster_pairs,
+                                             cand_cluster_keyframe_relation);
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;  
     }
 
 

@@ -169,7 +169,7 @@ namespace slam
                         tf::Transform c_robot_motion = robot2camera_ * c_camera_motion * robot2camera_.inverse();
 
                         // Calculates the robot's current pose by accumulating its movement.
-                        // {o}^T_{r2} = {0}^T_{r1} * {r1}^T_{r2}
+                        // {o}^T_{r2} = {o}^T_{r1} * {r1}^T_{r2}
                         c_robot_pose_ *= c_robot_motion;
 
                         if (enable_debugging_)
@@ -429,11 +429,11 @@ namespace slam
 
         // Estimate the motion.
         start_time = ros::Time::now().toSec();
-        cv::Mat r_camera_motion, t_camera_motion;
+        cv::Mat camera_rotation, camera_translation;
         std::vector<cv::Point3f> i_c_obj_pts, i_p_obj_pts;
         std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
         estimateMotion(c_cluster_ids, p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
-                       r_camera_motion, t_camera_motion, 
+                       camera_rotation, camera_translation, 
                        f_c_cluster_ids, f_p_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
         run_times_.motion_estimation = ros::Time::now().toSec() - start_time;
         if (i_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
@@ -464,7 +464,7 @@ namespace slam
         }
 
         // Build a TF
-        if(!fromMatToTf(r_camera_motion, t_camera_motion, c_camera_motion))
+        if(!fromMatToTf(camera_rotation, camera_translation, c_camera_motion))
             return false;
 
         return true;

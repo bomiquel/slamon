@@ -2,7 +2,7 @@ slamon:
   lowe_ratio: 0.75 # 0.7/0.9, good 0.85
   min_inliers: 30 # 20
   working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/test2
-  matching_type: circular_homography_matching 
+  matching_type: ratio_matching 
   min_lc_inliers: 50
   robot_frame_id: /robot_0/base_link
   origin_frame_id: /odom

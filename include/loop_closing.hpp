@@ -21,7 +21,7 @@
 #include "caster.hpp"
 #include "cluster.hpp"
 #include "publisher.hpp"
-#include "stereo_modules.hpp"
+#include "vision_motion_modules.hpp"
 
 #include "slamon/GetProjectionMatrices.h"
 
@@ -33,7 +33,7 @@ namespace slam
     class Graph;
 
 
-    class LoopClosing: protected Caster, protected Publisher, protected StereoModules
+    class LoopClosing: protected Caster, protected Publisher, protected VisionMotionModules
     {
         public:
 
@@ -140,6 +140,18 @@ namespace slam
             Cluster readCluster(int id);
 
 
+            /** \brief Tries to close a loop between query and candidate cluster.
+             *  If a loop is closed, the graph is updated.
+             *  \param q_cluster Query cluster (input).
+             *  \param cand_cluster Candidate cluster (input).
+             *  \param seach_method Type of search used (proximity or hash (input).
+             *  @return True if loop closing.
+             */
+            bool closeLoopBetween(Cluster q_cluster,
+                                  Cluster cand_cluster,
+                                  const std::string& search_method);
+
+
         private:
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
@@ -151,6 +163,8 @@ namespace slam
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
 
             int lc_discard_window_; //!> Window size of discarded graph vertices (clusters).
+            
+            int num_loop_closures_; //!> Stores the number of loop closures.
 
             std::list<Cluster> cluster_queue_; //!> Clusters queue to be inserted into the graph
 
@@ -173,6 +187,12 @@ namespace slam
             std::vector<std::pair<int, std::vector<float>>> hash_table_; //!> Hash table: stores a hash for every cluster. This is the unique variable that grows with the robot trajectory.
 
             ros::ServiceClient proj_mat_client_; //!> Service for requesting projection matrices.
+
+            ros::Publisher num_clusters_pub_; //!> Number of clusters publisher.
+            
+            ros::Publisher num_loop_closure_pub_; //!> Number of loop closure publisher.
+
+            ros::Publisher loop_closure_img_pub_; //!> Loop closure image publisher.
     };
 
 
