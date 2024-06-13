@@ -627,11 +627,14 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
     text << "Keyframe " << q_keyframe_id;
     written_img = writeTxtInImage(false, img, text, 20);
 
-    // Composes query keyframe with candidate keyframes.
-    cv::Mat q_img(written_img.rows, cand_keyframe_vector_img.cols, cand_keyframe_vector_img.type(), cv::Scalar(0, 0, 0));
+    // Gets query offset to compose query and candidates keyframes correctly and to draw the keypoints in the correct location.
+    int q_y_offset = written_img.rows - img.rows;
     int q_x_offset = std::round((cand_keyframe_vector_img.cols / 2) - (written_img.cols / 2));
-    written_img.copyTo(q_img(cv::Rect(q_x_offset, 0, written_img.cols, written_img.rows)));
-    cv::vconcat(q_img, cand_keyframe_vector_img, o_img);
+    
+    // Composes query keyframe with candidate keyframes.
+    cv::Mat q_written_spaced_img(written_img.rows, cand_keyframe_vector_img.cols, cand_keyframe_vector_img.type(), cv::Scalar(0, 0, 0));
+    written_img.copyTo(q_written_spaced_img(cv::Rect(q_x_offset, 0, written_img.cols, written_img.rows)));
+    cv::vconcat(q_written_spaced_img, cand_keyframe_vector_img, o_img);
 
     // Builds the vector of colors.
     cv::RNG rng(12345);
@@ -690,9 +693,10 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
             {
                 // Adds x offset to query left point.
                 q_l_kpt.x += q_x_offset;
+                q_l_kpt.y += q_y_offset;
 
                 // Adds x and y offsets to candidate left point.
-                cand_l_kpt.y += q_img.rows;
+                cand_l_kpt.y += q_written_spaced_img.rows;
                 cand_l_kpt.x += keyframe_position * written_img.cols;
 
                 cv::circle(o_img, q_l_kpt, 2, colors[color_idx], -1);
