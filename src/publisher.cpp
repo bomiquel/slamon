@@ -428,9 +428,9 @@ cv::Mat Publisher::writeTxtInImage(const bool caption,
     }
     else
     {
-        img.copyTo(img.rowRange(text_size.height + extra_vertical_space, img.rows + text_size.height + extra_vertical_space).colRange(0, img.cols));
+        img.copyTo(o_img.rowRange(text_size.height + extra_vertical_space, img.rows + text_size.height + extra_vertical_space).colRange(0, img.cols));
         o_img.rowRange(0, text_size.height + extra_vertical_space).setTo(cv::Scalar(255, 255, 255));
-        cv::putText(o_img, text.str(), cv::Point(5, 14), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2, 8);
+        cv::putText(o_img, text.str(), cv::Point(5, 20), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2, 8);
     }
     return o_img;
 }
@@ -590,37 +590,45 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
                                    const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
                                    const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation)
 {
-    // Local variables.
-    cv::Mat img, written_img;
-    std::stringstream caption, title, aux_title;
+    ROS_INFO_STREAM("Input path: " << i_path);
+    ROS_INFO_STREAM("Query keyframe id: " << q_keyframe_id);
+    ROS_INFO_STREAM("Query cluster ids: " << q_cluster_ids.size());
+    ROS_INFO_STREAM("Candidate cluster ids: " << cand_cluster_ids.size());
+    ROS_INFO_STREAM("Candidate keyframe ids: " << cand_keyframe_ids.size());
+    ROS_INFO_STREAM("Filtered query left keypoints: " << f_q_l_kpts.size());
+    ROS_INFO_STREAM("Filtered candidate left keypoints: " << f_cand_l_kpts.size());
+    ROS_INFO_STREAM("Definitive cluster pairs: " << definitive_cluster_pairs.size());
+    ROS_INFO_STREAM("Definitive inliers per pair: " << definitive_inliers_per_pair.size());
+    ROS_INFO_STREAM("Candidate cluster keyframe relation: " << cand_cluster_keyframe_relation.size());
 
+    // Local variables.
+    std::stringstream text;
+    cv::Mat img, o_img, written_img;
+ 
     // Builds candidate keyframe vector.
+    
     cv::Mat cand_keyframe_vector_img;
     for (uint i = 0; i < cand_keyframe_ids.size(); i++)
     {
         // Reads candidate keyframes.
+        ROS_INFO_STREAM("Candidate keyframe path: " << i_path + convertTo5Digits(cand_keyframe_ids[i]) + "_left.png");
         img = cv::imread(i_path + convertTo5Digits(cand_keyframe_ids[i]) + "_left.png", cv::IMREAD_COLOR);
 
         // Adds caption to candidate keyframe.
-        caption.str("");
-        caption << "Keyframe: " << cand_keyframe_ids[i];
-        written_img = writeTxtInImage(true, img, caption, 20);
-
-        if (i == 0)
-            aux_title << cand_keyframe_ids[i];
-        else if ((i + 1) == cand_keyframe_ids.size())
-            aux_title << " and " << cand_keyframe_ids[i];
-        else
-            aux_title << ", " << cand_keyframe_ids[i];
+        text.str("");
+        text << "Keyframe: " << cand_keyframe_ids[i];
+        written_img = writeTxtInImage(true, img, text, 20);
 
         // Horizontal concatenation of candidate keyframes.
         if (cand_keyframe_vector_img.cols == 0)
             written_img.copyTo(cand_keyframe_vector_img);
         else
             cv::hconcat(cand_keyframe_vector_img, written_img, cand_keyframe_vector_img);
+        ROS_INFO_STREAM("Candidate keyframe vector img cols: " << cand_keyframe_vector_img.cols);
     }
 
     // Reads query keyframe.
+    ROS_INFO_STREAM("Query keyframe path: " << i_path + convertTo5Digits(q_keyframe_id) + "_left.png");
     img = cv::imread(i_path + convertTo5Digits(q_keyframe_id) + "_left.png", cv::IMREAD_COLOR);
 
     // Count definitive inliers.
@@ -628,21 +636,23 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
     for (uint i = 0; i < definitive_inliers_per_pair.size(); i++)
         definitive_inliers_counter += definitive_inliers_per_pair[i];
 
+    ROS_INFO_STREAM("Definitive inliers counter: " << definitive_inliers_counter);
+
     // Adds title to query keyframe.
-    title << "Keyframe " << q_keyframe_id << " has a total of " << f_q_l_kpts.size() << " inliers with " << std::endl;
-    if (cand_keyframe_ids.size() == 1)
-        title << "keyframe: " << aux_title.str() << ". " << definitive_inliers_counter << " of them " << std::endl;
-    else 
-        title << "keyframes: " << aux_title.str() << ". " << definitive_inliers_counter << " of them " << std::endl;
-    title << "are used to generate new and robust edges.";
-    written_img = writeTxtInImage(false, img, title, 70);
+    text.str("");
+    text << "Keyframe " << q_keyframe_id;
+    written_img = writeTxtInImage(false, img, text, 20);
+
+    ROS_INFO_STREAM("Image title ok!");
 
     // Composes query keyframe with candidate keyframes.
-    cv::Mat o_img;
     cv::Mat q_img(written_img.rows, cand_keyframe_vector_img.cols, cand_keyframe_vector_img.type(), cv::Scalar(0, 0, 0));
     int q_x_offset = std::round((cand_keyframe_vector_img.cols / 2) - (written_img.cols / 2));
     written_img.copyTo(q_img(cv::Rect(q_x_offset, 0, written_img.cols, written_img.rows)));
     cv::vconcat(q_img, cand_keyframe_vector_img, o_img);
+
+    ROS_INFO_STREAM("Output image rows: " << o_img.rows);
+    ROS_INFO_STREAM("Output image cols: " << o_img.cols);
 
     // Builds the vector of colors.
     cv::RNG rng(12345);
@@ -704,7 +714,7 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
 
                 // Adds x and y offsets to candidate left point.
                 cand_l_kpt.y += q_img.rows;
-                cand_l_kpt.x = cand_l_kpt.x + keyframe_position * written_img.cols;
+                cand_l_kpt.x += keyframe_position * written_img.cols;
 
                 cv::circle(o_img, q_l_kpt, 2, colors[color_idx], -1);
                 cv::circle(o_img, cand_l_kpt, 2, colors[color_idx], -1);

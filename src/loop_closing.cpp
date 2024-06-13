@@ -25,6 +25,9 @@ namespace slam
         // Set "uninitialised" to the loop closing.
         init_loop_closing_ = false;
 
+        // Initialises number of loop closing.
+        num_loop_closures_ = 0; 
+
         // Creates execution directory
         execution_path_ = w_path_ + "haloc/";
         if (std::filesystem::exists(execution_path_))
@@ -315,8 +318,6 @@ namespace slam
     {
         ROS_INFO_STREAM("Hello there");
 
-
-        
         // Cluster ids list.
         std::vector<int> q_cluster_ids, cand_cluster_ids, f_q_cluster_ids, f_cand_cluster_ids;
 
@@ -333,7 +334,7 @@ namespace slam
                                 f_q_l_kpts, f_q_r_kpts, 
                                 f_cand_l_kpts, f_cand_r_kpts,
                                 f_q_obj_pts, f_cand_obj_pts);
-                                
+
         // Gets the neighbor clusters if enough matching percentage.
         if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_ / 2))
         {
@@ -586,8 +587,6 @@ namespace slam
 
                     if (some_edge_added)
                     {
-                        num_loop_closures_++;
-
                         graph_->update();
 
                         ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------" << std::endl << 
@@ -614,7 +613,7 @@ namespace slam
                                                    definitive_cluster_pairs,
                                                    cand_cluster_keyframe_relation);
 
-                            writeLoopClosure(lc_path_,
+                            writeLoopClosure(lc_path_ + convertTo5Digits(num_loop_closures_),
                                              q_cluster.getFrameId(),
                                              keyframe_path_,
                                              i_q_cluster_ids,
@@ -628,6 +627,7 @@ namespace slam
                                              definitive_cluster_pairs,
                                              cand_cluster_keyframe_relation);
                         }
+                        num_loop_closures_++;
                         return true;
                     }
                 }
