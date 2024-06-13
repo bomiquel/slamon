@@ -100,10 +100,11 @@ namespace slam
 
     tf::Transform Graph::getVertexPose(int vertex_id, bool lock = true)
     {
-        tf::Transform vertex_pose;
         if (lock)
         {
-            mutex_graph_.lock();
+            std::scoped_lock lock(mutex_graph_);
+
+            tf::Transform vertex_pose;
             if (vertex_id >= 0)
             {
                 g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_id]);
@@ -113,10 +114,11 @@ namespace slam
             {
                 vertex_pose.setIdentity();
             }
-            mutex_graph_.unlock();
+            return vertex_pose;
         }
         else
         {
+            tf::Transform vertex_pose;
             if (vertex_id >= 0)
             {
                 g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_id]);
@@ -126,8 +128,8 @@ namespace slam
             {
                 vertex_pose.setIdentity();
             }
+            return vertex_pose;
         }
-        return vertex_pose;
     }
 
 
@@ -159,7 +161,7 @@ namespace slam
                                  std::vector<tf::Transform>& keyframe_poses)
     {
         // Locks graph
-        mutex_graph_.lock();
+        std::scoped_lock lock(mutex_graph_);
 
         // Get keyframe poses
         bool found;
@@ -186,17 +188,14 @@ namespace slam
             stamps.push_back(keyframe_stamps_[keyframe_id]);
             keyframe_poses.push_back(getVertexCameraPose(vertex_id, false) * robot2camera_.inverse());
         }
-        
-        // Unlocks graph
-        mutex_graph_.unlock();
     }
 
 
     void Graph::addEdge(int vertex_0_id,
                         int vertex_1_id,
-                        const tf::Transform& tf_edge)
+                        tf::Transform tf_edge)
     {
-        mutex_graph_.lock();
+        std::scoped_lock lock(mutex_graph_);
 
         // Get the graph vertices.
         g2o::VertexSE3* vertex_0 = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_0_id]);
@@ -210,8 +209,6 @@ namespace slam
         graph_edge->setMeasurement(iso_edge);
 
         graph_optimizer_.addEdge(graph_edge);
-
-        mutex_graph_.unlock();
     }
 
 
@@ -262,13 +259,11 @@ namespace slam
 
     void Graph::update()
     {
-        mutex_graph_.lock();
+        std::scoped_lock lock(mutex_graph_);
 
         // Optimize!
         graph_optimizer_.initializeOptimization();
         graph_optimizer_.optimize(20);
-
-        mutex_graph_.unlock();
 
         ROS_INFO_STREAM("[Graph->updater:] Optimization done in graph with: " << graph_optimizer_.vertices().size() << " vertices.");
     }
@@ -319,8 +314,8 @@ namespace slam
                 if (clustering_img_pub_.getNumSubscribers() > 0)
                     publishKeypointsClustering(c_frame.getLeftImg(), stamp, clustering_img_pub_, l_kpts, clusters);
                 writeKeypointsClustering(c_frame.getLeftImg(), clusters_path_ + c_keyframe_name, l_kpts, clusters);
-                ROS_INFO_STREAM("[GRAPH->Map includer]: Adding keyframe: " << c_keyframe_id_);
             }
+            ROS_INFO_STREAM("[GRAPH->Map includer]: Adding keyframe: " << c_keyframe_id_);
 
             // Save the frame timestamp
             keyframe_stamps_.push_back(stamp.toSec());
@@ -453,9 +448,11 @@ namespace slam
             }
 
             // Publish updated robot pose.
-            mutex_graph_.lock();
-            int c_vertex_id = graph_optimizer_.vertices().size() - 1;
-            mutex_graph_.unlock();
+            int c_vertex_id = -1;
+            {
+                std::scoped_lock lock(mutex_graph_);
+                c_vertex_id = graph_optimizer_.vertices().size() - 1;
+            }
             tf::Transform updated_robot_pose = getVertexCameraPose(c_vertex_id, true) * robot2camera_.inverse();
             publishPose(stamp, map_pub_, "map", robot_frame_id_, updated_robot_pose);
         }
@@ -557,7 +554,7 @@ namespace slam
     int Graph::addVertex(tf::Transform pose)
     {
         // Lock graph.
-        mutex_graph_.lock();
+        std::scoped_lock lock(mutex_graph_);
 
         // Convert pose for graph
         Eigen::Isometry3d vertex_pose = fromTfToIsometry(pose);
@@ -576,9 +573,6 @@ namespace slam
 
         // Add vertex.
         graph_optimizer_.addVertex(c_vertex);
-
-        // Unlock graph.
-        mutex_graph_.unlock();
 
         return id;
     }

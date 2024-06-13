@@ -120,7 +120,7 @@ namespace slam
              */
             void addEdge(int vertex_0_id, 
                          int vertex_1_id, 
-                         const tf::Transform& tf_edge);
+                         tf::Transform tf_edge);
 
 
             /** \brief Gets nearest neighbour vertices by distance.
