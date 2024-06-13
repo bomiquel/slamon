@@ -1,11 +1,11 @@
 slamon:
-  lowe_ratio: 0.75 # 0.7/0.9, good 0.85
-  min_inliers: 30 # 20
+  lowe_ratio: 0.80 # 0.7/0.9, good 0.85
+  min_inliers: 40 # 20
   working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/test2
   matching_type: ratio_matching 
-  min_lc_inliers: 50
+  min_lc_inliers: 60
   robot_frame_id: /robot_0/base_link
   origin_frame_id: /odom
   enable_debugging: true
-  min_dist_keyframe: 0.25
+  min_dist_keyframe: 0.50
   motion_estimation_type: p3p

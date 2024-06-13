@@ -61,7 +61,7 @@ namespace slam
         loop_closure_img_pub_ = nhp.advertise<sensor_msgs::Image>("loop_closure_img", 1);
 
         // Loop
-        ros::Rate r(5);
+        ros::Rate r(50);
         Cluster c_cluster;
         while (ros::ok())
         {
@@ -73,7 +73,7 @@ namespace slam
 
                 processNewCluster(c_cluster);
 
-                ROS_INFO_STREAM("[LC->run]: Cluster id: " << c_cluster.getId());
+                ROS_INFO_STREAM("[LC->run]: Cluster: " << c_cluster.getId() << " from keyframe: " << c_cluster.getFrameId());
 
                 searchByProximity(c_cluster);
 
@@ -163,7 +163,7 @@ namespace slam
         // Get the candidates to close loop
         std::vector<int> candidates;
         graph_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), 
-                                    lc_discard_window_, 5, candidates);
+                                    lc_discard_window_, 3, candidates);
         if (candidates.size() == 0)
             return;
 
@@ -316,8 +316,6 @@ namespace slam
                                        Cluster cand_cluster,
                                        const std::string& search_method)
     {
-        ROS_INFO_STREAM("Hello there");
-
         // Cluster ids list.
         std::vector<int> q_cluster_ids, cand_cluster_ids, f_q_cluster_ids, f_cand_cluster_ids;
 
@@ -338,7 +336,6 @@ namespace slam
         // Gets the neighbor clusters if enough matching percentage.
         if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_ / 2))
         {
-            ROS_INFO_STREAM("General Kenobi");
             // Inits accumulated data. Sanity check.
             q_cluster_ids.clear();
             f_q_cluster_ids.clear();
@@ -475,7 +472,6 @@ namespace slam
 
             if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_))
             {
-                ROS_INFO_STREAM("I HATE SAND");
                 // Estimates motion.
                 cv::Mat estimated_rotation, estimated_translation;
                 std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
@@ -488,7 +484,6 @@ namespace slam
                 // Loop found!
                 if (i_q_l_kpts.size() >= (uint)(min_lc_inliers_))
                 {
-                    ROS_INFO_STREAM("MAY THE FORCE BE WITH YOU");
                     tf::Transform estimated_motion;
                     fromMatToTf(estimated_rotation, estimated_translation, estimated_motion);
                     
