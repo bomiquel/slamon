@@ -18,7 +18,7 @@
 
 #include "hash.hpp"
 #include "graph.hpp"
-#include "caster.hpp"
+#include "tools.hpp"
 #include "cluster.hpp"
 #include "publisher.hpp"
 #include "vision_motion_modules.hpp"
@@ -33,7 +33,7 @@ namespace slam
     class Graph;
 
 
-    class LoopClosing: protected Caster, protected Publisher, protected VisionMotionModules
+    class LoopClosing: protected Publisher, protected VisionMotionModules
     {
         public:
 
@@ -76,7 +76,7 @@ namespace slam
             void addClusterToQueue(Cluster cluster);
 
 
-        protected:
+        private:
 
 
             /** \brief Check if there are clusters in the queue.
@@ -151,9 +151,7 @@ namespace slam
                                   Cluster cand_cluster,
                                   const std::string& search_method);
 
-
-        private:
-
+            // Atributes.
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
             bool init_loop_closing_; //!> Loop closing state.

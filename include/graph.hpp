@@ -27,7 +27,6 @@
 #include <g2o/core/optimization_algorithm_levenberg.h>
 
 #include "frame.hpp"
-#include "caster.hpp"
 #include "cluster.hpp"
 #include "publisher.hpp"
 #include "loop_closing.hpp"
@@ -42,7 +41,7 @@ namespace slam
     class LoopClosing;
 
 
-    class Graph: protected Caster, protected Publisher
+    class Graph: protected Publisher
     {   
         public:
 
@@ -143,7 +142,7 @@ namespace slam
             void update();
 
 
-        protected:
+        private:
 
 
             /** \brief Messages callback. This function is called when synchronized frame
@@ -171,6 +170,62 @@ namespace slam
             bool addFrameToMap(Frame& c_frame);
 
 
+            /** \brief Obtains, from the VO and through a service, the transformation
+             *  between the centre of the robot (base_link) and the sensor (camera).
+             */
+            void getRobot2Camera();
+
+
+            /** \brief Adds a vertex to the graph.
+             *  \param pose Vertex pose.
+             *  @return the vertex id.
+             */
+            int addVertex(tf::Transform pose);
+
+
+            /** \brief Return all possible combinations of 2 elements of the input vector.
+             *  \param Vec Input vector with all values.
+             *  @return the list of combinations.
+             */
+            std::vector<std::vector<int>> createComb(const std::vector<int>& vec);
+
+
+            /** \brief Convert custom ROS frame msg to frame object (slam::Frame)
+             *  \param msg ROS message with relevant visual information (input).
+             *  \param frame Will contain the relevant visual information (output).
+             */
+            void fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
+                                           Frame& frame);
+
+
+            /** \brief Convert cv::Point3f to tf::Transform.
+             *  \param pt 3D point (input).
+             *  @return 3D point converted into a transform.
+             */
+            tf::Transform fromPoint3DToTf(const cv::Point3f& pt);
+
+
+            /** \brief Convert a tf::Transform to Eigen::Isometry3d
+             *  \param tf The tf::Transform (input).
+             *  @return The Eigen::Isometry3d matrix.
+             */
+            Eigen::Isometry3d fromTfToIsometry(const tf::Transform& tf);
+
+
+            /** \brief Convert an Eigen::Isometry3d to tf::Transform.
+             *  \param iso The Eigen::Isometry3d matrix (input).
+             *  @return The tf::Transform.
+             */
+            tf::Transform fromIsometryToTf(const Eigen::Isometry3d& iso);
+
+
+            /** \brief Convert g2o::VertexSE3 to tf::Transform.
+             *  \param vertex The g2o::VertexSE3 (input).
+             *  @return The tf::Transform.
+             */ 
+            tf::Transform fromVertexToTf(const g2o::VertexSE3* vertex);
+
+
             /** \brief Computes the absolute diference between 2 poses (omitting z).
              *  \param pose_0 transformation matrix of pose 0
              *  \param pose_1 transformation matrix of pose 1
@@ -196,25 +251,6 @@ namespace slam
                 return sqrt(d.x()*d.x() + d.y()*d.y() + d.z()*d.z());
             }
 
-            /** \brief Obtains, from the VO and through a service, the transformation
-             *  between the centre of the robot (base_link) and the sensor (camera).
-             */
-            void getRobot2Camera();
-
-
-            /** \brief Adds a vertex to the graph.
-             *  \param pose Vertex pose.
-             *  @return the vertex id.
-             */
-            int addVertex(tf::Transform pose);
-
-
-            /** \brief Return all possible combinations of 2 elements of the input vector.
-             *  \param Vec Input vector with all values.
-             *  @return the list of combinations.
-             */
-            std::vector<std::vector<int>> createComb(const std::vector<int>& vec);
-
 
             /** \brief Returns whether the second element of the first
              *  std::pair is less than the second element of the second std::pair
@@ -228,8 +264,7 @@ namespace slam
             }
 
 
-        private:
-
+            // Atributes.
             bool init_graph_; //!> Graph state.
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.

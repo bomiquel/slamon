@@ -607,4 +607,81 @@ namespace slam
     }
 
 
+    void Graph::fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
+                                          Frame& frame)
+    {
+        cv::Point2f kpt;
+        cv::Point3f obj_pt;
+        std::vector<float> desc;
+        cv::Mat l_descs, r_descs;
+        std::vector<cv::Point3f> obj_pts;
+        std::vector<cv::Point2f> l_kpts, r_kpts;
+        for (uint i = 0; i < msg->l_kpts.size(); i++)
+        {
+            kpt.x = msg->l_kpts[i].pt.x;
+            kpt.y = msg->l_kpts[i].pt.y;
+            l_kpts.push_back(kpt);
+            kpt.x = msg->r_kpts[i].pt.x;
+            kpt.y = msg->r_kpts[i].pt.y;
+            r_kpts.push_back(kpt);
+            desc = msg->l_kpts[i].desc;
+            l_descs.push_back(cv::Mat(1, desc.size(), CV_32F, desc.data()));
+            desc = msg->r_kpts[i].desc;
+            r_descs.push_back(cv::Mat(1, desc.size(), CV_32F, desc.data()));
+            obj_pt.x = msg->obj_pts[i].x;
+            obj_pt.y = msg->obj_pts[i].y;
+            obj_pt.z = msg->obj_pts[i].z;
+            obj_pts.push_back(obj_pt);
+        }
+
+        frame = Frame(l_descs, r_descs, msg->header.stamp, l_kpts, r_kpts, obj_pts);
+    }
+
+
+    tf::Transform Graph::fromPoint3DToTf(const cv::Point3f& pt)
+    {
+        tf::Transform out;
+        out.setIdentity();
+        tf::Vector3 translation(pt.x, pt.y, pt.z);
+        out.setOrigin(translation);
+        return out;
+    }
+
+
+    Eigen::Isometry3d Graph::fromTfToIsometry(const tf::Transform& tf)
+    {
+        tf::Vector3 t_in = tf.getOrigin();
+        tf::Quaternion q_in = tf.getRotation();
+        Eigen::Vector3d t_out(t_in.getX(), t_in.getY(), t_in.getZ());
+        Eigen::Quaterniond q_out;
+        q_out.setIdentity();
+        q_out.x() = q_in.getX();
+        q_out.y() = q_in.getY();
+        q_out.z() = q_in.getZ();
+        q_out.w() = q_in.getW();
+        Eigen::Isometry3d out = (Eigen::Isometry3d)q_out;
+        out.translation() = t_out;
+        return out;
+    }
+
+
+    tf::Transform Graph::fromIsometryToTf(const Eigen::Isometry3d& iso)
+    {
+        Eigen::Vector3d t_in = iso.translation();
+        Eigen::Quaterniond q_in = (Eigen::Quaterniond)iso.rotation();
+        tf::Vector3 t_out(t_in.x(), t_in.y(), t_in.z());
+        tf::Quaternion q_out(q_in.x(), q_in.y(), q_in.z(), q_in.w());
+        tf::Transform out(q_out, t_out);
+        return out;
+    }
+
+
+    tf::Transform Graph::fromVertexToTf(const g2o::VertexSE3* vertex)
+    {
+        Eigen::Isometry3d iso = vertex->estimate();
+        tf::Transform tf = fromIsometryToTf(iso);
+        return tf;
+    }
+
+
 }

@@ -116,7 +116,6 @@ link_directories(${OpenCV_INCLUDE_DIRS})
 # Executables
 add_executable(vo_slamon 
                src/frame.cpp
-               src/caster.cpp
                src/vo_node.cpp
                src/publisher.cpp
                src/vision_motion_modules.cpp
@@ -125,7 +124,6 @@ add_executable(map_slamon
                src/hash.cpp
                src/graph.cpp
                src/frame.cpp
-               src/caster.cpp
                src/cluster.cpp
                src/map_node.cpp
                src/publisher.cpp

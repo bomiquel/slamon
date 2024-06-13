@@ -20,7 +20,7 @@
 #include <image_transport/subscriber_filter.h>
 
 #include "frame.hpp"
-#include "caster.hpp"
+#include "tools.hpp"
 #include "publisher.hpp"
 #include "vision_motion_modules.hpp"
 
@@ -32,7 +32,7 @@ namespace slam
 {
 
 
-    class VisualOdometry: protected Caster, protected Publisher, protected VisionMotionModules 
+    class VisualOdometry: protected Publisher, protected VisionMotionModules 
     {
         public:
 
@@ -69,7 +69,7 @@ namespace slam
             void run();
 
 
-        protected:
+        private:
 
 
             /** \brief Messages callback. This function is called when synchronized image
@@ -152,7 +152,13 @@ namespace slam
             void getInitialPose();
 
 
-        private:
+            /** \brief Convert ROS image message to cv::Mat
+             *  \param msg ROS message containing an img (input).
+             *  \param img Will contain the image in cv::Mat type (output).
+             *  @return If the conversion has been possible.
+             */
+            bool fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
+                                 cv::Mat& img);
             
             // Atributes
             int c_frame_id_; //!> Current frame id.
