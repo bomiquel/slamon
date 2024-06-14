@@ -343,7 +343,8 @@ class Publisher
          *  \param r_descs The right image keypoints descriptors (input).
          *  \param l_kpts The left image keypoints (input).
          *  \param r_kpts The right image keypoints (input).
-         *  \param obj_pts 3D points of the scene obtained from the stereo data (input).
+         *  \param cam_pts 3D points of the scene obtained from the stereo data
+         *  and relative to camera (input).
          *  \param publisher The ROS publisher (input).
         */
         void publishFrame(const cv::Mat& l_descs,
@@ -352,7 +353,7 @@ class Publisher
                           const ros::Publisher& publisher,
                           const std::vector<cv::Point2f>& l_kpts,
                           const std::vector<cv::Point2f>& r_kpts,
-                          const std::vector<cv::Point3f>& obj_pts);
+                          const std::vector<cv::Point3f>& cam_pts);
 
 
         /** \brief Writes a list of poses.

@@ -35,7 +35,7 @@ class Cluster
          *  \param camera_pose World camera pose when the cluster was obtained.
          *  \param l_kpts Cluster left keypoints.
          *  \param r_kpts Cluster right keypoints.
-         *  \param obj_pts Cluster 3D points.
+         *  \param cam_pts Cluster 3D points relative to camera.
          */
         Cluster(int id,
                 int frame_id,
@@ -44,13 +44,7 @@ class Cluster
                 tf::Transform camera_pose,
                 std::vector<cv::Point2f> l_kpts,
                 std::vector<cv::Point2f> r_kpts,
-                std::vector<cv::Point3f> obj_pts);
-
-
-        /** \brief Computes the 3D points in world coordinates.
-         *  @return 3D points in world coordinates.
-         */
-        std::vector<cv::Point3f> getWorldPoints();
+                std::vector<cv::Point3f> cam_pts);
 
 
         /** \brief Get the cluster id.
@@ -95,10 +89,17 @@ class Cluster
         inline std::vector<cv::Point2f> getRightKpts() const {return r_kpts_;}
 
 
-        /** \brief Get cluster 3D points.
-         *  @return The cluster 3D points.
+        /** \brief Get cluster 3D points relative to camera.
+         *  @return The cluster 3D points relative to camera.
          */
-        inline std::vector<cv::Point3f> getObjectPoints() const {return obj_pts_;}
+        inline std::vector<cv::Point3f> getCameraPoints() const {return cam_pts_;}
+
+
+        /** \brief Transforms 3D points relative to the camera to relative to the
+         *  world coordinate axis. 
+         *  @return The cluster 3D points relative to world.
+         */
+        std::vector<cv::Point3f> getWorldPoints();
     
 
     private:
@@ -117,7 +118,7 @@ class Cluster
 
         std::vector<cv::Point2f> r_kpts_; //!> Cluster right keypoints.
 
-        std::vector<cv::Point3f> obj_pts_; //!> Cluster 3D points.
+        std::vector<cv::Point3f> cam_pts_; //!> Cluster 3D points relative to camera.
 
 };
 

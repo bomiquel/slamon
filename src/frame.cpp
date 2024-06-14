@@ -6,14 +6,14 @@ Frame::Frame(cv::Mat l_descs,
              ros::Time stamp,
              std::vector<cv::Point2f> l_kpts,
              std::vector<cv::Point2f> r_kpts,
-             std::vector<cv::Point3f> obj_pts)
+             std::vector<cv::Point3f> cam_pts)
 {
     stamp_ = stamp;
     l_kpts_ = l_kpts;
     r_kpts_ = r_kpts;
     l_descs_ = l_descs;
     r_descs_ = r_descs;
-    obj_pts_ = obj_pts;
+    cam_pts_ = cam_pts;
 }
 
 
@@ -24,7 +24,7 @@ Frame::Frame(cv::Mat l_img,
              ros::Time stamp,
              std::vector<cv::Point2f> l_kpts,
              std::vector<cv::Point2f> r_kpts,
-             std::vector<cv::Point3f> obj_pts)
+             std::vector<cv::Point3f> cam_pts)
 {
     l_img_ = l_img;
     r_img_ = r_img;
@@ -33,7 +33,7 @@ Frame::Frame(cv::Mat l_img,
     r_kpts_ = r_kpts;
     l_descs_ = l_descs;
     r_descs_ = r_descs;
-    obj_pts_ = obj_pts;
+    cam_pts_ = cam_pts;
 }
 
 
@@ -179,19 +179,19 @@ void Frame::regionClustering()
 
     // Compute the clusters centroids
     idx = -1;
-    cv::Point3f centroid, cluster_obj_pt;
-    std::vector<cv::Point3f> cluster_obj_pts;
+    cv::Point3f centroid, cluster_cam_pt;
+    std::vector<cv::Point3f> cluster_cam_pts;
     for (uint i = 0; i < clusters_.size(); i++)
     {
-        cluster_obj_pts.clear();
+        cluster_cam_pts.clear();
         for (uint j = 0; j < clusters_[i].size(); j++)
         {
             idx = clusters_[i][j];
-            cluster_obj_pt = obj_pts_[idx];
-            cluster_obj_pts.push_back(cluster_obj_pt);
+            cluster_cam_pt = cam_pts_[idx];
+            cluster_cam_pts.push_back(cluster_cam_pt);
         }
 
-        cluster_centroids_.push_back(compute3DCentroid(cluster_obj_pts));
+        cluster_centroids_.push_back(compute3DCentroid(cluster_cam_pts));
     }
 }
 

@@ -14,12 +14,12 @@ Cluster::Cluster(int id,
                  tf::Transform camera_pose,
                  std::vector<cv::Point2f> l_kpts,
                  std::vector<cv::Point2f> r_kpts,
-                 std::vector<cv::Point3f> obj_pts)
+                 std::vector<cv::Point3f> cam_pts)
 {
     id_ = id;
     l_kpts_ = l_kpts;
     r_kpts_ = r_kpts;
-    obj_pts_ = obj_pts;
+    cam_pts_ = cam_pts;
     l_descs_ = l_descs;
     r_descs_ = r_descs;
     frame_id_ = frame_id;
@@ -29,18 +29,20 @@ Cluster::Cluster(int id,
 
 std::vector<cv::Point3f> Cluster::getWorldPoints()
 {
-    tf::Vector3 p_tf;
-    tf::Vector3 p_tf_world;
-    std::vector<cv::Point3f> world_pts;
-    for (uint i = 0; i < obj_pts_.size(); i++)
+    tf::Vector3 tf_cam_pt;
+    tf::Vector3 tf_world_pt;
+    cv::Point3f cv_world_pt;
+    std::vector<cv::Point3f> tf_world_pts;
+    for (uint i = 0; i < cam_pts_.size(); i++)
     { 
-        p_tf.setX(obj_pts_[i].x);
-        p_tf.setY(obj_pts_[i].y);
-        p_tf.setZ(obj_pts_[i].z);
-        p_tf_world = camera_pose_ * p_tf;
-        world_pts.push_back(cv::Point3f(p_tf_world.getX(),
-                                        p_tf_world.getY(),
-                                        p_tf_world.getZ()));
+        tf_cam_pt.setX(cam_pts_[i].x);
+        tf_cam_pt.setY(cam_pts_[i].y);
+        tf_cam_pt.setZ(cam_pts_[i].z);
+        tf_world_pt = camera_pose_ * tf_cam_pt;
+        cv_world_pt.x = tf_world_pt.getX();
+        cv_world_pt.y = tf_world_pt.getY();
+        cv_world_pt.z = tf_world_pt.getZ();
+        tf_world_pts.push_back(cv_world_pt);
     }
-    return world_pts;
+    return tf_world_pts;
 }

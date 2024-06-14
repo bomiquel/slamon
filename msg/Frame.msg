@@ -6,4 +6,4 @@ Keypoint[] l_kpts
 Keypoint[] r_kpts
 
 # 3D points
-geometry_msgs/Point[] obj_pts
+geometry_msgs/Point[] cam_pts

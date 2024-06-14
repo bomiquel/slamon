@@ -33,14 +33,14 @@ class Frame
          *  \param stamp Time stamp in which the frame was obtained.
          *  \param l_kpts Left keypoints.
          *  \param r_kpts Right keypoints.
-         *  \param obk_pts 3D points.
+         *  \param cam_pts 3D points relative to camera.
          */
         Frame(cv::Mat l_descs,
               cv::Mat r_descs,
               ros::Time stamp,
               std::vector<cv::Point2f> l_kpts,
               std::vector<cv::Point2f> r_kpts,
-              std::vector<cv::Point3f> obj_pts);
+              std::vector<cv::Point3f> cam_pts);
 
 
         /** \brief Full class constructor
@@ -51,7 +51,7 @@ class Frame
          *  \param stamp Time stamp in which the frame was obtained.
          *  \param l_kpts Left keypoints.
          *  \param r_kpts Right keypoints.
-         *  \param obk_pts 3D points.
+         *  \param cam_pts 3D points relative to camera.
          */
         Frame(cv::Mat l_img,
               cv::Mat r_img,
@@ -60,7 +60,7 @@ class Frame
               ros::Time stamp,
               std::vector<cv::Point2f> l_kpts,
               std::vector<cv::Point2f> r_kpts,
-              std::vector<cv::Point3f> obj_pts);
+              std::vector<cv::Point3f> cam_pts);
 
 
         /** \brief Set left image.
@@ -117,9 +117,9 @@ class Frame
         inline std::vector<cv::Point2f> getRightKpts() const {return r_kpts_;}
         
 
-        /** \brief Get 3D in camera frame.
+        /** \brief Get 3D points relative to camera.
          */
-        inline std::vector<cv::Point3f> getObjectPoints() const {return obj_pts_;}
+        inline std::vector<cv::Point3f> getCameraPoints() const {return cam_pts_;}
 
 
         /** \brief Set camera pose.
@@ -185,7 +185,7 @@ class Frame
         std::vector<cv::Point2f> l_kpts_; //!> Left keypoints.
         std::vector<cv::Point2f> r_kpts_; //!> Right keypoints.
 
-        std::vector<cv::Point3f> obj_pts_; //!> Stereo 3D points in camera frame.
+        std::vector<cv::Point3f> cam_pts_; //!> Stereo 3D points relative to camera.
 
         tf::Transform camera_pose_; //!> Camera world position for this frame.
 

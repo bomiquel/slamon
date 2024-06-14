@@ -155,7 +155,7 @@ namespace slam
                                 cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                             }
                             publishFrame(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
-                                         frame_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getObjectPoints());
+                                         frame_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getCameraPoints());
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, origin_frame_id_, 
                                                    robot_frame_id_, c_robot_pose_, tf::Transform());
                         }
@@ -179,7 +179,7 @@ namespace slam
                             cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                         }
                         publishFrame(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
-                                     frame_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getObjectPoints());
+                                     frame_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getCameraPoints());
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, origin_frame_id_, 
                                                robot_frame_id_, c_robot_pose_, c_robot_motion);
                     }
@@ -353,9 +353,9 @@ namespace slam
         // Compute 3D keypoints. 
         start_time = ros::Time::now().toSec();
         cv::Mat f_l_descs, f_r_descs;
-        std::vector<cv::Point3f> f_obj_pts;
+        std::vector<cv::Point3f> f_cam_pts;
         std::vector<cv::Point2f> f_l_kpts, f_r_kpts;
-        compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_obj_pts);
+        compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_cam_pts);
         run_times_.triangulation = ros::Time::now().toSec() - start_time;
 
         // Sanity check.
@@ -371,7 +371,7 @@ namespace slam
             publishMatches(false, l_img, r_img, l_img_msg->header.stamp, stereo_matches_img_pub_, f_l_kpts, f_r_kpts);
 
         // Fill Frame object
-        c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_obj_pts);
+        c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_cam_pts);
 
         if (enable_debugging_)
             ROS_INFO_STREAM("[VO->Stereo frame processor:] Stereoscopic image processed successfully!");
@@ -391,11 +391,11 @@ namespace slam
 
         // Search for matches of keypoints between successive frames or pairs of frames.
         start_time = ros::Time::now().toSec();
-        std::vector<cv::Point3f> f_c_obj_pts, f_p_obj_pts;
+        std::vector<cv::Point3f> f_c_cam_pts, f_p_cam_pts;
         std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
         matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), c_cluster_ids, p_cluster_ids, 
-                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), c_frame.getObjectPoints(), p_frame_.getObjectPoints(),
-                                f_c_cluster_ids, f_p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts);
+                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), c_frame.getCameraPoints(), p_frame_.getCameraPoints(),
+                                f_c_cluster_ids, f_p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts);
         run_times_.successive_matching = ros::Time::now().toSec() - start_time;
 
         // Sanity check.
@@ -430,11 +430,11 @@ namespace slam
         // Estimate the motion.
         start_time = ros::Time::now().toSec();
         cv::Mat camera_rotation, camera_translation;
-        std::vector<cv::Point3f> i_c_obj_pts, i_p_obj_pts;
+        std::vector<cv::Point3f> i_c_cam_pts, i_p_cam_pts;
         std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
-        estimateMotion(c_cluster_ids, p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_obj_pts, f_p_obj_pts,
+        estimateMotion(c_cluster_ids, p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts,
                        camera_rotation, camera_translation, 
-                       f_c_cluster_ids, f_p_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_obj_pts, i_p_obj_pts);
+                       f_c_cluster_ids, f_p_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_cam_pts, i_p_cam_pts);
         run_times_.motion_estimation = ros::Time::now().toSec() - start_time;
         if (i_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
         {

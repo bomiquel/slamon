@@ -306,19 +306,19 @@ void Publisher::publishFrame(const cv::Mat& l_descs,
                              const ros::Publisher& publisher,
                              const std::vector<cv::Point2f>& l_kpts,
                              const std::vector<cv::Point2f>& r_kpts,
-                             const std::vector<cv::Point3f>& obj_pts)
+                             const std::vector<cv::Point3f>& cam_pts)
 {
     // Create and fill frame msg
     slamon::Frame frame_msg;
-    geometry_msgs::Point obj_pt_msg;
+    geometry_msgs::Point cam_pt_msg;
     slamon::Keypoint l_kpt_msg, r_kpt_msg;
     frame_msg.header.stamp = stamp;
     for (uint i = 0; i < l_kpts.size(); i++)
     {
         // Fill base msgs
-        obj_pt_msg.x = obj_pts[i].x;
-        obj_pt_msg.y = obj_pts[i].y;
-        obj_pt_msg.z = obj_pts[i].z;
+        cam_pt_msg.x = cam_pts[i].x;
+        cam_pt_msg.y = cam_pts[i].y;
+        cam_pt_msg.z = cam_pts[i].z;
         l_kpt_msg.pt.x = l_kpts[i].x;
         l_kpt_msg.pt.y = l_kpts[i].y;
         r_kpt_msg.pt.x = r_kpts[i].x;
@@ -329,7 +329,7 @@ void Publisher::publishFrame(const cv::Mat& l_descs,
         // Fill Frame msg
         frame_msg.l_kpts.push_back(l_kpt_msg);
         frame_msg.r_kpts.push_back(r_kpt_msg);
-        frame_msg.obj_pts.push_back(obj_pt_msg);
+        frame_msg.cam_pts.push_back(cam_pt_msg);
     }
 
     // Publishes 

@@ -152,8 +152,8 @@ class VisionMotionModules
          *  \param f_r_descs Filtered right image descriptors (output).
          *  \param f_l_kpts Filtered left image keypoints (output).
          *  \param f_r_kpts Filtered right image keypoints (output).
-         *  \param f_obj_pts Filtered 3D points of the scene obtained from
-         *  the stereo data (output).
+         *  \param f_cam_pts Filtered 3D points of the scene obtained from
+         *  the stereo data and relative to camera (output).
          */
         void compute3DPoints(const cv::Mat& l_descs,
                              const cv::Mat& r_descs,
@@ -163,7 +163,7 @@ class VisionMotionModules
                              cv::Mat& f_r_descs,
                              std::vector<cv::Point2f>& f_l_kpts,
                              std::vector<cv::Point2f>& f_r_kpts,
-                             std::vector<cv::Point3f>& f_obj_pts);
+                             std::vector<cv::Point3f>& f_cam_pts);
 
 
         /** \brief Matches the visual keypoints of two different sets. These sets must come
@@ -202,10 +202,10 @@ class VisionMotionModules
          *  previous left keypoints. In loop closing images: candidate left keypoints.
          *  \param r_kpts_1 Right keypoints of the second set (input). In consecutive images: 
          *  previous right keypoints. In loop closing images: candidate right keypoints.
-         *  \param obj_pts_0 3D points of the first set (input). In consecutive images:
-         *  current 3D points. In loop closing images: query 3D points.
-         *  \param obj_pts_1 3D points of the second set (input). In consecutive images:
-         *  previous 3D points. In loop closing images: candidate 3D points.
+         *  \param cam_pts_0 3D points relative to camera of the first set (input). In 
+         *  consecutive images: current 3D points. In loop closing images: query 3D points.
+         *  \param cam_pts_1 3D points relative to camera of the second set (input). In
+         *  consecutive images: previous 3D points. In loop closing images: candidate 3D points.
          *  \param f_cluster_ids_0 Filtered subset identifiers of the first set (output). In
          *  consecutive images: current identifiers filtered out. In loop closing images: 
          *  query identifiers filtered out.
@@ -224,10 +224,12 @@ class VisionMotionModules
          *  \param f_r_kpts_1 Filtered right keypoints of the second set (output). In consecutive
          *  images: previous right keypoints filtered out. In loop closing images: candidate right
          *  keypoints filtered out.
-         *  \param f_obj_pts_0 Filtered 3D points of the first set (output). In consecutive images:
-         *  current 3D points filtered out. In loop closing images: query 3D points filtered out.
-         *  \param f_obj_pts_1 Filtered 3D points of the second set (output). In consecutive images:
-         *  previous 3D points filtered out. In loop closing images: candidate 3D points filtered out.
+         *  \param f_cam_pts_0 Filtered 3D points relative to camera of the first set (output).
+         *  In consecutive images: current 3D points filtered out. In loop closing images: query
+         *  3D points filtered out.
+         *  \param f_cam_pts_1 Filtered 3D points relative to camera of the second set (output).
+         *  In consecutive images: previous 3D points filtered out. In loop closing images: 
+         *  candidate 3D points filtered out.
          */
         void matchNonStereoKeypoints(const cv::Mat& l_descs_0,
                                      const cv::Mat& r_descs_0,
@@ -239,16 +241,16 @@ class VisionMotionModules
                                      const std::vector<cv::Point2f>& r_kpts_0,
                                      const std::vector<cv::Point2f>& l_kpts_1,
                                      const std::vector<cv::Point2f>& r_kpts_1,
-                                     const std::vector<cv::Point3f>& obj_pts_0,
-                                     const std::vector<cv::Point3f>& obj_pts_1,
+                                     const std::vector<cv::Point3f>& cam_pts_0,
+                                     const std::vector<cv::Point3f>& cam_pts_1,
                                      std::vector<int>& f_cluster_ids_0,
                                      std::vector<int>& f_cluster_ids_1,
                                      std::vector<cv::Point2f>& f_l_kpts_0,
                                      std::vector<cv::Point2f>& f_r_kpts_0,
                                      std::vector<cv::Point2f>& f_l_kpts_1,
                                      std::vector<cv::Point2f>& f_r_kpts_1,
-                                     std::vector<cv::Point3f>& f_obj_pts_0,
-                                     std::vector<cv::Point3f>& f_obj_pts_1);
+                                     std::vector<cv::Point3f>& f_cam_pts_0,
+                                     std::vector<cv::Point3f>& f_cam_pts_1);
 
 
         /** \brief Estimate motion between two sets of keypoints using 3D-to-2D method. These sets 
@@ -271,8 +273,8 @@ class VisionMotionModules
          *  current left keypoints. In loop closing images: query left keypoints.
          *  \param r_kpts_0 Right keypoints of the first set (input). In consecutive images:
          *  current right keypoints. In loop closing images: query right keypoints.
-         *  \param obj_pts_1 3D points of the second set (input). In consecutive images:
-         *  previous 3D points. In loop closing images: candidate 3D points.
+         *  \param cam_pts_1 3D points relative to camera of the second set (input). In
+         *  consecutive images: previous 3D points. In loop closing images: candidate 3D points.
          *  \param r_vec Estimated rotation vector (output).
          *  \param t_vec Estimated translation matrix (output).
          *  \param f_cluster_ids_0 Filtered subset identifiers of the first set (output). In
@@ -287,21 +289,22 @@ class VisionMotionModules
          *  \param f_r_kpts_0 Filtered right keypoints of the first set (output). In consecutive
          *  images: current right keypoints filtered out. In loop closing images: query right
          *  keypoints filtered out.
-         *  \param f_obj_pts_1 Filtered 3D points of the second set (output). In consecutive images:
-         *  previous 3D points filtered out. In loop closing images: candidate 3D points filtered out.
+         *  \param f_cam_pts_1 Filtered 3D points relative to camera of the second set (output).
+         *  In consecutive images: previous 3D points filtered out. In loop closing images:
+         *  candidate 3D points filtered out.
          */
         void estimateMotion(const std::vector<int>& cluster_ids_0,
                             const std::vector<int>& cluster_ids_1,
                             const std::vector<cv::Point2f>& l_kpts_0,
                             const std::vector<cv::Point2f>& r_kpts_0,
-                            const std::vector<cv::Point3f>& obj_pts_1,
+                            const std::vector<cv::Point3f>& cam_pts_1,
                             cv::Mat& r_vec,
                             cv::Mat& t_vec,
                             std::vector<int>& f_cluster_ids_0,
                             std::vector<int>& f_cluster_ids_1,
                             std::vector<cv::Point2f>& f_l_kpts_0,
                             std::vector<cv::Point2f>& f_r_kpts_0,
-                            std::vector<cv::Point3f>& f_obj_pts_1);
+                            std::vector<cv::Point3f>& f_cam_pts_1);
 
 
         /** \brief Estimate motion between two sets of keypoints using 3D-to-2D method. These sets 
@@ -328,10 +331,10 @@ class VisionMotionModules
          *  previous left keypoints. In loop closing images: candidate left keypoints.
          *  \param r_kpts_1 Right keypoints of the second set (input). In consecutive images: 
          *  previous right keypoints. In loop closing images: candidate right keypoints.
-         *  \param obj_pts_0 3D points of the first set (input). In consecutive images:
-         *  current 3D points. In loop closing images: query 3D points.
-         *  \param obj_pts_1 3D points of the second set (input). In consecutive images:
-         *  previous 3D points. In loop closing images: candidate 3D points.
+         *  \param cam_pts_0 3D points relative to camera of the first set (input). In
+         *  consecutive images: current 3D points. In loop closing images: query 3D points.
+         *  \param cam_pts_1 3D points relative to camera of the second set (input). In
+         *  consecutive images: previous 3D points. In loop closing images: candidate 3D points.
          *  \param r_vec Estimated rotation vector (output).
          *  \param t_vec Estimated translation matrix (output).
          *  \param f_cluster_ids_0 Filtered subset identifiers of the first set (output). In
@@ -352,10 +355,12 @@ class VisionMotionModules
          *  \param f_r_kpts_1 Filtered right keypoints of the second set (output). In consecutive
          *  images: previous right keypoints filtered out. In loop closing images: candidate right
          *  keypoints filtered out.
-         *  \param f_obj_pts_0 Filtered 3D points of the first set (output). In consecutive images:
-         *  current 3D points filtered out. In loop closing images: query 3D points filtered out.
-         *  \param f_obj_pts_1 Filtered 3D points of the second set (output). In consecutive images:
-         *  previous 3D points filtered out. In loop closing images: candidate 3D points filtered out.
+         *  \param f_cam_pts_0 Filtered 3D points relative to camera of the first set (output).
+         *  In consecutive images: current 3D points filtered out. In loop closing images: query
+         *  3D points filtered out.
+         *  \param f_cam_pts_1 Filtered 3D points relative to camera of the second set (output).
+         *  In consecutive images: previous 3D points filtered out. In loop closing images: 
+         *  candidate 3D points filtered out.
          */
         void estimateMotion(const std::vector<int>& cluster_ids_0,
                             const std::vector<int>& cluster_ids_1,
@@ -363,8 +368,8 @@ class VisionMotionModules
                             const std::vector<cv::Point2f>& r_kpts_0,
                             const std::vector<cv::Point2f>& l_kpts_1,
                             const std::vector<cv::Point2f>& r_kpts_1,
-                            const std::vector<cv::Point3f>& obj_pts_0,
-                            const std::vector<cv::Point3f>& obj_pts_1,
+                            const std::vector<cv::Point3f>& cam_pts_0,
+                            const std::vector<cv::Point3f>& cam_pts_1,
                             cv::Mat& r_vec,
                             cv::Mat& t_vec,
                             std::vector<int>& f_cluster_ids_0,
@@ -373,8 +378,8 @@ class VisionMotionModules
                             std::vector<cv::Point2f>& f_r_kpts_0,
                             std::vector<cv::Point2f>& f_l_kpts_1,
                             std::vector<cv::Point2f>& f_r_kpts_1,
-                            std::vector<cv::Point3f>& f_obj_pts_0,
-                            std::vector<cv::Point3f>& f_obj_pts_1);
+                            std::vector<cv::Point3f>& f_cam_pts_0,
+                            std::vector<cv::Point3f>& f_cam_pts_1);
 
 
     protected:
@@ -430,16 +435,16 @@ class VisionMotionModules
          *  \param cluster_ids_1 Subset identifier of the second set (input).
          *  \param kpts_0 Keypoints of the first set (input).
          *  \param kpts_1 Keypoints of the second set (input).
-         *  \param obj_pts_0 3D points of the first set (input).
-         *  \param obj_pts_1 3D points of the second set (input).
+         *  \param cam_pts_0 3D points relative to camera of the first set (input).
+         *  \param cam_pts_1 3D points relative to camera of the second set (input).
          *  \param f_descs_0 Filtered descriptors of the first set (output).
          *  \param f_descs_1 Filtered descriptors of the second set (output).
          *  \param f_cluster_ids_0 Filtered subset identifier of the first set (output).
          *  \param f_cluster_ids_1 Filtered subset identifier of the second set (output).
          *  \param f_kpts_0 Filtered keypoints of the first set (output).
          *  \param f_kpts_1 Filtered keypoints of the second set (output).
-         *  \param f_obj_pts_0 Filtered 3D points of the first set (output).
-         *  \param f_obj_pts_1 Filtered 3D points of the second set (output).
+         *  \param f_cam_pts_0 Filtered 3D points relative to camera of the first set (output).
+         *  \param f_cam_pts_1 Filtered 3D points relative to camera of the second set (output).
          */
         void ratioMatching(const cv::Mat& descs_0, 
                            const cv::Mat& descs_1,
@@ -447,16 +452,16 @@ class VisionMotionModules
                            const std::vector<int>& cluster_ids_1,
                            const std::vector<cv::Point2f>& kpts_0,
                            const std::vector<cv::Point2f>& kpts_1,
-                           const std::vector<cv::Point3f>& obj_pts_0,
-                           const std::vector<cv::Point3f>& obj_pts_1,
+                           const std::vector<cv::Point3f>& cam_pts_0,
+                           const std::vector<cv::Point3f>& cam_pts_1,
                            cv::Mat& f_descs_0,
                            cv::Mat& f_descs_1,
                            std::vector<int>& f_cluster_ids_0,
                            std::vector<int>& f_cluster_ids_1,
                            std::vector<cv::Point2f>& f_kpts_0,
                            std::vector<cv::Point2f>& f_kpts_1,
-                           std::vector<cv::Point3f>& f_obj_pts_0,
-                           std::vector<cv::Point3f>& f_obj_pts_1);
+                           std::vector<cv::Point3f>& f_cam_pts_0,
+                           std::vector<cv::Point3f>& f_cam_pts_1);
 
 
         /** \brief Matches the visual keypoints of two different sets. These sets must come
@@ -477,16 +482,16 @@ class VisionMotionModules
          *  \param cluster_ids_1 Subset identifier of the second set (input).
          *  \param kpts_0 Keypoints of the first set (input).
          *  \param kpts_1 Keypoints of the second set (input).
-         *  \param obj_pts_0 3D points of the first set (input).
-         *  \param obj_pts_1 3D points of the second set (input).
+         *  \param cam_pts_0 3D points relative to camera of the first set (input).
+         *  \param cam_pts_1 3D points relative to camera of the second set (input).
          *  \param f_descs_0 Filtered descriptors of the first set (output).
          *  \param f_descs_1 Filtered descriptors of the second set (output).
          *  \param f_cluster_ids_0 Filtered subset identifier of the first set (output).
          *  \param f_cluster_ids_1 Filtered subset identifier of the second set (output).
          *  \param f_kpts_0 Filtered keypoints of the first set (output).
          *  \param f_kpts_1 Filtered keypoints of the second set (output).
-         *  \param f_obj_pts_0 Filtered 3D points of the first set (output).
-         *  \param f_obj_pts_1 Filtered 3D points of the second set (output).
+         *  \param f_cam_pts_0 Filtered 3D points relative to camera of the first set (output).
+         *  \param f_cam_pts_1 Filtered 3D points relative to camera of the second set (output).
          */
         void geometricalMatching(bool coplanar_pts,
                                  const cv::Mat& descs_0, 
@@ -495,16 +500,16 @@ class VisionMotionModules
                                  const std::vector<int>& cluster_ids_1,
                                  const std::vector<cv::Point2f>& kpts_0,
                                  const std::vector<cv::Point2f>& kpts_1,
-                                 const std::vector<cv::Point3f>& obj_pts_0,
-                                 const std::vector<cv::Point3f>& obj_pts_1,
+                                 const std::vector<cv::Point3f>& cam_pts_0,
+                                 const std::vector<cv::Point3f>& cam_pts_1,
                                  cv::Mat& f_descs_0,
                                  cv::Mat& f_descs_1,
                                  std::vector<int>& f_cluster_ids_0,
                                  std::vector<int>& f_cluster_ids_1,
                                  std::vector<cv::Point2f>& f_kpts_0,
                                  std::vector<cv::Point2f>& f_kpts_1,
-                                 std::vector<cv::Point3f>& f_obj_pts_0,
-                                 std::vector<cv::Point3f>& f_obj_pts_1);
+                                 std::vector<cv::Point3f>& f_cam_pts_0,
+                                 std::vector<cv::Point3f>& f_cam_pts_1);
 
 
         /** \brief Assemble four matchings to build circular matches.
@@ -528,10 +533,10 @@ class VisionMotionModules
          *  number of keypoints after successive matching (input).
          *  \param successive_kpts_1_highest Keypoint vector of the second set with the highest
          *  number of keypoints after successive matching (input).
-         *  \param successive_obj_pts_0 3D points vector of the first set with the lowest
-         *  number of 3D points after successive matching (input).
-         *  \param successive_obj_pts_1 3D points vector of the second set with the lowest
-         *  number of 3D points after successive matching (input).
+         *  \param successive_cam_pts_0 3D points vector relative to camera of the first set with
+         *  the lowest number of 3D points after successive matching (input).
+         *  \param successive_cam_pts_1 3D points vector relative to camera of the second set with
+         *  the lowest number of 3D points after successive matching (input).
          *  \param successive_cluster_ids_0 Cluster ids of the first set with the lowest number
          *  of ids after successive matching (input).
          *  \param successive_cluster_ids_1 Cluster ids of the second set with the lowest number
@@ -540,8 +545,8 @@ class VisionMotionModules
          *  \param f_kpts_0_highest Filtered successive_kpts_0_highest (output).
          *  \param f_kpts_1_lowest Filtered successive_kpts_1_lowest (output). 
          *  \param f_kpts_1_highest Filtered successive_kpts_1_highest (output). 
-         *  \param f_obj_pts_0 Filtered successive_obj_pts_0 (output).
-         *  \param f_obj_pts_1 Filtered successive_obj_pts_1 (output).
+         *  \param f_cam_pts_0 Filtered successive_cam_pts_0 (output).
+         *  \param f_cam_pts_1 Filtered successive_cam_pts_1 (output).
          *  \param f_cluster_ids_0 Filtered successive_cluster_ids_0 (output).
          *  \param f_cluster_ids_1 Filtered successive_cluster_ids_1 (output).
          */
@@ -553,16 +558,16 @@ class VisionMotionModules
                                        const std::vector<cv::Point2f>& successive_kpts_0_highest,
                                        const std::vector<cv::Point2f>& successive_kpts_1_lowest,
                                        const std::vector<cv::Point2f>& successive_kpts_1_highest,
-                                       const std::vector<cv::Point3f>& successive_obj_pts_0,
-                                       const std::vector<cv::Point3f>& successive_obj_pts_1,
+                                       const std::vector<cv::Point3f>& successive_cam_pts_0,
+                                       const std::vector<cv::Point3f>& successive_cam_pts_1,
                                        const std::vector<int>& successive_cluster_ids_0,
                                        const std::vector<int>& successive_cluster_ids_1,
                                        std::vector<cv::Point2f>& f_kpts_0_lowest,
                                        std::vector<cv::Point2f>& f_kpts_0_highest,
                                        std::vector<cv::Point2f>& f_kpts_1_lowest,
                                        std::vector<cv::Point2f>& f_kpts_1_highest,
-                                       std::vector<cv::Point3f>& f_obj_pts_0,
-                                       std::vector<cv::Point3f>& f_obj_pts_1,
+                                       std::vector<cv::Point3f>& f_cam_pts_0,
+                                       std::vector<cv::Point3f>& f_cam_pts_1,
                                        std::vector<int>& f_cluster_ids_0,
                                        std::vector<int>& f_cluster_ids_1);
 
