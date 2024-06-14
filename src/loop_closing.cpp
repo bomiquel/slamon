@@ -17,7 +17,7 @@ namespace slam
     {
         // Initialises parameters.
         w_path_ = w_path;
-        lc_neighbors = lc_neighbors_;
+        lc_neighbors_ = lc_neighbors;
         min_lc_inliers_ = min_lc_inliers;
         enable_debugging_ = enable_debugging;
         lc_discard_window_ = lc_discard_window;
@@ -61,7 +61,7 @@ namespace slam
         loop_closure_img_pub_ = nhp.advertise<sensor_msgs::Image>("loop_closure_img", 1);
 
         // Loop
-        ros::Rate r(50);
+        ros::Rate r(10);
         Cluster c_cluster;
         while (ros::ok())
         {
@@ -95,8 +95,7 @@ namespace slam
     bool LoopClosing::checkNewClusterInQueue()
     {
         std::scoped_lock lock(mutex_cluster_queue_);
-        bool full = !cluster_queue_.empty();
-        return full;   
+        return (!cluster_queue_.empty());
     }
 
 
@@ -163,7 +162,7 @@ namespace slam
         // Get the candidates to close loop
         std::vector<int> candidates;
         graph_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), 
-                                    lc_discard_window_, 3, candidates);
+                                    lc_discard_window_, 5, candidates);
         if (candidates.size() == 0)
             return;
 
@@ -190,7 +189,7 @@ namespace slam
         getHashCandidates(c_cluster.getId(), 5, candidates);
         if (candidates.size() == 0)
             return;
-        
+
         // Loop over candidates.
         bool valid;
         Cluster cand_cluster;
@@ -304,6 +303,7 @@ namespace slam
         fs["l_descs"] >> l_descs;
         fs["r_descs"] >> r_descs;
         fs["frame_id"] >> frame_id;
+        fs.release();
 
         // Sets the properties of the cluster.
         tf::Transform camera_pose = graph_->getVertexCameraPose(id, true);

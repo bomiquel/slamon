@@ -677,7 +677,8 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
         // Draws the ith matching.
         if (keyframe_position >= 0)
         {
-            // Decides the color.
+            // Decides the color. Weak edges (less than 5 inliers) are not inserted into the graph
+            // and are therefore not drawn nor assigned a colour.
             color_idx = -1;
             for (uint j = 0; j < definitive_inliers_per_pair.size(); j++)
             {
@@ -702,10 +703,6 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
                 cv::circle(o_img, q_l_kpt, 2, colors[color_idx], -1);
                 cv::circle(o_img, cand_l_kpt, 2, colors[color_idx], -1);
                 cv::line(o_img, q_l_kpt, cand_l_kpt, colors[color_idx], 1, cv::LINE_AA, 0);
-            }
-            else
-            {
-                ROS_ERROR_STREAM("[drawLoopClosure:] Negative color index!");
             }
         }
         else
