@@ -1,13 +1,13 @@
 /**
  *  @file
- *  @brief Graph class
+ *  @brief Map class
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
  *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
  */
 
-#ifndef GRAPH_HPP
-#define GRAPH_HPP
+#ifndef MAP_HPP
+#define MAP_HPP
 
 
 #include <string>
@@ -41,7 +41,7 @@ namespace slam
     class LoopClosing;
 
 
-    class Graph: protected Publisher
+    class Map: protected Publisher
     {   
         public:
 
@@ -54,15 +54,15 @@ namespace slam
              *  \param loop_closing Loop closing object pointer.
              *  \param robot_frame_id Robot coordinate axis identficator (base link).
              */
-            Graph(int min_lc_inliers,
-                  bool enable_debugging,
-                  double min_dist_keyframe,
-                  const std::string& w_path,
-                  LoopClosing* loop_closing,
-                  const std::string& robot_frame_id);
+            Map(int min_lc_inliers,
+                bool enable_debugging,
+                double min_dist_keyframe,
+                const std::string& w_path,
+                LoopClosing* loop_closing,
+                const std::string& robot_frame_id);
 
 
-            /** \brief Starts graph
+            /** \brief Starts map.
              */
             void run();
 
@@ -265,7 +265,7 @@ namespace slam
 
 
             // Atributes.
-            bool init_graph_; //!> Graph state.
+            bool init_map_; //!> Map state.
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
             
@@ -305,7 +305,7 @@ namespace slam
 
             std::mutex mutex_graph_; //!> Mutex for the graph manipulation.
 
-            g2o::SparseOptimizer graph_optimizer_; //!> G2O graph optimizer.
+            g2o::SparseOptimizer graph_; //!> G2O graph.
 
             LoopClosing* loop_closing_; // Loop closing object pointer.
 
@@ -321,4 +321,4 @@ namespace slam
 } // End namespace
 
 
-#endif // GRAPH_HPP
+#endif // MAP_HPP

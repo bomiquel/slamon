@@ -5,7 +5,8 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 
-#include "graph.hpp"
+#include "map.hpp"
+#include "loop_closing.hpp"
 
 
 void readParams(int& lc_neighbors,
@@ -135,16 +136,16 @@ int main(int argc, char **argv)
                                    working_path,
                                    matching_type,
                                    motion_estimation_type);
-    slam::Graph graph(min_lc_inliers, 
-                      enable_debugging, 
-                      min_dist_keyframe, 
-                      working_path, 
-                      &loop_closing, 
-                      robot_frame_id);
-    loop_closing.setGraph(&graph);
+    slam::Map map(min_lc_inliers, 
+                  enable_debugging, 
+                  min_dist_keyframe, 
+                  working_path, 
+                  &loop_closing, 
+                  robot_frame_id);
+    loop_closing.setMap(&map);
 
     // Launch threads.
-    std::thread graph_thread(&slam::Graph::run, &graph);
+    std::thread map_thread(&slam::Map::run, &map);
     std::thread loop_closing_thread(&slam::LoopClosing::run, &loop_closing);
 
     // ROS wait

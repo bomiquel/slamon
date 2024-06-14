@@ -161,7 +161,7 @@ namespace slam
     {
         // Get the candidates to close loop
         std::vector<int> candidates;
-        graph_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), 
+        map_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), 
                                     lc_discard_window_, 5, candidates);
         if (candidates.size() == 0)
             return;
@@ -306,7 +306,7 @@ namespace slam
         fs.release();
 
         // Sets the properties of the cluster.
-        tf::Transform camera_pose = graph_->getVertexCameraPose(id, true);
+        tf::Transform camera_pose = map_->getVertexCameraPose(id, true);
         Cluster cluster(id, frame_id, l_descs, r_descs, camera_pose, l_kpts, r_kpts, cam_pts);
         return cluster;
     }
@@ -368,7 +368,7 @@ namespace slam
 
             // Increases the probability to close loop by extracting the candidate neighbors.
             std::vector<int> cand_cluster_neighbours;
-            graph_->findClosestVertices(cand_cluster.getId(), q_cluster.getId(), lc_discard_window_, lc_neighbors_, cand_cluster_neighbours);
+            map_->findClosestVertices(cand_cluster.getId(), q_cluster.getId(), lc_discard_window_, lc_neighbors_, cand_cluster_neighbours);
             for (uint i = 0; i < cand_cluster_neighbours.size(); i++)
             {
                 // Reads from the disk the candidate cluster's ith neighbour.
@@ -410,7 +410,7 @@ namespace slam
 
             // Extracts all the clusters corresponding to the current cluster frame
             std::vector<int> q_cluster_neighbours;
-            graph_->getKeyframeVertices(q_cluster.getFrameId(), q_cluster_neighbours);
+            map_->getKeyframeVertices(q_cluster.getFrameId(), q_cluster_neighbours);
             for (uint i = 0; i < q_cluster_neighbours.size(); i++)
             {
                 // Avoids itself.
@@ -501,7 +501,7 @@ namespace slam
                     {
                         q_cluster_id = i_q_cluster_ids[i];
                         cand_cluster_id = i_cand_cluster_ids[i];
-                        cand_keyframe_id = graph_->getVertexKeyframeId(cand_cluster_id);
+                        cand_keyframe_id = map_->getVertexKeyframeId(cand_cluster_id);
 
                         // Builds the unique candidate keyframe vector.
                         cand_keyframe_found = false;
@@ -566,13 +566,13 @@ namespace slam
                                 continue;
                             
                             // Computes correct transform between edges.
-                            cand_cluster_pose = graph_->getVertexPose(cluster_pairs[i].second, true); // {O}^T_{cand_cluster}
-                            q_cluster_pose_relative_to_camera = graph_->getVertexPoseRelativeToCamera(cluster_pairs[i].first); // {q_cam}^T_{q_cluster}
+                            cand_cluster_pose = map_->getVertexPose(cluster_pairs[i].second, true); // {O}^T_{cand_cluster}
+                            q_cluster_pose_relative_to_camera = map_->getVertexPoseRelativeToCamera(cluster_pairs[i].first); // {q_cam}^T_{q_cluster}
                             edge = cand_cluster_pose.inverse() * estimated_motion * q_cluster_pose_relative_to_camera; // {cand_cluster}^T_{q_cluster} = {cand_cluster}^T_{O} * {O}^T_{q_cam} * {q_cam}^T_{q_cluster}
 
                             // Adds this edge to the graph.
                             some_edge_added = true;
-                            graph_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, edge);                           
+                            map_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, edge);                           
                             definitive_inliers_per_pair.push_back(inliers_per_pair[i]);
                             definitive_cluster_pairs.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second)); // q_cluster_id - cand_cluster_id
 
@@ -583,7 +583,7 @@ namespace slam
 
                     if (some_edge_added)
                     {
-                        graph_->update();
+                        map_->update();
 
                         ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------" << std::endl << 
                                                             " LOOP CLOSURE: " << num_loop_closures_ << std::endl << 

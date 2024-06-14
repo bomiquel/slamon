@@ -16,8 +16,8 @@
 
 #include <ros/ros.h>
 
+#include "map.hpp"
 #include "hash.hpp"
-#include "graph.hpp"
 #include "tools.hpp"
 #include "cluster.hpp"
 #include "publisher.hpp"
@@ -30,7 +30,7 @@ namespace slam
 {
     
 
-    class Graph;
+    class Map;
 
 
     class LoopClosing: protected Publisher, protected VisionMotionModules
@@ -60,9 +60,9 @@ namespace slam
 
 
             /** \brief Set the graph object.
-             *  \param graph The object pointer (input).
+             *  \param map The object pointer (input).
              */
-            inline void setGraph(Graph *graph) {graph_ = graph;}
+            inline void setMap(Map *map) {map_ = map;}
 
 
             /** \brief Starts loop closing.
@@ -176,7 +176,7 @@ namespace slam
 
             std::mutex mutex_cluster_queue_; //!> Mutex for the insertion of new clusters.
 
-            Graph* graph_; //!> Graph object pointer.
+            Map* map_; //!> Graph object pointer.
 
             haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
 

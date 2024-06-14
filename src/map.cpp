@@ -1,16 +1,16 @@
-#include "graph.hpp"
+#include "map.hpp"
 
 
 namespace slam
 {
 
 
-    Graph::Graph(int min_lc_inliers,
-                 bool enable_debugging,
-                 double min_dist_keyframe,
-                 const std::string& w_path,
-                 LoopClosing* loop_closing,
-                 const std::string& robot_frame_id)
+    Map::Map(int min_lc_inliers,
+             bool enable_debugging,
+             double min_dist_keyframe,
+             const std::string& w_path,
+             LoopClosing* loop_closing,
+             const std::string& robot_frame_id)
     {
         // Inilitialises parameters.
         w_path_ = w_path;
@@ -20,8 +20,8 @@ namespace slam
         enable_debugging_ = enable_debugging;
         min_dist_keyframe_ = min_dist_keyframe;
 
-        // Set "uninitialised" to the graph.
-        init_graph_ = false;
+        // Set "uninitialised" to the map.
+        init_map_ = false;
 
         // Initialised keyframe counter.
         c_keyframe_id_ = -1;
@@ -30,7 +30,7 @@ namespace slam
         std::unique_ptr<g2o::BlockSolverX::LinearSolverType> linear_solver_ptr (new g2o::LinearSolverCholmod<g2o::BlockSolverX::PoseMatrixType>());
         std::unique_ptr<g2o::BlockSolverX> solver_ptr (new g2o::BlockSolverX(std::move(linear_solver_ptr)));
         g2o::OptimizationAlgorithmLevenberg * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
-        graph_optimizer_.setAlgorithm(solver);
+        graph_.setAlgorithm(solver);
 
         // Create debugging directories.
         if (enable_debugging_)
@@ -54,7 +54,7 @@ namespace slam
     }
 
 
-    void Graph::run()
+    void Map::run()
     {
         // Create ROS node.
         ros::NodeHandle nh;
@@ -76,14 +76,14 @@ namespace slam
         frame_sub.subscribe(nh, "frame", 5);
         odom_sub.subscribe(nh, "odom", 5);
         sync.reset(new Sync_(SyncPolicy_(10), frame_sub, odom_sub));
-        sync->registerCallback(boost::bind(&Graph::frameCallback, this, _1, _2));
+        sync->registerCallback(boost::bind(&Map::frameCallback, this, _1, _2));
 
         // Calls callback when synchronised messages arrive
         ros::spin();
     }
 
 
-    int Graph::getVertexKeyframeId(int vertex_id)
+    int Map::getVertexKeyframeId(int vertex_id)
     {
         int frame_id = -1;
         for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
@@ -98,7 +98,7 @@ namespace slam
     }
     
 
-    tf::Transform Graph::getVertexPose(int vertex_id, bool lock = true)
+    tf::Transform Map::getVertexPose(int vertex_id, bool lock = true)
     {
         if (lock)
         {
@@ -107,7 +107,7 @@ namespace slam
             tf::Transform vertex_pose;
             if (vertex_id >= 0)
             {
-                g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_id]);
+                g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_.vertices()[vertex_id]);
                 vertex_pose = fromVertexToTf(vertex);
             }
             else
@@ -121,7 +121,7 @@ namespace slam
             tf::Transform vertex_pose;
             if (vertex_id >= 0)
             {
-                g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_id]);
+                g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_.vertices()[vertex_id]);
                 vertex_pose = fromVertexToTf(vertex);
             }
             else
@@ -133,20 +133,20 @@ namespace slam
     }
 
 
-    tf::Transform Graph::getVertexPoseRelativeToCamera(int vertex_id)
+    tf::Transform Map::getVertexPoseRelativeToCamera(int vertex_id)
     {
         return local_cluster_poses_[vertex_id];
     }
 
 
-    tf::Transform Graph::getVertexCameraPose(int vertex_id, bool lock = true)
+    tf::Transform Map::getVertexCameraPose(int vertex_id, bool lock = true)
     {
         tf::Transform vertex_pose = getVertexPose(vertex_id, lock);
         return vertex_pose * local_cluster_poses_[vertex_id].inverse();
     }
 
 
-    void Graph::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
+    void Map::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
     {
         vertices.clear();
         for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
@@ -157,8 +157,8 @@ namespace slam
     }
 
 
-    void Graph::getKeyframePoses(std::vector<double>& stamps,
-                                 std::vector<tf::Transform>& keyframe_poses)
+    void Map::getKeyframePoses(std::vector<double>& stamps,
+                               std::vector<tf::Transform>& keyframe_poses)
     {
         // Locks graph
         std::scoped_lock lock(mutex_graph_);
@@ -167,7 +167,7 @@ namespace slam
         bool found;
         int keyframe_id;
         std::vector<int> processed_keyframes;
-        for (uint vertex_id = 0; vertex_id < graph_optimizer_.vertices().size(); vertex_id++)
+        for (uint vertex_id = 0; vertex_id < graph_.vertices().size(); vertex_id++)
         {
             // Is this keyframe processed?
             found = false;
@@ -191,15 +191,15 @@ namespace slam
     }
 
 
-    void Graph::addEdge(int vertex_0_id,
-                        int vertex_1_id,
-                        tf::Transform tf_edge)
+    void Map::addEdge(int vertex_0_id,
+                      int vertex_1_id,
+                      tf::Transform tf_edge)
     {
         std::scoped_lock lock(mutex_graph_);
 
         // Get the graph vertices.
-        g2o::VertexSE3* vertex_0 = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_0_id]);
-        g2o::VertexSE3* vertex_1 = dynamic_cast<g2o::VertexSE3*>(graph_optimizer_.vertices()[vertex_1_id]);
+        g2o::VertexSE3* vertex_0 = dynamic_cast<g2o::VertexSE3*>(graph_.vertices()[vertex_0_id]);
+        g2o::VertexSE3* vertex_1 = dynamic_cast<g2o::VertexSE3*>(graph_.vertices()[vertex_1_id]);
 
         // Add graph edge to graph.
         g2o::EdgeSE3* graph_edge = new g2o::EdgeSE3();
@@ -208,15 +208,15 @@ namespace slam
         graph_edge->setVertex(1, vertex_1);
         graph_edge->setMeasurement(iso_edge);
 
-        graph_optimizer_.addEdge(graph_edge);
+        graph_.addEdge(graph_edge);
     }
 
 
-    void Graph::findClosestVertices(int vertex_id,
-                                    int window_center,
-                                    int discard_window,
-                                    uint num_closest_neighbors,
-                                    std::vector<int>& closest_neighbors)
+    void Map::findClosestVertices(int vertex_id,
+                                  int window_center,
+                                  int discard_window,
+                                  uint num_closest_neighbors,
+                                  std::vector<int>& closest_neighbors)
     {
         // Init.
         closest_neighbors.clear();
@@ -226,7 +226,7 @@ namespace slam
         double dist;
         tf::Transform neighbor_vertex_pose;
         std::vector<std::pair<int, double>> neighbors;
-        for (int i = 0; i < (int)graph_optimizer_.vertices().size(); i++)
+        for (int i = 0; i < (int)graph_.vertices().size(); i++)
         {
             // Avoids itself.
             if (i == vertex_id)
@@ -257,20 +257,20 @@ namespace slam
     }
 
 
-    void Graph::update()
+    void Map::update()
     {
         std::scoped_lock lock(mutex_graph_);
 
         // Optimize!
-        graph_optimizer_.initializeOptimization();
-        graph_optimizer_.optimize(20);
+        graph_.initializeOptimization();
+        graph_.optimize(20);
 
-        ROS_INFO_STREAM("[Graph->updater:] Optimization done in graph with: " << graph_optimizer_.vertices().size() << " vertices.");
+        ROS_INFO_STREAM("[Graph->updater:] Optimization done in graph with: " << graph_.vertices().size() << " vertices.");
     }
 
 
-    void Graph::frameCallback(const slamon::FrameConstPtr& frame_msg,
-                              const nav_msgs::OdometryConstPtr& odom_msg)
+    void Map::frameCallback(const slamon::FrameConstPtr& frame_msg,
+                            const nav_msgs::OdometryConstPtr& odom_msg)
     {
         // From ROS messages to local objects.
         Frame c_frame;
@@ -291,7 +291,7 @@ namespace slam
         if (needNewKeyFrame(c_frame, c_robot_pose))
         {
             // Updates global variables.
-            init_graph_ = true;
+            init_map_ = true;
             c_keyframe_id_++;
             p_keyframe_robot_pose_ = c_robot_pose;
             
@@ -438,7 +438,7 @@ namespace slam
                 }
             }
 
-            // Save graph poses to file.
+            // Save map poses to file.
             if (enable_debugging_)
             {
                 std::vector<double> stamps;
@@ -451,7 +451,7 @@ namespace slam
             int c_vertex_id = -1;
             {
                 std::scoped_lock lock(mutex_graph_);
-                c_vertex_id = graph_optimizer_.vertices().size() - 1;
+                c_vertex_id = graph_.vertices().size() - 1;
             }
             tf::Transform updated_robot_pose = getVertexCameraPose(c_vertex_id, true) * robot2camera_.inverse();
             publishPose(stamp, map_pub_, "map", robot_frame_id_, updated_robot_pose);
@@ -465,9 +465,9 @@ namespace slam
     }
 
 
-    bool Graph::needNewKeyFrame(Frame& c_frame, const tf::Transform& c_robot_pose)
+    bool Map::needNewKeyFrame(Frame& c_frame, const tf::Transform& c_robot_pose)
     {
-        if (!init_graph_)
+        if (!init_map_)
         {
             if (addFrameToMap(c_frame))
             {
@@ -490,7 +490,7 @@ namespace slam
     }
 
 
-    bool Graph::addFrameToMap(Frame& c_frame)
+    bool Map::addFrameToMap(Frame& c_frame)
     {
         if (c_frame.getLeftKpts().size() > (long unsigned int)(min_lc_inliers_/2))
         {
@@ -516,7 +516,7 @@ namespace slam
     }
 
 
-    void Graph::getRobot2Camera()
+    void Map::getRobot2Camera()
     {
         slamon::GetTransform srv;
         if (robot2camera_client_.call(srv))
@@ -551,7 +551,7 @@ namespace slam
     }
 
 
-    int Graph::addVertex(tf::Transform pose)
+    int Map::addVertex(tf::Transform pose)
     {
         // Lock graph.
         std::scoped_lock lock(mutex_graph_);
@@ -560,7 +560,7 @@ namespace slam
         Eigen::Isometry3d vertex_pose = fromTfToIsometry(pose);
 
         // Set node id equal to graph size
-        int id = graph_optimizer_.vertices().size();
+        int id = graph_.vertices().size();
 
         // Build the vertex
         g2o::VertexSE3* c_vertex = new g2o::VertexSE3();
@@ -572,13 +572,13 @@ namespace slam
             c_vertex->setFixed(true);
 
         // Add vertex.
-        graph_optimizer_.addVertex(c_vertex);
+        graph_.addVertex(c_vertex);
 
         return id;
     }
 
 
-    std::vector<std::vector<int>> Graph::createComb(const std::vector<int>& vec)
+    std::vector<std::vector<int>> Map::createComb(const std::vector<int>& vec)
     {
         std::string bitmask(2, 1);
         bitmask.resize(vec.size(), 0);
@@ -601,7 +601,7 @@ namespace slam
     }
 
 
-    void Graph::fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
+    void Map::fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
                                           Frame& frame)
     {
         cv::Point2f kpt;
@@ -632,7 +632,7 @@ namespace slam
     }
 
 
-    tf::Transform Graph::fromPoint3DToTf(const cv::Point3f& pt)
+    tf::Transform Map::fromPoint3DToTf(const cv::Point3f& pt)
     {
         tf::Transform out;
         out.setIdentity();
@@ -642,7 +642,7 @@ namespace slam
     }
 
 
-    Eigen::Isometry3d Graph::fromTfToIsometry(const tf::Transform& tf)
+    Eigen::Isometry3d Map::fromTfToIsometry(const tf::Transform& tf)
     {
         tf::Vector3 t_in = tf.getOrigin();
         tf::Quaternion q_in = tf.getRotation();
@@ -659,7 +659,7 @@ namespace slam
     }
 
 
-    tf::Transform Graph::fromIsometryToTf(const Eigen::Isometry3d& iso)
+    tf::Transform Map::fromIsometryToTf(const Eigen::Isometry3d& iso)
     {
         Eigen::Vector3d t_in = iso.translation();
         Eigen::Quaterniond q_in = (Eigen::Quaterniond)iso.rotation();
@@ -670,7 +670,7 @@ namespace slam
     }
 
 
-    tf::Transform Graph::fromVertexToTf(const g2o::VertexSE3* vertex)
+    tf::Transform Map::fromVertexToTf(const g2o::VertexSE3* vertex)
     {
         Eigen::Isometry3d iso = vertex->estimate();
         tf::Transform tf = fromIsometryToTf(iso);
