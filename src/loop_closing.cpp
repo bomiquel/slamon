@@ -459,6 +459,7 @@ namespace slam
             f_cand_cam_pts.clear();
 
             // Second descriptor matching.
+            std::vector<cv::Point3f> f_cand_world_pts;
             matchNonStereoKeypoints(all_q_l_descs, all_q_r_descs, 
                                     all_cand_l_descs, all_cand_r_descs,
                                     q_cluster_ids, cand_cluster_ids,
@@ -468,18 +469,18 @@ namespace slam
                                     f_q_cluster_ids, f_cand_cluster_ids,
                                     f_q_l_kpts, f_q_r_kpts,
                                     f_cand_l_kpts, f_cand_r_kpts,
-                                    f_q_cam_pts, f_cand_cam_pts);
+                                    f_q_cam_pts, f_cand_world_pts);
 
             if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_))
             {
                 // Estimates motion.
                 cv::Mat estimated_rotation, estimated_translation;
                 std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
-                std::vector<cv::Point3f> i_q_cam_pts, i_cand_cam_pts;
+                std::vector<cv::Point3f> i_q_cam_pts, i_cand_world_pts;
                 std::vector<cv::Point2f> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
-                estimateMotion(f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_cam_pts, f_cand_cam_pts,
+                estimateMotion(f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_cam_pts, f_cand_world_pts,
                                estimated_rotation, estimated_translation,
-                               i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_cam_pts, i_cand_cam_pts);
+                               i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_cam_pts, i_cand_world_pts);
 
                 // Loop found!
                 if (i_q_l_kpts.size() >= (uint)(min_lc_inliers_))
