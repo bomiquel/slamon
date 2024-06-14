@@ -17,6 +17,7 @@
 
 #include <ros/ros.h>
 #include <tf/tf.h>
+#include <std_msgs/Int32.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
@@ -354,6 +355,14 @@ class Publisher
                           const std::vector<cv::Point2f>& l_kpts,
                           const std::vector<cv::Point2f>& r_kpts,
                           const std::vector<cv::Point3f>& cam_pts);
+
+
+        /** \brief Publishes counters to ROS.
+         *  \param counter The data to be published (input).
+         *  \param publisher The ROS publisher (input). 
+         */
+        void publishCounter(const int counter,
+                            const ros::Publisher& publisher);
 
 
         /** \brief Writes a list of poses.

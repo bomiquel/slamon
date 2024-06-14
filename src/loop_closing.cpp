@@ -26,7 +26,7 @@ namespace slam
         init_loop_closing_ = false;
 
         // Initialises number of loop closing.
-        num_loop_closures_ = 0; 
+        loop_closure_num_ = 0; 
 
         // Creates execution directory
         execution_path_ = w_path_ + "haloc/";
@@ -56,8 +56,8 @@ namespace slam
         proj_mat_client_ = nh.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
 
         // Publishers
-        // num_clusters_pub_ = nhp.advertise<std_msgs::Int32>("num_clusters", 1);
-        // num_loop_closure_pub_ = nhp.advertise<std_msgs::Int32>("num_loop_closure", 1);
+        cluster_num_pub_ = nhp.advertise<std_msgs::Int32>("cluster_num", 1);
+        loop_closure_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_num", 1);
         loop_closure_img_pub_ = nhp.advertise<sensor_msgs::Image>("loop_closure_img", 1);
 
         // Loop
@@ -73,11 +73,17 @@ namespace slam
 
                 processNewCluster(c_cluster);
 
-                ROS_INFO_STREAM("[LC->run]: Cluster: " << c_cluster.getId() << " from keyframe: " << c_cluster.getFrameId());
+                if (enable_debugging_)
+                    ROS_INFO_STREAM("[LC->run]: Cluster: " << c_cluster.getId() << " from keyframe: " << c_cluster.getFrameId());
 
                 searchByProximity(c_cluster);
 
                 searchByHash(c_cluster);
+
+                if (cluster_num_pub_.getNumSubscribers() > 0)
+                    publishCounter(c_cluster.getId() + 1, cluster_num_pub_);
+                if (loop_closure_num_pub_.getNumSubscribers() > 0)
+                    publishCounter(loop_closure_num_, loop_closure_num_pub_);
             }
             
             r.sleep();
@@ -210,7 +216,7 @@ namespace slam
 
 
     void LoopClosing::getHashCandidates(int c_cluster_id,
-                                        uint num_closest_candidates,
+                                        uint closest_candidates_num,
                                         std::vector<int>& closest_candidates)
     {
         // Init.
@@ -268,9 +274,9 @@ namespace slam
         std::sort(candidates.begin(), candidates.end(), sortByMatching);
 
         // Gets closest matches (minnor mmatching distance)
-        if (num_closest_candidates > candidates.size())
-            num_closest_candidates = candidates.size();
-        for (uint i = 0; i < num_closest_candidates; i++)
+        if (closest_candidates_num > candidates.size())
+            closest_candidates_num = candidates.size();
+        for (uint i = 0; i < closest_candidates_num; i++)
             closest_candidates.push_back(candidates[i].first);
     }
 
@@ -586,7 +592,7 @@ namespace slam
                         map_->update();
 
                         ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------" << std::endl << 
-                                                            " LOOP CLOSURE: " << num_loop_closures_ << std::endl << 
+                                                            " LOOP CLOSURE: " << loop_closure_num_ << std::endl << 
                                         "Between keyframe " << q_cluster.getFrameId() << " and " << cand_cluster.getFrameId() << std::endl <<
                                         "Method: " << search_method << std::endl <<
                                         "Inliers: " << i_q_l_kpts.size());
@@ -609,7 +615,7 @@ namespace slam
                                                    definitive_cluster_pairs,
                                                    cand_cluster_keyframe_relation);
 
-                            writeLoopClosure(lc_path_ + convertTo5Digits(num_loop_closures_),
+                            writeLoopClosure(lc_path_ + convertTo5Digits(loop_closure_num_),
                                              q_cluster.getFrameId(),
                                              keyframe_path_,
                                              i_q_cluster_ids,
@@ -623,7 +629,7 @@ namespace slam
                                              definitive_cluster_pairs,
                                              cand_cluster_keyframe_relation);
                         }
-                        num_loop_closures_++;
+                        loop_closure_num_++;
                         return true;
                     }
                 }

@@ -113,11 +113,11 @@ namespace slam
 
             /** \brief Get the best candidates to close a loop by hash.
              *  \param c_cluster_id The current cluster id (input).
-             *  \param num_closest_candidates The number of best candidates to be retrieved (input).
+             *  \param closest_candidates_num The number of best candidates to be retrieved (input).
              *  \param candidates The list of best candidates (output).
              */
             void getHashCandidates(int c_cluster_id, 
-                                   uint num_closest_candidates,
+                                   uint closest_candidates_num,
                                    std::vector<int>& closest_candidates);
 
 
@@ -162,7 +162,7 @@ namespace slam
 
             int lc_discard_window_; //!> Window size of discarded graph vertices (clusters).
             
-            int num_loop_closures_; //!> Stores the number of loop closures.
+            int loop_closure_num_; //!> Stores the number of loop closures.
 
             std::list<Cluster> cluster_queue_; //!> Clusters queue to be inserted into the graph
 
@@ -186,9 +186,9 @@ namespace slam
 
             ros::ServiceClient proj_mat_client_; //!> Service for requesting projection matrices.
 
-            ros::Publisher num_clusters_pub_; //!> Number of clusters publisher.
+            ros::Publisher cluster_num_pub_; //!> Cluster number publisher.
             
-            ros::Publisher num_loop_closure_pub_; //!> Number of loop closure publisher.
+            ros::Publisher loop_closure_num_pub_; //!> Loop closing number publisher.
 
             ros::Publisher loop_closure_img_pub_; //!> Loop closure image publisher.
     };

@@ -35,6 +35,7 @@ find_package(
     catkin REQUIRED COMPONENTS
         tf
         roscpp
+        std_msgs
         nav_msgs
         cv_bridge
         sensor_msgs

@@ -105,7 +105,8 @@ namespace slam
         {
             case UNINITIALISED:
             {
-                ROS_INFO_STREAM("UNINITIALIZED");
+                if (enable_debugging_)
+                    ROS_INFO_STREAM("UNINITIALIZED");
                 if (!initialisation(l_info_msg, r_info_msg))
                     break;
                 if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
@@ -122,7 +123,8 @@ namespace slam
             }
             case SEMI_INITIALISED:
             {
-                ROS_INFO_STREAM("SEMI-INITIALISED");
+                if (enable_debugging_)
+                    ROS_INFO_STREAM("SEMI-INITIALISED");
                 if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
                     status_ = RUNNING;
@@ -136,7 +138,8 @@ namespace slam
             }
             case RUNNING:
             {
-                ROS_INFO_STREAM("RUNNING");
+                if (enable_debugging_)
+                    ROS_INFO_STREAM("RUNNING");
                 if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
                     valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);

@@ -65,6 +65,7 @@ namespace slam
 
         // Publishers.
         map_pub_ = nhp.advertise<nav_msgs::Odometry>("map", 1);
+        keyframes_num_pub_ = nhp.advertise<std_msgs::Int32>("keyframe_num", 1);
         clustering_img_pub_ = nhp.advertise<sensor_msgs::Image>("keypoints_clustering_img", 1);
 
         // Subscribers.
@@ -215,7 +216,7 @@ namespace slam
     void Map::findClosestVertices(int vertex_id,
                                   int window_center,
                                   int discard_window,
-                                  uint num_closest_neighbors,
+                                  uint closest_neighbors_num,
                                   std::vector<int>& closest_neighbors)
     {
         // Init.
@@ -250,9 +251,9 @@ namespace slam
         std::sort(neighbors.begin(), neighbors.end(), sortByDistance);
 
         // Gets closest vertices (minnor distance)
-        if (num_closest_neighbors > neighbors.size())
-            num_closest_neighbors = neighbors.size();
-        for (uint i = 0; i < num_closest_neighbors; i++)
+        if (closest_neighbors_num > neighbors.size())
+            closest_neighbors_num = neighbors.size();
+        for (uint i = 0; i < closest_neighbors_num; i++)
             closest_neighbors.push_back(neighbors[i].first);
     }
 
@@ -265,7 +266,7 @@ namespace slam
         graph_.initializeOptimization();
         graph_.optimize(20);
 
-        ROS_INFO_STREAM("[Graph->updater:] Optimization done in graph with: " << graph_.vertices().size() << " vertices.");
+        ROS_INFO_STREAM("[Map->updater:] Optimization done in graph with: " << graph_.vertices().size() << " vertices.");
     }
 
 
@@ -314,8 +315,8 @@ namespace slam
                 if (clustering_img_pub_.getNumSubscribers() > 0)
                     publishKeypointsClustering(c_frame.getLeftImg(), stamp, clustering_img_pub_, l_kpts, clusters);
                 writeKeypointsClustering(c_frame.getLeftImg(), clusters_path_ + c_keyframe_name, l_kpts, clusters);
+                ROS_INFO_STREAM("[MAP->Includer]: Adding keyframe: " << c_keyframe_id_);
             }
-            ROS_INFO_STREAM("[GRAPH->Map includer]: Adding keyframe: " << c_keyframe_id_);
 
             // Save the frame timestamp
             keyframe_stamps_.push_back(stamp.toSec());
@@ -434,7 +435,7 @@ namespace slam
                 }
                 else
                 {
-                    ROS_ERROR("[GRAPH->Map includer]: Impossible to connect current and previous keyframe. Graph will have non-connected parts!");
+                    ROS_ERROR("[MAP->Includer]: Impossible to connect current and previous keyframe. Graph will have non-connected parts!");
                 }
             }
 
@@ -455,6 +456,10 @@ namespace slam
             }
             tf::Transform updated_robot_pose = getVertexCameraPose(c_vertex_id, true) * robot2camera_.inverse();
             publishPose(stamp, map_pub_, "map", robot_frame_id_, updated_robot_pose);
+
+            // Publish number of keyframes.
+            if (keyframes_num_pub_.getNumSubscribers() > 0)
+                publishCounter(c_keyframe_id_ + 1, keyframes_num_pub_);
         }
 
         if (enable_debugging_)

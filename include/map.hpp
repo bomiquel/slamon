@@ -127,13 +127,13 @@ namespace slam
              *  \param vertex_id The vertex id to retrieve its neighbors (input).
              *  \param window_center The vertex where discard window will be centered (input).
              *  \param discard_window The number of discarded vertices (input).
-             *  \param num_closest_neighbors The number of neighbors to be retrieved (input).
+             *  \param closest_neighbors_num The number of neighbors to be retrieved (input).
              *  \param closest_neighbors Will contain the list of closest neighbors by distance (output).
              */
             void findClosestVertices(int vertex_id,
                                      int window_center,
                                      int discard_window,
-                                     uint num_closest_neighbors,
+                                     uint closest_neighbors_num,
                                      std::vector<int>& closest_neighbors);
 
 
@@ -292,6 +292,8 @@ namespace slam
             std::vector<double> keyframe_stamps_; //> Stores the frame timestamps
 
             ros::Publisher map_pub_; //!> Updated robot pose publisher.
+
+            ros::Publisher keyframes_num_pub_; // Publisher for the number of keyframes.
 
             ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering.
 

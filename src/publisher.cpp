@@ -337,6 +337,15 @@ void Publisher::publishFrame(const cv::Mat& l_descs,
 }
 
 
+void Publisher::publishCounter(const int counter,
+                               const ros::Publisher& publisher)
+{
+    std_msgs::Int32 msg;
+    msg.data = counter;
+    publisher.publish(msg);
+}
+
+
 void Publisher::writePoses(const std::string& o_path,
                            const std::vector<double>& stamps,
                            const std::vector<tf::Transform>& poses)
