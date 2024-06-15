@@ -10,6 +10,7 @@
 
 
 void readParams(int& lc_neighbors,
+                int& lc_candidates,
                 double& lowe_ratio,
                 int& min_lc_inliers,
                 int& lc_discard_window,
@@ -25,6 +26,7 @@ void readParams(int& lc_neighbors,
     nh.param("slamon/lowe_ratio",             lowe_ratio,             0.8);
     nh.param("slamon/lc_neighbors",           lc_neighbors,           4);
     nh.param("slamon/working_path",           working_path,           ros::package::getPath("slamon") + "/output/");
+    nh.param("slamon/lc_candidates",          lc_candidates,          3);
     nh.param("slamon/matching_type",          matching_type,          std::string("ratio_matching"));
     nh.param("slamon/min_lc_inliers",         min_lc_inliers,         40);
     nh.param("slamon/robot_frame_id",         robot_frame_id,         std::string("base_link"));
@@ -38,6 +40,7 @@ void readParams(int& lc_neighbors,
                     "Lowe's ratio                    = " << lowe_ratio << std::endl <<
                     "Num loop closing neighbors      = " << lc_neighbors << std::endl <<
                     "Working path                    = " << working_path << std::endl <<
+                    "Num loop closing candidates     = " << lc_candidates << std::endl <<
                     "Matching type                   = " << matching_type << std::endl <<
                     "Min loop closing inliers        = " << min_lc_inliers << std::endl <<
                     "Robot frame id                  = " << robot_frame_id << std::endl <<
@@ -68,6 +71,11 @@ void readParams(int& lc_neighbors,
         working_path += "/";
         invalid_parameter = true;
     }
+    if (lc_candidates < 1 || lc_candidates > 7)
+    {
+        lc_candidates = 3;
+        invalid_parameter = true;
+    }
     if (min_lc_inliers < 30)
     {
         min_lc_inliers = 30;
@@ -94,6 +102,7 @@ void readParams(int& lc_neighbors,
                         "Lowe's ratio                    = " << lowe_ratio << std::endl <<
                         "Num loop closing neighbors      = " << lc_neighbors << std::endl <<
                         "Working path                    = " << working_path << std::endl <<
+                        "Num loop closing candidates     = " << lc_candidates << std::endl <<
                         "Matching type                   = " << matching_type << std::endl <<
                         "Min loop closing inliers        = " << min_lc_inliers << std::endl <<
                         "Robot frame id                  = " << robot_frame_id << std::endl <<
@@ -114,9 +123,10 @@ int main(int argc, char **argv)
     // Read parameters.
     bool enable_debugging;
     double min_dist_keyframe, lowe_ratio;
+    int lc_neighbors, min_lc_inliers, lc_discard_window, lc_candidates;
     std::string working_path, matching_type, robot_frame_id, motion_estimation_type;
-    int lc_neighbors, min_lc_inliers, lc_discard_window;
     readParams(lc_neighbors, 
+               lc_candidates,
                lowe_ratio,
                min_lc_inliers,
                lc_discard_window,
@@ -130,6 +140,7 @@ int main(int argc, char **argv)
     // Declare threads.
     slam::LoopClosing loop_closing(lowe_ratio,
                                    lc_neighbors, 
+                                   lc_candidates,
                                    min_lc_inliers,
                                    lc_discard_window,
                                    enable_debugging,

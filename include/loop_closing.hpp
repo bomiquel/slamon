@@ -42,6 +42,7 @@ namespace slam
              *  \param ratio The ratio for Lowe's ratio test (input).
              *  \param lc_neighbors Number of neighbours to recover in order to 
              *  increase the possibility of closing a loop (input).
+             *  \param lc_candidates Number of candidates to close a loop (input).
              *  \param min_lc_inliers Minimum number of inliers for loop closing (input).
              *  \param lc_discard_window Window size of discarded graph vertices (input).
              *  \param enable_debugging Enabling or disabling debugging (input).
@@ -51,6 +52,7 @@ namespace slam
              */
             LoopClosing(double ratio,
                         int lc_neighbors,
+                        int lc_candidates,
                         int min_lc_inliers,
                         int lc_discard_window,
                         bool enable_debugging,
@@ -157,6 +159,8 @@ namespace slam
             bool init_loop_closing_; //!> Loop closing state.
 
             int lc_neighbors_; //!> Number of neighbours to recover in order to increase the possibility of closing the loop.
+
+            int lc_candidates_; //!> Number of candidates to close a loop.
 
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
 

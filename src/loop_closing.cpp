@@ -7,6 +7,7 @@ namespace slam
 
     LoopClosing::LoopClosing(double ratio,
                              int lc_neighbors,
+                             int lc_candidates,
                              int min_lc_inliers,
                              int lc_discard_window,
                              bool enable_debugging,
@@ -18,6 +19,7 @@ namespace slam
         // Initialises parameters.
         w_path_ = w_path;
         lc_neighbors_ = lc_neighbors;
+        lc_candidates_ = lc_candidates;
         min_lc_inliers_ = min_lc_inliers;
         enable_debugging_ = enable_debugging;
         lc_discard_window_ = lc_discard_window;
@@ -190,7 +192,7 @@ namespace slam
         // Get the candidates to close loop
         start_module_time = ros::Time::now().toSec();
         std::vector<int> candidates;
-        map_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), lc_discard_window_, 5, candidates);
+        map_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), lc_discard_window_, lc_candidates_, candidates);
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by proximity.
         if (candidates.size() == 0)
             return;
@@ -223,7 +225,7 @@ namespace slam
         // Get the candidates to close loop
         start_module_time = ros::Time::now().toSec();
         std::vector<int> candidates;
-        getHashCandidates(c_cluster.getId(), 5, candidates);
+        getHashCandidates(c_cluster.getId(), lc_candidates_, candidates);
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by hash.
         if (candidates.size() == 0)
             return;
