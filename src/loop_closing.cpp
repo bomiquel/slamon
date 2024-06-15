@@ -77,15 +77,16 @@ namespace slam
 
                 // Initialisation of the variables necessary to measure thread performance.
                 p_loop_closures_num = loop_closure_num_;
-                run_times_.run_time_3 = 0.0;
-                run_times_.run_time_4 = 0.0;
+                run_times_.run_time_3 = 0.0; // Read cluster candidates run time.
+                run_times_.run_time_4 = 0.0; // Loop detection run time.
+                run_times_.run_time_5 = 0.0; // Close loop run time.
 
                 if (!init_loop_closing_)
                     getProjectionMatrices();
                 
                 start_module_time = ros::Time::now().toSec();
                 processNewCluster(c_cluster);
-                run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time;
+                run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Process current cluster run time.
 
                 if (enable_debugging_)
                     ROS_INFO_STREAM("[LC->run]: Cluster: " << c_cluster.getId() << " from keyframe: " << c_cluster.getFrameId());
@@ -190,7 +191,7 @@ namespace slam
         start_module_time = ros::Time::now().toSec();
         std::vector<int> candidates;
         map_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), lc_discard_window_, 5, candidates);
-        run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time;
+        run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by proximity.
         if (candidates.size() == 0)
             return;
         
@@ -198,13 +199,17 @@ namespace slam
         Cluster cand_cluster;
         for (uint i = 0; i < candidates.size(); i++)
         {
+            // Reads cluster candidate from disk.
+            start_module_time = ros::Time::now().toSec();
             cand_cluster = readCluster(candidates[i]);
             if (cand_cluster.getLeftDescs().rows == 0)
             {
                 ROS_WARN_STREAM("[LC->searchByProximity->readCluster:] It is not possible to read the cluster " << candidates[i] << " from the disk!");
                 continue;
             }
+            run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time); // Read cluster candidate run time.
 
+            // Tries to close loop between current/query cluster and a candidate cluster.
             closeLoopBetween(c_cluster, cand_cluster, "proximity");
         }
     }
@@ -219,7 +224,7 @@ namespace slam
         start_module_time = ros::Time::now().toSec();
         std::vector<int> candidates;
         getHashCandidates(c_cluster.getId(), 5, candidates);
-        run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time;
+        run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by hash.
         if (candidates.size() == 0)
             return;
 
@@ -228,13 +233,17 @@ namespace slam
         Cluster cand_cluster;
         for (uint i = 0; i < candidates.size(); i++)
         {
+            // Reads cluster candidate from disk.
+            start_module_time = ros::Time::now().toSec();
             cand_cluster = readCluster(candidates[i]);
             if (cand_cluster.getLeftDescs().rows == 0)
             {
                 ROS_WARN_STREAM("[LC->searchByHash->readCluster:] It is not possible to read the cluster " << candidates[i] << " from the disk!");
                 continue;
             }
+            run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time); // Read cluster candidate run time.
 
+            // Tries to close loop between current/query cluster and a candidate cluster.
             valid = closeLoopBetween(c_cluster, cand_cluster, "hash");
             if (valid)
                 break;
@@ -522,7 +531,7 @@ namespace slam
                 if (i_q_l_kpts.size() >= (uint)(min_lc_inliers_))
                 {
                     // Finished loop detection, starting loop closing.
-                    run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time);
+                    run_times_.run_time_4 += (ros::Time::now().toSec() - start_module_time); // Loop detection run time.
                     start_module_time = ros::Time::now().toSec();
 
                     // From cv::Mat to tf::Transform.
@@ -625,7 +634,7 @@ namespace slam
                     if (some_edge_added)
                     {
                         map_->update();
-                        run_times_.run_time_4 += (ros::Time::now().toSec() - start_module_time);
+                        run_times_.run_time_5 += (ros::Time::now().toSec() - start_module_time); // Close loop run time.
 
                         ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------" << std::endl << 
                                                             " LOOP CLOSURE: " << loop_closure_num_ << std::endl << 
@@ -668,10 +677,14 @@ namespace slam
                         loop_closure_num_++;
                         return true;
                     }
+                    else
+                    {
+                        run_times_.run_time_5 += (ros::Time::now().toSec() - start_module_time); // Close loop run time.
+                    }
                 }
             }
         }
-        run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time);
+        run_times_.run_time_4 += (ros::Time::now().toSec() - start_module_time); // Loop detection run time.
         return false;  
     }
 

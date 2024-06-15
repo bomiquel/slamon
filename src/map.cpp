@@ -494,6 +494,8 @@ namespace slam
             std::filesystem::remove(frame_path_ + c_frame_name + "_right.png");
         }
 
+        // Publishes last iteration performance.
+        run_times_.run_time_5 = 0.0; // Nothing.
         run_times_.total_run_time = ros::Time::now().toSec() - start_callback_time;
         if (run_times_pub_.getNumSubscribers() > 0)
             publishPerformance(ros::Time::now(), (int)add_keyframe, run_times_, run_times_pub_);
