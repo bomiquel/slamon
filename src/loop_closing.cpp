@@ -55,7 +55,8 @@ namespace slam
         // Client services.
         proj_mat_client_ = nh.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
 
-        // Publishers
+        // Publishers.
+        run_times_pub_ = nhp.advertise<slamon::Performance>("loop_closing_performance", 1);
         cluster_num_pub_ = nhp.advertise<std_msgs::Int32>("cluster_num", 1);
         loop_closure_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_num", 1);
         loop_closure_img_pub_ = nhp.advertise<sensor_msgs::Image>("loop_closure_img", 1);
@@ -63,15 +64,28 @@ namespace slam
         // Loop
         ros::Rate r(10);
         Cluster c_cluster;
+        int p_loop_closures_num;
+        double start_module_time;
+        double start_iteration_time;
         while (ros::ok())
         {
             // Search loop closing in the new cluster.
             if (checkNewClusterInQueue())
             {
+                // Time at which the program starts the iteration.
+                start_iteration_time = ros::Time::now().toSec();
+
+                // Initialisation of the variables necessary to measure thread performance.
+                p_loop_closures_num = loop_closure_num_;
+                run_times_.run_time_3 = 0.0;
+                run_times_.run_time_4 = 0.0;
+
                 if (!init_loop_closing_)
                     getProjectionMatrices();
-
+                
+                start_module_time = ros::Time::now().toSec();
                 processNewCluster(c_cluster);
+                run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time;
 
                 if (enable_debugging_)
                     ROS_INFO_STREAM("[LC->run]: Cluster: " << c_cluster.getId() << " from keyframe: " << c_cluster.getFrameId());
@@ -84,8 +98,12 @@ namespace slam
                     publishCounter(c_cluster.getId() + 1, cluster_num_pub_);
                 if (loop_closure_num_pub_.getNumSubscribers() > 0)
                     publishCounter(loop_closure_num_, loop_closure_num_pub_);
+
+                // Publishes last iteration performance.
+                run_times_.total_run_time = ros::Time::now().toSec() - start_iteration_time;
+                if (run_times_pub_.getNumSubscribers() > 0)
+                    publishPerformance(ros::Time::now(), loop_closure_num_ - p_loop_closures_num, run_times_, run_times_pub_);
             }
-            
             r.sleep();
         }
     }
@@ -165,13 +183,17 @@ namespace slam
     // TODO: no_candidates?
     void LoopClosing::searchByProximity(const Cluster& c_cluster)
     {
+        // Auxilary variable to set the start time of a module.
+        double start_module_time;
+
         // Get the candidates to close loop
+        start_module_time = ros::Time::now().toSec();
         std::vector<int> candidates;
-        map_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), 
-                                    lc_discard_window_, 5, candidates);
+        map_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), lc_discard_window_, 5, candidates);
+        run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time;
         if (candidates.size() == 0)
             return;
-
+        
         // Loop over candidates.
         Cluster cand_cluster;
         for (uint i = 0; i < candidates.size(); i++)
@@ -190,9 +212,14 @@ namespace slam
 
     void LoopClosing::searchByHash(const Cluster& c_cluster)
     {
+        // Auxilary variable to set the start time of a module.
+        double start_module_time;
+
         // Get the candidates to close loop
+        start_module_time = ros::Time::now().toSec();
         std::vector<int> candidates;
         getHashCandidates(c_cluster.getId(), 5, candidates);
+        run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time;
         if (candidates.size() == 0)
             return;
 
@@ -322,6 +349,9 @@ namespace slam
                                        Cluster cand_cluster,
                                        const std::string& search_method)
     {
+        // Auxilary variable to set the start time of a module.
+        double start_module_time = ros::Time::now().toSec();
+
         // Cluster ids list.
         std::vector<int> q_cluster_ids, cand_cluster_ids, f_q_cluster_ids, f_cand_cluster_ids;
 
@@ -491,6 +521,11 @@ namespace slam
                 // Loop found!
                 if (i_q_l_kpts.size() >= (uint)(min_lc_inliers_))
                 {
+                    // Finished loop detection, starting loop closing.
+                    run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time);
+                    start_module_time = ros::Time::now().toSec();
+
+                    // From cv::Mat to tf::Transform.
                     tf::Transform estimated_motion;
                     fromMatToTf(estimated_rotation, estimated_translation, estimated_motion);
                     
@@ -590,6 +625,7 @@ namespace slam
                     if (some_edge_added)
                     {
                         map_->update();
+                        run_times_.run_time_4 += (ros::Time::now().toSec() - start_module_time);
 
                         ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------" << std::endl << 
                                                             " LOOP CLOSURE: " << loop_closure_num_ << std::endl << 
@@ -635,6 +671,7 @@ namespace slam
                 }
             }
         }
+        run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time);
         return false;  
     }
 

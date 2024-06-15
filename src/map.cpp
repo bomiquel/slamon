@@ -65,6 +65,7 @@ namespace slam
 
         // Publishers.
         map_pub_ = nhp.advertise<nav_msgs::Odometry>("map", 1);
+        run_times_pub_ = nhp.advertise<slamon::Performance>("map_performance", 1);
         keyframes_num_pub_ = nhp.advertise<std_msgs::Int32>("keyframe_num", 1);
         clustering_img_pub_ = nhp.advertise<sensor_msgs::Image>("keypoints_clustering_img", 1);
 
@@ -273,11 +274,19 @@ namespace slam
     void Map::frameCallback(const slamon::FrameConstPtr& frame_msg,
                             const nav_msgs::OdometryConstPtr& odom_msg)
     {
+        // Time at which the program enters into the callback.
+        double start_callback_time = ros::Time::now().toSec();
+        
+        // Auxilary variable to set the start time of a module.
+        double start_module_time;
+
         // From ROS messages to local objects.
+        start_module_time = ros::Time::now().toSec();
         Frame c_frame;
         tf::Transform c_robot_pose;
         fromFrameMsgToFrameObject(frame_msg, c_frame);
         tf::poseMsgToTF(odom_msg->pose.pose, c_robot_pose);
+        run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // From Frame msg to Frame object run time.
 
         // If enable debugging gets images from disk.
         std::string c_frame_name;
@@ -288,8 +297,13 @@ namespace slam
             c_frame.setRightImg(cv::imread(frame_path_ + c_frame_name + "_right.png", cv::IMREAD_COLOR));
         }
 
-        // Include a keyframe to the map if necessary.
-        if (needNewKeyFrame(c_frame, c_robot_pose))
+        // Does the map need a new keyframe?
+        start_module_time = ros::Time::now().toSec();
+        bool add_keyframe = needNewKeyFrame(c_frame, c_robot_pose);
+        run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Need new keyframe? run time.
+
+        // Includes a keyframe if the map needs one.
+        if (add_keyframe)
         {
             // Updates global variables.
             init_map_ = true;
@@ -322,6 +336,7 @@ namespace slam
             keyframe_stamps_.push_back(stamp.toSec());
             
             // Loop of frame clusters.
+            start_module_time = ros::Time::now().toSec();
             int cluster_id, idx;
             std::vector<int> c_vertex_ids;
             cv::Mat cluster_l_descs, cluster_r_descs;
@@ -368,8 +383,10 @@ namespace slam
             // Send the new clusters to the loop closing thread.
             for (uint i = 0; i < clusters_to_close_loop.size(); i++)
                 loop_closing_->addClusterToQueue(clusters_to_close_loop[i]);
+            run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Add vertex (cluster) to graph run time.
 
             // Add edges between clusters of the same frame.
+            start_module_time = ros::Time::now().toSec();
             if (clusters.size() > 1)
             {
                 // Retrieve all possible combinations.
@@ -438,8 +455,10 @@ namespace slam
                     ROS_ERROR("[MAP->Includer]: Impossible to connect current and previous keyframe. Graph will have non-connected parts!");
                 }
             }
+            run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Add edges to graph run time.
 
             // Save map poses to file.
+            start_module_time = ros::Time::now().toSec();
             if (enable_debugging_)
             {
                 std::vector<double> stamps;
@@ -456,10 +475,17 @@ namespace slam
             }
             tf::Transform updated_robot_pose = getVertexCameraPose(c_vertex_id, true) * robot2camera_.inverse();
             publishPose(stamp, map_pub_, "map", robot_frame_id_, updated_robot_pose);
+            run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Write graph to disk and publish updated robot pose run time.
 
             // Publish number of keyframes.
             if (keyframes_num_pub_.getNumSubscribers() > 0)
                 publishCounter(c_keyframe_id_ + 1, keyframes_num_pub_);
+        }
+        else
+        {
+            run_times_.run_time_2 = 0.0;
+            run_times_.run_time_3 = 0.0;
+            run_times_.run_time_4 = 0.0;
         }
 
         if (enable_debugging_)
@@ -467,6 +493,10 @@ namespace slam
             std::filesystem::remove(frame_path_ + c_frame_name + "_left.png");
             std::filesystem::remove(frame_path_ + c_frame_name + "_right.png");
         }
+
+        run_times_.total_run_time = ros::Time::now().toSec() - start_callback_time;
+        if (run_times_pub_.getNumSubscribers() > 0)
+            publishPerformance(ros::Time::now(), (int)add_keyframe, run_times_, run_times_pub_);
     }
 
 

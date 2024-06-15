@@ -187,11 +187,11 @@ namespace slam
 
             tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.
 
-            ros::Publisher info_pub_; //!> Publishes last visual odometer last iteration performance.
-
             ros::Publisher odom_pub_; //!> Publishes current velocity and accumulated movement (odometry).
 
             ros::Publisher frame_pub_; //!> Publishes current relevant information from a stereo pair of images.
+
+            ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
 
             ros::Publisher inliers_img_pub_; // !> Publisher for the image with drawn inliers.
 
@@ -207,7 +207,7 @@ namespace slam
 
             ros::ServiceServer proj_mat_server_; // !> Service for sending projection matrices.
 
-            VORunTimes run_times_; // !> Internal times of the visual odometer.
+            RunTimes run_times_; // !> Internal visual odometer execution times.
 
             // Topic sync
             typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,

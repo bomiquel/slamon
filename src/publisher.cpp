@@ -276,28 +276,28 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
 }
 
 
-void Publisher::publishInfo(const ros::Time& stamp,
-                            const bool valid_motion,
-                            const VORunTimes& run_times,
-                            const ros::Publisher& publisher)
+void Publisher::publishPerformance(const ros::Time& stamp,
+                                   const int successes_num,
+                                   const RunTimes& run_times,
+                                   const ros::Publisher& publisher)
 {
-    slamon::VOInfo msg;
+    // Creates custom message.
+    slamon::Performance msg;
 
-    // Sets header
+    // Sets header.
     msg.header.stamp = stamp;
 
-    // Sets payload
-    msg.valid_motion = valid_motion;
-    msg.feature_extraction_run_time = run_times.feature_extraction;
-    msg.stereo_matching_run_time = run_times.stereo_matching;
-    msg.triangulation_run_time = run_times.triangulation;
-    msg.successive_matching_run_time = run_times.successive_matching;
-    msg.motion_estimation_run_time = run_times.motion_estimation;
-    msg.total_run_time = run_times.total;
+    // Sets payload.
+    msg.successes_num = successes_num;
+    msg.run_time_0 = run_times.run_time_0; // Time needed for VO: Feature extraction, MAP: From Frame msg to Frame object or LC: Process current cluster.
+    msg.run_time_1 = run_times.run_time_1; // Time needed for VO: Stereo matching, MAP: Need new keyframe? or LC: Search for candidates to close loops by proximity.
+    msg.run_time_2 = run_times.run_time_2; // Time needed for VO: Triangulation, MAP: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
+    msg.run_time_3 = run_times.run_time_3; // Time needed for VO: Successive matching, MAP: Add edges to graph or LC: Loop detection.
+    msg.run_time_4 = run_times.run_time_4; // Time needed for VO: Motion estimation, MAP: Write graph to disk and publish updated robot pose or LC: Close loop.
+    msg.total_run_time = run_times.total_run_time; // Time needed for each thread to perform one iteration.
 
-    // Publishes performance information
     publisher.publish(msg);
-}   
+}
 
 
 void Publisher::publishFrame(const cv::Mat& l_descs,

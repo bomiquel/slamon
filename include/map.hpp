@@ -293,6 +293,8 @@ namespace slam
 
             ros::Publisher map_pub_; //!> Updated robot pose publisher.
 
+            ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
+
             ros::Publisher keyframes_num_pub_; // Publisher for the number of keyframes.
 
             ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering.
@@ -310,6 +312,9 @@ namespace slam
             g2o::SparseOptimizer graph_; //!> G2O graph.
 
             LoopClosing* loop_closing_; // Loop closing object pointer.
+
+            RunTimes run_times_; // !> Internal map execution times.
+
 
             // Topic sync
             typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,

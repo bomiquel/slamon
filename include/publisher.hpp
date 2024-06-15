@@ -23,8 +23,8 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include "slamon/Frame.h"
-#include "slamon/VOInfo.h"
 #include "slamon/Keypoint.h"
+#include "slamon/Performance.h"
 
 
 class Publisher
@@ -36,17 +36,17 @@ class Publisher
         Publisher() {};
 
 
-        /** \brief Structure for storing all internal times
-         *  of the visual odometer.
+        /** \brief Structure for storing SLAMON runtimes. To avoid creating a structure
+         *  for each part of the system, this structure is reused in all three threads.
          */
-        struct VORunTimes
+        struct RunTimes
         {
-            double feature_extraction = 0.0;    //!> Time needed to extract keypoints and compute descriptors.
-            double stereo_matching = 0.0;       //!> Time needed to match stereo keypoints.
-            double triangulation = 0.0;         //!> Time needed to compute 3D keypoints.
-            double successive_matching = 0.0;   //!> Time needed to match successive keypoints.
-            double motion_estimation = 0.0;     //!> Time needed to estimate the motion.
-            double total = 0.0;                 //!> Total callback run time.
+            double run_time_0 = 0.0;     //!> Time needed for VO: Feature extraction, MAP: From Frame msg to Frame object or LC: Process current cluster.
+            double run_time_1 = 0.0;     //!> Time needed for VO: Stereo matching, MAP: Need new keyframe? or LC: Search for candidates to close loops by proximity.
+            double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MAP: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
+            double run_time_3 = 0.0;     //!> Time needed for VO: Successive matching, MAP: Add edges to graph or LC: Loop detection.
+            double run_time_4 = 0.0;     //!> Time needed for VO: Motion estimation, MAP: Write graph to disk and publish updated robot pose or LC: Close loop.
+            double total_run_time = 0.0; //!> Time needed for each thread to perform one iteration.
         };
 
 
@@ -326,16 +326,19 @@ class Publisher
                                     const tf::Transform& c_robot_motion);
 
 
-        /** \brief Publishes current visual odometer internal performance.
-         *  \param stamp Current frame ROS timestamp (input).
-         *  \param valid_motion If a valid movement could be estimated in the last iteration (input).
-         *  \param run_times Structure with all visual odometer internal run times (input).
+        /** \brief Publishes SLAMON performance.
+         *  \param stamp Message timestamp. VO: current frame timestamp,
+         *   MAP: current time or LC: current time (input).
+         *  \param successes_num Successes in the last iteration of the
+         *  thread in question. (input).
+         *  \param run_times Structure with all the execution times of
+         *  the thread in question. (input).
          *  \param publisher The ROS publisher (input).
          */
-        void publishInfo(const ros::Time& stamp,
-                         const bool valid_motion,
-                         const VORunTimes& run_times,
-                         const ros::Publisher& publisher);              
+        void publishPerformance(const ros::Time& stamp,
+                                const int successes_num,
+                                const RunTimes& run_times,
+                                const ros::Publisher& publisher);              
 
 
         /** \brief Publishes relevant information from a stereo pair of images.

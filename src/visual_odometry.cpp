@@ -57,9 +57,9 @@ namespace slam
         proj_mat_server_ = nhp.advertiseService("send_projection_matrices", &VisualOdometry::sendProjectionMatrices, this);
 
         // Publishers.
-        info_pub_ = nhp.advertise<slamon::VOInfo>("vo_info", 1);
         odom_pub_ = nhp.advertise<nav_msgs::Odometry>("odom", 1);
         frame_pub_ = nhp.advertise<slamon::Frame>("frame", 1);
+        run_times_pub_ = nhp.advertise<slamon::Performance>("vo_performance", 1);
         inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("inliers_img", 1);
         stereo_kps_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
         stereo_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_matches_img", 1);
@@ -89,7 +89,7 @@ namespace slam
                                        const sensor_msgs::CameraInfoConstPtr& r_info_msg)
     {
         // Time at which the program enters into the callback.
-        double start_time = ros::Time::now().toSec();
+        double start_callback_time = ros::Time::now().toSec();
 
         // Create current frame object.
         Frame c_frame; 
@@ -116,9 +116,9 @@ namespace slam
                 else
                 {
                     status_ = SEMI_INITIALISED;
-                    run_times_.successive_matching = 0.0;
-                    run_times_.motion_estimation = 0.0;
                 }
+                run_times_.run_time_3 = 0.0; // Succesive matching run time
+                run_times_.run_time_4 = 0.0; // Motion estimation run time
                 break;
             }
             case SEMI_INITIALISED:
@@ -129,11 +129,8 @@ namespace slam
                 {
                     status_ = RUNNING;
                 }
-                else
-                {
-                    run_times_.successive_matching = 0.0;
-                    run_times_.motion_estimation = 0.0;
-                }
+                run_times_.run_time_3 = 0.0; // Succesive matching run time
+                run_times_.run_time_4 = 0.0; // Motion estimation run time
                 break;
             }
             case RUNNING:
@@ -189,8 +186,8 @@ namespace slam
                 }
                 else
                 {
-                    run_times_.successive_matching = 0.0;
-                    run_times_.motion_estimation = 0.0;
+                    run_times_.run_time_3 = 0.0; // Succesive matching run time
+                    run_times_.run_time_4 = 0.0; // Motion estimation run time
                 }
                 break;
             }
@@ -200,8 +197,9 @@ namespace slam
         p_frame_ = c_frame;
         
         // Publishes last iteration performance
-        run_times_.total = ros::Time::now().toSec() - start_time;
-        publishInfo(l_img_msg->header.stamp, valid_motion, run_times_, info_pub_);
+        run_times_.total_run_time = ros::Time::now().toSec() - start_callback_time;
+        if (run_times_pub_.getNumSubscribers() > 0)
+            publishPerformance(l_img_msg->header.stamp, (int)valid_motion, run_times_, run_times_pub_);
     }
 
 
@@ -305,8 +303,8 @@ namespace slam
                                              const sensor_msgs::ImageConstPtr& r_img_msg,
                                              Frame& c_frame)
     {
-        // Auxilary variable to set the start time of a process.
-        double start_time;
+        // Auxilary variable to set the start time of a module.
+        double start_module_time;
 
         // From ROS image message to cv::Mat.
         cv::Mat l_img, r_img;
@@ -316,12 +314,12 @@ namespace slam
             return false; 
 
         // Detecting keypoints.
-        start_time = ros::Time::now().toSec();
+        start_module_time = ros::Time::now().toSec();
         cv::Mat l_descs, r_descs;
         std::vector<cv::Point2f> l_kpts, r_kpts;
         std::string feature_detector_type = "sift";
         detectStereoKeypoints(l_img, r_img, feature_detector_type, l_descs, r_descs, l_kpts, r_kpts);
-        run_times_.feature_extraction = ros::Time::now().toSec() - start_time;
+        run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Feature extraction run time.
 
         // Keypoint detection debugging.
         if (stereo_kps_img_pub_.getNumSubscribers() > 0)
@@ -332,34 +330,34 @@ namespace slam
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo keypoints detector:] There are not enough keypoints to match and filter!");
-            run_times_.stereo_matching = 0.0;
-            run_times_.triangulation = 0.0;
+            run_times_.run_time_1 = 0.0; // Stereo matching run time.
+            run_times_.run_time_2 = 0.0; // Triangulation run time.
             return false;
         }
 
         // Matching keypoints.
-        start_time = ros::Time::now().toSec();
+        start_module_time = ros::Time::now().toSec();
         cv::Mat h_f_l_descs, h_f_r_descs;
         std::vector<cv::Point2f> h_f_l_kpts, h_f_r_kpts;
         matchStereoKeypoints(l_descs, r_descs, l_kpts, r_kpts, h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts);
-        run_times_.stereo_matching = ros::Time::now().toSec() - start_time;
+        run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Stereo matching run time.
 
         // Sanity check.
         if (h_f_l_kpts.size() < (uint)(1.5 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
-            run_times_.triangulation = 0;
+            run_times_.run_time_2 = 0.0; // Triangulation run time.
             return false;
         }
             
         // Compute 3D keypoints. 
-        start_time = ros::Time::now().toSec();
+        start_module_time = ros::Time::now().toSec();
         cv::Mat f_l_descs, f_r_descs;
         std::vector<cv::Point3f> f_cam_pts;
         std::vector<cv::Point2f> f_l_kpts, f_r_kpts;
         compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_cam_pts);
-        run_times_.triangulation = ros::Time::now().toSec() - start_time;
+        run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
         if (f_l_kpts.size() < (uint)(1.5 * min_inliers_))
@@ -386,27 +384,27 @@ namespace slam
     bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
                                                        tf::Transform& c_camera_motion)
     {
-        // Auxilary variable to set the start time of a process
-        double start_time;
+        // Auxilary variable to set the start time of a module.
+        double start_module_time;
 
         // Creates dummy variables.
         std::vector<int> c_cluster_ids, p_cluster_ids, f_c_cluster_ids, f_p_cluster_ids; 
 
         // Search for matches of keypoints between successive frames or pairs of frames.
-        start_time = ros::Time::now().toSec();
+        start_module_time = ros::Time::now().toSec();
         std::vector<cv::Point3f> f_c_cam_pts, f_p_cam_pts;
         std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
         matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), c_cluster_ids, p_cluster_ids, 
                                 c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), c_frame.getCameraPoints(), p_frame_.getCameraPoints(),
                                 f_c_cluster_ids, f_p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts);
-        run_times_.successive_matching = ros::Time::now().toSec() - start_time;
+        run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Successive matching run time.
 
         // Sanity check.
         if (f_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
-            run_times_.motion_estimation = 0.0;
+            run_times_.run_time_4 = 0.0; // Motion estimation run time.
             return false;
         }
         else
@@ -431,14 +429,15 @@ namespace slam
         }
 
         // Estimate the motion.
-        start_time = ros::Time::now().toSec();
+        start_module_time = ros::Time::now().toSec();
         cv::Mat camera_rotation, camera_translation;
         std::vector<cv::Point3f> i_c_cam_pts, i_p_cam_pts;
         std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
         estimateMotion(c_cluster_ids, p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts,
                        camera_rotation, camera_translation, 
                        f_c_cluster_ids, f_p_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_cam_pts, i_p_cam_pts);
-        run_times_.motion_estimation = ros::Time::now().toSec() - start_time;
+        run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
+
         if (i_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
         {
             if (enable_debugging_)

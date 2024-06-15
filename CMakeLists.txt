@@ -74,8 +74,8 @@ add_message_files(
         msg 
     FILES
         Frame.msg
-        VOInfo.msg
         Keypoint.msg
+        Performance.msg
 )
 
 # Declare custom ROS services

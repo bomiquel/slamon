@@ -176,21 +176,25 @@ namespace slam
 
             std::mutex mutex_cluster_queue_; //!> Mutex for the insertion of new clusters.
 
-            Map* map_; //!> Graph object pointer.
-
-            haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
-
             std::vector<std::pair<int, int>> cluster_lc_found_; //!> Stores all the loop closures (between clusters) found in order to do not repeat them.
 
             std::vector<std::pair<int, std::vector<float>>> hash_table_; //!> Hash table: stores a hash for every cluster. This is the unique variable that grows with the robot trajectory.
 
             ros::ServiceClient proj_mat_client_; //!> Service for requesting projection matrices.
+            
+            ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
 
             ros::Publisher cluster_num_pub_; //!> Cluster number publisher.
-            
+
             ros::Publisher loop_closure_num_pub_; //!> Loop closing number publisher.
 
             ros::Publisher loop_closure_img_pub_; //!> Loop closure image publisher.
+
+            Map* map_; //!> Graph object pointer.
+
+            haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
+
+            RunTimes run_times_; // !> Internal loop closing execution times.
     };
 
 
