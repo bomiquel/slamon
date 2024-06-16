@@ -328,4 +328,4 @@ namespace slam
 } // End namespace
 
 
-#endif // MAP_HPP
+#endif // MAP2_HPP

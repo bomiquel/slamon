@@ -159,7 +159,7 @@ namespace slam
 
 
     void Map2::getKeyframePoses(std::vector<double>& stamps,
-                               std::vector<tf::Transform>& keyframe_poses)
+                                std::vector<tf::Transform>& keyframe_poses)
     {
         // Locks graph
         std::scoped_lock lock(mutex_graph_);
@@ -214,10 +214,10 @@ namespace slam
 
 
     void Map2::findClosestVertices(int vertex_id,
-                                  int window_center,
-                                  int discard_window,
-                                  uint closest_neighbors_num,
-                                  std::vector<int>& closest_neighbors)
+                                   int window_center,
+                                   int discard_window,
+                                   uint closest_neighbors_num,
+                                   std::vector<int>& closest_neighbors)
     {
         // Init.
         closest_neighbors.clear();

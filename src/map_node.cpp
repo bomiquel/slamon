@@ -5,7 +5,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 
-#include "map.hpp"
+#include "map2.hpp"
 #include "loop_closing.hpp"
 
 
@@ -147,16 +147,16 @@ int main(int argc, char **argv)
                                    working_path,
                                    matching_type,
                                    motion_estimation_type);
-    slam::Map map(min_lc_inliers, 
-                  enable_debugging, 
-                  min_dist_keyframe, 
-                  working_path, 
-                  &loop_closing, 
-                  robot_frame_id);
+    slam::Map2 map(min_lc_inliers, 
+                   enable_debugging, 
+                   min_dist_keyframe, 
+                   working_path, 
+                   &loop_closing, 
+                   robot_frame_id);
     loop_closing.setMap(&map);
 
     // Launch threads.
-    std::thread map_thread(&slam::Map::run, &map);
+    std::thread map_thread(&slam::Map2::run, &map);
     std::thread loop_closing_thread(&slam::LoopClosing::run, &loop_closing);
 
     // ROS wait
