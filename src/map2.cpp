@@ -322,13 +322,13 @@ namespace slam
                 tf::Transform p_camera_odom = p_robot_odom_ * robot2camera_;
 
                 // {p_cam}^T_{c_cam} = {p_cam}^T_{o} * {o}^T_{c_cam}.
-                tf::Transform camera_odom_diff = p_camera_odom.inverse() * c_camera_odom;
+                tf::Transform c_camera_motion = p_camera_odom.inverse() * c_camera_odom;
 
                 // Gets {w}^T_{p_cam}.
                 tf::Transform p_camera_pose = getKeyframePose(c_keyframe_id_);
 
                 // {w}^T_{c_cam} = {w}^T_{p_cam} * {p_cam}^T_{c_cam}.
-                c_camera_pose = p_camera_pose * camera_odom_diff;
+                c_camera_pose = p_camera_pose * c_camera_motion;
             }
             else
             {

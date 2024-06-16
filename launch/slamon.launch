@@ -88,7 +88,7 @@
             <param name = "qy"         value = "$(arg q_y)"/>
             <param name = "qz"         value = "$(arg q_z)"/>
             <param name = "qw"         value = "$(arg q_w)"/>
-            <remap from = "get_pose"   to    = "vo_slamon/get_first_pose"/>
+            <remap from = "get_pose"   to    = "vo_slamon/get_first_odom"/>
         </node>
 
         <!-- VO SLAMON -->

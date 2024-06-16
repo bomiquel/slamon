@@ -28,8 +28,8 @@ namespace slam
         // Set frame id counter.
         c_frame_id_ = 0;
 
-        // Set false to initialised pose flag.
-        initialised_pose_ = false;
+        // Set false to initialised odometry flag.
+        initialised_odom_ = false;
 
         // Create debugging directories.
         if (enable_debugging_)
@@ -50,7 +50,7 @@ namespace slam
         image_transport::ImageTransport it(nh);
 
         // Client services.
-        initial_pose_client_ = nhp.serviceClient<slamon::GetTransform>("get_first_pose");
+        initial_odom_client_ = nhp.serviceClient<slamon::GetTransform>("get_first_odom");
 
         // Server servives.
         robot2camera_server_ = nhp.advertiseService("send_robot_to_camera_tf", &VisualOdometry::sendRobot2Camera, this);
@@ -143,10 +143,10 @@ namespace slam
                     if (valid_motion)
                     {
                         std::string c_frame_name;
-                        if (!initialised_pose_)
+                        if (!initialised_odom_)
                         {
-                            getInitialPose();
-                            initialised_pose_ = true;
+                            getInitialOdom();
+                            initialised_odom_ = true;
 
                             if (enable_debugging_)
                             {
@@ -157,20 +157,20 @@ namespace slam
                             publishFrame(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
                                          frame_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getCameraPoints());
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, origin_frame_id_, 
-                                                   robot_frame_id_, c_robot_pose_, tf::Transform());
+                                                   robot_frame_id_, c_robot_odom_, tf::Transform());
                         }
                         c_frame_id_++;
 
-                        // From {c2}^T_{c1} to {c1}^T_{c2}.
+                        // From {c_cam}^T_{p_cam} to {p_cam}^T_{c_cam}.
                         c_camera_motion = c_camera_motion.inverse();
 
                         // Changes the coordinate axis of the movement. From camera to robot. 
-                        // {r1}^T_{r2} = {r1}^T_{c1} * {c1}^T_{c2} * {c2}^T_{r2}
+                        // {p_robot}^T_{c_robot} = {robot}^T_{cam} * {p_cam}^T_{c_cam} * {cam}^T_{robot}
                         tf::Transform c_robot_motion = robot2camera_ * c_camera_motion * robot2camera_.inverse();
 
-                        // Calculates the robot's current pose by accumulating its movement.
-                        // {o}^T_{r2} = {o}^T_{r1} * {r1}^T_{r2}
-                        c_robot_pose_ *= c_robot_motion;
+                        // Calculates the robot's current odometry by accumulating its movement.
+                        // {o}^T_{c_robot} = {o}^T_{p_robot} * {p_robot}^T_{c_robot}
+                        c_robot_odom_ *= c_robot_motion;
 
                         if (enable_debugging_)
                         {
@@ -181,7 +181,7 @@ namespace slam
                         publishFrame(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
                                      frame_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getCameraPoints());
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, origin_frame_id_, 
-                                               robot_frame_id_, c_robot_pose_, c_robot_motion);
+                                               robot_frame_id_, c_robot_odom_, c_robot_motion);
                     }
                 }
                 else
@@ -474,10 +474,10 @@ namespace slam
     }
 
 
-    void VisualOdometry::getInitialPose()
+    void VisualOdometry::getInitialOdom()
     {
         slamon::GetTransform srv;
-        if (initial_pose_client_.call(srv))
+        if (initial_odom_client_.call(srv))
         {
             double tx = srv.response.tf.position.x;
             double ty = srv.response.tf.position.y;
@@ -487,7 +487,7 @@ namespace slam
             double qz = srv.response.tf.orientation.z;
             double qw = srv.response.tf.orientation.w;
 
-            ROS_WARN_STREAM("[VO->Initial pose:] GetTransform service call successful. The initial position is as follows:" << std::endl <<
+            ROS_WARN_STREAM("[VO->Initial odom:] GetTransform service call successful. The initial odometry is as follows:" << std::endl <<
                             "tx: " << tx << std::endl << 
                             "ty: " << ty << std::endl << 
                             "tz: " << tz << std::endl << 
@@ -498,13 +498,13 @@ namespace slam
 
             tf::Vector3 translation(tx, ty, tz);
             tf::Quaternion rotation(qx, qy, qz, qw);
-            c_robot_pose_.setOrigin(translation);
-            c_robot_pose_.setRotation(rotation);
+            c_robot_odom_.setOrigin(translation);
+            c_robot_odom_.setRotation(rotation);
         }
         else
         {
-            ROS_WARN_STREAM("[VO->Initial pose:] Failed to call GetTransform service. The initial pose will be assumed as the identity.");
-            c_robot_pose_.setIdentity();
+            ROS_WARN_STREAM("[VO->Initial odom:] Failed to call GetTransform service. The initial odometry will be assumed as the identity.");
+            c_robot_odom_.setIdentity();
         }
     }
 

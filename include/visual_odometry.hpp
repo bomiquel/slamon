@@ -144,12 +144,12 @@ namespace slam
                                                tf::Transform& robot_motion);
 
 
-            /** \brief Initialises the robot pose (robot coordinate axis). To do this,
-             *  it calls a service and waits for another part of the system to respond.
-             *  If there is a response, the received pose is assigned, otherwise the pose
-             *  is initialised to 0 (identity).
+            /** \brief Initialises the robot odometry relative to the robot coordinate axis. To do this,
+             *  it calls a service and waits for another part of the system to respond. If there is a
+             *  response, the received odometry is assigned, otherwise the odometry is initialised to 0
+             *  (identity).
              */                        
-            void getInitialPose();
+            void getInitialOdom();
 
 
             /** \brief Convert ROS image message to cv::Mat
@@ -171,7 +171,7 @@ namespace slam
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
-            bool initialised_pose_; //!> Flag that indicates if the robot's pose has been initialised.
+            bool initialised_odom_; //!> Flag that indicates if the robot's odom has been initialised.
 
             std::string w_path_; //!> Path to working directory.
 
@@ -181,7 +181,7 @@ namespace slam
 
             std::string origin_frame_id_; //!> Odometry coordinate axis identficator.
 
-            tf::Transform c_robot_pose_; //!> Current robot pose.
+            tf::Transform c_robot_odom_; //!> Current robot odometry pose.
 
             tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
@@ -201,7 +201,7 @@ namespace slam
 
             ros::Publisher successive_matches_img_pub_; // !> Publisher for the image with drawn successive matches.
 
-            ros::ServiceClient initial_pose_client_; //!> Service for requesting the initial position to the SLAM.
+            ros::ServiceClient initial_odom_client_; //!> Service for requesting the initial position to the SLAM.
             
             ros::ServiceServer robot2camera_server_; // !> Service for sending robot2camera transform.
 
