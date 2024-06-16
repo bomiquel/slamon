@@ -327,7 +327,7 @@ namespace slam
             publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kps_img_pub_, l_kpts, r_kpts);
 
         // Sanity check.
-        if (l_kpts.size() < (uint)(1.5 * min_inliers_))
+        if (l_kpts.size() < (uint)(1.2 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo keypoints detector:] There are not enough keypoints to match and filter!");
@@ -344,7 +344,7 @@ namespace slam
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Stereo matching run time.
 
         // Sanity check.
-        if (h_f_l_kpts.size() < (uint)(1.5 * min_inliers_))
+        if (h_f_l_kpts.size() < (uint)(1.2 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
@@ -361,7 +361,7 @@ namespace slam
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
-        if (f_l_kpts.size() < (uint)(1.5 * min_inliers_))
+        if (f_l_kpts.size() < (uint)(1.2 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Triangulator:] There are not enough 3D points after triangulation!");
@@ -401,7 +401,7 @@ namespace slam
         run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Successive matching run time.
 
         // Sanity check.
-        if (f_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
+        if (f_c_l_kpts.size() < (uint)(1.2 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
@@ -439,7 +439,7 @@ namespace slam
                        f_c_cluster_ids, f_p_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_cam_pts, i_p_cam_pts);
         run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
 
-        if (i_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
+        if (i_c_l_kpts.size() < (uint)(1.2 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Motion estimator:] There are not enough inliers after motion estimation!");

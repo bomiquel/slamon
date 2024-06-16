@@ -105,6 +105,13 @@ namespace slam
                                      std::vector<int>& vertices);
 
 
+            /** \brief Gets the absolute pose of a specific keyframe.
+             *  \param keyframe_id The id of the keyframe for which the pose is desired (input).
+             *  @return Tf with the world camera pose.
+             */
+            tf::Transform getKeyframePose(int keyframe_id);
+
+
             /** \brief Gets the poses of each keyframe in the graph.
              *  \param stamps The timestamp of each pose (output).
              *  \param keyframe_poses A list containing the poses of each keyframe (output).
@@ -156,11 +163,12 @@ namespace slam
 
 
             /** \brief Decides if new keyframe is needed.
-             *  \param c_frame Current frame (input).
-             *  \param c_robot_pose Current robot pose (input).
+             *  \param c_robot_odom Current robot odom (input).
+             *  \param c_frame Current frame (input/output).
              *  @return True if new keyframe will be inserted into the graph.
              */
-            bool needNewKeyFrame(Frame& c_frame, const tf::Transform& c_robot_pose);
+            bool needNewKeyFrame(const tf::Transform& c_robot_odom,
+                                 Frame& c_frame);
 
 
             /** \brief Adds a frame to the graph if enough inliers
@@ -287,7 +295,7 @@ namespace slam
 
             std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 
-            tf::Transform p_keyframe_robot_pose_; //!> The robot's pose the last time a keyframe was inserted.
+            tf::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
 
             std::vector<double> keyframe_stamps_; //> Stores the frame timestamps
 

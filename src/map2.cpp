@@ -158,6 +158,14 @@ namespace slam
     }
 
 
+    tf::Transform Map2::getKeyframePose(int keyframe_id)
+    {
+        std::vector<int> keyframe_vertices;
+        getKeyframeVertices(keyframe_id, keyframe_vertices);
+        return getVertexCameraPose(keyframe_vertices[0]);
+    }
+
+
     void Map2::getKeyframePoses(std::vector<double>& stamps,
                                 std::vector<tf::Transform>& keyframe_poses)
     {
@@ -282,9 +290,9 @@ namespace slam
         // From ROS messages to local objects.
         start_module_time = ros::Time::now().toSec();
         Frame c_frame;
-        tf::Transform c_robot_pose;
+        tf::Transform c_robot_odom;
         fromFrameMsgToFrameObject(frame_msg, c_frame);
-        tf::poseMsgToTF(odom_msg->pose.pose, c_robot_pose);
+        tf::poseMsgToTF(odom_msg->pose.pose, c_robot_odom);
         run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // From Frame msg to Frame object run time.
 
         // If enable debugging gets images from disk.
@@ -298,16 +306,41 @@ namespace slam
 
         // Does the map need a new keyframe?
         start_module_time = ros::Time::now().toSec();
-        bool add_keyframe = needNewKeyFrame(c_frame, c_robot_pose);
+        bool add_keyframe = needNewKeyFrame(c_robot_odom, c_frame);
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Need new keyframe? run time.
 
         // Includes a keyframe if the map needs one.
         if (add_keyframe)
         {
+            tf::Transform c_camera_pose;
+            if (init_map_)
+            {
+                // {o}^T_{c_cam} = {o}^T_{c_robot} * {robot}^T_{cam}.
+                tf::Transform c_camera_odom = c_robot_odom * robot2camera_;
+
+                // {o}^T_{p_cam} = {o}^T_{p_robot} * {robot}^T_{cam}.
+                tf::Transform p_camera_odom = p_robot_odom_ * robot2camera_;
+
+                // {p_cam}^T_{c_cam} = {p_cam}^T_{o} * {o}^T_{c_cam}.
+                tf::Transform camera_odom_diff = p_camera_odom.inverse() * c_camera_odom;
+
+                // Gets {w}^T_{p_cam}.
+                tf::Transform p_camera_pose = getKeyframePose(c_keyframe_id_);
+
+                // {w}^T_{c_cam} = {w}^T_{p_cam} * {p_cam}^T_{c_cam}.
+                c_camera_pose = p_camera_pose * camera_odom_diff;
+            }
+            else
+            {
+                // The first SLAM position is the same as the odometry.
+                // {w}^T_{c_cam} = {w}^T_{c_robot} * {robot}^T_{cam}.
+                c_camera_pose = c_robot_odom * robot2camera_;
+            }
+
             // Updates global variables.
             init_map_ = true;
             c_keyframe_id_++;
-            p_keyframe_robot_pose_ = c_robot_pose;
+            p_robot_odom_ = c_robot_odom;
             
             // Get frame visual information.
             ros::Time stamp = c_frame.getTimestamp();
@@ -343,11 +376,15 @@ namespace slam
             std::vector<cv::Point2f> cluster_l_kpts, cluster_r_kpts;
             std::vector<Cluster> clusters_to_close_loop;
             tf::Transform local_cluster_pose, c_cluster_pose;
-            tf::Transform c_camera_pose = c_robot_pose * robot2camera_; // {o}^T_{c} = {o}^T_{r} * {r}^T_{c}
             for (uint i = 0; i < clusters.size(); i++)
             {
-                local_cluster_pose = fromPoint3DToTf(cluster_centroids[i]); // {c}^T_{cluster}
-                c_cluster_pose = c_camera_pose * local_cluster_pose; // {o}^T_{cluster} = {o}^T_{c} * {c}^T_{cluster}
+                // Gets {c_cam}^T_{c_cluster}.
+                local_cluster_pose = fromPoint3DToTf(cluster_centroids[i]);
+
+                // {w}^T_{c_cluster} = {w}^T_{c_cam} * {c_cam}^T_{c_cluster}.
+                c_cluster_pose = c_camera_pose * local_cluster_pose; 
+
+                // Store current cluster pose.
                 initial_cluster_pose_history_.push_back(c_cluster_pose);
 
                 // Add cluster to the graph.
@@ -501,7 +538,8 @@ namespace slam
     }
 
 
-    bool Map2::needNewKeyFrame(Frame& c_frame, const tf::Transform& c_robot_pose)
+    bool Map2::needNewKeyFrame(const tf::Transform& c_robot_odom,
+                               Frame& c_frame)
     {
         if (!init_map_)
         {
@@ -515,7 +553,7 @@ namespace slam
                 return false;
             }
         }
-        else if (poseDiff2D(p_keyframe_robot_pose_, c_robot_pose) > min_dist_keyframe_)
+        else if (poseDiff2D(p_robot_odom_, c_robot_odom) > min_dist_keyframe_)
         {
             return addFrameToMap(c_frame);
         }
