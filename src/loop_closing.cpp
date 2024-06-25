@@ -192,11 +192,11 @@ namespace slam
         // Get the candidates to close loop
         start_module_time = ros::Time::now().toSec();
         std::vector<int> candidates;
-        map_->findClosestVertices(c_cluster.getId(), c_cluster.getId(), lc_discard_window_, lc_candidates_, candidates);
+        map_->findClosestVertices(c_cluster.getId(), lc_discard_window_, c_cluster.getId(), lc_candidates_, candidates);
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by proximity.
         if (candidates.size() == 0)
             return;
-        
+
         // Loop over candidates.
         Cluster cand_cluster;
         for (uint i = 0; i < candidates.size(); i++)
@@ -415,7 +415,7 @@ namespace slam
 
             // Increases the probability to close loop by extracting the candidate neighbors.
             std::vector<int> cand_cluster_neighbours;
-            map_->findClosestVertices(cand_cluster.getId(), q_cluster.getId(), lc_discard_window_, lc_neighbors_, cand_cluster_neighbours);
+            map_->findClosestVertices(cand_cluster.getId(), lc_discard_window_, q_cluster.getId(), lc_neighbors_, cand_cluster_neighbours);
             for (uint i = 0; i < cand_cluster_neighbours.size(); i++)
             {
                 // Reads from the disk the candidate cluster's ith neighbour.
@@ -638,11 +638,12 @@ namespace slam
                         map_->update();
                         run_times_.run_time_5 += (ros::Time::now().toSec() - start_module_time); // Close loop run time.
 
-                        ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------" << std::endl << 
-                                                            " LOOP CLOSURE: " << loop_closure_num_ << std::endl << 
-                                        "Between keyframe " << q_cluster.getFrameId() << " and " << cand_cluster.getFrameId() << std::endl <<
-                                        "Method: " << search_method << std::endl <<
-                                        "Inliers: " << i_q_l_kpts.size());
+                        ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
+                        ROS_INFO_STREAM("                      LOOP CLOSURE: " << loop_closure_num_);
+                        ROS_INFO_STREAM("Between keyframe " << q_cluster.getFrameId() << " and " << cand_cluster.getFrameId());
+                        ROS_INFO_STREAM("Method: " << search_method);
+                        ROS_INFO_STREAM("Inliers: " << i_q_l_kpts.size());
+                        ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
 
                         if (enable_debugging_)
                         {

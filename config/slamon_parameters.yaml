@@ -1,13 +1,13 @@
 slamon:
   enable_debugging: true
-  lc_candidates: 5
-  lc_neighbors: 4
+  lc_candidates: 3
+  lc_neighbors: 3
   lowe_ratio: 0.8
-  matching_type: ratio_matching
+  matching_type: circular_essential_matching
   min_dist_keyframe: 0.5
   min_inliers: 50
   min_lc_inliers: 80
-  motion_estimation_type: p3p
+  motion_estimation_type: ap3p
   origin_frame_id: /odom
   robot_frame_id: /robot_0/base_link
-  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/test/ratio_matching/p3p/execution_2/
+  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/test2/circular_essential_matching/ap3p/execution_0/

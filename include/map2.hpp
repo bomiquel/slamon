@@ -132,14 +132,14 @@ namespace slam
 
             /** \brief Gets nearest neighbour vertices by distance.
              *  \param vertex_id The vertex id to retrieve its neighbors (input).
-             *  \param window_center The vertex where discard window will be centered (input).
-             *  \param discard_window The number of discarded vertices (input).
+             *  \param security_window Discarded number of vertices before the critical vertex (input).
+             *  \param critical_vertex_id Identifier of the vertex that the search cannot reach (input).
              *  \param closest_neighbors_num The number of neighbors to be retrieved (input).
              *  \param closest_neighbors Will contain the list of closest neighbors by distance (output).
              */
             void findClosestVertices(int vertex_id,
-                                     int window_center,
-                                     int discard_window,
+                                     int security_window,
+                                     int critical_vertex_id,
                                      uint closest_neighbors_num,
                                      std::vector<int>& closest_neighbors);
 

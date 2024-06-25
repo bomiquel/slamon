@@ -222,8 +222,8 @@ namespace slam
 
 
     void Map2::findClosestVertices(int vertex_id,
-                                   int window_center,
-                                   int discard_window,
+                                   int security_window,
+                                   int critical_vertex_id,
                                    uint closest_neighbors_num,
                                    std::vector<int>& closest_neighbors)
     {
@@ -235,14 +235,11 @@ namespace slam
         double dist;
         tf::Transform neighbor_vertex_pose;
         std::vector<std::pair<int, double>> neighbors;
-        for (int i = 0; i < (int)graph_.vertices().size(); i++)
+        int search_end = critical_vertex_id - security_window;
+        for (int i = 0; i < search_end; i++)
         {
             // Avoids itself.
             if (i == vertex_id)
-                continue;
-
-            // Discards window.
-            if ((i > window_center - discard_window) && (i < window_center + discard_window))
                 continue;
 
             // Gets the distance between the queried vertex and the ith vertex.
