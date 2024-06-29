@@ -50,18 +50,16 @@ namespace slam
              *  \param enable_debugging Enabling or disabling debugging.
              *  \param w_path Working path for debugging purpose.
              *  \param matching_type Matching type.
+             *  \param robot_frame_id Robot odometry coordinate axis identficator.
              *  \param motion_estimation_type Motion estimation type.
-             *  \param robot_frame_id Robot coordinate axis identficator (base link).
-             *  \param origin_frame_id Origin coordinate axis identficator.
              */
             VisualOdometry(double ratio,
                            int min_inliers,
                            bool enable_debugging,
                            const std::string& w_path,
                            std::string& matching_type,
-                           std::string& motion_estimation_type,
-                           const std::string& robot_frame_id,
-                           const std::string& origin_frame_id);
+                           std::string& robot_frame_id,
+                           std::string& motion_estimation_type);
 
 
             /** \brief Starts tracking
@@ -177,17 +175,21 @@ namespace slam
 
             std::string frame_path_; //!> Path to store frames with debugging purpose.
 
-            std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
+            std::string robot_frame_id_; //!> Robot odometry coordinate axis identficator.
 
-            std::string origin_frame_id_; //!> Odometry coordinate axis identficator.
+            std::string camera_frame_id_; //!> Camera odometry coordinate axis identficator.
 
-            tf::Transform c_robot_odom_; //!> Current robot odometry pose.
+            tf::Transform c_robot_odom_; //!> Current robot odometry.
+
+            tf::Transform c_camera_odom_; //!> Current camera odometry.
 
             tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
             tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.
 
-            ros::Publisher odom_pub_; //!> Publishes current velocity and accumulated movement (odometry).
+            ros::Publisher robot_odom_pub_; //!> Publishes current velocity and accumulated movement (odometry) relative to robot.
+
+            ros::Publisher camera_odom_pub_; //!> Publishes current velocity and accumulated movement (odometry) relative to camera.
 
             ros::Publisher frame_pub_; //!> Publishes current relevant information from a stereo pair of images.
 

@@ -224,12 +224,11 @@ void Publisher::writeLoopClosure(const std::string& o_path,
 
 
 void Publisher::publishPose(const ros::Time& c_stamp,
+                            const tf::Transform& c_pose,
                             const ros::Publisher& publisher,
-                            const std::string& world_frame_id,
-                            const std::string& robot_frame_id,
-                            const tf::Transform& c_robot_pose)
+                            const std::string& reference_frame_id)
 {
-    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, world_frame_id, robot_frame_id, c_robot_pose);
+    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, c_pose, reference_frame_id);
 
     // Publish pose
     publisher.publish(msg);
@@ -238,13 +237,12 @@ void Publisher::publishPose(const ros::Time& c_stamp,
 
 void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
                                        const ros::Time& p_stamp,
+                                       const tf::Transform& c_pose,
+                                       const tf::Transform& c_motion,
                                        const ros::Publisher& publisher,
-                                       const std::string& world_frame_id,
-                                       const std::string& robot_frame_id,
-                                       const tf::Transform& c_robot_pose,
-                                       const tf::Transform& c_robot_motion)
+                                       const std::string& reference_frame_id)
 {
-    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, world_frame_id, robot_frame_id, c_robot_pose);
+    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, c_pose, reference_frame_id);
 
     // Set linear velocity
     double delta_t = (c_stamp - p_stamp).toSec();
@@ -259,10 +257,10 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
     }
     else
     {
-        msg.twist.twist.linear.x = c_robot_motion.getOrigin().getX() / delta_t;
-        msg.twist.twist.linear.y = c_robot_motion.getOrigin().getY() / delta_t;
-        msg.twist.twist.linear.z = c_robot_motion.getOrigin().getZ() / delta_t;
-        tf::Quaternion delta_rot = c_robot_motion.getRotation();
+        msg.twist.twist.linear.x = c_motion.getOrigin().getX() / delta_t;
+        msg.twist.twist.linear.y = c_motion.getOrigin().getY() / delta_t;
+        msg.twist.twist.linear.z = c_motion.getOrigin().getZ() / delta_t;
+        tf::Quaternion delta_rot = c_motion.getRotation();
         tfScalar angle = delta_rot.getAngle();
         tf::Vector3 axis = delta_rot.getAxis();
         tf::Vector3 angular_velocity = (axis * angle) / delta_t;
@@ -726,19 +724,17 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
 
 
 nav_msgs::Odometry Publisher::buildPoseMsg(const ros::Time& c_stamp,
-                                           const std::string& world_frame_id,
-                                           const std::string& robot_frame_id,
-                                           const tf::Transform& c_robot_pose)
+                                           const tf::Transform& c_pose,
+                                           const std::string& reference_frame_id)
 {
     nav_msgs::Odometry msg;
 
     // Set header
     msg.header.stamp = c_stamp;
-    msg.header.frame_id = world_frame_id;
-    msg.child_frame_id = robot_frame_id;
+    msg.header.frame_id = reference_frame_id;
 
     // Set pose
-    tf::poseTFToMsg(c_robot_pose, msg.pose.pose);
+    tf::poseTFToMsg(c_pose, msg.pose.pose);
 
     return msg;
 }

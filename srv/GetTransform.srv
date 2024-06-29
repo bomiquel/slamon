@@ -1,2 +1,2 @@
 ---
-geometry_msgs/Pose tf
+geometry_msgs/PoseStamped tf

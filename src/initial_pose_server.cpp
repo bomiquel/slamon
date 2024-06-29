@@ -9,13 +9,13 @@ bool getPoseCallback(slamon::GetTransform::Request  &req,
                      slamon::GetTransform::Response &res)
 {
     ROS_WARN_STREAM("Hello there");
-    res.tf.position.x = tx_;
-    res.tf.position.y = ty_;
-    res.tf.position.z = tz_;
-    res.tf.orientation.x = qx_;
-    res.tf.orientation.y = qy_;
-    res.tf.orientation.z = qz_;
-    res.tf.orientation.w = qw_;
+    res.tf.pose.position.x = tx_;
+    res.tf.pose.position.y = ty_;
+    res.tf.pose.position.z = tz_;
+    res.tf.pose.orientation.x = qx_;
+    res.tf.pose.orientation.y = qy_;
+    res.tf.pose.orientation.z = qz_;
+    res.tf.pose.orientation.w = qw_;
     
     return true;
 }

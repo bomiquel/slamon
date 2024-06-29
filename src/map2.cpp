@@ -63,7 +63,8 @@ namespace slam
         robot2camera_client_ = nh.serviceClient<slamon::GetTransform>("get_robot_to_camera_tf");
 
         // Publishers.
-        map_pub_ = nhp.advertise<nav_msgs::Odometry>("map", 1);
+        robot_map_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_map", 1);
+        camera_map_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_map", 1);
         run_times_pub_ = nhp.advertise<slamon::Performance>("map_performance", 1);
         keyframes_num_pub_ = nhp.advertise<std_msgs::Int32>("keyframe_num", 1);
         clustering_img_pub_ = nhp.advertise<sensor_msgs::Image>("keypoints_clustering_img", 1);
@@ -506,8 +507,10 @@ namespace slam
                 std::scoped_lock lock(mutex_graph_);
                 c_vertex_id = graph_.vertices().size() - 1;
             }
-            tf::Transform updated_robot_pose = getVertexCameraPose(c_vertex_id, true) * robot2camera_.inverse();
-            publishPose(stamp, map_pub_, "map", robot_frame_id_, updated_robot_pose);
+            tf::Transform updated_camera_pose = getVertexCameraPose(c_vertex_id, true);
+            publishPose(stamp, updated_camera_pose, camera_map_pub_, camera_frame_id_);
+            tf::Transform updated_robot_pose = updated_camera_pose * robot2camera_.inverse();
+            publishPose(stamp, updated_robot_pose, robot_map_pub_, robot_frame_id_);
             run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Write graph to disk and publish updated robot pose run time.
 
             // Publish number of keyframes.
@@ -592,13 +595,14 @@ namespace slam
         slamon::GetTransform srv;
         if (robot2camera_client_.call(srv))
         {
-            double tx = srv.response.tf.position.x;
-            double ty = srv.response.tf.position.y;
-            double tz = srv.response.tf.position.z;
-            double qx = srv.response.tf.orientation.x;
-            double qy = srv.response.tf.orientation.y;
-            double qz = srv.response.tf.orientation.z;
-            double qw = srv.response.tf.orientation.w;
+            camera_frame_id_ = srv.response.tf.header.frame_id;
+            double tx = srv.response.tf.pose.position.x;
+            double ty = srv.response.tf.pose.position.y;
+            double tz = srv.response.tf.pose.position.z;
+            double qx = srv.response.tf.pose.orientation.x;
+            double qy = srv.response.tf.pose.orientation.y;
+            double qz = srv.response.tf.pose.orientation.z;
+            double qw = srv.response.tf.pose.orientation.w;
 
             ROS_WARN_STREAM("[GRAPH->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
                             "tx: " << tx << std::endl << 

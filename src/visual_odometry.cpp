@@ -10,16 +10,14 @@ namespace slam
                                    bool enable_debugging,
                                    const std::string& w_path,
                                    std::string& matching_type,
-                                   std::string& motion_estimation_type,
-                                   const std::string& robot_frame_id, 
-                                   const std::string& origin_frame_id):
+                                   std::string& robot_frame_id,
+                                   std::string& motion_estimation_type):
                                    VisionMotionModules(ratio, matching_type, motion_estimation_type)
     {
         // Inilitialises parameters.
         w_path_ = w_path;
         min_inliers_ = min_inliers;
         robot_frame_id_ = robot_frame_id;
-        origin_frame_id_ = origin_frame_id;
         enable_debugging_ = enable_debugging;
 
         // Set "uninitialised" status to visual odometer.
@@ -57,9 +55,10 @@ namespace slam
         proj_mat_server_ = nhp.advertiseService("send_projection_matrices", &VisualOdometry::sendProjectionMatrices, this);
 
         // Publishers.
-        odom_pub_ = nhp.advertise<nav_msgs::Odometry>("odom", 1);
         frame_pub_ = nhp.advertise<slamon::Frame>("frame", 1);
         run_times_pub_ = nhp.advertise<slamon::Performance>("vo_performance", 1);
+        robot_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_odom", 1);
+        camera_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_odom", 1);
         inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("inliers_img", 1);
         stereo_kps_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
         stereo_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_matches_img", 1);
@@ -71,10 +70,10 @@ namespace slam
 
         // Message sync.
         boost::shared_ptr<Sync_> sync;
-        l_img_sub.subscribe(it, "left_image_rect_color", 5);
-        r_img_sub.subscribe(it, "right_image_rect_color", 5);
-        l_info_sub.subscribe(nh, "left_camera_info", 5);
-        r_info_sub.subscribe(nh, "right_camera_info", 5);
+        l_img_sub.subscribe(it, "left_image_rect_color", 1);
+        r_img_sub.subscribe(it, "right_image_rect_color", 1);
+        l_info_sub.subscribe(nh, "left_camera_info", 1);
+        r_info_sub.subscribe(nh, "right_camera_info", 1);
         sync.reset(new Sync_(SyncPolicy_(10), l_img_sub, r_img_sub, l_info_sub, r_info_sub));
         sync->registerCallback(boost::bind(&VisualOdometry::imageCallback, this, _1, _2, _3, _4));
         
@@ -156,13 +155,19 @@ namespace slam
                             }
                             publishFrame(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
                                          frame_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getCameraPoints());
-                            publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, origin_frame_id_, 
-                                                   robot_frame_id_, c_robot_odom_, tf::Transform());
+                            publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_camera_odom_, tf::Transform(),
+                                                   camera_odom_pub_, camera_frame_id_);
+                            publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_robot_odom_, tf::Transform(),
+                                                   robot_odom_pub_, robot_frame_id_);                            
                         }
                         c_frame_id_++;
 
                         // From {c_cam}^T_{p_cam} to {p_cam}^T_{c_cam}.
                         c_camera_motion = c_camera_motion.inverse();
+
+                        // Calculates the camera's current odometry by accumulating its movement.
+                        // {o}^T_{c_cam} = {o}^T_{p_cam} * {p_cam}^T_{c_cam}
+                        c_camera_odom_ *= c_camera_motion;
 
                         // Changes the coordinate axis of the movement. From camera to robot. 
                         // {p_robot}^T_{c_robot} = {robot}^T_{cam} * {p_cam}^T_{c_cam} * {cam}^T_{robot}
@@ -180,8 +185,10 @@ namespace slam
                         }
                         publishFrame(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
                                      frame_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getCameraPoints());
-                        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), odom_pub_, origin_frame_id_, 
-                                               robot_frame_id_, c_robot_odom_, c_robot_motion);
+                        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_camera_odom_, c_camera_motion,
+                                               camera_odom_pub_, camera_frame_id_);
+                        publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_robot_odom_, c_robot_motion,
+                                               robot_odom_pub_, robot_frame_id_);
                     }
                 }
                 else
@@ -207,13 +214,14 @@ namespace slam
     bool VisualOdometry::sendRobot2Camera(slamon::GetTransform::Request& req,
                                           slamon::GetTransform::Response& res)
     {
-        res.tf.position.x = robot2camera_.getOrigin().getX();
-        res.tf.position.y = robot2camera_.getOrigin().getY();
-        res.tf.position.z = robot2camera_.getOrigin().getZ();
-        res.tf.orientation.x = robot2camera_.getRotation().getX();
-        res.tf.orientation.y = robot2camera_.getRotation().getY();
-        res.tf.orientation.z = robot2camera_.getRotation().getZ();
-        res.tf.orientation.w = robot2camera_.getRotation().getW();
+        res.tf.header.frame_id = camera_frame_id_;
+        res.tf.pose.position.x = robot2camera_.getOrigin().getX();
+        res.tf.pose.position.y = robot2camera_.getOrigin().getY();
+        res.tf.pose.position.z = robot2camera_.getOrigin().getZ();
+        res.tf.pose.orientation.x = robot2camera_.getRotation().getX();
+        res.tf.pose.orientation.y = robot2camera_.getRotation().getY();
+        res.tf.pose.orientation.z = robot2camera_.getRotation().getZ();
+        res.tf.pose.orientation.w = robot2camera_.getRotation().getW();
         return true;
     }
 
@@ -240,7 +248,8 @@ namespace slam
         robot2camera_.setIdentity();
         try
         {
-            tf_listener_.lookupTransform(robot_frame_id_, l_info_msg->header.frame_id, ros::Time(0), robot2camera_);
+            camera_frame_id_ = l_info_msg->header.frame_id;
+            tf_listener_.lookupTransform(robot_frame_id_, camera_frame_id_, ros::Time(0), robot2camera_);
         }
         catch (const tf::TransformException& e)
         {
@@ -479,13 +488,13 @@ namespace slam
         slamon::GetTransform srv;
         if (initial_odom_client_.call(srv))
         {
-            double tx = srv.response.tf.position.x;
-            double ty = srv.response.tf.position.y;
-            double tz = srv.response.tf.position.z;
-            double qx = srv.response.tf.orientation.x;
-            double qy = srv.response.tf.orientation.y;
-            double qz = srv.response.tf.orientation.z;
-            double qw = srv.response.tf.orientation.w;
+            double tx = srv.response.tf.pose.position.x;
+            double ty = srv.response.tf.pose.position.y;
+            double tz = srv.response.tf.pose.position.z;
+            double qx = srv.response.tf.pose.orientation.x;
+            double qy = srv.response.tf.pose.orientation.y;
+            double qz = srv.response.tf.pose.orientation.z;
+            double qw = srv.response.tf.pose.orientation.w;
 
             ROS_WARN_STREAM("[VO->Initial odom:] GetTransform service call successful. The initial odometry is as follows:" << std::endl <<
                             "tx: " << tx << std::endl << 
@@ -506,6 +515,7 @@ namespace slam
             ROS_WARN_STREAM("[VO->Initial odom:] Failed to call GetTransform service. The initial odometry will be assumed as the identity.");
             c_robot_odom_.setIdentity();
         }
+        c_camera_odom_ = c_robot_odom_ * robot2camera_;
     }
 
 
@@ -534,5 +544,4 @@ namespace slam
     }
 
     
-
 }

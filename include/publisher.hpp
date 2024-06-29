@@ -296,35 +296,33 @@ class Publisher
 
         /** \brief Publishes current robot pose.
          *  \param c_stamp Current pose timestamp (input).
+         *  \param c_pose The current pose to be published (input).
          *  \param publisher The ROS publisher (input).
-         *  \param world_frame_id World coordinate axis id (input).
-         *  \param robot_frame_id Robot coordinate axis id (input).
-         *  \param c_robot_pose The current robot pose to be published (input).
+         *  \param reference_frame_id The ID of the frame to which the pose
+         *  is relative (input).
          */
         void publishPose(const ros::Time& c_stamp,
+                         const tf::Transform& c_pose,
                          const ros::Publisher& publisher,
-                         const std::string& world_frame_id,
-                         const std::string& robot_frame_id,
-                         const tf::Transform& c_robot_pose);
+                         const std::string& reference_frame_id);
 
 
-        /** \brief Publishes current robot pose and velocity.
-         *  \param c_stamp Current frame ROS timestamp (input).
+        /** \brief Publishes current pose and velocity.
+         *  \param c_stamp Current ROS timestamp (input).
          *  \param p_stamp Previous ROS timestamp (input).
+         *  \param c_pose The current pose to be published (input).
+         *  \param c_motion The movement between current and previous frames.
+         *  Used to calculate velocity (input).
          *  \param publisher The ROS publisher (input).
-         *  \param world_frame_id World coordinate axis id (input).
-         *  \param robot_frame_id Robot coordinate axis id (input).
-         *  \param c_robot_pose The current robot pose to be published (input).
-         *  \param c_robot_motion The robot movement between current and previous frames.
-         *  Used to calculate robot velocity (input).
+         *  \param reference_frame_id The ID of the frame to which the pose and 
+         *  velocity are relative (input).
          */
         void publishPoseAndVelocity(const ros::Time& c_stamp,
                                     const ros::Time& p_stamp,
+                                    const tf::Transform& c_pose,
+                                    const tf::Transform& c_motion,
                                     const ros::Publisher& publisher,
-                                    const std::string& world_frame_id,
-                                    const std::string& robot_frame_id,
-                                    const tf::Transform& c_robot_pose,
-                                    const tf::Transform& c_robot_motion);
+                                    const std::string& reference_frame_id);
 
 
         /** \brief Publishes SLAMON performance.
@@ -523,16 +521,15 @@ class Publisher
                                 const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
 
 
-        /** \brief Builds nav_msgs::Odometry msg with current robot pose.
+        /** \brief Builds nav_msgs::Odometry msg with current pose.
          *  \param c_stamp Current pose timestamp (input).
-         *  \param world_frame_id World coordinate axis id (input).
-         *  \param robot_frame_id Robot coordinate axis id (input).
-         *  \param c_robot_pose The current robot pose to be published (input).
+         *  \param c_pose The current pose to be published (input).
+         *  \param reference_frame_id The ID of the frame to which 
+         *  the current pose is relative (input).
          */
         nav_msgs::Odometry buildPoseMsg(const ros::Time& c_stamp,
-                                        const std::string& world_frame_id,
-                                        const std::string& robot_frame_id,
-                                        const tf::Transform& c_robot_pose);
+                                        const tf::Transform& c_pose,
+                                        const std::string& reference_frame_id);
 
 
         /** \brief Publishes images.

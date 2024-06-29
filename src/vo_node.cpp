@@ -14,7 +14,6 @@ void readParams(int& min_inliers,
                 std::string& working_path,
                 std::string& matching_type,
                 std::string& robot_frame_id,
-                std::string& origin_frame_id,
                 std::string& motion_estimation_type)
 {
     // Getting parameters from parameter server.
@@ -24,7 +23,6 @@ void readParams(int& min_inliers,
     nh.param("slamon/working_path",           working_path,           ros::package::getPath("slamon") + "/output/");
     nh.param("slamon/matching_type",          matching_type,          std::string("ratio_matching"));
     nh.param("slamon/robot_frame_id",         robot_frame_id,         std::string("base_link"));
-    nh.param("slamon/origin_frame_id",        origin_frame_id,        std::string("odom"));
     nh.param("slamon/enable_debugging",       enable_debugging,       true);
     nh.param("slamon/motion_estimation_type", motion_estimation_type, std::string("p3p"));
 
@@ -35,7 +33,6 @@ void readParams(int& min_inliers,
                     "Working path           = " << working_path << std::endl <<
                     "Matching type          = " << matching_type << std::endl <<
                     "Robot frame id         = " << robot_frame_id << std::endl <<
-                    "Odom frame id          = " << origin_frame_id << std::endl <<
                     "Enable debugging       = " << enable_debugging << std::endl <<
                     "Motion estimation type = " << motion_estimation_type);
 
@@ -66,23 +63,17 @@ void readParams(int& min_inliers,
         robot_frame_id = "base_link";
         invalid_parameter = true;
     }
-    if (origin_frame_id == "")
-    {
-        origin_frame_id = "odom";
-        invalid_parameter = true;
-    }
     if (invalid_parameter)
     {
         ROS_INFO_STREAM("[VO]: Some parameter was invalid and has been assigned its default value." << std::endl <<
                         "Current parameter values are: " << std::endl <<
-                        "Lowe's ratio           = " << lowe_ratio << std::endl <<
-                        "Minimum kpts           = " << min_inliers << std::endl << 
-                        "Working path           = " << working_path << std::endl <<
-                        "Matching type          = " << matching_type << std::endl <<
-                        "Robot frame id         = " << robot_frame_id << std::endl <<
-                        "World frame id         = " << origin_frame_id << std::endl <<
-                        "Enable debugging       = " << enable_debugging << std::endl <<
-                        "Motion estimation type = " << motion_estimation_type);
+                        "Lowe's ratio             = " << lowe_ratio << std::endl <<
+                        "Minimum kpts             = " << min_inliers << std::endl << 
+                        "Working path             = " << working_path << std::endl <<
+                        "Matching type            = " << matching_type << std::endl <<
+                        "Robot frame id           = " << robot_frame_id << std::endl <<
+                        "Enable debugging         = " << enable_debugging << std::endl <<
+                        "Motion estimation type   = " << motion_estimation_type);
     }
 }
     
@@ -97,9 +88,9 @@ int main(int argc, char **argv)
     int min_inliers;
     double lowe_ratio;
     bool enable_debugging;
-    std::string working_path, matching_type, robot_frame_id, origin_frame_id, motion_estimation_type;
+    std::string working_path, matching_type, robot_frame_id, motion_estimation_type;
     readParams(min_inliers, lowe_ratio, enable_debugging, working_path, matching_type,
-               robot_frame_id, origin_frame_id, motion_estimation_type);
+               robot_frame_id, motion_estimation_type);
 
     // Declare threads.
     slam::VisualOdometry visual_odometer(lowe_ratio, 
@@ -107,9 +98,8 @@ int main(int argc, char **argv)
                                          enable_debugging, 
                                          working_path, 
                                          matching_type, 
-                                         motion_estimation_type,
-                                         robot_frame_id, 
-                                         origin_frame_id);
+                                         robot_frame_id,
+                                         motion_estimation_type);
 
     // Launch threads.
     std::thread visual_odometer_thread(&slam::VisualOdometry::run, &visual_odometer);

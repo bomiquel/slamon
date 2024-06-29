@@ -295,11 +295,15 @@ namespace slam
 
             std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 
+            std::string camera_frame_id_; //!> Camera coordinate axis identficator.
+
             tf::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
 
             std::vector<double> keyframe_stamps_; //> Stores the frame timestamps
 
-            ros::Publisher map_pub_; //!> Updated robot pose publisher.
+            ros::Publisher robot_map_pub_; //!> Updated robot pose publisher.
+            
+            ros::Publisher camera_map_pub_; //!> Updated camera pose publisher.
 
             ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
 
