@@ -187,7 +187,7 @@ namespace slam
                                      frame_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getCameraPoints());
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_camera_odom_, c_camera_motion,
                                                camera_odom_pub_, camera_frame_id_);
-                        publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_robot_odom_, c_robot_motion,
+                        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_robot_odom_, c_robot_motion,
                                                robot_odom_pub_, robot_frame_id_);
                     }
                 }
