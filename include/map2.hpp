@@ -29,7 +29,7 @@
 #include "frame.hpp"
 #include "cluster.hpp"
 #include "publisher.hpp"
-#include "loop_closing.hpp"
+#include "loop_closer.hpp"
 
 #include "slamon/GetTransform.h"
 
@@ -38,7 +38,7 @@ namespace slam
 {
 
 
-    class LoopClosing;
+    class LoopCloser;
 
 
     class Map2: protected Publisher
@@ -47,18 +47,18 @@ namespace slam
 
 
             /** \brief Class constructor
-             *  \param min_lc_inliers Minimum number of inliers for loop closing.
+             *  \param min_lc_inliers Minimum number of inliers for loop closure.
              *  \param enable_debugging Enabling or disabling debugging.
              *  \param min_dist_keyframe Minimum distance between keyframes.
              *  \param w_path Working path for debugging purpose.
-             *  \param loop_closing Loop closing object pointer.
+             *  \param loop_closer Loop closer object pointer.
              *  \param robot_frame_id Robot coordinate axis identficator (base link).
              */
             Map2(int min_lc_inliers,
                  bool enable_debugging,
+                 LoopCloser* loop_closer,
                  double min_dist_keyframe,
                  const std::string& w_path,
-                 LoopClosing* loop_closing,
                  const std::string& robot_frame_id);
 
 
@@ -323,7 +323,7 @@ namespace slam
 
             g2o::SparseOptimizer graph_; //!> G2O graph.
 
-            LoopClosing* loop_closing_; // Loop closing object pointer.
+            LoopCloser* loop_closer_; // Loop closer pointer.
 
             RunTimes run_times_; // !> Internal map execution times.
 

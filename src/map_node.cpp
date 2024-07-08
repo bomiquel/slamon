@@ -6,7 +6,7 @@
 #include <ros/package.h>
 
 #include "map2.hpp"
-#include "loop_closing.hpp"
+#include "loop_closer.hpp"
 
 
 void readParams(int& lc_neighbors,
@@ -138,26 +138,26 @@ int main(int argc, char **argv)
                motion_estimation_type);
 
     // Declare threads.
-    slam::LoopClosing loop_closing(lowe_ratio,
-                                   lc_neighbors, 
-                                   lc_candidates,
-                                   min_lc_inliers,
-                                   lc_discard_window,
-                                   enable_debugging,
-                                   working_path,
-                                   matching_type,
-                                   motion_estimation_type);
+    slam::LoopCloser loop_closer(lowe_ratio,
+                                  lc_neighbors, 
+                                  lc_candidates,
+                                  min_lc_inliers,
+                                  lc_discard_window,
+                                  enable_debugging,
+                                  working_path,
+                                  matching_type,
+                                  motion_estimation_type);
     slam::Map2 map(min_lc_inliers, 
                    enable_debugging, 
+                   &loop_closer, 
                    min_dist_keyframe, 
                    working_path, 
-                   &loop_closing, 
                    robot_frame_id);
-    loop_closing.setMap(&map);
+    loop_closer.setMap(&map);
 
     // Launch threads.
     std::thread map_thread(&slam::Map2::run, &map);
-    std::thread loop_closing_thread(&slam::LoopClosing::run, &loop_closing);
+    std::thread loop_closer_thread(&slam::LoopCloser::run, &loop_closer);
 
     // ROS wait
     ros::Rate r(10);

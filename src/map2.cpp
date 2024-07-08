@@ -6,14 +6,14 @@ namespace slam
 
     Map2::Map2(int min_lc_inliers,
                bool enable_debugging,
+               LoopCloser* loop_closer,
                double min_dist_keyframe,
                const std::string& w_path,
-               LoopClosing* loop_closing,
                const std::string& robot_frame_id)
     {
         // Inilitialises parameters.
         w_path_ = w_path;
-        loop_closing_ = loop_closing;
+        loop_closer_ = loop_closer;
         min_lc_inliers_ = min_lc_inliers;
         robot_frame_id_ = robot_frame_id;
         enable_debugging_ = enable_debugging;
@@ -416,7 +416,7 @@ namespace slam
 
             // Send the new clusters to the loop closing thread.
             for (uint i = 0; i < clusters_to_close_loop.size(); i++)
-                loop_closing_->addClusterToQueue(clusters_to_close_loop[i]);
+                loop_closer_->addClusterToQueue(clusters_to_close_loop[i]);
             run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Add vertex (cluster) to graph run time.
 
             // Add edges between clusters of the same frame.

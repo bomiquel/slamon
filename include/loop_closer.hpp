@@ -1,13 +1,13 @@
 /**
  *  @file
- *  @brief Loop closing class
+ *  @brief Loop closer class
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
  *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
  */
 
-#ifndef LOOP_CLOSING_H
-#define LOOP_CLOSING_H
+#ifndef LOOP_CLOSER_HPP
+#define LOOP_CLOSER_HPP
 
 
 #include <string>
@@ -33,7 +33,7 @@ namespace slam
     class Map2;
 
 
-    class LoopClosing: protected Publisher, protected VisionMotionModules
+    class LoopCloser: protected Publisher, protected VisionMotionModules
     {
         public:
 
@@ -43,22 +43,22 @@ namespace slam
              *  \param lc_neighbors Number of neighbours to recover in order to 
              *  increase the possibility of closing a loop (input).
              *  \param lc_candidates Number of candidates to close a loop (input).
-             *  \param min_lc_inliers Minimum number of inliers for loop closing (input).
+             *  \param min_lc_inliers Minimum number of inliers for loop closure (input).
              *  \param lc_discard_window Window size of discarded graph vertices (input).
              *  \param enable_debugging Enabling or disabling debugging (input).
              *  \param w_path Working path for debugging purpose (input).
              *  \param matching_type Desired matching type name (input).
              *  \param motion_estimation_type Desired motion type name (input).
              */
-            LoopClosing(double ratio,
-                        int lc_neighbors,
-                        int lc_candidates,
-                        int min_lc_inliers,
-                        int lc_discard_window,
-                        bool enable_debugging,
-                        const std::string& w_path,
-                        std::string& matching_type,
-                        std::string& motion_estimation_type);
+            LoopCloser(double ratio,
+                       int lc_neighbors,
+                       int lc_candidates,
+                       int min_lc_inliers,
+                       int lc_discard_window,
+                       bool enable_debugging,
+                       const std::string& w_path,
+                       std::string& matching_type,
+                       std::string& motion_estimation_type);
 
 
             /** \brief Set the graph object.
@@ -67,7 +67,7 @@ namespace slam
             inline void setMap(Map2 *map) {map_ = map;}
 
 
-            /** \brief Starts loop closing.
+            /** \brief Starts loop closer.
              */
             void run();
 
@@ -156,7 +156,7 @@ namespace slam
             // Atributes.
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
-            bool init_loop_closing_; //!> Loop closing state.
+            bool init_loop_closer_; //!> Loop closer state.
 
             int lc_neighbors_; //!> Number of neighbours to recover in order to increase the possibility of closing the loop.
 
@@ -204,4 +204,4 @@ namespace slam
 
 } // End namespace
 
-#endif // LOOP_CLOSING_HPP
+#endif // LOOP_CLOSER_HPPPP

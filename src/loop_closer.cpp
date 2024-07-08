@@ -1,20 +1,20 @@
-#include "loop_closing.hpp"
+#include "loop_closer.hpp"
 
 
 namespace slam
 {
 
 
-    LoopClosing::LoopClosing(double ratio,
-                             int lc_neighbors,
-                             int lc_candidates,
-                             int min_lc_inliers,
-                             int lc_discard_window,
-                             bool enable_debugging,
-                             const std::string& w_path,
-                             std::string& matching_type,
-                             std::string& motion_estimation_type):
-                             VisionMotionModules(ratio, matching_type, motion_estimation_type)
+    LoopCloser::LoopCloser(double ratio,
+                           int lc_neighbors,
+                           int lc_candidates,
+                           int min_lc_inliers,
+                           int lc_discard_window,
+                           bool enable_debugging,
+                           const std::string& w_path,
+                           std::string& matching_type,
+                           std::string& motion_estimation_type):
+                           VisionMotionModules(ratio, matching_type, motion_estimation_type)
     {
         // Initialises parameters.
         w_path_ = w_path;
@@ -24,10 +24,10 @@ namespace slam
         enable_debugging_ = enable_debugging;
         lc_discard_window_ = lc_discard_window;
 
-        // Set "uninitialised" to the loop closing.
-        init_loop_closing_ = false;
+        // Set "uninitialised" to the loop closer.
+        init_loop_closer_ = false;
 
-        // Initialises number of loop closing.
+        // Initialises number of closed loops.
         loop_closure_num_ = 0; 
 
         // Creates execution directory
@@ -48,7 +48,7 @@ namespace slam
     }
 
 
-    void LoopClosing::run()
+    void LoopCloser::run()
     { 
         // Create ROS node.
         ros::NodeHandle nh;
@@ -58,7 +58,7 @@ namespace slam
         proj_mat_client_ = nh.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
 
         // Publishers.
-        run_times_pub_ = nhp.advertise<slamon::Performance>("loop_closing_performance", 1);
+        run_times_pub_ = nhp.advertise<slamon::Performance>("loop_closer_performance", 1);
         cluster_num_pub_ = nhp.advertise<std_msgs::Int32>("cluster_num", 1);
         loop_closure_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_num", 1);
         loop_closure_img_pub_ = nhp.advertise<sensor_msgs::Image>("loop_closure_img", 1);
@@ -71,7 +71,7 @@ namespace slam
         double start_iteration_time;
         while (ros::ok())
         {
-            // Search loop closing in the new cluster.
+            // Search for a loop closure in the new cluster.
             if (checkNewClusterInQueue())
             {
                 // Time at which the program starts the iteration.
@@ -83,7 +83,7 @@ namespace slam
                 run_times_.run_time_4 = 0.0; // Loop detection run time.
                 run_times_.run_time_5 = 0.0; // Close loop run time.
 
-                if (!init_loop_closing_)
+                if (!init_loop_closer_)
                     getProjectionMatrices();
                 
                 start_module_time = ros::Time::now().toSec();
@@ -112,21 +112,21 @@ namespace slam
     }
 
 
-    void LoopClosing::addClusterToQueue(Cluster cluster)
+    void LoopCloser::addClusterToQueue(Cluster cluster)
     {
         std::scoped_lock lock(mutex_cluster_queue_);
         cluster_queue_.push_back(cluster);
     }
 
 
-    bool LoopClosing::checkNewClusterInQueue()
+    bool LoopCloser::checkNewClusterInQueue()
     {
         std::scoped_lock lock(mutex_cluster_queue_);
         return (!cluster_queue_.empty());
     }
 
 
-    void LoopClosing::getProjectionMatrices()
+    void LoopCloser::getProjectionMatrices()
     {
         slamon::GetProjectionMatrices srv;
         if (proj_mat_client_.call(srv))
@@ -151,11 +151,11 @@ namespace slam
             l_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1);
             r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1);
         }
-        init_loop_closing_ = true;
+        init_loop_closer_ = true;
     }
 
 
-    void LoopClosing::processNewCluster(Cluster& c_cluster)
+    void LoopCloser::processNewCluster(Cluster& c_cluster)
     {
         // Get the cluster
         {
@@ -184,7 +184,7 @@ namespace slam
 
 
     // TODO: no_candidates?
-    void LoopClosing::searchByProximity(const Cluster& c_cluster)
+    void LoopCloser::searchByProximity(const Cluster& c_cluster)
     {
         // Auxilary variable to set the start time of a module.
         double start_module_time;
@@ -217,7 +217,7 @@ namespace slam
     }
 
 
-    void LoopClosing::searchByHash(const Cluster& c_cluster)
+    void LoopCloser::searchByHash(const Cluster& c_cluster)
     {
         // Auxilary variable to set the start time of a module.
         double start_module_time;
@@ -253,9 +253,9 @@ namespace slam
     }
 
 
-    void LoopClosing::getHashCandidates(int c_cluster_id,
-                                        uint closest_candidates_num,
-                                        std::vector<int>& closest_candidates)
+    void LoopCloser::getHashCandidates(int c_cluster_id,
+                                       uint closest_candidates_num,
+                                       std::vector<int>& closest_candidates)
     {
         // Init.
         closest_candidates.clear();
@@ -264,7 +264,7 @@ namespace slam
         if ((int)hash_table_.size() <= lc_discard_window_)
             return;
 
-        // Create a list with the non-possible candidates (because they are already loop closings).
+        // Create a list with the non-possible candidates (because they are already loop closures).
         std::vector<int> no_candidates;
         for (uint i = 0; i < cluster_lc_found_.size(); i++)
         {
@@ -319,7 +319,7 @@ namespace slam
     }
 
 
-    Cluster LoopClosing::readCluster(int id)
+    Cluster LoopCloser::readCluster(int id)
     {
         Cluster cluster_tmp;
         std::string cluster_path = execution_path_ + convertTo5Digits(id) + ".yml";
@@ -356,9 +356,9 @@ namespace slam
     }
 
 
-    bool LoopClosing::closeLoopBetween(Cluster q_cluster,
-                                       Cluster cand_cluster,
-                                       const std::string& search_method)
+    bool LoopCloser::closeLoopBetween(Cluster q_cluster,
+                                      Cluster cand_cluster,
+                                      const std::string& search_method)
     {
         // Auxilary variable to set the start time of a module.
         double start_module_time = ros::Time::now().toSec();
@@ -532,7 +532,7 @@ namespace slam
                 // Loop found!
                 if (i_q_l_kpts.size() >= (uint)(min_lc_inliers_))
                 {
-                    // Finished loop detection, starting loop closing.
+                    // Finished loop detection, starting loop closure.
                     run_times_.run_time_4 += (ros::Time::now().toSec() - start_module_time); // Loop detection run time.
                     start_module_time = ros::Time::now().toSec();
 
@@ -628,7 +628,7 @@ namespace slam
                             definitive_inliers_per_pair.push_back(inliers_per_pair[i]);
                             definitive_cluster_pairs.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second)); // q_cluster_id - cand_cluster_id
 
-                            // Adds this edge to the cluster list of loop closings found.
+                            // Add this edge to the list of clusters that close loops.
                             cluster_lc_found_.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second));
                         }
                     }

@@ -74,8 +74,8 @@ add_message_files(
         msg 
     FILES
         Keypoint.msg
-        Performance.msg
         StereoData.msg
+        Performance.msg
 )
 
 # Declare custom ROS services
@@ -128,7 +128,7 @@ add_executable(map_slamon
                src/cluster.cpp
                src/map_node.cpp
                src/publisher.cpp
-               src/loop_closing.cpp
+               src/loop_closer.cpp
                src/vision_motion_modules.cpp)
 add_executable(initial_pose_server src/initial_pose_server)
 
