@@ -1,12 +1,12 @@
 /**
  *  @file
- *  @brief The Visual Odometry class is responsive to track consecutive image frames and compute their motion.
+ *  @brief The Visual Odometer class is responsive to track consecutive image frames and compute their motion.
  *  @author Bo Miquel Nordfeldt-Fiol
  *  @date Winter-Spring 2024
  */
 
-#ifndef VISUAL_ODOMETRY_HPP
-#define VISUAL_ODOMETRY_HPP
+#ifndef VISUAL_ODOMETER_HPP
+#define VISUAL_ODOMETER_HPP
 
 #include <string>
 #include <vector>
@@ -32,7 +32,7 @@ namespace slam
 {
 
 
-    class VisualOdometry: protected Publisher, protected VisionMotionModules 
+    class VisualOdometer: protected Publisher, protected VisionMotionModules 
     {
         public:
 
@@ -53,7 +53,7 @@ namespace slam
              *  \param robot_frame_id Robot odometry coordinate axis identficator.
              *  \param motion_estimation_type Motion estimation type.
              */
-            VisualOdometry(double ratio,
+            VisualOdometer(double ratio,
                            int min_inliers,
                            bool enable_debugging,
                            const std::string& w_path,
@@ -224,4 +224,4 @@ namespace slam
 } // End namespace.
 
 
-#endif // VISUAL_ODOMETRY_HPP
+#endif // VISUAL_ODOMETER_HPP

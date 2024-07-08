@@ -120,7 +120,7 @@ add_executable(vo_slamon
                src/vo_node.cpp
                src/publisher.cpp
                src/vision_motion_modules.cpp
-               src/visual_odometry.cpp)
+               src/visual_odometer.cpp)
 add_executable(map_slamon
                src/map2.cpp
                src/hash.cpp

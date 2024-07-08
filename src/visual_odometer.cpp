@@ -1,11 +1,11 @@
-#include "visual_odometry.hpp"
+#include "visual_odometer.hpp"
 
 
 namespace slam
 {
 
 
-    VisualOdometry::VisualOdometry(double ratio,
+    VisualOdometer::VisualOdometer(double ratio,
                                    int min_inliers,
                                    bool enable_debugging,
                                    const std::string& w_path,
@@ -40,7 +40,7 @@ namespace slam
     }
 
 
-    void VisualOdometry::run()
+    void VisualOdometer::run()
     {
         // Create ROS node.
         ros::NodeHandle nh;
@@ -51,8 +51,8 @@ namespace slam
         initial_odom_client_ = nhp.serviceClient<slamon::GetTransform>("get_first_odom");
 
         // Server servives.
-        robot2camera_server_ = nhp.advertiseService("send_robot_to_camera_tf", &VisualOdometry::sendRobot2Camera, this);
-        proj_mat_server_ = nhp.advertiseService("send_projection_matrices", &VisualOdometry::sendProjectionMatrices, this);
+        robot2camera_server_ = nhp.advertiseService("send_robot_to_camera_tf", &VisualOdometer::sendRobot2Camera, this);
+        proj_mat_server_ = nhp.advertiseService("send_projection_matrices", &VisualOdometer::sendProjectionMatrices, this);
 
         // Publishers.
         stereo_data_pub_ = nhp.advertise<slamon::StereoData>("stereo_data", 1);
@@ -75,14 +75,14 @@ namespace slam
         l_info_sub.subscribe(nh, "left_camera_info", 1);
         r_info_sub.subscribe(nh, "right_camera_info", 1);
         sync.reset(new Sync_(SyncPolicy_(10), l_img_sub, r_img_sub, l_info_sub, r_info_sub));
-        sync->registerCallback(boost::bind(&VisualOdometry::callback, this, _1, _2, _3, _4));
+        sync->registerCallback(boost::bind(&VisualOdometer::callback, this, _1, _2, _3, _4));
         
         // Calls callback when synchronised messages arrives.
         ros::spin();
     }
 
 
-    void VisualOdometry::callback(const sensor_msgs::ImageConstPtr& l_img_msg,
+    void VisualOdometer::callback(const sensor_msgs::ImageConstPtr& l_img_msg,
                                   const sensor_msgs::ImageConstPtr& r_img_msg,
                                   const sensor_msgs::CameraInfoConstPtr& l_info_msg,
                                   const sensor_msgs::CameraInfoConstPtr& r_info_msg)
@@ -211,7 +211,7 @@ namespace slam
     }
 
 
-    bool VisualOdometry::sendRobot2Camera(slamon::GetTransform::Request& req,
+    bool VisualOdometer::sendRobot2Camera(slamon::GetTransform::Request& req,
                                           slamon::GetTransform::Response& res)
     {
         res.tf.header.frame_id = camera_frame_id_;
@@ -226,7 +226,7 @@ namespace slam
     }
 
 
-    bool VisualOdometry::sendProjectionMatrices(slamon::GetProjectionMatrices::Request& req,
+    bool VisualOdometer::sendProjectionMatrices(slamon::GetProjectionMatrices::Request& req,
                                                 slamon::GetProjectionMatrices::Response& res)
     {
         for (int row = 0; row < l_proj_mat_.rows; row++)
@@ -241,7 +241,7 @@ namespace slam
     }
 
 
-    bool VisualOdometry::initialisation(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+    bool VisualOdometer::initialisation(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
                                         const sensor_msgs::CameraInfoConstPtr& r_info_msg)
     {
         // Gets the static transformation between robot frame (base link) and camera frame.
@@ -309,7 +309,7 @@ namespace slam
     }
 
 
-    bool VisualOdometry::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img_msg,
+    bool VisualOdometer::processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img_msg,
                                              const sensor_msgs::ImageConstPtr& r_img_msg,
                                              Frame& c_frame)
     {
@@ -391,7 +391,7 @@ namespace slam
     }
 
 
-    bool VisualOdometry::computeMotionSuccessiveFrames(const Frame& c_frame,
+    bool VisualOdometer::computeMotionSuccessiveFrames(const Frame& c_frame,
                                                        tf::Transform& c_camera_motion)
     {
         // Auxilary variable to set the start time of a module.
@@ -483,7 +483,7 @@ namespace slam
     }
 
 
-    void VisualOdometry::getInitialOdom()
+    void VisualOdometer::getInitialOdom()
     {
         slamon::GetTransform srv;
         if (initial_odom_client_.call(srv))
@@ -519,7 +519,7 @@ namespace slam
     }
 
 
-    bool VisualOdometry::fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
+    bool VisualOdometer::fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
                                          cv::Mat& img)
     {
         // Convert message to cv::Mat

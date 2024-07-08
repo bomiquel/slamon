@@ -5,7 +5,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 
-#include "visual_odometry.hpp"
+#include "visual_odometer.hpp"
 
 
 void readParams(int& min_inliers,
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
                robot_frame_id, motion_estimation_type);
 
     // Declare threads.
-    slam::VisualOdometry visual_odometer(lowe_ratio, 
+    slam::VisualOdometer visual_odometer(lowe_ratio, 
                                          min_inliers, 
                                          enable_debugging, 
                                          working_path, 
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
                                          motion_estimation_type);
 
     // Launch threads.
-    std::thread visual_odometer_thread(&slam::VisualOdometry::run, &visual_odometer);
+    std::thread visual_odometer_thread(&slam::VisualOdometer::run, &visual_odometer);
 
     // ROS wait
     ros::Rate r(10);
