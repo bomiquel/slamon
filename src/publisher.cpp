@@ -299,19 +299,19 @@ void Publisher::publishPerformance(const ros::Time& stamp,
 }
 
 
-void Publisher::publishFrame(const cv::Mat& l_descs,
-                             const cv::Mat& r_descs,
-                             const ros::Time& stamp,
-                             const ros::Publisher& publisher,
-                             const std::vector<cv::Point2f>& l_kpts,
-                             const std::vector<cv::Point2f>& r_kpts,
-                             const std::vector<cv::Point3f>& cam_pts)
+void Publisher::publishStereoData(const cv::Mat& l_descs,
+                                  const cv::Mat& r_descs,
+                                  const ros::Time& stamp,
+                                  const ros::Publisher& publisher,
+                                  const std::vector<cv::Point2f>& l_kpts,
+                                  const std::vector<cv::Point2f>& r_kpts,
+                                  const std::vector<cv::Point3f>& cam_pts)
 {
-    // Create and fill frame msg
-    slamon::Frame frame_msg;
+    // Create and fill StereoData msg.
+    slamon::StereoData msg;
     geometry_msgs::Point cam_pt_msg;
     slamon::Keypoint l_kpt_msg, r_kpt_msg;
-    frame_msg.header.stamp = stamp;
+    msg.header.stamp = stamp;
     for (uint i = 0; i < l_kpts.size(); i++)
     {
         // Fill base msgs
@@ -325,14 +325,14 @@ void Publisher::publishFrame(const cv::Mat& l_descs,
         l_kpt_msg.desc = l_descs.row(i);
         r_kpt_msg.desc = r_descs.row(i);
 
-        // Fill Frame msg
-        frame_msg.l_kpts.push_back(l_kpt_msg);
-        frame_msg.r_kpts.push_back(r_kpt_msg);
-        frame_msg.cam_pts.push_back(cam_pt_msg);
+        // Fill StereoData msg.
+        msg.l_kpts.push_back(l_kpt_msg);
+        msg.r_kpts.push_back(r_kpt_msg);
+        msg.cam_pts.push_back(cam_pt_msg);
     }
 
-    // Publishes 
-    publisher.publish(frame_msg);
+    // Publishes.
+    publisher.publish(msg);
 }
 
 
@@ -603,7 +603,6 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
     cv::Mat img, o_img, written_img;
  
     // Builds candidate keyframe vector.
-    
     cv::Mat cand_keyframe_vector_img;
     for (uint i = 0; i < cand_keyframe_ids.size(); i++)
     {

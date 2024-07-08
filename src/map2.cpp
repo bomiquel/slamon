@@ -70,15 +70,15 @@ namespace slam
         clustering_img_pub_ = nhp.advertise<sensor_msgs::Image>("keypoints_clustering_img", 1);
 
         // Subscribers.
-        message_filters::Subscriber<slamon::Frame> frame_sub;
         message_filters::Subscriber<nav_msgs::Odometry> odom_sub;
+        message_filters::Subscriber<slamon::StereoData> stereo_data_sub;
 
         // Message sync.
         boost::shared_ptr<Sync_> sync;
-        frame_sub.subscribe(nh, "frame", 5);
-        odom_sub.subscribe(nh, "odom", 5);
-        sync.reset(new Sync_(SyncPolicy_(10), frame_sub, odom_sub));
-        sync->registerCallback(boost::bind(&Map2::frameCallback, this, _1, _2));
+        odom_sub.subscribe(nh, "odom", 1);
+        stereo_data_sub.subscribe(nh, "stereo_data", 1);
+        sync.reset(new Sync_(SyncPolicy_(10), odom_sub, stereo_data_sub));
+        sync->registerCallback(boost::bind(&Map2::callback, this, _1, _2));
 
         // Calls callback when synchronised messages arrive
         ros::spin();
@@ -276,8 +276,8 @@ namespace slam
     }
 
 
-    void Map2::frameCallback(const slamon::FrameConstPtr& frame_msg,
-                             const nav_msgs::OdometryConstPtr& odom_msg)
+    void Map2::callback(const nav_msgs::OdometryConstPtr& odom_msg,
+                        const slamon::StereoDataConstPtr& stereo_data_msg)
     {
         // Time at which the program enters into the callback.
         double start_callback_time = ros::Time::now().toSec();
@@ -289,15 +289,15 @@ namespace slam
         start_module_time = ros::Time::now().toSec();
         Frame c_frame;
         tf::Transform c_robot_odom;
-        fromFrameMsgToFrameObject(frame_msg, c_frame);
+        fromStereoDataToFrame(stereo_data_msg, c_frame);
         tf::poseMsgToTF(odom_msg->pose.pose, c_robot_odom);
-        run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // From Frame msg to Frame object run time.
+        run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // From StereoData msg to Frame object run time.
 
         // If enable debugging gets images from disk.
         std::string c_frame_name;
         if (enable_debugging_)
         {
-            c_frame_name = convertTo5Digits(frame_msg->header.seq);
+            c_frame_name = convertTo5Digits(stereo_data_msg->header.seq);
             c_frame.setLeftImg(cv::imread(frame_path_ + c_frame_name + "_left.png", cv::IMREAD_COLOR));
             c_frame.setRightImg(cv::imread(frame_path_ + c_frame_name + "_right.png", cv::IMREAD_COLOR));
         }
@@ -676,8 +676,8 @@ namespace slam
     }
 
 
-    void Map2::fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
-                                         Frame& frame)
+    void Map2::fromStereoDataToFrame(const slamon::StereoDataConstPtr& msg,
+                                     Frame& frame)
     {
         cv::Point2f kpt;
         cv::Point3f cam_pt;

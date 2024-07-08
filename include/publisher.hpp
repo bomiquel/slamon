@@ -22,8 +22,8 @@
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
 
-#include "slamon/Frame.h"
 #include "slamon/Keypoint.h"
+#include "slamon/StereoData.h"
 #include "slamon/Performance.h"
 
 
@@ -341,7 +341,7 @@ class Publisher
 
 
         /** \brief Publishes relevant information from a stereo pair of images.
-         *  \param stamp Current frame ROS timestamp (input).
+         *  \param stamp Current image ROS timestamp (input).
          *  \param l_descs The left image keypoints descriptors (input).
          *  \param r_descs The right image keypoints descriptors (input).
          *  \param l_kpts The left image keypoints (input).
@@ -350,13 +350,13 @@ class Publisher
          *  and relative to camera (input).
          *  \param publisher The ROS publisher (input).
         */
-        void publishFrame(const cv::Mat& l_descs,
-                          const cv::Mat& r_descs,
-                          const ros::Time& stamp,
-                          const ros::Publisher& publisher,
-                          const std::vector<cv::Point2f>& l_kpts,
-                          const std::vector<cv::Point2f>& r_kpts,
-                          const std::vector<cv::Point3f>& cam_pts);
+        void publishStereoData(const cv::Mat& l_descs,
+                               const cv::Mat& r_descs,
+                               const ros::Time& stamp,
+                               const ros::Publisher& publisher,
+                               const std::vector<cv::Point2f>& l_kpts,
+                               const std::vector<cv::Point2f>& r_kpts,
+                               const std::vector<cv::Point3f>& cam_pts);
 
 
         /** \brief Publishes counters to ROS.

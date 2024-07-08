@@ -12,7 +12,7 @@ Header header
 int16 successes_num
 
 # Run times.
-float64 run_time_0      # Time needed for VO: Feature extraction, MAP: From Frame msg to Frame object or LC: Process current cluster.
+float64 run_time_0      # Time needed for VO: Feature extraction, MAP: From StereoData msg to Frame object or LC: Process current cluster.
 float64 run_time_1      # Time needed for VO: Stereo matching, MAP: Need new keyframe? or LC: Search for candidates to close loops by proximity.
 float64 run_time_2      # Time needed for VO: Triangulation, MAP: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
 float64 run_time_3      # Time needed for VO: Successive matching, MAP: Add edges to graph or LC: Read cluster candidates.

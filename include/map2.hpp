@@ -152,14 +152,14 @@ namespace slam
         private:
 
 
-            /** \brief Messages callback. This function is called when synchronized frame
-             *  and odom messages are received.
-             *  \param frame_msg Custom ROS message containing current stereo pair image
-             *  relevant information (input).
+            /** \brief Messages callback. This function is called when synchronized stereo
+             *  data and odom messages are received.
              *  \param odom_msg ROS message containing current robot odometry (input).
+             *  \param stereo_data_msg Custom ROS message containing current stereo pair image
+             *  relevant information (input).
              */  
-            void frameCallback(const slamon::FrameConstPtr& frame_msg,
-                               const nav_msgs::OdometryConstPtr& odom_msg);
+            void callback(const nav_msgs::OdometryConstPtr& odom_msg,
+                          const slamon::StereoDataConstPtr& stereo_data_msg);
 
 
             /** \brief Decides if new keyframe is needed.
@@ -198,12 +198,12 @@ namespace slam
             std::vector<std::vector<int>> createComb(const std::vector<int>& vec);
             
 
-            /** \brief Convert custom ROS frame msg to frame object (slam::Frame)
+            /** \brief Convert custom ROS stereo data msg to frame object (slam::Frame)
              *  \param msg ROS message with relevant visual information (input).
              *  \param frame Will contain the relevant visual information (output).
              */
-            void fromFrameMsgToFrameObject(const slamon::FrameConstPtr& msg,
-                                           Frame& frame);
+            void fromStereoDataToFrame(const slamon::StereoDataConstPtr& msg,
+                                       Frame& frame);
 
 
             /** \brief Convert cv::Point3f to tf::Transform.
@@ -329,8 +329,8 @@ namespace slam
 
 
             // Topic sync
-            typedef message_filters::sync_policies::ApproximateTime<slamon::Frame,
-                                                                    nav_msgs::Odometry> SyncPolicy_;
+            typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,
+                                                                    slamon::StereoData> SyncPolicy_;
 
             typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
 

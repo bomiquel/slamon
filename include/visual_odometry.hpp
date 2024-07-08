@@ -70,17 +70,17 @@ namespace slam
         private:
 
 
-            /** \brief Messages callback. This function is called when synchronized image
+            /** \brief Image callback. This function is called when synchronized stereo image
              *  messages are received.
              *  \param l_img_msg ROS message containing the left image (input).
              *  \param r_img_msg ROS message containing the right image (input).
              *  \param l_info_msg ROS message containing the info of the left image (input).
              *  \param r_info_msg ROS message containing the info of the right image (input).
              */  
-            void imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
-                               const sensor_msgs::ImageConstPtr& r_img_msg,
-                               const sensor_msgs::CameraInfoConstPtr& l_info_msg,
-                               const sensor_msgs::CameraInfoConstPtr& r_info_msg);
+            void callback(const sensor_msgs::ImageConstPtr& l_img_msg,
+                          const sensor_msgs::ImageConstPtr& r_img_msg,
+                          const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+                          const sensor_msgs::CameraInfoConstPtr& r_info_msg);
 
 
             /** \brief Service callback. This function is called when another part of the
@@ -191,7 +191,7 @@ namespace slam
 
             ros::Publisher camera_odom_pub_; //!> Publishes current velocity and accumulated movement (odometry) relative to camera.
 
-            ros::Publisher frame_pub_; //!> Publishes current relevant information from a stereo pair of images.
+            ros::Publisher stereo_data_pub_; //!> Publishes current relevant information from a stereo pair of images.
 
             ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
 

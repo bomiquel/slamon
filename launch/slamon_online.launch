@@ -39,8 +39,8 @@
 
         <!-- MAP SLAMON -->
         <node pkg = "slamon" type = "map_slamon" name = "map_slamon" output = "screen">
-            <remap from = "frame"                       to = "vo_slamon/frame"/>
             <remap from = "odom"                        to = "vo_slamon/robot_odom"/>
+            <remap from = "stereo_data"                 to = "vo_slamon/stereo_data"/>
             <remap from = "get_robot_to_camera_tf"      to = "vo_slamon/send_robot_to_camera_tf"/>
             <remap from = "get_projection_matrices"     to = "vo_slamon/send_projection_matrices"/>
         </node>

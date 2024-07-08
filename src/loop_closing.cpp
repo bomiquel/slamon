@@ -91,7 +91,7 @@ namespace slam
                 run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Process current cluster run time.
 
                 if (enable_debugging_)
-                    ROS_INFO_STREAM("[LC->run]: Cluster: " << c_cluster.getId() << " from keyframe: " << c_cluster.getFrameId());
+                    ROS_INFO_STREAM("[LC->run]: Cluster: " << c_cluster.getId() << " from keyframe: " << c_cluster.getKeyframeId());
 
                 searchByProximity(c_cluster);
 
@@ -173,12 +173,12 @@ namespace slam
 
         // Store
         cv::FileStorage fs(execution_path_ + convertTo5Digits(c_cluster.getId()) + ".yml", cv::FileStorage::WRITE);
-        cv::write(fs, "frame_id", c_cluster.getFrameId());
         cv::write(fs, "l_kpts", c_cluster.getLeftKpts());
         cv::write(fs, "r_kpts", c_cluster.getRightKpts());
         cv::write(fs, "l_descs", c_cluster.getLeftDescs());
         cv::write(fs, "r_descs", c_cluster.getRightDescs());
         cv::write(fs, "cam_pts", c_cluster.getCameraPoints());
+        cv::write(fs, "keyframe_id", c_cluster.getKeyframeId());
         fs.release();
     }
 
@@ -337,7 +337,7 @@ namespace slam
             return cluster_tmp;
 
         // Reads cluster data.
-        int frame_id;
+        int keyframe_id;
         cv::Mat l_descs, r_descs;
         std::vector<cv::Point3f> cam_pts;
         std::vector<cv::Point2f> l_kpts, r_kpts;
@@ -346,12 +346,12 @@ namespace slam
         fs["cam_pts"] >> cam_pts;
         fs["l_descs"] >> l_descs;
         fs["r_descs"] >> r_descs;
-        fs["frame_id"] >> frame_id;
+        fs["keyframe_id"] >> keyframe_id;
         fs.release();
 
         // Sets the properties of the cluster.
         tf::Transform camera_pose = map_->getVertexCameraPose(id, true);
-        Cluster cluster(id, frame_id, l_descs, r_descs, camera_pose, l_kpts, r_kpts, cam_pts);
+        Cluster cluster(id, keyframe_id, l_descs, r_descs, camera_pose, l_kpts, r_kpts, cam_pts);
         return cluster;
     }
 
@@ -457,7 +457,7 @@ namespace slam
 
             // Extracts all the clusters corresponding to the current cluster frame
             std::vector<int> q_cluster_neighbours;
-            map_->getKeyframeVertices(q_cluster.getFrameId(), q_cluster_neighbours);
+            map_->getKeyframeVertices(q_cluster.getKeyframeId(), q_cluster_neighbours);
             for (uint i = 0; i < q_cluster_neighbours.size(); i++)
             {
                 // Avoids itself.
@@ -640,7 +640,7 @@ namespace slam
 
                         ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
                         ROS_INFO_STREAM("                      LOOP CLOSURE: " << loop_closure_num_);
-                        ROS_INFO_STREAM("Between keyframe " << q_cluster.getFrameId() << " and " << cand_cluster.getFrameId());
+                        ROS_INFO_STREAM("Between keyframe " << q_cluster.getKeyframeId() << " and " << cand_cluster.getKeyframeId());
                         ROS_INFO_STREAM("Method: " << search_method);
                         ROS_INFO_STREAM("Inliers: " << i_q_l_kpts.size());
                         ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
@@ -650,7 +650,7 @@ namespace slam
                             if (loop_closure_img_pub_.getNumSubscribers() > 0)
                                 publishLoopClosure(ros::Time::now(), 
                                                    loop_closure_img_pub_,
-                                                   q_cluster.getFrameId(),
+                                                   q_cluster.getKeyframeId(),
                                                    keyframe_path_,
                                                    i_q_cluster_ids,
                                                    i_cand_cluster_ids,
@@ -664,7 +664,7 @@ namespace slam
                                                    cand_cluster_keyframe_relation);
 
                             writeLoopClosure(lc_path_ + convertTo5Digits(loop_closure_num_),
-                                             q_cluster.getFrameId(),
+                                             q_cluster.getKeyframeId(),
                                              keyframe_path_,
                                              i_q_cluster_ids,
                                              i_cand_cluster_ids,

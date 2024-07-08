@@ -73,9 +73,9 @@ add_message_files(
     DIRECTORY 
         msg 
     FILES
-        Frame.msg
         Keypoint.msg
         Performance.msg
+        StereoData.msg
 )
 
 # Declare custom ROS services

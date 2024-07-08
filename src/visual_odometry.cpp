@@ -55,7 +55,7 @@ namespace slam
         proj_mat_server_ = nhp.advertiseService("send_projection_matrices", &VisualOdometry::sendProjectionMatrices, this);
 
         // Publishers.
-        frame_pub_ = nhp.advertise<slamon::Frame>("frame", 1);
+        stereo_data_pub_ = nhp.advertise<slamon::StereoData>("stereo_data", 1);
         run_times_pub_ = nhp.advertise<slamon::Performance>("vo_performance", 1);
         robot_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_odom", 1);
         camera_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_odom", 1);
@@ -75,17 +75,17 @@ namespace slam
         l_info_sub.subscribe(nh, "left_camera_info", 1);
         r_info_sub.subscribe(nh, "right_camera_info", 1);
         sync.reset(new Sync_(SyncPolicy_(10), l_img_sub, r_img_sub, l_info_sub, r_info_sub));
-        sync->registerCallback(boost::bind(&VisualOdometry::imageCallback, this, _1, _2, _3, _4));
+        sync->registerCallback(boost::bind(&VisualOdometry::callback, this, _1, _2, _3, _4));
         
         // Calls callback when synchronised messages arrives.
         ros::spin();
     }
 
 
-    void VisualOdometry::imageCallback(const sensor_msgs::ImageConstPtr& l_img_msg,
-                                       const sensor_msgs::ImageConstPtr& r_img_msg,
-                                       const sensor_msgs::CameraInfoConstPtr& l_info_msg,
-                                       const sensor_msgs::CameraInfoConstPtr& r_info_msg)
+    void VisualOdometry::callback(const sensor_msgs::ImageConstPtr& l_img_msg,
+                                  const sensor_msgs::ImageConstPtr& r_img_msg,
+                                  const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+                                  const sensor_msgs::CameraInfoConstPtr& r_info_msg)
     {
         // Time at which the program enters into the callback.
         double start_callback_time = ros::Time::now().toSec();
@@ -153,8 +153,8 @@ namespace slam
                                 cv::imwrite(frame_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
                                 cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                             }
-                            publishFrame(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
-                                         frame_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getCameraPoints());
+                            publishStereoData(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
+                                              stereo_data_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getCameraPoints());
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_camera_odom_, tf::Transform(),
                                                    camera_odom_pub_, camera_frame_id_);
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_robot_odom_, tf::Transform(),
@@ -183,8 +183,8 @@ namespace slam
                             cv::imwrite(frame_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
                             cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                         }
-                        publishFrame(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
-                                     frame_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getCameraPoints());
+                        publishStereoData(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
+                                          stereo_data_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getCameraPoints());
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_camera_odom_, c_camera_motion,
                                                camera_odom_pub_, camera_frame_id_);
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_robot_odom_, c_robot_motion,
@@ -257,11 +257,11 @@ namespace slam
             return false;
         }
 
-        // Gets projection matrix
+        // Gets projection matrix.
         l_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(l_info_msg->P.data())).clone();
         r_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(r_info_msg->P.data())).clone();
 
-        // Checks if the projection matrices are filled with 0s
+        // Checks if the projection matrices are filled with 0s.
         double counter = 0.0;
         for (int i = 0; i < l_proj_mat_.rows; i++)
         {

@@ -8,7 +8,7 @@ Cluster::Cluster()
 
 
 Cluster::Cluster(int id,
-                 int frame_id,
+                 int keyframe_id,
                  cv::Mat l_descs,
                  cv::Mat r_descs,
                  tf::Transform camera_pose,
@@ -22,7 +22,7 @@ Cluster::Cluster(int id,
     cam_pts_ = cam_pts;
     l_descs_ = l_descs;
     r_descs_ = r_descs;
-    frame_id_ = frame_id;
+    keyframe_id_ = keyframe_id;
     camera_pose_ = camera_pose;
 }
 

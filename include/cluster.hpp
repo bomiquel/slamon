@@ -1,6 +1,6 @@
 /**
  *  @file
- *  @brief The Cluster class represents one keypoints clustering of the camera frame.
+ *  @brief The Cluster class represents one keypoints clustering of the camera keyframe.
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
  *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
@@ -29,7 +29,7 @@ class Cluster
 
         /** \brief Class constructor
          *  \param id Cluster id.
-         *  \param frame_id Frame id.
+         *  \param keyframe_id Keyframe id.
          *  \param l_descs Cluster left descriptors.
          *  \param r_descs Cluster right descriptors.
          *  \param camera_pose World camera pose when the cluster was obtained.
@@ -38,7 +38,7 @@ class Cluster
          *  \param cam_pts Cluster 3D points relative to camera.
          */
         Cluster(int id,
-                int frame_id,
+                int keyframe_id,
                 cv::Mat l_descs,
                 cv::Mat r_descs,
                 tf::Transform camera_pose,
@@ -53,10 +53,10 @@ class Cluster
         inline int getId() const {return id_;}
 
 
-        /** \brief Get the corresponding frame id.
-         *  @return The corresponding frame id.
+        /** \brief Get the corresponding keyframe id.
+         *  @return The corresponding keyframe id.
          */
-        inline int getFrameId() const {return frame_id_;}
+        inline int getKeyframeId() const {return keyframe_id_;}
 
 
         /** \brief Get cluster left descriptors.
@@ -106,7 +106,7 @@ class Cluster
 
         int id_; //!> Cluster id.
 
-        int frame_id_; //!> Corresponding frame id.
+        int keyframe_id_; //!> Corresponding keyframe id.
 
         cv::Mat l_descs_; //!> Cluster left descriptors.
 
