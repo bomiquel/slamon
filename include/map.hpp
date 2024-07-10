@@ -6,8 +6,8 @@
  *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
  */
 
-#ifndef MAP2_HPP
-#define MAP2_HPP
+#ifndef MAP_HPP
+#define MAP_HPP
 
 
 #include <string>
@@ -41,7 +41,7 @@ namespace slamon
     class LoopCloser;
 
 
-    class Map2: protected Publisher
+    class Map: protected Publisher
     {
         public:
 
@@ -54,12 +54,12 @@ namespace slamon
              *  \param loop_closer Loop closer object pointer.
              *  \param robot_frame_id Robot coordinate axis identficator (base link).
              */
-            Map2(int min_lc_inliers,
-                 bool enable_debugging,
-                 LoopCloser* loop_closer,
-                 double min_dist_keyframe,
-                 const std::string& w_path,
-                 const std::string& robot_frame_id);
+            Map(int min_lc_inliers,
+                bool enable_debugging,
+                LoopCloser* loop_closer,
+                double min_dist_keyframe,
+                const std::string& w_path,
+                const std::string& robot_frame_id);
 
 
             /** \brief Starts map.
@@ -340,4 +340,4 @@ namespace slamon
 } // End namespace
 
 
-#endif // MAP2_HPP
+#endif // MAP_HPP

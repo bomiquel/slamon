@@ -16,7 +16,7 @@
 
 #include <ros/ros.h>
 
-#include "map2.hpp"
+#include "map.hpp"
 #include "hash.hpp"
 #include "tools.hpp"
 #include "cluster.hpp"
@@ -30,7 +30,7 @@ namespace slamon
 {
     
 
-    class Map2;
+    class Map;
 
 
     class LoopCloser: protected Publisher, protected VisionMotionModules
@@ -64,7 +64,7 @@ namespace slamon
             /** \brief Set the graph object.
              *  \param map The object pointer (input).
              */
-            inline void setMap(Map2 *map) {map_ = map;}
+            inline void setMap(Map *map) {map_ = map;}
 
 
             /** \brief Starts loop closer.
@@ -194,7 +194,7 @@ namespace slamon
 
             ros::Publisher loop_closure_img_pub_; //!> Loop closure image publisher.
 
-            Map2* map_; //!> Graph object pointer.
+            Map* map_; //!> Graph object pointer.
 
             haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
 

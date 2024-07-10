@@ -1,15 +1,15 @@
-#include "map2.hpp"
+#include "map.hpp"
 
 
 namespace slamon
 {
 
-    Map2::Map2(int min_lc_inliers,
-               bool enable_debugging,
-               LoopCloser* loop_closer,
-               double min_dist_keyframe,
-               const std::string& w_path,
-               const std::string& robot_frame_id)
+    Map::Map(int min_lc_inliers,
+             bool enable_debugging,
+             LoopCloser* loop_closer,
+             double min_dist_keyframe,
+             const std::string& w_path,
+             const std::string& robot_frame_id)
     {
         // Inilitialises parameters.
         w_path_ = w_path;
@@ -53,7 +53,7 @@ namespace slamon
     }
 
 
-    void Map2::run()
+    void Map::run()
     {
         // Create ROS node.
         ros::NodeHandle nh;
@@ -78,14 +78,14 @@ namespace slamon
         odom_sub.subscribe(nh, "odom", 1);
         stereo_data_sub.subscribe(nh, "stereo_data", 1);
         sync.reset(new Sync_(SyncPolicy_(10), odom_sub, stereo_data_sub));
-        sync->registerCallback(boost::bind(&Map2::callback, this, _1, _2));
+        sync->registerCallback(boost::bind(&Map::callback, this, _1, _2));
 
         // Calls callback when synchronised messages arrive
         ros::spin();
     }
 
 
-    int Map2::getVertexKeyframeId(int vertex_id)
+    int Map::getVertexKeyframeId(int vertex_id)
     {
         int frame_id = -1;
         for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
@@ -100,7 +100,7 @@ namespace slamon
     }
     
 
-    tf::Transform Map2::getVertexPose(int vertex_id, bool lock = true)
+    tf::Transform Map::getVertexPose(int vertex_id, bool lock = true)
     {
         if (lock)
         {
@@ -135,20 +135,20 @@ namespace slamon
     }
 
 
-    tf::Transform Map2::getVertexPoseRelativeToCamera(int vertex_id)
+    tf::Transform Map::getVertexPoseRelativeToCamera(int vertex_id)
     {
         return local_cluster_poses_[vertex_id];
     }
 
 
-    tf::Transform Map2::getVertexCameraPose(int vertex_id, bool lock = true)
+    tf::Transform Map::getVertexCameraPose(int vertex_id, bool lock = true)
     {
         tf::Transform vertex_pose = getVertexPose(vertex_id, lock);
         return vertex_pose * local_cluster_poses_[vertex_id].inverse();
     }
 
 
-    void Map2::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
+    void Map::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
     {
         vertices.clear();
         for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
@@ -159,7 +159,7 @@ namespace slamon
     }
 
 
-    tf::Transform Map2::getKeyframePose(int keyframe_id)
+    tf::Transform Map::getKeyframePose(int keyframe_id)
     {
         std::vector<int> keyframe_vertices;
         getKeyframeVertices(keyframe_id, keyframe_vertices);
@@ -167,8 +167,8 @@ namespace slamon
     }
 
 
-    void Map2::getKeyframePoses(std::vector<double>& stamps,
-                                std::vector<tf::Transform>& keyframe_poses)
+    void Map::getKeyframePoses(std::vector<double>& stamps,
+                               std::vector<tf::Transform>& keyframe_poses)
     {
         // Locks graph
         std::scoped_lock lock(mutex_graph_);
@@ -201,9 +201,9 @@ namespace slamon
     }
 
 
-    void Map2::addEdge(int vertex_0_id,
-                       int vertex_1_id,
-                       tf::Transform tf_edge)
+    void Map::addEdge(int vertex_0_id,
+                      int vertex_1_id,
+                      tf::Transform tf_edge)
     {
         std::scoped_lock lock(mutex_graph_);
 
@@ -222,11 +222,11 @@ namespace slamon
     }
 
 
-    void Map2::findClosestVertices(int vertex_id,
-                                   int security_window,
-                                   int critical_vertex_id,
-                                   uint closest_neighbors_num,
-                                   std::vector<int>& closest_neighbors)
+    void Map::findClosestVertices(int vertex_id,
+                                  int security_window,
+                                  int critical_vertex_id,
+                                  uint closest_neighbors_num,
+                                  std::vector<int>& closest_neighbors)
     {
         // Init.
         closest_neighbors.clear();
@@ -264,7 +264,7 @@ namespace slamon
     }
 
 
-    void Map2::update()
+    void Map::update()
     {
         std::scoped_lock lock(mutex_graph_);
 
@@ -276,8 +276,8 @@ namespace slamon
     }
 
 
-    void Map2::callback(const nav_msgs::OdometryConstPtr& odom_msg,
-                        const slamon::StereoDataConstPtr& stereo_data_msg)
+    void Map::callback(const nav_msgs::OdometryConstPtr& odom_msg,
+                       const slamon::StereoDataConstPtr& stereo_data_msg)
     {
         // Time at which the program enters into the callback.
         double start_callback_time = ros::Time::now().toSec();
@@ -538,8 +538,8 @@ namespace slamon
     }
 
 
-    bool Map2::needNewKeyFrame(const tf::Transform& c_robot_odom,
-                               Frame& c_frame)
+    bool Map::needNewKeyFrame(const tf::Transform& c_robot_odom,
+                              Frame& c_frame)
     {
         if (!init_map_)
         {
@@ -564,7 +564,7 @@ namespace slamon
     }
 
 
-    bool Map2::addFrameToMap(Frame& c_frame)
+    bool Map::addFrameToMap(Frame& c_frame)
     {
         if (c_frame.getLeftKpts().size() > (long unsigned int)(min_lc_inliers_/2))
         {
@@ -590,7 +590,7 @@ namespace slamon
     }
 
 
-    void Map2::getRobot2Camera()
+    void Map::getRobot2Camera()
     {
         slamon::GetTransform srv;
         if (robot2camera_client_.call(srv))
@@ -626,7 +626,7 @@ namespace slamon
     }
 
 
-    int Map2::addVertex(tf::Transform pose)
+    int Map::addVertex(tf::Transform pose)
     {
         // Lock graph.
         std::scoped_lock lock(mutex_graph_);
@@ -653,7 +653,7 @@ namespace slamon
     }
 
 
-    std::vector<std::vector<int>> Map2::createComb(const std::vector<int>& vec)
+    std::vector<std::vector<int>> Map::createComb(const std::vector<int>& vec)
     {
         std::string bitmask(2, 1);
         bitmask.resize(vec.size(), 0);
@@ -676,8 +676,8 @@ namespace slamon
     }
 
 
-    void Map2::fromStereoDataToFrame(const slamon::StereoDataConstPtr& msg,
-                                     Frame& frame)
+    void Map::fromStereoDataToFrame(const slamon::StereoDataConstPtr& msg,
+                                    Frame& frame)
     {
         cv::Point2f kpt;
         cv::Point3f cam_pt;
@@ -707,7 +707,7 @@ namespace slamon
     }
 
 
-    tf::Transform Map2::fromPoint3DToTf(const cv::Point3f& pt)
+    tf::Transform Map::fromPoint3DToTf(const cv::Point3f& pt)
     {
         tf::Transform out;
         out.setIdentity();
@@ -717,7 +717,7 @@ namespace slamon
     }
 
 
-    Eigen::Isometry3d Map2::fromTfToIsometry(const tf::Transform& tf)
+    Eigen::Isometry3d Map::fromTfToIsometry(const tf::Transform& tf)
     {
         tf::Vector3 t_in = tf.getOrigin();
         tf::Quaternion q_in = tf.getRotation();
@@ -734,7 +734,7 @@ namespace slamon
     }
 
 
-    tf::Transform Map2::fromIsometryToTf(const Eigen::Isometry3d& iso)
+    tf::Transform Map::fromIsometryToTf(const Eigen::Isometry3d& iso)
     {
         Eigen::Vector3d t_in = iso.translation();
         Eigen::Quaterniond q_in = (Eigen::Quaterniond)iso.rotation();
@@ -745,7 +745,7 @@ namespace slamon
     }
 
 
-    tf::Transform Map2::fromVertexToTf(const g2o::VertexSE3* vertex)
+    tf::Transform Map::fromVertexToTf(const g2o::VertexSE3* vertex)
     {
         Eigen::Isometry3d iso = vertex->estimate();
         tf::Transform tf = fromIsometryToTf(iso);
