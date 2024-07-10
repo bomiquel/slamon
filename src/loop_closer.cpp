@@ -1,7 +1,7 @@
 #include "loop_closer.hpp"
 
 
-namespace slam
+namespace slamon
 {
 
 

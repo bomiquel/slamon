@@ -1,7 +1,7 @@
 #include "map2.hpp"
 
 
-namespace slam
+namespace slamon
 {
 
     Map2::Map2(int min_lc_inliers,

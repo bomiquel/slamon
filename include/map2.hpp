@@ -34,7 +34,7 @@
 #include "slamon/GetTransform.h"
 
 
-namespace slam
+namespace slamon
 {
 
 

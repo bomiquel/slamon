@@ -28,7 +28,7 @@
 #include "slamon/GetProjectionMatrices.h"
 
 
-namespace slam
+namespace slamon
 {
 
 

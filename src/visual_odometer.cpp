@@ -1,7 +1,7 @@
 #include "visual_odometer.hpp"
 
 
-namespace slam
+namespace slamon
 {
 
 

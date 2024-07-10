@@ -138,7 +138,7 @@ int main(int argc, char **argv)
                motion_estimation_type);
 
     // Declare threads.
-    slam::LoopCloser loop_closer(lowe_ratio,
+    slamon::LoopCloser loop_closer(lowe_ratio,
                                   lc_neighbors, 
                                   lc_candidates,
                                   min_lc_inliers,
@@ -147,17 +147,17 @@ int main(int argc, char **argv)
                                   working_path,
                                   matching_type,
                                   motion_estimation_type);
-    slam::Map2 map(min_lc_inliers, 
-                   enable_debugging, 
-                   &loop_closer, 
-                   min_dist_keyframe, 
-                   working_path, 
-                   robot_frame_id);
+    slamon::Map2 map(min_lc_inliers, 
+                     enable_debugging, 
+                     &loop_closer, 
+                     min_dist_keyframe, 
+                     working_path, 
+                     robot_frame_id);
     loop_closer.setMap(&map);
 
     // Launch threads.
-    std::thread map_thread(&slam::Map2::run, &map);
-    std::thread loop_closer_thread(&slam::LoopCloser::run, &loop_closer);
+    std::thread map_thread(&slamon::Map2::run, &map);
+    std::thread loop_closer_thread(&slamon::LoopCloser::run, &loop_closer);
 
     // ROS wait
     ros::Rate r(10);
