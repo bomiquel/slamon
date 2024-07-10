@@ -130,14 +130,14 @@ add_executable(map_slamon
                src/publisher.cpp
                src/loop_closer.cpp
                src/vision_motion_modules.cpp)
-add_executable(initial_pose_server src/initial_pose_server)
+add_executable(initial_pose_server_params src/initial_pose_server_params)
 
 # Dependencies
 add_dependencies(vo_slamon ${catkin_EXPORTED_TARGETS})
 add_dependencies(map_slamon ${catkin_EXPORTED_TARGETS})
-add_dependencies(initial_pose_server ${catkin_EXPORTED_TARGETS})
+add_dependencies(initial_pose_server_params ${catkin_EXPORTED_TARGETS})
 
 # Linking
 target_link_libraries(vo_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(map_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(initial_pose_server ${catkin_LIBRARIES})
+target_link_libraries(initial_pose_server_params ${catkin_LIBRARIES})
