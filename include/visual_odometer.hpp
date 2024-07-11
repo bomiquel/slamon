@@ -150,6 +150,24 @@ namespace slamon
             void getInitialOdom();
 
 
+            /** \brief Detects keypoints in ROS images. To do this, it transforms images of 
+             *  sensor_msgs::ImageConstPtr type to cv::Mat type, and then detects the
+             *  keypoints and calculates the descriptors.
+             *  \param feature_detector_type String containing the name of the desired detector for detecting
+             *  image keypoints (input).
+             *  \param img_msg ROS message containing an image (input).
+             *  \param img cv::Mat image (output).
+             *  \param descs Descriptors (output).
+             *  \param kpts Keypoints (output).
+             *  @return If the conversion has been possible.
+             */
+            bool detectROSKeypoints(const std::string& feature_detector_type,
+                                    const sensor_msgs::ImageConstPtr& img_msg,
+                                    cv::Mat& img,
+                                    cv::Mat& descs,
+                                    std::vector<cv::Point2f>& kpts);
+
+
             /** \brief Convert ROS image message to cv::Mat
              *  \param msg ROS message containing an img (input).
              *  \param img Will contain the image in cv::Mat type (output).

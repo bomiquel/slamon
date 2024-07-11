@@ -70,10 +70,10 @@ namespace slamon
 
         // Message sync.
         boost::shared_ptr<Sync_> sync;
-        l_img_sub.subscribe(it, "left_image_rect_color", 1);
-        r_img_sub.subscribe(it, "right_image_rect_color", 1);
-        l_info_sub.subscribe(nh, "left_camera_info", 1);
-        r_info_sub.subscribe(nh, "right_camera_info", 1);
+        l_img_sub.subscribe(it, "left_image_rect_color", 5);
+        r_img_sub.subscribe(it, "right_image_rect_color", 5);
+        l_info_sub.subscribe(nh, "left_camera_info", 5);
+        r_info_sub.subscribe(nh, "right_camera_info", 5);
         sync.reset(new Sync_(SyncPolicy_(10), l_img_sub, r_img_sub, l_info_sub, r_info_sub));
         sync->registerCallback(boost::bind(&VisualOdometer::callback, this, _1, _2, _3, _4));
         
@@ -316,20 +316,20 @@ namespace slamon
         // Auxilary variable to set the start time of a module.
         double start_module_time;
 
-        // From ROS image message to cv::Mat.
-        cv::Mat l_img, r_img;
-        if (!fromImgMsgToMat(l_img_msg, l_img)) // TODO: paralellization?
-            return false; 
-        if (!fromImgMsgToMat(r_img_msg, r_img)) // TODO: paralellization?
-            return false; 
-
-        // Detecting keypoints.
+        // From ROS image message to cv::Mat and detects stereo keypoints.
         start_module_time = ros::Time::now().toSec();
-        cv::Mat l_descs, r_descs;
+        bool l_result, r_result;
+        cv::Mat l_img, r_img, l_descs, r_descs;
         std::vector<cv::Point2f> l_kpts, r_kpts;
         std::string feature_detector_type = "sift";
-        detectStereoKeypoints(l_img, r_img, feature_detector_type, l_descs, r_descs, l_kpts, r_kpts);
+        std::thread l_detector([&] {l_result = detectROSKeypoints(feature_detector_type, l_img_msg, l_img, l_descs, l_kpts);});
+        std::thread r_detector([&] {r_result = detectROSKeypoints(feature_detector_type, r_img_msg, r_img, r_descs, r_kpts);});
+        l_detector.join();
+        r_detector.join();
         run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Feature extraction run time.
+
+        if (!(l_result && r_result))
+            return false;
 
         // Keypoint detection debugging.
         if (stereo_kps_img_pub_.getNumSubscribers() > 0)
@@ -519,6 +519,21 @@ namespace slamon
     }
 
 
+    bool VisualOdometer::detectROSKeypoints(const std::string& feature_detector_type,
+                                            const sensor_msgs::ImageConstPtr& img_msg,
+                                            cv::Mat& img,
+                                            cv::Mat& descs,
+                                            std::vector<cv::Point2f>& kpts)
+    {
+        
+        if (!fromImgMsgToMat(img_msg, img))
+            return false;
+
+        detectKeypoints(img, feature_detector_type, descs, kpts);
+        return true;
+    }
+
+
     bool VisualOdometer::fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
                                          cv::Mat& img)
     {
@@ -531,7 +546,7 @@ namespace slamon
             // this function into the code and the warning will no longer appear.
             img_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
         }
-        catch(const cv_bridge::Exception& e)
+        catch (const cv_bridge::Exception& e)
         {
             ROS_ERROR_STREAM("[Caster:] cv_bridge exception: " << e.what());
             return false;
