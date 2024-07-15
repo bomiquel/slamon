@@ -43,13 +43,42 @@ VisionMotionModules::VisionMotionModules(const double b,
 
 
 void VisionMotionModules::detectKeypoints(const cv::Mat& img,
+                                          const bool enable_enhacement,
                                           const std::string& detector_name,
                                           cv::Mat& descs,
                                           std::vector<cv::Point2f>& kpts)
 {
     // Convert images to grayscale
     cv::Mat g_img;
-    cv::cvtColor(img, g_img, cv::COLOR_RGB2GRAY);
+    if (img.type() == CV_8UC3)
+    {
+        cv::cvtColor(img, g_img, cv::COLOR_BGR2GRAY);
+    }
+    else if (img.type() == CV_8UC1)
+    {
+        g_img = img;
+    }
+    else
+    {
+        std::cerr << "Invalid image type, only CV_8UC1 and CV_8UC3 are allowed. Exiting!" << std::endl;
+        return;
+    }
+
+    // Enhances the image using CLAHE.
+    cv::Mat o_img;
+    if (enable_enhacement)
+    {
+        o_img = enhanceImage(g_img);
+        if (o_img.rows == 0)
+        {
+            std::cerr << "Something went wrong with the image enhancement. Exiting!" << std::endl;
+            return;
+        }
+    }
+    else
+    {
+        o_img = g_img;
+    }
 
     // Select detector and extract keypoints
     std::vector<cv::KeyPoint> kps;
@@ -57,22 +86,22 @@ void VisionMotionModules::detectKeypoints(const cv::Mat& img,
     if (detector_name == "sift")
     {
         detector = cv::xfeatures2d::SIFT::create();
-        detector->detectAndCompute(g_img, cv::noArray(), kps, descs);
+        detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
     }
     else if (detector_name == "surf")
     {
         detector = cv::xfeatures2d::SURF::create();
-        detector->detectAndCompute(g_img, cv::noArray(), kps, descs);
+        detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
     }
     else if (detector_name == "orb")
     {  
         detector = cv::ORB::create();
-        detector->detectAndCompute(g_img, cv::noArray(), kps, descs);
+        detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
     }
     else
     {
         detector = cv::xfeatures2d::SIFT::create();
-        detector->detectAndCompute(g_img, cv::noArray(), kps, descs);
+        detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
     }
 
     cv::KeyPoint::convert(kps, kpts);
@@ -81,17 +110,18 @@ void VisionMotionModules::detectKeypoints(const cv::Mat& img,
 
 void VisionMotionModules::detectStereoKeypoints(const cv::Mat& l_img,
                                                 const cv::Mat& r_img,
+                                                const bool enable_enhacement,
                                                 const std::string& detector_name,
                                                 cv::Mat& l_descs,
                                                 cv::Mat& r_descs,
                                                 std::vector<cv::Point2f>& l_kpts,
                                                 std::vector<cv::Point2f>& r_kpts)
 { 
-    std::thread l_detection(&VisionMotionModules::detectKeypoints, this, 
-                            std::ref(l_img), std::ref(detector_name), 
+    std::thread l_detection(&VisionMotionModules::detectKeypoints, this, std::ref(l_img), 
+                            enable_enhacement, std::ref(detector_name), 
                             std::ref(l_descs), std::ref(l_kpts));
-    std::thread r_detection(&VisionMotionModules::detectKeypoints, this, 
-                            std::ref(r_img), std::ref(detector_name), 
+    std::thread r_detection(&VisionMotionModules::detectKeypoints, this, std::ref(r_img),
+                            enable_enhacement, std::ref(detector_name), 
                             std::ref(r_descs), std::ref(r_kpts));
     l_detection.join();
     r_detection.join();
@@ -404,6 +434,23 @@ void VisionMotionModules::estimateMotion(const std::vector<int>& cluster_ids_0,
             f_cluster_ids_1.push_back(cluster_ids_1[inliers[i]]);
         }
     }
+}
+
+
+cv::Mat VisionMotionModules::enhanceImage(const cv::Mat& img)
+{
+    // Gets main statistical values.
+    int min, max, median;
+    if (!getImageMainStatisticalValues(img, min, max, median))
+        return cv::Mat();
+
+    // Use CLAHE with adaptative threshold to overcome lighting conditions.
+    cv::Mat o_img;
+    double tau = (double)((max - min) / median);
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(tau, cv::Size(8, 8));
+    clahe->apply(img, o_img);    
+    
+    return o_img;
 }
 
 
@@ -745,4 +792,52 @@ void VisionMotionModules::assembleCircularMatchings(const std::vector<cv::Point2
             }
         }
     }
+}
+
+
+bool VisionMotionModules::getImageMainStatisticalValues(const cv::Mat& img,
+                                                        int& min,
+                                                        int& max,
+                                                        int& median)
+{
+    // Sanity check
+    if (img.type() != CV_8UC1)
+    {
+        std::cout << "Invalid image type, only CV_8UC1 is available. Exiting!" << std::endl;
+        return false;
+    }
+
+    // Computes histogram.
+    cv::Mat hist;
+    int hist_size = 256;
+    float range[] = {0.0, (float)hist_size};
+    const float* hist_range[] = {range};
+    bool uniform = true, accumulate = false;
+    cv::calcHist(&img, 1, 0, cv::Mat(), hist, 1, &hist_size, hist_range, uniform, accumulate);
+
+    // Searches for min, max and median values.
+    max = 0;
+    min = 256;
+    median = 0;
+    float freq, acc_freq = 0.0;
+    bool median_obtained = false;
+    float half_img_size = (img.rows * img.cols) / 2;
+    for (int bin = 0; bin < hist.rows; bin++)
+    {
+        freq = hist.at<float>(bin, 0);
+        acc_freq += freq;
+        if (freq != 0.0)
+        {
+            max = bin;
+            if (min > bin)
+                min = bin;
+        }
+        if ((acc_freq >= half_img_size) && (median_obtained == false))
+        {
+            median = bin;
+            median_obtained = true;
+        }
+    }
+
+    return true;
 }

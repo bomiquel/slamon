@@ -56,6 +56,7 @@ namespace slamon
             VisualOdometer(double ratio,
                            int min_inliers,
                            bool enable_debugging,
+                           bool enable_enhacement,
                            const std::string& w_path,
                            std::string& matching_type,
                            std::string& robot_frame_id,
@@ -153,6 +154,7 @@ namespace slamon
             /** \brief Detects keypoints in ROS images. To do this, it transforms images of 
              *  sensor_msgs::ImageConstPtr type to cv::Mat type, and then detects the
              *  keypoints and calculates the descriptors.
+             *  \param enable_enhacement If true, the image is enhanced using CLAHE (input).
              *  \param feature_detector_type String containing the name of the desired detector for detecting
              *  image keypoints (input).
              *  \param img_msg ROS message containing an image (input).
@@ -161,7 +163,8 @@ namespace slamon
              *  \param kpts Keypoints (output).
              *  @return If the conversion has been possible.
              */
-            bool detectROSKeypoints(const std::string& feature_detector_type,
+            bool detectROSKeypoints(const bool enable_enhacement,
+                                    const std::string& feature_detector_type,
                                     const sensor_msgs::ImageConstPtr& img_msg,
                                     cv::Mat& img,
                                     cv::Mat& descs,
@@ -186,6 +189,8 @@ namespace slamon
             VOStatus status_; //!> Visual odometer state.
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
+
+            bool enable_enhacement_; //!> Enabling or disabling image enhacement.
 
             bool initialised_odom_; //!> Flag that indicates if the robot's odom has been initialised.
 

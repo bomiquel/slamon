@@ -87,12 +87,15 @@ class VisionMotionModules
 
         /** \brief Detects keypoints of an image.
          *  \param img The image (input).
+         *  \param enable_enhacement If true, the image is enhanced 
+         *  using CLAHE (input).
          *  \param detector_name String containing the name of the 
          *  desired detector for detecting image keypoints (input).
          *  \param descs The image keypoints descriptors (output).
          *  \param kpts The image keypoints (output).
          */
         void detectKeypoints(const cv::Mat& img,
+                             const bool enable_enhacement,
                              const std::string& detector_name,
                              cv::Mat& descs,
                              std::vector<cv::Point2f>& kpts);
@@ -101,6 +104,8 @@ class VisionMotionModules
         /** \brief Parallelizes stereo image keypoint detection.
          *  \param l_img The left image (input).
          *  \param r_img The right image (input).
+         *  \param enable_enhacement If true, the image is enhanced 
+         *  using CLAHE (input).
          *  \param detector_name String containing the name of the 
          *  desired detector for detecting image keypoints (input).
          *  \param l_descs The left image keypoints descriptors (output).
@@ -110,6 +115,7 @@ class VisionMotionModules
          */
         void detectStereoKeypoints(const cv::Mat& l_img,
                                    const cv::Mat& r_img,
+                                   const bool enable_enhacement,
                                    const std::string& detector_name,
                                    cv::Mat& l_descs,
                                    cv::Mat& r_descs,
@@ -382,6 +388,15 @@ class VisionMotionModules
                             std::vector<cv::Point3f>& f_cam_pts_1);
 
 
+        /** \brief Enhances image using Contrast-Limited Adaptive Histogram Equalization (CLAHE),
+         *  with adaptive thresholding to dynamically overcome variable lighting conditions (Sabry
+         *  et al. 2022).
+         *  \param img The image (input).
+         *  @return The enhanced image. 
+         */
+        cv::Mat enhanceImage(const cv::Mat& img);
+
+
     protected:
 
         /** \brief Transforms a string into the correct MatchingType value.
@@ -570,6 +585,20 @@ class VisionMotionModules
                                        std::vector<cv::Point3f>& f_cam_pts_1,
                                        std::vector<int>& f_cluster_ids_0,
                                        std::vector<int>& f_cluster_ids_1);
+
+
+        /** \brief Gets the minimum, maximum and median value of a greyscale image.
+         *  \param img The image (input).
+         *  \param min The minimum intensity value (output).
+         *  \param max The maximum intensity value (output).
+         *  \param median The median intensity value (output).
+         *  @return true if the image is in greyscale and therefore the desired 
+         *  values could be obtained.
+         */
+        bool getImageMainStatisticalValues(const cv::Mat& img,
+                                           int& min,
+                                           int& max,
+                                           int& median);
 
 
         double ratio_; //!> Lowe's ratio.

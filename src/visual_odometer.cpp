@@ -8,6 +8,7 @@ namespace slamon
     VisualOdometer::VisualOdometer(double ratio,
                                    int min_inliers,
                                    bool enable_debugging,
+                                   bool enable_enhacement,
                                    const std::string& w_path,
                                    std::string& matching_type,
                                    std::string& robot_frame_id,
@@ -19,6 +20,7 @@ namespace slamon
         min_inliers_ = min_inliers;
         robot_frame_id_ = robot_frame_id;
         enable_debugging_ = enable_debugging;
+        enable_enhacement_ = enable_enhacement;
 
         // Set "uninitialised" status to visual odometer.
         status_ = UNINITIALISED;
@@ -317,13 +319,14 @@ namespace slamon
         double start_module_time;
 
         // From ROS image message to cv::Mat and detects stereo keypoints.
+        ROS_INFO_STREAM("Enable enhacement: " << enable_enhacement_);
         start_module_time = ros::Time::now().toSec();
         bool l_result, r_result;
         cv::Mat l_img, r_img, l_descs, r_descs;
         std::vector<cv::Point2f> l_kpts, r_kpts;
         std::string feature_detector_type = "sift";
-        std::thread l_detector([&] {l_result = detectROSKeypoints(feature_detector_type, l_img_msg, l_img, l_descs, l_kpts);});
-        std::thread r_detector([&] {r_result = detectROSKeypoints(feature_detector_type, r_img_msg, r_img, r_descs, r_kpts);});
+        std::thread l_detector([&] {l_result = detectROSKeypoints(enable_enhacement_, feature_detector_type, l_img_msg, l_img, l_descs, l_kpts);});
+        std::thread r_detector([&] {r_result = detectROSKeypoints(enable_enhacement_, feature_detector_type, r_img_msg, r_img, r_descs, r_kpts);});
         l_detector.join();
         r_detector.join();
         run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Feature extraction run time.
@@ -519,7 +522,8 @@ namespace slamon
     }
 
 
-    bool VisualOdometer::detectROSKeypoints(const std::string& feature_detector_type,
+    bool VisualOdometer::detectROSKeypoints(const bool enable_enhacement,
+                                            const std::string& feature_detector_type,
                                             const sensor_msgs::ImageConstPtr& img_msg,
                                             cv::Mat& img,
                                             cv::Mat& descs,
@@ -529,7 +533,7 @@ namespace slamon
         if (!fromImgMsgToMat(img_msg, img))
             return false;
 
-        detectKeypoints(img, feature_detector_type, descs, kpts);
+        detectKeypoints(img, enable_enhacement, feature_detector_type, descs, kpts);
         return true;
     }
 
@@ -542,13 +546,11 @@ namespace slamon
         try
         {
             // TODO: cv_bridge gives problems with OpenCV-4.2.0-contrib. 
-            // If SLAM uses only this cv_bridge::toCvCopy, we can copy
-            // this function into the code and the warning will no longer appear.
             img_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
         }
         catch (const cv_bridge::Exception& e)
         {
-            ROS_ERROR_STREAM("[Caster:] cv_bridge exception: " << e.what());
+            ROS_ERROR_STREAM("[VO->Caster:] cv_bridge exception: " << e.what());
             return false;
         }
         

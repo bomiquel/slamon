@@ -11,6 +11,7 @@
 void readParams(int& min_inliers,
                 double& lowe_ratio, 
                 bool& enable_debugging,
+                bool& enable_enhacement,
                 std::string& working_path,
                 std::string& matching_type,
                 std::string& robot_frame_id,
@@ -24,6 +25,7 @@ void readParams(int& min_inliers,
     nh.param("slamon/matching_type",          matching_type,          std::string("ratio_matching"));
     nh.param("slamon/robot_frame_id",         robot_frame_id,         std::string("base_link"));
     nh.param("slamon/enable_debugging",       enable_debugging,       true);
+    nh.param("slamon/enable_enhacement",      enable_enhacement,      true);
     nh.param("slamon/motion_estimation_type", motion_estimation_type, std::string("p3p"));
 
     // Printing parameters values.
@@ -34,6 +36,7 @@ void readParams(int& min_inliers,
                     "Matching type          = " << matching_type << std::endl <<
                     "Robot frame id         = " << robot_frame_id << std::endl <<
                     "Enable debugging       = " << enable_debugging << std::endl <<
+                    "Enable enhacement      = " << enable_enhacement << std::endl <<
                     "Motion estimation type = " << motion_estimation_type);
 
     // Checking the validity of the parameters
@@ -73,6 +76,7 @@ void readParams(int& min_inliers,
                         "Matching type            = " << matching_type << std::endl <<
                         "Robot frame id           = " << robot_frame_id << std::endl <<
                         "Enable debugging         = " << enable_debugging << std::endl <<
+                        "Enable enhacement        = " << enable_enhacement << std::endl <<
                         "Motion estimation type   = " << motion_estimation_type);
     }
 }
@@ -87,15 +91,16 @@ int main(int argc, char **argv)
     // Read parameters.
     int min_inliers;
     double lowe_ratio;
-    bool enable_debugging;
+    bool enable_debugging, enable_enhacement;
     std::string working_path, matching_type, robot_frame_id, motion_estimation_type;
-    readParams(min_inliers, lowe_ratio, enable_debugging, working_path, matching_type,
-               robot_frame_id, motion_estimation_type);
+    readParams(min_inliers, lowe_ratio, enable_debugging, enable_enhacement, working_path,
+               matching_type, robot_frame_id, motion_estimation_type);
 
     // Declare threads.
     slamon::VisualOdometer visual_odometer(lowe_ratio, 
                                            min_inliers, 
                                            enable_debugging, 
+                                           enable_enhacement,
                                            working_path, 
                                            matching_type, 
                                            robot_frame_id,
