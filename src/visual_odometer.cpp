@@ -319,7 +319,6 @@ namespace slamon
         double start_module_time;
 
         // From ROS image message to cv::Mat and detects stereo keypoints.
-        ROS_INFO_STREAM("Enable enhacement: " << enable_enhacement_);
         start_module_time = ros::Time::now().toSec();
         bool l_result, r_result;
         cv::Mat l_img, r_img, l_descs, r_descs;

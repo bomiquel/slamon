@@ -85,22 +85,22 @@ void VisionMotionModules::detectKeypoints(const cv::Mat& img,
     cv::Ptr<cv::Feature2D> detector;
     if (detector_name == "sift")
     {
-        detector = cv::xfeatures2d::SIFT::create();
+        detector = cv::xfeatures2d::SIFT::create(1500, 3, 0.04, 10, 1.6);
         detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
     }
     else if (detector_name == "surf")
     {
-        detector = cv::xfeatures2d::SURF::create();
+        detector = cv::xfeatures2d::SURF::create(100, 4, 3, false, false);
         detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
     }
     else if (detector_name == "orb")
     {  
-        detector = cv::ORB::create();
+        detector = cv::ORB::create(1500, 1.2, 8, 31, 0, 2, cv::ORB::HARRIS_SCORE, 31, 20);
         detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
     }
     else
     {
-        detector = cv::xfeatures2d::SIFT::create();
+        detector = cv::xfeatures2d::SIFT::create(1500, 3, 0.04, 10, 1.6);
         detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
     }
 
