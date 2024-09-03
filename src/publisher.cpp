@@ -4,10 +4,10 @@
 void Publisher::writeKeypoints(const cv::Mat& img,
                                const cv::Scalar& color,
                                const std::string& o_path,
-                               const std::vector<cv::Point2f> kpts)
+                               const std::vector<cv::KeyPoint> kpts)
 {
     // Draws keypoints.
-    cv::Mat o_img = drawPoints(img, color, kpts);
+    cv::Mat o_img = drawKeypoints(img, color, kpts);
 
     // Writes image.
     cv::imwrite(o_path + ".png", o_img);
@@ -18,8 +18,8 @@ void Publisher::publishStereoKeypoints(const cv::Mat& l_img,
                                        const cv::Mat& r_img,
                                        const ros::Time& stamp,
                                        const ros::Publisher& publisher,
-                                       const std::vector<cv::Point2f>& l_kpts,
-                                       const std::vector<cv::Point2f>& r_kpts)
+                                       const std::vector<cv::KeyPoint>& l_kpts,
+                                       const std::vector<cv::KeyPoint>& r_kpts)
 {
     // Concatenates stereo images and draws their keypoints.
     cv::Scalar color(0.0, 0.0, 255);
@@ -33,8 +33,8 @@ void Publisher::publishStereoKeypoints(const cv::Mat& l_img,
 void Publisher::writeStereoKeypoints(const cv::Mat& l_img,
                                      const cv::Mat& r_img,
                                      const std::string& o_path,
-                                     const std::vector<cv::Point2f>& l_kpts,
-                                     const std::vector<cv::Point2f>& r_kpts)
+                                     const std::vector<cv::KeyPoint>& l_kpts,
+                                     const std::vector<cv::KeyPoint>& r_kpts)
 {
     // Concatenates stereo images and draws their keypoints.
     cv::Scalar color(0.0, 0.0, 255);
@@ -50,16 +50,16 @@ void Publisher::publishMatches(const bool vertical,
                                const cv::Mat& img_1,
                                const ros::Time& stamp,
                                const ros::Publisher& publisher,
-                               const std::vector<cv::Point2f>& f_kpts_0,
-                               const std::vector<cv::Point2f>& f_kpts_1)
+                               const std::vector<cv::KeyPoint>& m_kpts_0,
+                               const std::vector<cv::KeyPoint>& m_kpts_1)
 {
     // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
-    cv::Mat drawn_img = drawMatches(vertical, img_0, img_1, color, f_kpts_0, f_kpts_1);
+    cv::Mat drawn_img = drawMatches(vertical, img_0, img_1, color, m_kpts_0, m_kpts_1);
 
     // Writes text.
     std::stringstream caption;
-    caption << " Number of matches: " << f_kpts_0.size();
+    caption << " Number of matches: " << m_kpts_0.size();
     cv::Mat o_img = writeTxtInImage(true, drawn_img, caption, 20);
 
     // Publishes image.
@@ -71,16 +71,16 @@ void Publisher::writeMatches(const bool vertical,
                              const cv::Mat& img_0,
                              const cv::Mat& img_1,
                              const std::string& o_path,
-                             const std::vector<cv::Point2f>& f_kpts_0,
-                             const std::vector<cv::Point2f>& f_kpts_1)
+                             const std::vector<cv::KeyPoint>& m_kpts_0,
+                             const std::vector<cv::KeyPoint>& m_kpts_1)
 {
     // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
-    cv::Mat drawn_img = drawMatches(vertical, img_0, img_1, color, f_kpts_0, f_kpts_1);
+    cv::Mat drawn_img = drawMatches(vertical, img_0, img_1, color, m_kpts_0, m_kpts_1);
 
     // Writes text.
     std::stringstream caption;
-    caption << " Number of matches: " << f_kpts_0.size();
+    caption << " Number of matches: " << m_kpts_0.size();
     cv::Mat o_img = writeTxtInImage(true, drawn_img, caption, 20);
 
     // Writes image.
@@ -94,15 +94,15 @@ void Publisher::publishCircularMatches(const cv::Mat& c_l_img,
                                        const cv::Mat& p_r_img,
                                        const ros::Time& stamp,
                                        const ros::Publisher& publisher,
-                                       const std::vector<cv::Point2f>& f_c_l_kpts,
-                                       const std::vector<cv::Point2f>& f_c_r_kpts,
-                                       const std::vector<cv::Point2f>& f_p_l_kpts,
-                                       const std::vector<cv::Point2f>& f_p_r_kpts)
+                                       const std::vector<cv::KeyPoint>& m_c_l_kpts,
+                                       const std::vector<cv::KeyPoint>& m_c_r_kpts,
+                                       const std::vector<cv::KeyPoint>& m_p_l_kpts,
+                                       const std::vector<cv::KeyPoint>& m_p_r_kpts)
 {
     // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
     cv::Mat o_img = drawCircularMatches(c_l_img, c_r_img, p_l_img, p_r_img, color,
-                                        f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts);
+                                        m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
     
     // Publishes image
     publishImage(o_img, stamp, publisher);
@@ -114,15 +114,15 @@ void Publisher::writeCircularMatches(const cv::Mat& c_l_img,
                                      const cv::Mat& p_l_img,
                                      const cv::Mat& p_r_img,
                                      const std::string& o_path,
-                                     const std::vector<cv::Point2f>& f_c_l_kpts,
-                                     const std::vector<cv::Point2f>& f_c_r_kpts,
-                                     const std::vector<cv::Point2f>& f_p_l_kpts,
-                                     const std::vector<cv::Point2f>& f_p_r_kpts)
+                                     const std::vector<cv::KeyPoint>& m_c_l_kpts,
+                                     const std::vector<cv::KeyPoint>& m_c_r_kpts,
+                                     const std::vector<cv::KeyPoint>& m_p_l_kpts,
+                                     const std::vector<cv::KeyPoint>& m_p_r_kpts)
 {
     // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
     cv::Mat o_img = drawCircularMatches(c_l_img, c_r_img, p_l_img, p_r_img, color,
-                                        f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts);
+                                        m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
 
     // Writes image.
     cv::imwrite(o_path + ".png", o_img);
@@ -132,7 +132,7 @@ void Publisher::writeCircularMatches(const cv::Mat& c_l_img,
 void Publisher::publishKeypointsClustering(const cv::Mat& l_img,
                                            const ros::Time& stamp,
                                            const ros::Publisher& publisher,
-                                           const std::vector<cv::Point2f>& l_kpts,
+                                           const std::vector<cv::KeyPoint>& l_kpts,
                                            const std::vector<std::vector<int>>& clusters)
 {
     // Draws keypoints clustering.
@@ -145,7 +145,7 @@ void Publisher::publishKeypointsClustering(const cv::Mat& l_img,
 
 void Publisher::writeKeypointsClustering(const cv::Mat& l_img,
                                          const std::string& o_path,
-                                         const std::vector<cv::Point2f>& l_kpts,
+                                         const std::vector<cv::KeyPoint>& l_kpts,
                                          const std::vector<std::vector<int>>& clusters)
 {
     // Draws keypoints clustering.
@@ -163,10 +163,10 @@ void Publisher::publishLoopClosure(const ros::Time& stamp,
                                    const std::vector<int>& q_cluster_ids,
                                    const std::vector<int>& cand_cluster_ids,
                                    const std::vector<int>& cand_keyframe_ids,
-                                   const std::vector<cv::Point2f>& f_q_l_kpts,
-                                   const std::vector<cv::Point2f>& f_q_r_kpts,
-                                   const std::vector<cv::Point2f>& f_cand_l_kpts,
-                                   const std::vector<cv::Point2f>& f_cand_r_kpts,
+                                   const std::vector<cv::KeyPoint>& f_q_l_kpts,
+                                   const std::vector<cv::KeyPoint>& f_q_r_kpts,
+                                   const std::vector<cv::KeyPoint>& f_cand_l_kpts,
+                                   const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                    const std::vector<int>& definitive_inliers_per_pair,
                                    const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
                                    const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation)
@@ -196,10 +196,10 @@ void Publisher::writeLoopClosure(const std::string& o_path,
                                  const std::vector<int>& q_cluster_ids,
                                  const std::vector<int>& cand_cluster_ids,
                                  const std::vector<int>& cand_keyframe_ids,
-                                 const std::vector<cv::Point2f>& f_q_l_kpts,
-                                 const std::vector<cv::Point2f>& f_q_r_kpts,
-                                 const std::vector<cv::Point2f>& f_cand_l_kpts,
-                                 const std::vector<cv::Point2f>& f_cand_r_kpts,
+                                 const std::vector<cv::KeyPoint>& f_q_l_kpts,
+                                 const std::vector<cv::KeyPoint>& f_q_r_kpts,
+                                 const std::vector<cv::KeyPoint>& f_cand_l_kpts,
+                                 const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                  const std::vector<int>& definitive_inliers_per_pair,
                                  const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
                                  const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation)
@@ -303,8 +303,8 @@ void Publisher::publishStereoData(const cv::Mat& l_descs,
                                   const cv::Mat& r_descs,
                                   const ros::Time& stamp,
                                   const ros::Publisher& publisher,
-                                  const std::vector<cv::Point2f>& l_kpts,
-                                  const std::vector<cv::Point2f>& r_kpts,
+                                  const std::vector<cv::KeyPoint>& l_kpts,
+                                  const std::vector<cv::KeyPoint>& r_kpts,
                                   const std::vector<cv::Point3f>& cam_pts)
 {
     // Create and fill StereoData msg.
@@ -318,12 +318,14 @@ void Publisher::publishStereoData(const cv::Mat& l_descs,
         cam_pt_msg.x = cam_pts[i].x;
         cam_pt_msg.y = cam_pts[i].y;
         cam_pt_msg.z = cam_pts[i].z;
-        l_kpt_msg.pt.x = l_kpts[i].x;
-        l_kpt_msg.pt.y = l_kpts[i].y;
-        r_kpt_msg.pt.x = r_kpts[i].x;
-        r_kpt_msg.pt.y = r_kpts[i].y;
+        l_kpt_msg.pt.x = l_kpts[i].pt.x;
+        l_kpt_msg.pt.y = l_kpts[i].pt.y;
+        r_kpt_msg.pt.x = r_kpts[i].pt.x;
+        r_kpt_msg.pt.y = r_kpts[i].pt.y;
         l_kpt_msg.desc = l_descs.row(i);
         r_kpt_msg.desc = r_descs.row(i);
+        l_kpt_msg.response = l_kpts[i].response;
+        r_kpt_msg.response = r_kpts[i].response;
 
         // Fill StereoData msg.
         msg.l_kpts.push_back(l_kpt_msg);
@@ -404,16 +406,16 @@ std::string Publisher::convertTo5Digits(int in)
 }
 
 
-cv::Mat Publisher::drawPoints(const cv::Mat& img,
-                              const cv::Scalar& color,
-                              const std::vector<cv::Point2f>& pts)
+cv::Mat Publisher::drawKeypoints(const cv::Mat& img,
+                                 const cv::Scalar& color,
+                                 const std::vector<cv::KeyPoint>& kpts)
 {
     cv::Mat o_img;
     img.copyTo(o_img);
 
     // Draw points
-    for (uint i = 0; i < pts.size(); i++)
-        cv::circle(o_img, pts[i], 2, color, -1);
+    for (uint i = 0; i < kpts.size(); i++)
+        cv::circle(o_img, kpts[i].pt, 2, color, -1);
 
     return o_img;
 }
@@ -447,12 +449,12 @@ cv::Mat Publisher::writeTxtInImage(const bool caption,
 cv::Mat Publisher::drawStereoKeypoints(const cv::Mat& l_img,
                                        const cv::Mat& r_img,
                                        const cv::Scalar& color,
-                                       const std::vector<cv::Point2f>& l_kpts,
-                                       const std::vector<cv::Point2f>& r_kpts)
+                                       const std::vector<cv::KeyPoint>& l_kpts,
+                                       const std::vector<cv::KeyPoint>& r_kpts)
 {
     // Draw the key points in their respective images.
-    cv::Mat drawn_l_img = drawPoints(l_img, color, l_kpts);
-    cv::Mat drawn_r_img = drawPoints(r_img, color, r_kpts);
+    cv::Mat drawn_l_img = drawKeypoints(l_img, color, l_kpts);
+    cv::Mat drawn_r_img = drawKeypoints(r_img, color, r_kpts);
 
     // Write text
     std::stringstream caption;
@@ -474,8 +476,8 @@ cv::Mat Publisher::drawMatches(const bool vertical,
                                const cv::Mat& img_0,
                                const cv::Mat& img_1,
                                const cv::Scalar& color,
-                               const std::vector<cv::Point2f>& f_kpts_0,
-                               const std::vector<cv::Point2f>& f_kpts_1)
+                               const std::vector<cv::KeyPoint>& m_kpts_0,
+                               const std::vector<cv::KeyPoint>& m_kpts_1)
 {
     // Image concatenation and offset assignment
     int offset;
@@ -492,18 +494,18 @@ cv::Mat Publisher::drawMatches(const bool vertical,
     }
 
     // Draw keypoints and matches
-    cv::Point2f f_q_kpt_offset;
-    for (uint i = 0; i < f_kpts_0.size(); i++)
+    cv::Point2f m_q_kpt_offset;
+    for (uint i = 0; i < m_kpts_0.size(); i++)
     {
-        f_q_kpt_offset = f_kpts_1[i];
+        m_q_kpt_offset = m_kpts_1[i].pt;
         if (vertical)
-            f_q_kpt_offset.y += offset;
+            m_q_kpt_offset.y += offset;
         else
-            f_q_kpt_offset.x += offset;
+            m_q_kpt_offset.x += offset;
 
-        cv::circle(o_img, f_kpts_0[i], 4, color, 1, cv::LINE_AA, 0);
-        cv::circle(o_img, f_q_kpt_offset, 4, color, 1, cv::LINE_AA, 0);
-        cv::line(o_img, f_kpts_0[i], f_q_kpt_offset, color, 1, cv::LINE_AA, 0);
+        cv::circle(o_img, m_kpts_0[i].pt, 4, color, 1, cv::LINE_AA, 0);
+        cv::circle(o_img, m_q_kpt_offset, 4, color, 1, cv::LINE_AA, 0);
+        cv::line(o_img, m_kpts_0[i].pt, m_q_kpt_offset, color, 1, cv::LINE_AA, 0);
     }
 
     return o_img;
@@ -515,14 +517,14 @@ cv::Mat Publisher::drawCircularMatches(const cv::Mat& c_l_img,
                                        const cv::Mat& p_l_img,
                                        const cv::Mat& p_r_img,
                                        const cv::Scalar& color,
-                                       const std::vector<cv::Point2f>& f_c_l_kpts,
-                                       const std::vector<cv::Point2f>& f_c_r_kpts,
-                                       const std::vector<cv::Point2f>& f_p_l_kpts,
-                                       const std::vector<cv::Point2f>& f_p_r_kpts)
+                                       const std::vector<cv::KeyPoint>& m_c_l_kpts,
+                                       const std::vector<cv::KeyPoint>& m_c_r_kpts,
+                                       const std::vector<cv::KeyPoint>& m_p_l_kpts,
+                                       const std::vector<cv::KeyPoint>& m_p_r_kpts)
 {
     // Concatenates horizontal images and draws matches
-    cv::Mat c_stereo_img = drawMatches(false, c_l_img, c_r_img, color, f_c_l_kpts, f_c_r_kpts);
-    cv::Mat p_stereo_img = drawMatches(false, p_l_img, p_r_img, color, f_p_l_kpts, f_p_r_kpts);
+    cv::Mat c_stereo_img = drawMatches(false, c_l_img, c_r_img, color, m_c_l_kpts, m_c_r_kpts);
+    cv::Mat p_stereo_img = drawMatches(false, p_l_img, p_r_img, color, m_p_l_kpts, m_p_r_kpts);
 
     // Vertical concatenation
     cv::Mat drawn_stereo_img;
@@ -531,27 +533,27 @@ cv::Mat Publisher::drawCircularMatches(const cv::Mat& c_l_img,
     // Draw vertical matches
     int x_offset = c_l_img.cols;
     int y_offset = c_l_img.rows;
-    cv::Point2f f_c_r_pt_offset, f_p_l_pt_offset, f_p_r_pt_offset;
-    for (uint i = 0; i < f_c_l_kpts.size(); i++)
+    cv::Point2f m_c_r_pt_offset, m_p_l_pt_offset, m_p_r_pt_offset;
+    for (uint i = 0; i < m_c_l_kpts.size(); i++)
     {
         // Add offset to filtered current right keypoints
-        f_c_r_pt_offset = f_c_r_kpts[i];
-        f_c_r_pt_offset.x += x_offset;
+        m_c_r_pt_offset = m_c_r_kpts[i].pt;
+        m_c_r_pt_offset.x += x_offset;
         // Add offset to filtered previous left keypoints
-        f_p_l_pt_offset = f_p_l_kpts[i];
-        f_p_l_pt_offset.y += y_offset;
+        m_p_l_pt_offset = m_p_l_kpts[i].pt;
+        m_p_l_pt_offset.y += y_offset;
         // Add offset to filtered previous right keypoints
-        f_p_r_pt_offset = f_p_r_kpts[i];
-        f_p_r_pt_offset.x += x_offset;
-        f_p_r_pt_offset.y += y_offset;
+        m_p_r_pt_offset = m_p_r_kpts[i].pt;
+        m_p_r_pt_offset.x += x_offset;
+        m_p_r_pt_offset.y += y_offset;
 
-        cv::line(drawn_stereo_img, f_c_l_kpts[i], f_p_l_pt_offset, color, 1, cv::LINE_AA, 0);
-        cv::line(drawn_stereo_img, f_c_r_pt_offset, f_p_r_pt_offset, color, 1, cv::LINE_AA, 0);
+        cv::line(drawn_stereo_img, m_c_l_kpts[i].pt, m_p_l_pt_offset, color, 1, cv::LINE_AA, 0);
+        cv::line(drawn_stereo_img, m_c_r_pt_offset, m_p_r_pt_offset, color, 1, cv::LINE_AA, 0);
     }
 
     // Writes text
     std::stringstream caption;
-    caption << " Number of matches: " << f_c_l_kpts.size();
+    caption << " Number of matches: " << m_c_l_kpts.size();
     cv::Mat o_img = writeTxtInImage(true, drawn_stereo_img, caption, 20);
 
     return o_img;
@@ -559,7 +561,7 @@ cv::Mat Publisher::drawCircularMatches(const cv::Mat& c_l_img,
 
 
 cv::Mat Publisher::drawKeypointsClustering(const cv::Mat& img,
-                                           const std::vector<cv::Point2f>& kpts,
+                                           const std::vector<cv::KeyPoint>& kpts,
                                            const std::vector<std::vector<int>>& clusters)
 {
     cv::Mat drawn_img;
@@ -573,7 +575,7 @@ cv::Mat Publisher::drawKeypointsClustering(const cv::Mat& img,
     {
         cv::Scalar color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
         for (uint j = 0; j < clusters[i].size(); j++)
-            cv::circle(drawn_img, kpts[clusters[i][j]], 2, color, -1);
+            cv::circle(drawn_img, kpts[clusters[i][j]].pt, 2, color, -1);
     }
 
     // Writes text
@@ -590,10 +592,10 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
                                    const std::vector<int>& q_cluster_ids,
                                    const std::vector<int>& cand_cluster_ids,
                                    const std::vector<int>& cand_keyframe_ids,
-                                   const std::vector<cv::Point2f>& f_q_l_kpts,
-                                   const std::vector<cv::Point2f>& f_q_r_kpts,
-                                   const std::vector<cv::Point2f>& f_cand_l_kpts,
-                                   const std::vector<cv::Point2f>& f_cand_r_kpts,
+                                   const std::vector<cv::KeyPoint>& f_q_l_kpts,
+                                   const std::vector<cv::KeyPoint>& f_q_r_kpts,
+                                   const std::vector<cv::KeyPoint>& f_cand_l_kpts,
+                                   const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                    const std::vector<int>& definitive_inliers_per_pair,
                                    const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
                                    const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation)
@@ -656,8 +658,8 @@ cv::Mat Publisher::drawLoopClosure(const int q_keyframe_id,
     for (uint i = 0; i < f_q_l_kpts.size(); i++)
     {
         // Gets the ith keypoints.
-        q_l_kpt = f_q_l_kpts[i];
-        cand_l_kpt = f_cand_l_kpts[i];
+        q_l_kpt = f_q_l_kpts[i].pt;
+        cand_l_kpt = f_cand_l_kpts[i].pt;
 
         // Gets the ith candidate cluster ids.
         cand_cluster_id = cand_cluster_ids[i];

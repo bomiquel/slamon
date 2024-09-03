@@ -12,8 +12,8 @@ Cluster::Cluster(int id,
                  cv::Mat l_descs,
                  cv::Mat r_descs,
                  tf::Transform camera_pose,
-                 std::vector<cv::Point2f> l_kpts,
-                 std::vector<cv::Point2f> r_kpts,
+                 std::vector<cv::KeyPoint> l_kpts,
+                 std::vector<cv::KeyPoint> r_kpts,
                  std::vector<cv::Point3f> cam_pts)
 {
     id_ = id;

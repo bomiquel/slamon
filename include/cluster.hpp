@@ -42,8 +42,8 @@ class Cluster
                 cv::Mat l_descs,
                 cv::Mat r_descs,
                 tf::Transform camera_pose,
-                std::vector<cv::Point2f> l_kpts,
-                std::vector<cv::Point2f> r_kpts,
+                std::vector<cv::KeyPoint> l_kpts,
+                std::vector<cv::KeyPoint> r_kpts,
                 std::vector<cv::Point3f> cam_pts);
 
 
@@ -74,7 +74,7 @@ class Cluster
         /** \brief Get cluster left keypoints.
          *  @return The cluster left keypoints.
          */
-        inline std::vector<cv::Point2f> getLeftKpts() const {return l_kpts_;}
+        inline std::vector<cv::KeyPoint> getLeftKpts() const {return l_kpts_;}
 
 
         /** \brief Get camera world position.
@@ -86,7 +86,7 @@ class Cluster
         /** \brief Get cluster right keypoints.
          *  @return The cluster right keypoints.
          */
-        inline std::vector<cv::Point2f> getRightKpts() const {return r_kpts_;}
+        inline std::vector<cv::KeyPoint> getRightKpts() const {return r_kpts_;}
 
 
         /** \brief Get cluster 3D points relative to camera.
@@ -114,9 +114,9 @@ class Cluster
 
         tf::Transform camera_pose_; //!> World camera pose when the cluster was obtained.
 
-        std::vector<cv::Point2f> l_kpts_; //!> Cluster left keypoints.
+        std::vector<cv::KeyPoint> l_kpts_; //!> Cluster left keypoints.
 
-        std::vector<cv::Point2f> r_kpts_; //!> Cluster right keypoints.
+        std::vector<cv::KeyPoint> r_kpts_; //!> Cluster right keypoints.
 
         std::vector<cv::Point3f> cam_pts_; //!> Cluster 3D points relative to camera.
 

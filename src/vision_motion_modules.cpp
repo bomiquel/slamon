@@ -46,9 +46,9 @@ void VisionMotionModules::detectKeypoints(const cv::Mat& img,
                                           const bool enable_enhacement,
                                           const std::string& detector_name,
                                           cv::Mat& descs,
-                                          std::vector<cv::Point2f>& kpts)
+                                          std::vector<cv::KeyPoint>& kpts)
 {
-    // Convert images to grayscale
+    // If necessary, converts the image to greyscale.
     cv::Mat g_img;
     if (img.type() == CV_8UC3)
     {
@@ -65,11 +65,11 @@ void VisionMotionModules::detectKeypoints(const cv::Mat& img,
     }
 
     // Enhances the image using CLAHE.
-    cv::Mat o_img;
+    cv::Mat proc_img;
     if (enable_enhacement)
     {
-        o_img = enhanceImage(g_img);
-        if (o_img.rows == 0)
+        proc_img = enhanceImage(g_img);
+        if (proc_img.rows == 0)
         {
             std::cerr << "Something went wrong with the image enhancement. Exiting!" << std::endl;
             return;
@@ -77,34 +77,31 @@ void VisionMotionModules::detectKeypoints(const cv::Mat& img,
     }
     else
     {
-        o_img = g_img;
+        proc_img = g_img;
     }
 
     // Select detector and extract keypoints
-    std::vector<cv::KeyPoint> kps;
     cv::Ptr<cv::Feature2D> detector;
     if (detector_name == "sift")
     {
-        detector = cv::xfeatures2d::SIFT::create(1500, 3, 0.04, 10, 1.6);
-        detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
+        detector = cv::xfeatures2d::SIFT::create(1800, 3, 0.04, 10, 1.6);
+        detector->detectAndCompute(proc_img, cv::noArray(), kpts, descs);
     }
     else if (detector_name == "surf")
     {
         detector = cv::xfeatures2d::SURF::create(100, 4, 3, false, false);
-        detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
+        detector->detectAndCompute(proc_img, cv::noArray(), kpts, descs);
     }
     else if (detector_name == "orb")
     {  
         detector = cv::ORB::create(1500, 1.2, 8, 31, 0, 2, cv::ORB::HARRIS_SCORE, 31, 20);
-        detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
+        detector->detectAndCompute(proc_img, cv::noArray(), kpts, descs);
     }
     else
     {
         detector = cv::xfeatures2d::SIFT::create(1500, 3, 0.04, 10, 1.6);
-        detector->detectAndCompute(o_img, cv::noArray(), kps, descs);
+        detector->detectAndCompute(proc_img, cv::noArray(), kpts, descs);
     }
-
-    cv::KeyPoint::convert(kps, kpts);
 }
 
 
@@ -114,8 +111,8 @@ void VisionMotionModules::detectStereoKeypoints(const cv::Mat& l_img,
                                                 const std::string& detector_name,
                                                 cv::Mat& l_descs,
                                                 cv::Mat& r_descs,
-                                                std::vector<cv::Point2f>& l_kpts,
-                                                std::vector<cv::Point2f>& r_kpts)
+                                                std::vector<cv::KeyPoint>& l_kpts,
+                                                std::vector<cv::KeyPoint>& r_kpts)
 { 
     std::thread l_detection(&VisionMotionModules::detectKeypoints, this, std::ref(l_img), 
                             enable_enhacement, std::ref(detector_name), 
@@ -130,12 +127,12 @@ void VisionMotionModules::detectStereoKeypoints(const cv::Mat& l_img,
 
 void VisionMotionModules::matchStereoKeypoints(const cv::Mat& l_descs,
                                                const cv::Mat& r_descs,
-                                               const std::vector<cv::Point2f>& l_kpts,
-                                               const std::vector<cv::Point2f>& r_kpts,
+                                               const std::vector<cv::KeyPoint>& l_kpts,
+                                               const std::vector<cv::KeyPoint>& r_kpts,
                                                cv::Mat& f_l_descs,
                                                cv::Mat& f_r_descs,
-                                               std::vector<cv::Point2f>& f_l_kpts,
-                                               std::vector<cv::Point2f>& f_r_kpts)
+                                               std::vector<cv::KeyPoint>& f_l_kpts,
+                                               std::vector<cv::KeyPoint>& f_r_kpts)
 {
     // Sanity check
     f_l_kpts.clear();
@@ -149,7 +146,7 @@ void VisionMotionModules::matchStereoKeypoints(const cv::Mat& l_descs,
 
     // Perform keypoint matching and Lowe's ratio
     cv::Mat h_f_l_descs, h_f_r_descs;
-    std::vector<cv::Point2f> h_f_l_kpts, h_f_r_kpts;
+    std::vector<cv::KeyPoint> h_f_l_kpts, h_f_r_kpts;
     ratioMatching(l_descs, r_descs, l_subset_ids, r_subset_ids, l_kpts, r_kpts, points_3d_0, points_3d_1,
                   h_f_l_descs, h_f_r_descs, f_l_subset_ids, f_r_subset_ids, h_f_l_kpts, h_f_r_kpts, 
                   f_points_3d_0, f_points_3d_1);
@@ -157,7 +154,7 @@ void VisionMotionModules::matchStereoKeypoints(const cv::Mat& l_descs,
     // Epipolar filtering
     for (uint i = 0; i < h_f_l_kpts.size(); i++)
     {
-        if (abs(h_f_l_kpts[i].y - h_f_r_kpts[i].y) <= 1.0)
+        if (abs(h_f_l_kpts[i].pt.y - h_f_r_kpts[i].pt.y) <= 1.0)
         {
             f_l_kpts.push_back(h_f_l_kpts[i]);
             f_r_kpts.push_back(h_f_r_kpts[i]);
@@ -170,17 +167,20 @@ void VisionMotionModules::matchStereoKeypoints(const cv::Mat& l_descs,
 
 void VisionMotionModules::compute3DPoints(const cv::Mat& l_descs,
                                           const cv::Mat& r_descs,
-                                          const std::vector<cv::Point2f>& l_kpts,
-                                          const std::vector<cv::Point2f>& r_kpts,
+                                          const std::vector<cv::KeyPoint>& l_kpts,
+                                          const std::vector<cv::KeyPoint>& r_kpts,
                                           cv::Mat& f_l_descs,
                                           cv::Mat& f_r_descs,
-                                          std::vector<cv::Point2f>& f_l_kpts,
-                                          std::vector<cv::Point2f>& f_r_kpts,
+                                          std::vector<cv::KeyPoint>& f_l_kpts,
+                                          std::vector<cv::KeyPoint>& f_r_kpts,
                                           std::vector<cv::Point3f>& f_cam_pts)
 {
     // Triangulates keypoints.
     cv::Mat pts_4d, cam_pts;
-    cv::triangulatePoints(l_proj_mat_, r_proj_mat_, l_kpts, r_kpts, pts_4d);
+    std::vector<cv::Point2f> l_pts, r_pts;
+    cv::KeyPoint::convert(l_kpts, l_pts);
+    cv::KeyPoint::convert(r_kpts, r_pts);
+    cv::triangulatePoints(l_proj_mat_, r_proj_mat_, l_pts, r_pts, pts_4d);
     cv::convertPointsFromHomogeneous(pts_4d.t(), cam_pts);
     cam_pts = cam_pts.reshape(1, cam_pts.rows).clone();
 
@@ -217,22 +217,48 @@ void VisionMotionModules::matchNonStereoKeypoints(const cv::Mat& l_descs_0,
                                                   const cv::Mat& r_descs_0,
                                                   const cv::Mat& l_descs_1,
                                                   const cv::Mat& r_descs_1,
-                                                  const std::vector<int>& cluster_ids_0,
-                                                  const std::vector<int>& cluster_ids_1,
-                                                  const std::vector<cv::Point2f>& l_kpts_0,
-                                                  const std::vector<cv::Point2f>& r_kpts_0,
-                                                  const std::vector<cv::Point2f>& l_kpts_1,
-                                                  const std::vector<cv::Point2f>& r_kpts_1,
+                                                  const std::vector<cv::KeyPoint>& l_kpts_0,
+                                                  const std::vector<cv::KeyPoint>& r_kpts_0,
+                                                  const std::vector<cv::KeyPoint>& l_kpts_1,
+                                                  const std::vector<cv::KeyPoint>& r_kpts_1,
                                                   const std::vector<cv::Point3f>& cam_pts_0,
                                                   const std::vector<cv::Point3f>& cam_pts_1,
-                                                  std::vector<int>& f_cluster_ids_0,
-                                                  std::vector<int>& f_cluster_ids_1,
-                                                  std::vector<cv::Point2f>& f_l_kpts_0,
-                                                  std::vector<cv::Point2f>& f_r_kpts_0,
-                                                  std::vector<cv::Point2f>& f_l_kpts_1,
-                                                  std::vector<cv::Point2f>& f_r_kpts_1,
+                                                  std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                                  std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                                  std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                                  std::vector<cv::KeyPoint>& f_r_kpts_1,
                                                   std::vector<cv::Point3f>& f_cam_pts_0,
                                                   std::vector<cv::Point3f>& f_cam_pts_1)
+{
+    // Dummy variables.
+    std::vector<int> cluster_ids_0, cluster_ids_1, f_cluster_ids_0, f_cluster_ids_1;
+    
+    // Matches keypoints and removes outliers using a general function.
+    matchKeypointClusters(l_descs_0, r_descs_0, l_descs_1, r_descs_1, cluster_ids_0, cluster_ids_1, l_kpts_0, r_kpts_0, l_kpts_1, r_kpts_1, cam_pts_0, cam_pts_1,
+                          f_cluster_ids_0, f_cluster_ids_1, f_l_kpts_0, f_r_kpts_0, f_l_kpts_1, f_r_kpts_1, f_cam_pts_0, f_cam_pts_1);
+}
+
+
+void VisionMotionModules::matchKeypointClusters(const cv::Mat& l_descs_0,
+                                                const cv::Mat& r_descs_0,
+                                                const cv::Mat& l_descs_1,
+                                                const cv::Mat& r_descs_1,
+                                                const std::vector<int>& cluster_ids_0,
+                                                const std::vector<int>& cluster_ids_1,
+                                                const std::vector<cv::KeyPoint>& l_kpts_0,
+                                                const std::vector<cv::KeyPoint>& r_kpts_0,
+                                                const std::vector<cv::KeyPoint>& l_kpts_1,
+                                                const std::vector<cv::KeyPoint>& r_kpts_1,
+                                                const std::vector<cv::Point3f>& cam_pts_0,
+                                                const std::vector<cv::Point3f>& cam_pts_1,
+                                                std::vector<int>& f_cluster_ids_0,
+                                                std::vector<int>& f_cluster_ids_1,
+                                                std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                                std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                                std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                                std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                                std::vector<cv::Point3f>& f_cam_pts_0,
+                                                std::vector<cv::Point3f>& f_cam_pts_1)
 {
     // Dummy variables.
     cv::Mat f_l_descs_0, f_r_descs_0, f_l_descs_1, f_r_descs_1;
@@ -260,7 +286,7 @@ void VisionMotionModules::matchNonStereoKeypoints(const cv::Mat& l_descs_0,
         // Temporal variables
         std::vector<cv::Point3f> l_cam_pts_0 = cam_pts_0, r_cam_pts_0 = cam_pts_0;
         std::vector<cv::Point3f> l_cam_pts_1 = cam_pts_1, r_cam_pts_1 = cam_pts_1;
-        std::vector<cv::Point2f> h_f_l_kpts_0, h_f_r_kpts_0, h_f_l_kpts_1, h_f_r_kpts_1;
+        std::vector<cv::KeyPoint> h_f_l_kpts_0, h_f_r_kpts_0, h_f_l_kpts_1, h_f_r_kpts_1;
         std::vector<int> l_cluster_ids_0 = cluster_ids_0, r_cluster_ids_0 = cluster_ids_0;
         std::vector<int> l_cluster_ids_1 = cluster_ids_1, r_cluster_ids_1 = cluster_ids_1;
         std::vector<cv::Point3f> h_f_l_cam_pts_0, h_f_r_cam_pts_0, h_f_l_cam_pts_1, h_f_r_cam_pts_1;
@@ -319,76 +345,44 @@ void VisionMotionModules::matchNonStereoKeypoints(const cv::Mat& l_descs_0,
 }
 
 
-void VisionMotionModules::estimateMotion(const std::vector<int>& cluster_ids_0,
-                                         const std::vector<int>& cluster_ids_1,
-                                         const std::vector<cv::Point2f>& l_kpts_0,
-                                         const std::vector<cv::Point2f>& r_kpts_0,
+void VisionMotionModules::estimateMotion(const std::vector<cv::KeyPoint>& l_kpts_0,
+                                         const std::vector<cv::KeyPoint>& r_kpts_0,
+                                         const std::vector<cv::KeyPoint>& l_kpts_1,
+                                         const std::vector<cv::KeyPoint>& r_kpts_1,
+                                         const std::vector<cv::Point3f>& cam_pts_0,
                                          const std::vector<cv::Point3f>& cam_pts_1,
                                          cv::Mat& r_vec,
                                          cv::Mat& t_vec,
-                                         std::vector<int>& f_cluster_ids_0,
-                                         std::vector<int>& f_cluster_ids_1,        
-                                         std::vector<cv::Point2f>& f_l_kpts_0,
-                                         std::vector<cv::Point2f>& f_r_kpts_0,
+                                         std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                         std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                         std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                         std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                         std::vector<cv::Point3f>& f_cam_pts_0,
                                          std::vector<cv::Point3f>& f_cam_pts_1)
 {
-    // Sanity check.
-    r_vec.release();
-    t_vec.release();
-
-    // If there are no right keypoints, the filtered right verctor must not be filled.
-    bool fill_right;
-    if (r_kpts_0.size() > 0)
-        fill_right = true;
-    else
-        fill_right = false;
-
-    // If there are no clusters, the filtered cluster vectors must not be filled.
-    bool fill_clusters;
-    if (cluster_ids_0.size() > 0)
-        fill_clusters = true;
-    else
-        fill_clusters = false;
-
-    // Estimate motion.
-    std::vector<int> inliers;
-    cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
-    cv::solvePnPRansac(cam_pts_1, l_kpts_0, K, cv::Mat(), r_vec, t_vec, 
-                       false, 2000, 2.0, 0.99, inliers, motion_estimation_type_); 
-
-    // Filter keypoints, 3D points and clusters.
-    for (uint i = 0; i < inliers.size(); i++)
-    {
-        f_l_kpts_0.push_back(l_kpts_0[inliers[i]]);
-        f_cam_pts_1.push_back(cam_pts_1[inliers[i]]);
-        if (fill_right)
-            f_r_kpts_0.push_back(r_kpts_0[inliers[i]]);
-        if (fill_clusters)
-        {
-            f_cluster_ids_0.push_back(cluster_ids_0[inliers[i]]);
-            f_cluster_ids_1.push_back(cluster_ids_1[inliers[i]]);
-        }
-
-    }
+    // Dummy variables.
+    std::vector<int> cluster_ids_0, cluster_ids_1, f_cluster_ids_0, f_cluster_ids_1;
+    estimateMotion(cluster_ids_0, cluster_ids_1, l_kpts_0, r_kpts_0, l_kpts_1, r_kpts_1, cam_pts_0, cam_pts_1,
+                   r_vec, t_vec, f_cluster_ids_0, f_cluster_ids_1, f_l_kpts_0, f_r_kpts_0, f_l_kpts_1, f_r_kpts_1, f_cam_pts_0, f_cam_pts_1);
 }
 
 
 void VisionMotionModules::estimateMotion(const std::vector<int>& cluster_ids_0,
                                          const std::vector<int>& cluster_ids_1,
-                                         const std::vector<cv::Point2f>& l_kpts_0,
-                                         const std::vector<cv::Point2f>& r_kpts_0,
-                                         const std::vector<cv::Point2f>& l_kpts_1,
-                                         const std::vector<cv::Point2f>& r_kpts_1,
+                                         const std::vector<cv::KeyPoint>& l_kpts_0,
+                                         const std::vector<cv::KeyPoint>& r_kpts_0,
+                                         const std::vector<cv::KeyPoint>& l_kpts_1,
+                                         const std::vector<cv::KeyPoint>& r_kpts_1,
                                          const std::vector<cv::Point3f>& cam_pts_0,
                                          const std::vector<cv::Point3f>& cam_pts_1,
                                          cv::Mat& r_vec,
                                          cv::Mat& t_vec,
                                          std::vector<int>& f_cluster_ids_0,
                                          std::vector<int>& f_cluster_ids_1,        
-                                         std::vector<cv::Point2f>& f_l_kpts_0,
-                                         std::vector<cv::Point2f>& f_r_kpts_0,
-                                         std::vector<cv::Point2f>& f_l_kpts_1,
-                                         std::vector<cv::Point2f>& f_r_kpts_1,
+                                         std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                         std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                         std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                         std::vector<cv::KeyPoint>& f_r_kpts_1,
                                          std::vector<cv::Point3f>& f_cam_pts_0,
                                          std::vector<cv::Point3f>& f_cam_pts_1)
 {
@@ -412,8 +406,10 @@ void VisionMotionModules::estimateMotion(const std::vector<int>& cluster_ids_0,
 
     // Estimate motion.
     std::vector<int> inliers;
+    std::vector<cv::Point2f> l_pts_0;
+    cv::KeyPoint::convert(l_kpts_0, l_pts_0);
     cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
-    cv::solvePnPRansac(cam_pts_1, l_kpts_0, K, cv::Mat(), r_vec, t_vec, 
+    cv::solvePnPRansac(cam_pts_1, l_pts_0, K, cv::Mat(), r_vec, t_vec, 
                        false, 2000, 2.0, 0.99, inliers, motion_estimation_type_);
 
     // Filter keypoints, 3D points and clusters.
@@ -451,6 +447,59 @@ cv::Mat VisionMotionModules::enhanceImage(const cv::Mat& img)
     clahe->apply(img, o_img);    
     
     return o_img;
+}
+
+
+std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::bucketKeypoints(const int n_rows_img,
+                                                                                            const int n_cols_img,
+                                                                                            const uint n_kpts_bucket,
+                                                                                            const std::vector<cv::KeyPoint>& l_kpts_0,
+                                                                                            const std::vector<cv::KeyPoint>& r_kpts_0,
+                                                                                            const std::vector<cv::KeyPoint>& l_kpts_1,
+                                                                                            const std::vector<cv::KeyPoint>& r_kpts_1,
+                                                                                            const std::vector<cv::Point3f>& cam_pts_0,
+                                                                                            const std::vector<cv::Point3f>& cam_pts_1,
+                                                                                            std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                                                                            std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                                                                            std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                                                                            std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                                                                            std::vector<cv::Point3f>& f_cam_pts_0,
+                                                                                            std::vector<cv::Point3f>& f_cam_pts_1)
+{
+    // Calculate the number of rows and columns that each bucket has.
+    float n_rows_bucket = n_rows_img / 10.0;
+    float n_cols_bucket = n_cols_img / 10.0;
+
+    // Fill buckets with keypoints and its indices.
+    int bucket_idx, bucket_row, bucket_col;
+    std::vector<std::vector<std::pair<int, cv::KeyPoint>>> buckets(100);
+    for (uint i = 0; i < l_kpts_0.size(); i++)
+    {
+        bucket_col = (int) floor(l_kpts_0[i].pt.x / n_cols_bucket);
+        bucket_row = (int) floor(l_kpts_0[i].pt.y / n_rows_bucket);
+        bucket_idx = (int) (10 * bucket_col + bucket_row);
+        buckets[bucket_idx].push_back(std::make_pair(i, l_kpts_0[i]));
+    }
+
+    // Remove excess keypoints from the buckets.
+    int idx; 
+    for (uint i = 0; i < buckets.size(); i++)
+    {
+        if (buckets[i].size() > n_kpts_bucket)
+            retainBest(n_kpts_bucket, buckets[i]);
+        for (uint j = 0; j < buckets[i].size(); j++)
+        {
+            idx = buckets[i][j].first;
+            f_l_kpts_0.push_back(l_kpts_0[idx]);
+            f_r_kpts_0.push_back(r_kpts_0[idx]);
+            f_l_kpts_1.push_back(l_kpts_1[idx]);
+            f_r_kpts_1.push_back(r_kpts_1[idx]);
+            f_cam_pts_0.push_back(cam_pts_0[idx]);
+            f_cam_pts_1.push_back(cam_pts_1[idx]);
+        }
+    }
+
+    return buckets;
 }
 
 
@@ -553,16 +602,16 @@ void VisionMotionModules::ratioMatching(const cv::Mat& descs_0,
                                         const cv::Mat& descs_1,
                                         const std::vector<int>& cluster_ids_0,
                                         const std::vector<int>& cluster_ids_1,
-                                        const std::vector<cv::Point2f>& kpts_0,
-                                        const std::vector<cv::Point2f>& kpts_1,
+                                        const std::vector<cv::KeyPoint>& kpts_0,
+                                        const std::vector<cv::KeyPoint>& kpts_1,
                                         const std::vector<cv::Point3f>& cam_pts_0,
                                         const std::vector<cv::Point3f>& cam_pts_1,
                                         cv::Mat& f_descs_0,
                                         cv::Mat& f_descs_1,
                                         std::vector<int>& f_cluster_ids_0,
                                         std::vector<int>& f_cluster_ids_1,
-                                        std::vector<cv::Point2f>& f_kpts_0,
-                                        std::vector<cv::Point2f>& f_kpts_1,
+                                        std::vector<cv::KeyPoint>& f_kpts_0,
+                                        std::vector<cv::KeyPoint>& f_kpts_1,
                                         std::vector<cv::Point3f>& f_cam_pts_0,
                                         std::vector<cv::Point3f>& f_cam_pts_1)
 {
@@ -630,16 +679,16 @@ void VisionMotionModules::geometricalMatching(bool coplanar_pts,
                                               const cv::Mat& descs_1,
                                               const std::vector<int>& cluster_ids_0,
                                               const std::vector<int>& cluster_ids_1,
-                                              const std::vector<cv::Point2f>& kpts_0,
-                                              const std::vector<cv::Point2f>& kpts_1,
+                                              const std::vector<cv::KeyPoint>& kpts_0,
+                                              const std::vector<cv::KeyPoint>& kpts_1,
                                               const std::vector<cv::Point3f>& cam_pts_0,
                                               const std::vector<cv::Point3f>& cam_pts_1,
                                               cv::Mat& f_descs_0,
                                               cv::Mat& f_descs_1,
                                               std::vector<int>& f_cluster_ids_0,
                                               std::vector<int>& f_cluster_ids_1,
-                                              std::vector<cv::Point2f>& f_kpts_0,
-                                              std::vector<cv::Point2f>& f_kpts_1,
+                                              std::vector<cv::KeyPoint>& f_kpts_0,
+                                              std::vector<cv::KeyPoint>& f_kpts_1,
                                               std::vector<cv::Point3f>& f_cam_pts_0,
                                               std::vector<cv::Point3f>& f_cam_pts_1)
 {
@@ -665,7 +714,7 @@ void VisionMotionModules::geometricalMatching(bool coplanar_pts,
 
     int idx_0, idx_1;
     cv::Mat m_descs_0, m_descs_1;
-    std::vector<cv::Point2f> m_kpts_0, m_kpts_1;
+    std::vector<cv::KeyPoint> m_kpts_0, m_kpts_1;
     std::vector<int> m_cluster_ids_0, m_cluster_ids_1;
     std::vector<cv::Point3f> m_cam_pts_0, m_cam_pts_1;
     for (uint i = 0; i < matches.size(); i++)
@@ -686,13 +735,16 @@ void VisionMotionModules::geometricalMatching(bool coplanar_pts,
     }
 
     // Compute homography or essential matrix
+    std::vector<cv::Point2f> m_pts_0, m_pts_1;
+    cv::KeyPoint::convert(m_kpts_0, m_pts_0);
+    cv::KeyPoint::convert(m_kpts_1, m_pts_1);
     cv::Mat M, mask, K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
     try
     {
         if (coplanar_pts)
-            M = cv::findHomography(m_kpts_0, m_kpts_1, mask, cv::RANSAC, 1.0);
+            M = cv::findHomography(m_pts_0, m_pts_1, mask, cv::RANSAC, 1.0);
         else
-            M = cv::findEssentialMat(m_kpts_0, m_kpts_1, K, cv::RANSAC, 0.999, 1.0, mask);
+            M = cv::findEssentialMat(m_pts_0, m_pts_1, K, cv::RANSAC, 0.999, 1.0, mask);
     }
     catch (cv::Exception &e)
     {
@@ -722,22 +774,22 @@ void VisionMotionModules::geometricalMatching(bool coplanar_pts,
 }
 
 
-void VisionMotionModules::assembleCircularMatchings(const std::vector<cv::Point2f>& stereo_kpts_0_lowest,
-                                                    const std::vector<cv::Point2f>& stereo_kpts_0_highest,
-                                                    const std::vector<cv::Point2f>& stereo_kpts_1_lowest,
-                                                    const std::vector<cv::Point2f>& stereo_kpts_1_highest,
-                                                    const std::vector<cv::Point2f>& successive_kpts_0_lowest,
-                                                    const std::vector<cv::Point2f>& successive_kpts_0_highest,
-                                                    const std::vector<cv::Point2f>& successive_kpts_1_lowest,
-                                                    const std::vector<cv::Point2f>& successive_kpts_1_highest,
+void VisionMotionModules::assembleCircularMatchings(const std::vector<cv::KeyPoint>& stereo_kpts_0_lowest,
+                                                    const std::vector<cv::KeyPoint>& stereo_kpts_0_highest,
+                                                    const std::vector<cv::KeyPoint>& stereo_kpts_1_lowest,
+                                                    const std::vector<cv::KeyPoint>& stereo_kpts_1_highest,
+                                                    const std::vector<cv::KeyPoint>& successive_kpts_0_lowest,
+                                                    const std::vector<cv::KeyPoint>& successive_kpts_0_highest,
+                                                    const std::vector<cv::KeyPoint>& successive_kpts_1_lowest,
+                                                    const std::vector<cv::KeyPoint>& successive_kpts_1_highest,
                                                     const std::vector<cv::Point3f>& successive_cam_pts_0,
                                                     const std::vector<cv::Point3f>& successive_cam_pts_1,
                                                     const std::vector<int>& successive_cluster_ids_0,
                                                     const std::vector<int>& successive_cluster_ids_1,
-                                                    std::vector<cv::Point2f>& f_kpts_0_lowest,
-                                                    std::vector<cv::Point2f>& f_kpts_0_highest,
-                                                    std::vector<cv::Point2f>& f_kpts_1_lowest,
-                                                    std::vector<cv::Point2f>& f_kpts_1_highest,
+                                                    std::vector<cv::KeyPoint>& f_kpts_0_lowest,
+                                                    std::vector<cv::KeyPoint>& f_kpts_0_highest,
+                                                    std::vector<cv::KeyPoint>& f_kpts_1_lowest,
+                                                    std::vector<cv::KeyPoint>& f_kpts_1_highest,
                                                     std::vector<cv::Point3f>& f_cam_pts_0,
                                                     std::vector<cv::Point3f>& f_cam_pts_1,
                                                     std::vector<int>& f_cluster_ids_0,
@@ -758,17 +810,17 @@ void VisionMotionModules::assembleCircularMatchings(const std::vector<cv::Point2
     {
         for (j = 0; j < stereo_kpts_1_lowest.size(); j++)
         {
-            if (successive_kpts_1_lowest[i] == stereo_kpts_1_lowest[j])
+            if (successive_kpts_1_lowest[i].pt == stereo_kpts_1_lowest[j].pt)
             {
                 for (k = 0; k < successive_kpts_1_highest.size(); k++)
                 {
-                    if (stereo_kpts_1_highest[j] == successive_kpts_1_highest[k])
+                    if (stereo_kpts_1_highest[j].pt == successive_kpts_1_highest[k].pt)
                     {
                         for (l = 0; l < stereo_kpts_0_highest.size(); l++)
                         {
-                            if (successive_kpts_0_highest[k] == stereo_kpts_0_highest[l])
+                            if (successive_kpts_0_highest[k].pt == stereo_kpts_0_highest[l].pt)
                             {
-                                if (stereo_kpts_0_lowest[l] == successive_kpts_0_lowest[i])
+                                if (stereo_kpts_0_lowest[l].pt == successive_kpts_0_lowest[i].pt)
                                 {
                                     f_kpts_0_lowest.push_back(successive_kpts_0_lowest[i]);
                                     f_kpts_0_highest.push_back(successive_kpts_0_highest[k]);
@@ -840,4 +892,24 @@ bool VisionMotionModules::getImageMainStatisticalValues(const cv::Mat& img,
     }
 
     return true;
+}
+
+
+void VisionMotionModules::retainBest(int n_kpts, std::vector<std::pair<int, cv::KeyPoint>>& kpts)
+{
+    // This is only necessary if the keypoints size is greater than the number of desired points.
+    if (n_kpts > 0 && kpts.size() > (size_t) n_kpts)
+    {
+        // First use nth element to partition the keypoints into the best and worst.
+        std::nth_element(kpts.begin(), kpts.begin() + n_kpts - 1, kpts.end(), KeypointPairResponseGreater());
+
+        // This is the boundary response, and in the case of FAST may be ambiguous
+        float ambiguous_response = kpts[n_kpts - 1].second.response;
+
+        // Use std::partition to grab all of the keypoints with the boundary response.
+        std::vector<std::pair<int, cv::KeyPoint>>::const_iterator new_end = std::partition(kpts.begin() + n_kpts, kpts.end(), KeypointPairResponseGreaterThanThreshold(ambiguous_response));
+
+        // Resize the keypoints, given this new end point. nth_element and partition reordered the points inplace.
+        kpts.resize(new_end - kpts.begin());
+    }
 }

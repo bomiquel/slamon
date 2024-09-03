@@ -344,8 +344,8 @@ namespace slamon
             ros::Time stamp = c_frame.getTimestamp();
             cv::Mat l_descs = c_frame.getLeftDescs();
             cv::Mat r_descs = c_frame.getRightDescs();
-            std::vector<cv::Point2f> l_kpts = c_frame.getLeftKpts();
-            std::vector<cv::Point2f> r_kpts = c_frame.getRightKpts();
+            std::vector<cv::KeyPoint> l_kpts = c_frame.getLeftKpts();
+            std::vector<cv::KeyPoint> r_kpts = c_frame.getRightKpts();
             std::vector<cv::Point3f> cam_pts = c_frame.getCameraPoints();
             std::vector<cv::Point3f> cluster_centroids = c_frame.getClustersCentroids();
             std::vector<std::vector<int>> clusters = c_frame.getClusters();
@@ -371,7 +371,7 @@ namespace slamon
             std::vector<int> c_vertex_ids;
             cv::Mat cluster_l_descs, cluster_r_descs;
             std::vector<cv::Point3f> cluster_cam_pts;
-            std::vector<cv::Point2f> cluster_l_kpts, cluster_r_kpts;
+            std::vector<cv::KeyPoint> cluster_l_kpts, cluster_r_kpts;
             std::vector<Cluster> clusters_to_close_loop;
             tf::Transform local_cluster_pose, c_cluster_pose;
             for (uint i = 0; i < clusters.size(); i++)
@@ -679,19 +679,21 @@ namespace slamon
     void Map::fromStereoDataToFrame(const slamon::StereoDataConstPtr& msg,
                                     Frame& frame)
     {
-        cv::Point2f kpt;
+        cv::KeyPoint kpt;
         cv::Point3f cam_pt;
         std::vector<float> desc;
         cv::Mat l_descs, r_descs;
         std::vector<cv::Point3f> cam_pts;
-        std::vector<cv::Point2f> l_kpts, r_kpts;
+        std::vector<cv::KeyPoint> l_kpts, r_kpts;
         for (uint i = 0; i < msg->l_kpts.size(); i++)
         {
-            kpt.x = msg->l_kpts[i].pt.x;
-            kpt.y = msg->l_kpts[i].pt.y;
+            kpt.pt.x = msg->l_kpts[i].pt.x;
+            kpt.pt.y = msg->l_kpts[i].pt.y;
+            kpt.response = msg->l_kpts[i].response;
             l_kpts.push_back(kpt);
-            kpt.x = msg->r_kpts[i].pt.x;
-            kpt.y = msg->r_kpts[i].pt.y;
+            kpt.pt.x = msg->r_kpts[i].pt.x;
+            kpt.pt.y = msg->r_kpts[i].pt.y;
+            kpt.response = msg->r_kpts[i].response;
             r_kpts.push_back(kpt);
             desc = msg->l_kpts[i].desc;
             l_descs.push_back(cv::Mat(1, desc.size(), CV_32F, desc.data()));

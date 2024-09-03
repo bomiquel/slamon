@@ -168,7 +168,7 @@ namespace slamon
                                     const sensor_msgs::ImageConstPtr& img_msg,
                                     cv::Mat& img,
                                     cv::Mat& descs,
-                                    std::vector<cv::Point2f>& kpts);
+                                    std::vector<cv::KeyPoint>& kpts);
 
 
             /** \brief Convert ROS image message to cv::Mat

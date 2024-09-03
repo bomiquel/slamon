@@ -38,8 +38,8 @@ class Frame
         Frame(cv::Mat l_descs,
               cv::Mat r_descs,
               ros::Time stamp,
-              std::vector<cv::Point2f> l_kpts,
-              std::vector<cv::Point2f> r_kpts,
+              std::vector<cv::KeyPoint> l_kpts,
+              std::vector<cv::KeyPoint> r_kpts,
               std::vector<cv::Point3f> cam_pts);
 
 
@@ -58,8 +58,8 @@ class Frame
               cv::Mat l_descs,
               cv::Mat r_descs,
               ros::Time stamp,
-              std::vector<cv::Point2f> l_kpts,
-              std::vector<cv::Point2f> r_kpts,
+              std::vector<cv::KeyPoint> l_kpts,
+              std::vector<cv::KeyPoint> r_kpts,
               std::vector<cv::Point3f> cam_pts);
 
 
@@ -108,13 +108,13 @@ class Frame
         /** \brief Get left keypoints.
          *  @return Left keypoints.
          */
-        inline std::vector<cv::Point2f> getLeftKpts() const {return l_kpts_;}
+        inline std::vector<cv::KeyPoint> getLeftKpts() const {return l_kpts_;}
 
 
         /** \brief Get right keypoints.
          *  @return Right keypoints.
          */
-        inline std::vector<cv::Point2f> getRightKpts() const {return r_kpts_;}
+        inline std::vector<cv::KeyPoint> getRightKpts() const {return r_kpts_;}
         
 
         /** \brief Get 3D points relative to camera.
@@ -161,8 +161,8 @@ class Frame
          *  @return the list of keypoints into a certain region
          */
         std::vector<int> regionQuery(float eps, 
-                                     cv::Point2f *keypoint, 
-                                     std::vector<cv::Point2f> *keypoints);
+                                     cv::KeyPoint *keypoint, 
+                                     std::vector<cv::KeyPoint> *keypoints);
 
 
         /** \brief Given a 3D point vector, calculate its centroid.
@@ -182,8 +182,8 @@ class Frame
         cv::Mat l_descs_; //!> Left descriptors.
         cv::Mat r_descs_; //!> Right descriptors.
 
-        std::vector<cv::Point2f> l_kpts_; //!> Left keypoints.
-        std::vector<cv::Point2f> r_kpts_; //!> Right keypoints.
+        std::vector<cv::KeyPoint> l_kpts_; //!> Left keypoints.
+        std::vector<cv::KeyPoint> r_kpts_; //!> Right keypoints.
 
         std::vector<cv::Point3f> cam_pts_; //!> Stereo 3D points relative to camera.
 

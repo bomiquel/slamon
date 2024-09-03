@@ -4,8 +4,8 @@
 Frame::Frame(cv::Mat l_descs,
              cv::Mat r_descs,
              ros::Time stamp,
-             std::vector<cv::Point2f> l_kpts,
-             std::vector<cv::Point2f> r_kpts,
+             std::vector<cv::KeyPoint> l_kpts,
+             std::vector<cv::KeyPoint> r_kpts,
              std::vector<cv::Point3f> cam_pts)
 {
     stamp_ = stamp;
@@ -22,8 +22,8 @@ Frame::Frame(cv::Mat l_img,
              cv::Mat l_descs,
              cv::Mat r_descs,
              ros::Time stamp,
-             std::vector<cv::Point2f> l_kpts,
-             std::vector<cv::Point2f> r_kpts,
+             std::vector<cv::KeyPoint> l_kpts,
+             std::vector<cv::KeyPoint> r_kpts,
              std::vector<cv::Point3f> cam_pts)
 {
     l_img_ = l_img;
@@ -126,7 +126,7 @@ void Frame::regionClustering()
     int idx;
     float dist;
     uint size_a;
-    cv::Point2f p_n, p_c;
+    cv::KeyPoint p_n, p_c;
     bool iterate = true, found;
     std::vector<int> noise_tmp;
     while (iterate && noise.size() > 0)
@@ -143,7 +143,7 @@ void Frame::regionClustering()
                 for (uint j = 0; j < clusters_[i].size(); j++)
                 {
                     p_c = l_kpts_[clusters_[i][j]];
-                    dist = sqrt(pow((p_c.x - p_n.x), 2) + pow((p_c.y - p_n.y), 2));
+                    dist = sqrt(pow((p_c.pt.x - p_n.pt.x), 2) + pow((p_c.pt.y - p_n.pt.y), 2));
                     if (dist <= eps && dist != 0.0)
                     {
                         idx = i;
@@ -197,14 +197,14 @@ void Frame::regionClustering()
 
 
 std::vector<int> Frame::regionQuery(float eps, 
-                                    cv::Point2f *keypoint, 
-                                    std::vector<cv::Point2f> *keypoints)
+                                    cv::KeyPoint *kpt, 
+                                    std::vector<cv::KeyPoint> *kpts)
 {
     float dist;
     std::vector<int> ret_keys;
-    for (uint i = 0; i < keypoints->size(); i++)
+    for (uint i = 0; i < kpts->size(); i++)
     {
-        dist = sqrt(pow((keypoint->x - keypoints->at(i).x),2)+pow((keypoint->y - keypoints->at(i).y),2));
+        dist = sqrt(pow((kpt->pt.x - kpts->at(i).pt.x),2)+pow((kpt->pt.y - kpts->at(i).pt.y),2));
         if (dist <= eps && dist != 0.0)
             ret_keys.push_back(i);
     }

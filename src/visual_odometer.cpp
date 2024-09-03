@@ -322,7 +322,7 @@ namespace slamon
         start_module_time = ros::Time::now().toSec();
         bool l_result, r_result;
         cv::Mat l_img, r_img, l_descs, r_descs;
-        std::vector<cv::Point2f> l_kpts, r_kpts;
+        std::vector<cv::KeyPoint> l_kpts, r_kpts;
         std::string feature_detector_type = "sift";
         std::thread l_detector([&] {l_result = detectROSKeypoints(enable_enhacement_, feature_detector_type, l_img_msg, l_img, l_descs, l_kpts);});
         std::thread r_detector([&] {r_result = detectROSKeypoints(enable_enhacement_, feature_detector_type, r_img_msg, r_img, r_descs, r_kpts);});
@@ -350,7 +350,7 @@ namespace slamon
         // Matching keypoints.
         start_module_time = ros::Time::now().toSec();
         cv::Mat h_f_l_descs, h_f_r_descs;
-        std::vector<cv::Point2f> h_f_l_kpts, h_f_r_kpts;
+        std::vector<cv::KeyPoint> h_f_l_kpts, h_f_r_kpts;
         matchStereoKeypoints(l_descs, r_descs, l_kpts, r_kpts, h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts);
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Stereo matching run time.
 
@@ -367,7 +367,7 @@ namespace slamon
         start_module_time = ros::Time::now().toSec();
         cv::Mat f_l_descs, f_r_descs;
         std::vector<cv::Point3f> f_cam_pts;
-        std::vector<cv::Point2f> f_l_kpts, f_r_kpts;
+        std::vector<cv::KeyPoint> f_l_kpts, f_r_kpts;
         compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_cam_pts);
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
@@ -399,16 +399,14 @@ namespace slamon
         // Auxilary variable to set the start time of a module.
         double start_module_time;
 
-        // Creates dummy variables.
-        std::vector<int> c_cluster_ids, p_cluster_ids, f_c_cluster_ids, f_p_cluster_ids; 
-
         // Search for matches of keypoints between successive frames or pairs of frames.
         start_module_time = ros::Time::now().toSec();
         std::vector<cv::Point3f> f_c_cam_pts, f_p_cam_pts;
-        std::vector<cv::Point2f> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
-        matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), c_cluster_ids, p_cluster_ids, 
-                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), c_frame.getCameraPoints(), p_frame_.getCameraPoints(),
-                                f_c_cluster_ids, f_p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts);
+        std::vector<cv::KeyPoint> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
+        matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), 
+                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), 
+                                c_frame.getCameraPoints(), p_frame_.getCameraPoints(),
+                                f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts);
         run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Successive matching run time.
 
         // Sanity check.
@@ -444,10 +442,10 @@ namespace slamon
         start_module_time = ros::Time::now().toSec();
         cv::Mat camera_rotation, camera_translation;
         std::vector<cv::Point3f> i_c_cam_pts, i_p_cam_pts;
-        std::vector<cv::Point2f> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
-        estimateMotion(c_cluster_ids, p_cluster_ids, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts,
+        std::vector<cv::KeyPoint> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
+        estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts,
                        camera_rotation, camera_translation, 
-                       f_c_cluster_ids, f_p_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_cam_pts, i_p_cam_pts);
+                       i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_cam_pts, i_p_cam_pts);
         run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
 
         if (i_c_l_kpts.size() < (uint)(1.2 * min_inliers_))
@@ -526,7 +524,7 @@ namespace slamon
                                             const sensor_msgs::ImageConstPtr& img_msg,
                                             cv::Mat& img,
                                             cv::Mat& descs,
-                                            std::vector<cv::Point2f>& kpts)
+                                            std::vector<cv::KeyPoint>& kpts)
     {
         
         if (!fromImgMsgToMat(img_msg, img))

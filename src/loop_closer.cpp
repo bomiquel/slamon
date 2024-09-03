@@ -340,7 +340,7 @@ namespace slamon
         int keyframe_id;
         cv::Mat l_descs, r_descs;
         std::vector<cv::Point3f> cam_pts;
-        std::vector<cv::Point2f> l_kpts, r_kpts;
+        std::vector<cv::KeyPoint> l_kpts, r_kpts;
         fs["l_kpts"] >> l_kpts;
         fs["r_kpts"] >> r_kpts;
         fs["cam_pts"] >> cam_pts;
@@ -368,17 +368,17 @@ namespace slamon
 
         // First descriptor matching.
         std::vector<cv::Point3f> f_q_cam_pts, f_cand_cam_pts;
-        std::vector<cv::Point2f> f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts;
-        matchNonStereoKeypoints(q_cluster.getLeftDescs(), q_cluster.getRightDescs(), 
-                                cand_cluster.getLeftDescs(), cand_cluster.getRightDescs(),
-                                q_cluster_ids, cand_cluster_ids, 
-                                q_cluster.getLeftKpts(), q_cluster.getRightKpts(),
-                                cand_cluster.getLeftKpts(), cand_cluster.getRightKpts(),
-                                q_cluster.getCameraPoints(), cand_cluster.getCameraPoints(),
-                                f_q_cluster_ids, f_cand_cluster_ids,
-                                f_q_l_kpts, f_q_r_kpts, 
-                                f_cand_l_kpts, f_cand_r_kpts,
-                                f_q_cam_pts, f_cand_cam_pts);
+        std::vector<cv::KeyPoint> f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts;
+        matchKeypointClusters(q_cluster.getLeftDescs(), q_cluster.getRightDescs(), 
+                              cand_cluster.getLeftDescs(), cand_cluster.getRightDescs(),
+                              q_cluster_ids, cand_cluster_ids, 
+                              q_cluster.getLeftKpts(), q_cluster.getRightKpts(),
+                              cand_cluster.getLeftKpts(), cand_cluster.getRightKpts(),
+                              q_cluster.getCameraPoints(), cand_cluster.getCameraPoints(),
+                              f_q_cluster_ids, f_cand_cluster_ids,
+                              f_q_l_kpts, f_q_r_kpts, 
+                              f_cand_l_kpts, f_cand_r_kpts,
+                              f_q_cam_pts, f_cand_cam_pts);
 
         // Gets the neighbor clusters if enough matching percentage.
         if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_ / 2))
@@ -392,22 +392,22 @@ namespace slamon
             // Inits accumulated data. Candidate data.
             cv::Mat all_cand_l_descs = cand_cluster.getLeftDescs();
             cv::Mat all_cand_r_descs = cand_cluster.getRightDescs();
-            std::vector<cv::Point2f> all_cand_l_kpts = cand_cluster.getLeftKpts();
-            std::vector<cv::Point2f> all_cand_r_kpts = cand_cluster.getRightKpts();
+            std::vector<cv::KeyPoint> all_cand_l_kpts = cand_cluster.getLeftKpts();
+            std::vector<cv::KeyPoint> all_cand_r_kpts = cand_cluster.getRightKpts();
             std::vector<cv::Point3f> all_cand_world_pts = cand_cluster.getWorldPoints();
 
             // Inits accumulated data. Query data.
             cv::Mat all_q_l_descs = q_cluster.getLeftDescs();
             cv::Mat all_q_r_descs = q_cluster.getRightDescs();
-            std::vector<cv::Point2f> all_q_l_kpts = q_cluster.getLeftKpts();
-            std::vector<cv::Point2f> all_q_r_kpts = q_cluster.getRightKpts();
+            std::vector<cv::KeyPoint> all_q_l_kpts = q_cluster.getLeftKpts();
+            std::vector<cv::KeyPoint> all_q_r_kpts = q_cluster.getRightKpts();
             std::vector<cv::Point3f> all_q_cam_pts = q_cluster.getCameraPoints();
 
             // Temporal variables.
             Cluster tmp_cluster;
             cv::Mat tmp_l_descs, tmp_r_descs;
             std::vector<cv::Point3f> tmp_3d_pts;
-            std::vector<cv::Point2f> tmp_l_kpts, tmp_r_kpts;
+            std::vector<cv::KeyPoint> tmp_l_kpts, tmp_r_kpts;
 
             // Inits the cluster candidate list.
             for (uint i = 0; i < all_cand_l_kpts.size(); i++)
@@ -507,16 +507,16 @@ namespace slamon
 
             // Second descriptor matching.
             std::vector<cv::Point3f> f_cand_world_pts;
-            matchNonStereoKeypoints(all_q_l_descs, all_q_r_descs, 
-                                    all_cand_l_descs, all_cand_r_descs,
-                                    q_cluster_ids, cand_cluster_ids,
-                                    all_q_l_kpts, all_q_r_kpts, 
-                                    all_cand_l_kpts, all_cand_r_kpts,
-                                    all_q_cam_pts, all_cand_world_pts,
-                                    f_q_cluster_ids, f_cand_cluster_ids,
-                                    f_q_l_kpts, f_q_r_kpts,
-                                    f_cand_l_kpts, f_cand_r_kpts,
-                                    f_q_cam_pts, f_cand_world_pts);
+            matchKeypointClusters(all_q_l_descs, all_q_r_descs, 
+                                  all_cand_l_descs, all_cand_r_descs,
+                                  q_cluster_ids, cand_cluster_ids,
+                                  all_q_l_kpts, all_q_r_kpts, 
+                                  all_cand_l_kpts, all_cand_r_kpts,
+                                  all_q_cam_pts, all_cand_world_pts,
+                                  f_q_cluster_ids, f_cand_cluster_ids,
+                                  f_q_l_kpts, f_q_r_kpts,
+                                  f_cand_l_kpts, f_cand_r_kpts,
+                                  f_q_cam_pts, f_cand_world_pts);
 
             if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_))
             {
@@ -524,7 +524,7 @@ namespace slamon
                 cv::Mat estimated_rotation, estimated_translation;
                 std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
                 std::vector<cv::Point3f> i_q_cam_pts, i_cand_world_pts;
-                std::vector<cv::Point2f> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
+                std::vector<cv::KeyPoint> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
                 estimateMotion(f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_cam_pts, f_cand_world_pts,
                                estimated_rotation, estimated_translation,
                                i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_cam_pts, i_cand_world_pts);

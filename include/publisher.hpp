@@ -61,7 +61,7 @@ class Publisher
         void writeKeypoints(const cv::Mat& img,
                             const cv::Scalar& color,
                             const std::string& o_path,
-                            const std::vector<cv::Point2f> kpts);
+                            const std::vector<cv::KeyPoint> kpts);
 
 
         /** \brief Publishes stereo images with its keypoints drawn.
@@ -76,8 +76,8 @@ class Publisher
                                     const cv::Mat& r_img,
                                     const ros::Time& stamp,
                                     const ros::Publisher& publisher,
-                                    const std::vector<cv::Point2f>& l_kpts,
-                                    const std::vector<cv::Point2f>& r_kpts);
+                                    const std::vector<cv::KeyPoint>& l_kpts,
+                                    const std::vector<cv::KeyPoint>& r_kpts);
 
 
         /** \brief Writes on disk the stereoscopic images with their
@@ -92,8 +92,8 @@ class Publisher
         void writeStereoKeypoints(const cv::Mat& l_img,
                                   const cv::Mat& r_img,
                                   const std::string& o_path,
-                                  const std::vector<cv::Point2f>& l_kpts,
-                                  const std::vector<cv::Point2f>& r_kpts);
+                                  const std::vector<cv::KeyPoint>& l_kpts,
+                                  const std::vector<cv::KeyPoint>& r_kpts);
 
 
         /** \brief Draws and publishes vertical (successive) or horizontal (stereo)
@@ -107,16 +107,16 @@ class Publisher
          *  In the stereo case, it is the right image (input).
          *  \param stamp The ROS timestamp (input).
          *  \param publisher The ROS publisher (input).
-         *  \param f_kpts_0 Filtered and sorted current/left keypoints (input).
-         *  \param f_kpts_1 Filtered and sorted previous/right keypoints (input).
+         *  \param m_kpts_0 Matched and sorted current/left keypoints (input).
+         *  \param m_kpts_1 Matched and sorted previous/right keypoints (input).
          */
         void publishMatches(const bool vertical, 
                             const cv::Mat& img_0,
                             const cv::Mat& img_1,
                             const ros::Time& stamp,
                             const ros::Publisher& publisher,
-                            const std::vector<cv::Point2f>& f_kpts_0,
-                            const std::vector<cv::Point2f>& f_kpts_1);
+                            const std::vector<cv::KeyPoint>& m_kpts_0,
+                            const std::vector<cv::KeyPoint>& m_kpts_1);
 
 
         /** \brief Draws and writes on disk vertical (successive) or horizontal (stereo)
@@ -130,15 +130,15 @@ class Publisher
          *  In the stereo case, it is the right image (input).
          *  \param o_path Image output path. The name of the final
          *  file must be included (input).
-         *  \param f_kpts_0 Filtered and sorted current/left keypoints (input).
-         *  \param f_kpts_1 Filtered and sorted previous/right keypoints (input).
+         *  \param m_kpts_0 Matched and sorted current/left keypoints (input).
+         *  \param m_kpts_1 Matched and sorted previous/right keypoints (input).
          */
         void writeMatches(const bool vertical, 
                           const cv::Mat& img_0,
                           const cv::Mat& img_1,
                           const std::string& o_path,
-                          const std::vector<cv::Point2f>& f_kpts_0,
-                          const std::vector<cv::Point2f>& f_kpts_1);
+                          const std::vector<cv::KeyPoint>& m_kpts_0,
+                          const std::vector<cv::KeyPoint>& m_kpts_1);
 
 
         /** \brief Draws and publishes circular matches.
@@ -148,10 +148,10 @@ class Publisher
          *  \param p_r_img Previous right image (input).
          *  \param stamp The ROS timestamp (input).
          *  \param publisher The ROS publisher (input).
-         *  \param f_c_l_kpts Filtered and sorted current left keypoints (input).
-         *  \param f_c_r_kpts Filtered and sorted current right keypoints (input).
-         *  \param f_p_l_kpts Filtered and sorted previous left keypoints (input).
-         *  \param f_p_r_kpts Filtered and sorted previous right keypoints (input).
+         *  \param m_c_l_kpts Matched and sorted current left keypoints (input).
+         *  \param m_c_r_kpts Matched and sorted current right keypoints (input).
+         *  \param m_p_l_kpts Matched and sorted previous left keypoints (input).
+         *  \param m_p_r_kpts Matched and sorted previous right keypoints (input).
          */
         void publishCircularMatches(const cv::Mat& c_l_img,                                    
                                     const cv::Mat& c_r_img,
@@ -159,10 +159,10 @@ class Publisher
                                     const cv::Mat& p_r_img,
                                     const ros::Time& stamp,
                                     const ros::Publisher& publisher,
-                                    const std::vector<cv::Point2f>& f_c_l_kpts,
-                                    const std::vector<cv::Point2f>& f_c_r_kpts,
-                                    const std::vector<cv::Point2f>& f_p_l_kpts,
-                                    const std::vector<cv::Point2f>& f_p_r_kpts);
+                                    const std::vector<cv::KeyPoint>& m_c_l_kpts,
+                                    const std::vector<cv::KeyPoint>& m_c_r_kpts,
+                                    const std::vector<cv::KeyPoint>& m_p_l_kpts,
+                                    const std::vector<cv::KeyPoint>& m_p_r_kpts);
 
 
         /** \brief Draws and writes on disk circular matches.
@@ -172,20 +172,20 @@ class Publisher
          *  \param p_r_img Previous right image (input).
          *  \param o_path Image output path. The name of the final
          *  file must be included (input).
-         *  \param f_c_l_kpts Filtered and sorted current left keypoints (input).
-         *  \param f_c_r_kpts Filtered and sorted current right keypoints (input).
-         *  \param f_p_l_kpts Filtered and sorted previous left keypoints (input).
-         *  \param f_p_r_kpts Filtered and sorted previous right keypoints (input).
+         *  \param m_c_l_kpts Matched and sorted current left keypoints (input).
+         *  \param m_c_r_kpts Matched and sorted current right keypoints (input).
+         *  \param m_p_l_kpts Matched and sorted previous left keypoints (input).
+         *  \param m_p_r_kpts Matched and sorted previous right keypoints (input).
          */
         void writeCircularMatches(const cv::Mat& c_l_img,
                                   const cv::Mat& c_r_img,
                                   const cv::Mat& p_l_img,
                                   const cv::Mat& p_r_img,
                                   const std::string& o_path,
-                                  const std::vector<cv::Point2f>& f_c_l_kpts,
-                                  const std::vector<cv::Point2f>& f_c_r_kpts,
-                                  const std::vector<cv::Point2f>& f_p_l_kpts,
-                                  const std::vector<cv::Point2f>& f_p_r_kpts);
+                                  const std::vector<cv::KeyPoint>& m_c_l_kpts,
+                                  const std::vector<cv::KeyPoint>& m_c_r_kpts,
+                                  const std::vector<cv::KeyPoint>& m_p_l_kpts,
+                                  const std::vector<cv::KeyPoint>& m_p_r_kpts);
 
 
         /** \brief Draws and publishes keypoints clustering.
@@ -198,7 +198,7 @@ class Publisher
         void publishKeypointsClustering(const cv::Mat& l_img,
                                         const ros::Time& stamp,
                                         const ros::Publisher& publisher,
-                                        const std::vector<cv::Point2f>& l_kpts,
+                                        const std::vector<cv::KeyPoint>& l_kpts,
                                         const std::vector<std::vector<int>>& clusters);
 
 
@@ -211,7 +211,7 @@ class Publisher
          */
         void writeKeypointsClustering(const cv::Mat& l_img,
                                       const std::string& o_path,
-                                      const std::vector<cv::Point2f>& l_kpts,
+                                      const std::vector<cv::KeyPoint>& l_kpts,
                                       const std::vector<std::vector<int>>& clusters);
 
 
@@ -246,10 +246,10 @@ class Publisher
                                 const std::vector<int>& q_cluster_ids,
                                 const std::vector<int>& cand_cluster_ids,
                                 const std::vector<int>& cand_keyframe_ids,
-                                const std::vector<cv::Point2f>& f_q_l_kpts,
-                                const std::vector<cv::Point2f>& f_q_r_kpts,
-                                const std::vector<cv::Point2f>& f_cand_l_kpts,
-                                const std::vector<cv::Point2f>& f_cand_r_kpts,
+                                const std::vector<cv::KeyPoint>& f_q_l_kpts,
+                                const std::vector<cv::KeyPoint>& f_q_r_kpts,
+                                const std::vector<cv::KeyPoint>& f_cand_l_kpts,
+                                const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                 const std::vector<int>& definitive_inliers_per_pair,
                                 const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
                                 const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
@@ -285,10 +285,10 @@ class Publisher
                               const std::vector<int>& q_cluster_ids,
                               const std::vector<int>& cand_cluster_ids,
                               const std::vector<int>& cand_keyframe_ids,
-                              const std::vector<cv::Point2f>& f_q_l_kpts,
-                              const std::vector<cv::Point2f>& f_q_r_kpts,
-                              const std::vector<cv::Point2f>& f_cand_l_kpts,
-                              const std::vector<cv::Point2f>& f_cand_r_kpts,
+                              const std::vector<cv::KeyPoint>& f_q_l_kpts,
+                              const std::vector<cv::KeyPoint>& f_q_r_kpts,
+                              const std::vector<cv::KeyPoint>& f_cand_l_kpts,
+                              const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                               const std::vector<int>& definitive_inliers_per_pair,
                               const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
                               const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
@@ -354,8 +354,8 @@ class Publisher
                                const cv::Mat& r_descs,
                                const ros::Time& stamp,
                                const ros::Publisher& publisher,
-                               const std::vector<cv::Point2f>& l_kpts,
-                               const std::vector<cv::Point2f>& r_kpts,
+                               const std::vector<cv::KeyPoint>& l_kpts,
+                               const std::vector<cv::KeyPoint>& r_kpts,
                                const std::vector<cv::Point3f>& cam_pts);
 
 
@@ -392,12 +392,12 @@ class Publisher
         /** \brief Draws points to image.
          *  \param img Original image (input).
          *  \param color The colour desired to be used to paint the points (input).
-         *  \param pts The points (input).
+         *  \param kpts The points (input).
          *  @return The image with the points drawn.
          */
-        cv::Mat drawPoints(const cv::Mat& img,
-                           const cv::Scalar& color,
-                           const std::vector<cv::Point2f>& pts);
+        cv::Mat drawKeypoints(const cv::Mat& img,
+                              const cv::Scalar& color,
+                              const std::vector<cv::KeyPoint>& kpts);
 
 
         /** \brief Writes text at the bottom of the image. 
@@ -426,8 +426,8 @@ class Publisher
         cv::Mat drawStereoKeypoints(const cv::Mat& l_img,
                                     const cv::Mat& r_img,
                                     const cv::Scalar& color,
-                                    const std::vector<cv::Point2f>& l_kpts,
-                                    const std::vector<cv::Point2f>& r_kpts);
+                                    const std::vector<cv::KeyPoint>& l_kpts,
+                                    const std::vector<cv::KeyPoint>& r_kpts);
 
 
         /** \brief Draws vertical or horizontal matches between two images.
@@ -439,16 +439,16 @@ class Publisher
          *  \param img_1 In the case of successive images, it is the previous image.
          *  In the stereo case, it is the right image (input).
          *  \param color Color of the keypoints and matches (input).
-         *  \param f_kpts_0 Filtered and sorted current/left keypoints (input).
-         *  \param f_kpts_1 Filtered and sorted previous/right keypoints (input).
+         *  \param m_kpts_0 Matched and sorted current/left keypoints (input).
+         *  \param m_kpts_1 Matched and sorted previous/right keypoints (input).
          *  @return a concatened and drawn image. 
          */
         cv::Mat drawMatches(const bool vertical,
                             const cv::Mat& img_0,
                             const cv::Mat& img_1,
                             const cv::Scalar& color,
-                            const std::vector<cv::Point2f>& f_kpts_0,
-                            const std::vector<cv::Point2f>& f_kpts_1);
+                            const std::vector<cv::KeyPoint>& m_kpts_0,
+                            const std::vector<cv::KeyPoint>& m_kpts_1);
 
 
         /** \brief Draws circular matches.
@@ -457,10 +457,10 @@ class Publisher
          *  \param p_l_img Previous left image (input).
          *  \param p_r_img Previous right image (input).
          *  \param color Color of the keypoints and matches (input).
-         *  \param f_c_l_kpts Filtered and sorted current left keypoints (input).
-         *  \param f_c_r_kpts Filtered and sorted current right keypoints (input).
-         *  \param f_p_l_kpts Filtered and sorted previous left keypoints (input).
-         *  \param f_p_r_kpts Filtered and sorted previous right keypoints (input).
+         *  \param m_c_l_kpts Matched and sorted current left keypoints (input).
+         *  \param m_c_r_kpts Matched and sorted current right keypoints (input).
+         *  \param m_p_l_kpts Matched and sorted previous left keypoints (input).
+         *  \param m_p_r_kpts Matched and sorted previous right keypoints (input).
          *  @return An image where the current stereo pair and the previous stereo
          *  pair are concatenated with the drawn matches.
          */
@@ -469,10 +469,10 @@ class Publisher
                                     const cv::Mat& p_l_img,
                                     const cv::Mat& p_r_img,
                                     const cv::Scalar& color,
-                                    const std::vector<cv::Point2f>& f_c_l_kpts,
-                                    const std::vector<cv::Point2f>& f_c_r_kpts,
-                                    const std::vector<cv::Point2f>& f_p_l_kpts,
-                                    const std::vector<cv::Point2f>& f_p_r_kpts);
+                                    const std::vector<cv::KeyPoint>& m_c_l_kpts,
+                                    const std::vector<cv::KeyPoint>& m_c_r_kpts,
+                                    const std::vector<cv::KeyPoint>& m_p_l_kpts,
+                                    const std::vector<cv::KeyPoint>& m_p_r_kpts);
 
 
         /** \brief Draws keypoints clustering.
@@ -481,7 +481,7 @@ class Publisher
          *  \param clusters Keypoints clustering (input).
          */
         cv::Mat drawKeypointsClustering(const cv::Mat& img,
-                                        const std::vector<cv::Point2f>& kpts,
+                                        const std::vector<cv::KeyPoint>& kpts,
                                         const std::vector<std::vector<int>>& clusters);
 
 
@@ -512,10 +512,10 @@ class Publisher
                                 const std::vector<int>& q_cluster_ids,
                                 const std::vector<int>& cand_cluster_ids,
                                 const std::vector<int>& cand_keyframe_ids,
-                                const std::vector<cv::Point2f>& f_q_l_kpts,
-                                const std::vector<cv::Point2f>& f_q_r_kpts,
-                                const std::vector<cv::Point2f>& f_cand_l_kpts,
-                                const std::vector<cv::Point2f>& f_cand_r_kpts,
+                                const std::vector<cv::KeyPoint>& f_q_l_kpts,
+                                const std::vector<cv::KeyPoint>& f_q_r_kpts,
+                                const std::vector<cv::KeyPoint>& f_cand_l_kpts,
+                                const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                 const std::vector<int>& definitive_inliers_per_pair,
                                 const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
                                 const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
