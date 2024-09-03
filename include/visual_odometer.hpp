@@ -46,8 +46,11 @@ namespace slamon
 
             /** \brief Class constructor.
              *  \param ratio The ratio for Lowe's ratio test.
+             *  \param max_kpts_bucket The maximum number of keypoints per bucket.
              *  \param min_inliers The minimum number of keypoints to estimate the movement.
-             *  \param enable_debugging Enabling or disabling debugging.
+             *  \param enable_debugging Enabling or disabling debugging messages and topics.
+             *  \param enable_bucketing Enabling or disabling keypoints bucketing.
+             *  \param enable_enhacement Enabling or disabling image enhacement.
              *  \param w_path Working path for debugging purpose.
              *  \param matching_type Matching type.
              *  \param robot_frame_id Robot odometry coordinate axis identficator.
@@ -55,7 +58,9 @@ namespace slamon
              */
             VisualOdometer(double ratio,
                            int min_inliers,
+                           int max_kpts_bucket,
                            bool enable_debugging,
+                           bool enable_bucketing,
                            bool enable_enhacement,
                            const std::string& w_path,
                            std::string& matching_type,
@@ -182,13 +187,21 @@ namespace slamon
             // Atributes
             int c_frame_id_; //!> Current frame id.
 
+            int n_img_rows_; //!> Number of image rows.
+
+            int n_img_cols_; //!> Number of image cols.
+
             int min_inliers_; //!> The minimum number of inliers to estimate the movement.
+            
+            int max_kpts_bucket_; //!> The maximum number of keypoints per bucket.
 
             Frame p_frame_; //!> Previous frame.
             
             VOStatus status_; //!> Visual odometer state.
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
+
+            bool enable_bucketing_; //!> Enabling or disabling keypoint bucketing before motion estimation.
 
             bool enable_enhacement_; //!> Enabling or disabling image enhacement.
 

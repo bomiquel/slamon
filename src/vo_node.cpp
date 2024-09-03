@@ -9,8 +9,10 @@
 
 
 void readParams(int& min_inliers,
+                int& max_kpts_bucket,
                 double& lowe_ratio, 
                 bool& enable_debugging,
+                bool& enable_bucketing,
                 bool& enable_enhacement,
                 std::string& working_path,
                 std::string& matching_type,
@@ -24,20 +26,24 @@ void readParams(int& min_inliers,
     nh.param("slamon/working_path",           working_path,           ros::package::getPath("slamon") + "/output/");
     nh.param("slamon/matching_type",          matching_type,          std::string("ratio_matching"));
     nh.param("slamon/robot_frame_id",         robot_frame_id,         std::string("base_link"));
+    nh.param("slamon/max_kpts_bucket",        max_kpts_bucket,        4);
     nh.param("slamon/enable_debugging",       enable_debugging,       true);
+    nh.param("slamon/enable_bucketing",       enable_bucketing,       true);
     nh.param("slamon/enable_enhacement",      enable_enhacement,      true);
     nh.param("slamon/motion_estimation_type", motion_estimation_type, std::string("p3p"));
 
     // Printing parameters values.
     ROS_INFO_STREAM("[VO]: Parameter setting: " << std::endl <<
-                    "Lowe's ratio           = " << lowe_ratio << std::endl <<
-                    "Minimum kpts           = " << min_inliers << std::endl << 
-                    "Working path           = " << working_path << std::endl <<
-                    "Matching type          = " << matching_type << std::endl <<
-                    "Robot frame id         = " << robot_frame_id << std::endl <<
-                    "Enable debugging       = " << enable_debugging << std::endl <<
-                    "Enable enhacement      = " << enable_enhacement << std::endl <<
-                    "Motion estimation type = " << motion_estimation_type);
+                    "Lowe's ratio                 = " << lowe_ratio << std::endl <<
+                    "Working path                 = " << working_path << std::endl <<
+                    "Matching type                = " << matching_type << std::endl <<
+                    "Robot frame id               = " << robot_frame_id << std::endl <<
+                    "Minimum inliers              = " << min_inliers << std::endl << 
+                    "Enable debugging             = " << enable_debugging << std::endl <<
+                    "Enable bucketing             = " << enable_bucketing << std::endl <<
+                    "Enable enhacement            = " << enable_enhacement << std::endl <<
+                    "Motion estimation type       = " << motion_estimation_type << std::endl <<
+                    "Maximum keypoints per bucket = " << max_kpts_bucket);
 
     // Checking the validity of the parameters
     bool invalid_parameter = false;
@@ -70,14 +76,16 @@ void readParams(int& min_inliers,
     {
         ROS_INFO_STREAM("[VO]: Some parameter was invalid and has been assigned its default value." << std::endl <<
                         "Current parameter values are: " << std::endl <<
-                        "Lowe's ratio             = " << lowe_ratio << std::endl <<
-                        "Minimum kpts             = " << min_inliers << std::endl << 
-                        "Working path             = " << working_path << std::endl <<
-                        "Matching type            = " << matching_type << std::endl <<
-                        "Robot frame id           = " << robot_frame_id << std::endl <<
-                        "Enable debugging         = " << enable_debugging << std::endl <<
-                        "Enable enhacement        = " << enable_enhacement << std::endl <<
-                        "Motion estimation type   = " << motion_estimation_type);
+                        "Lowe's ratio                 = " << lowe_ratio << std::endl <<
+                        "Working path                 = " << working_path << std::endl <<
+                        "Matching type                = " << matching_type << std::endl <<
+                        "Robot frame id               = " << robot_frame_id << std::endl <<
+                        "Minimum inliers              = " << min_inliers << std::endl << 
+                        "Enable debugging             = " << enable_debugging << std::endl <<
+                        "Enable bucketing             = " << enable_bucketing << std::endl <<
+                        "Enable enhacement            = " << enable_enhacement << std::endl <<
+                        "Motion estimation type       = " << motion_estimation_type << std::endl <<
+                        "Maximum keypoints per bucket = " << max_kpts_bucket);
     }
 }
     
@@ -89,17 +97,19 @@ int main(int argc, char **argv)
     ros::start();
 
     // Read parameters.
-    int min_inliers;
     double lowe_ratio;
-    bool enable_debugging, enable_enhacement;
+    int min_inliers, max_kpts_bucket;
+    bool enable_debugging, enable_bucketing, enable_enhacement;
     std::string working_path, matching_type, robot_frame_id, motion_estimation_type;
-    readParams(min_inliers, lowe_ratio, enable_debugging, enable_enhacement, working_path,
-               matching_type, robot_frame_id, motion_estimation_type);
+    readParams(min_inliers, max_kpts_bucket, lowe_ratio, enable_debugging, enable_bucketing, 
+               enable_enhacement, working_path, matching_type, robot_frame_id, motion_estimation_type);
 
     // Declare threads.
     slamon::VisualOdometer visual_odometer(lowe_ratio, 
-                                           min_inliers, 
+                                           min_inliers,
+                                           max_kpts_bucket, 
                                            enable_debugging, 
+                                           enable_bucketing,
                                            enable_enhacement,
                                            working_path, 
                                            matching_type, 

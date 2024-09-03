@@ -45,8 +45,8 @@ class Publisher
             double run_time_1 = 0.0;     //!> Time needed for VO: Stereo matching, MAP: Need new keyframe? or LC: Search for candidates to close loops by proximity.
             double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MAP: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
             double run_time_3 = 0.0;     //!> Time needed for VO: Successive matching, MAP: Add edges to graph or LC: Read cluster candidates.
-            double run_time_4 = 0.0;     //!> Time needed for VO: Motion estimation, MAP: Write graph to disk and publish updated robot pose or LC: Loop detection.
-            double run_time_5 = 0.0;     //!> Time needed for VO: Nothing, MAP: Nothing or LC: Close loop.
+            double run_time_4 = 0.0;     //!> Time needed for VO: Bucketing, MAP: Write graph to disk and publish updated robot pose or LC: Loop detection.
+            double run_time_5 = 0.0;     //!> Time needed for VO: Motion estimation, MAP: Nothing or LC: Close loop.
             double total_run_time = 0.0; //!> Time needed for each thread to perform one iteration.
         };
 

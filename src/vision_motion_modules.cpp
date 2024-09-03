@@ -410,7 +410,7 @@ void VisionMotionModules::estimateMotion(const std::vector<int>& cluster_ids_0,
     cv::KeyPoint::convert(l_kpts_0, l_pts_0);
     cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
     cv::solvePnPRansac(cam_pts_1, l_pts_0, K, cv::Mat(), r_vec, t_vec, 
-                       false, 2000, 2.0, 0.99, inliers, motion_estimation_type_);
+                       false, 1000, 2.0, 0.99, inliers, motion_estimation_type_);
 
     // Filter keypoints, 3D points and clusters.
     for (uint i = 0; i < inliers.size(); i++)
@@ -466,9 +466,24 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::buck
                                                                                             std::vector<cv::Point3f>& f_cam_pts_0,
                                                                                             std::vector<cv::Point3f>& f_cam_pts_1)
 {
+    // Sanity check.
+    f_l_kpts_0.clear();
+    f_r_kpts_0.clear();
+    f_l_kpts_1.clear();
+    f_r_kpts_1.clear();
+    f_cam_pts_0.clear();
+    f_cam_pts_1.clear();
+
+    // If there are no right keypoints, the filtered right verctor must not be filled.
+    bool fill_right;
+    if (r_kpts_0.size() > 0)
+        fill_right = true;
+    else
+        fill_right = false;
+
     // Calculate the number of rows and columns that each bucket has.
-    float n_rows_bucket = n_rows_img / 10.0;
-    float n_cols_bucket = n_cols_img / 10.0;
+    float n_rows_bucket = (float)n_rows_img / 10.0;
+    float n_cols_bucket = (float)n_cols_img / 10.0;
 
     // Fill buckets with keypoints and its indices.
     int bucket_idx, bucket_row, bucket_col;
@@ -481,6 +496,8 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::buck
         buckets[bucket_idx].push_back(std::make_pair(i, l_kpts_0[i]));
     }
 
+    std::cout << "General Kenobi";
+
     // Remove excess keypoints from the buckets.
     int idx; 
     for (uint i = 0; i < buckets.size(); i++)
@@ -491,11 +508,15 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::buck
         {
             idx = buckets[i][j].first;
             f_l_kpts_0.push_back(l_kpts_0[idx]);
-            f_r_kpts_0.push_back(r_kpts_0[idx]);
             f_l_kpts_1.push_back(l_kpts_1[idx]);
-            f_r_kpts_1.push_back(r_kpts_1[idx]);
             f_cam_pts_0.push_back(cam_pts_0[idx]);
             f_cam_pts_1.push_back(cam_pts_1[idx]);
+
+            if (fill_right)
+            {
+                f_r_kpts_0.push_back(r_kpts_0[idx]);
+                f_r_kpts_1.push_back(r_kpts_1[idx]);
+            }
         }
     }
 

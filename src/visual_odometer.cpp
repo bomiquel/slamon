@@ -7,7 +7,9 @@ namespace slamon
 
     VisualOdometer::VisualOdometer(double ratio,
                                    int min_inliers,
+                                   int max_kpts_bucket,
                                    bool enable_debugging,
+                                   bool enable_bucketing,
                                    bool enable_enhacement,
                                    const std::string& w_path,
                                    std::string& matching_type,
@@ -19,7 +21,9 @@ namespace slamon
         w_path_ = w_path;
         min_inliers_ = min_inliers;
         robot_frame_id_ = robot_frame_id;
+        max_kpts_bucket_ = max_kpts_bucket;
         enable_debugging_ = enable_debugging;
+        enable_bucketing_ = enable_bucketing;
         enable_enhacement_ = enable_enhacement;
 
         // Set "uninitialised" status to visual odometer.
@@ -119,7 +123,8 @@ namespace slamon
                     status_ = SEMI_INITIALISED;
                 }
                 run_times_.run_time_3 = 0.0; // Succesive matching run time
-                run_times_.run_time_4 = 0.0; // Motion estimation run time
+                run_times_.run_time_4 = 0.0; // Bucketing run time
+                run_times_.run_time_5 = 0.0; // Motion estimation run time
                 break;
             }
             case SEMI_INITIALISED:
@@ -131,7 +136,8 @@ namespace slamon
                     status_ = RUNNING;
                 }
                 run_times_.run_time_3 = 0.0; // Succesive matching run time
-                run_times_.run_time_4 = 0.0; // Motion estimation run time
+                run_times_.run_time_4 = 0.0; // Bucketing run time
+                run_times_.run_time_5 = 0.0; // Motion estimation run time
                 break;
             }
             case RUNNING:
@@ -196,7 +202,8 @@ namespace slamon
                 else
                 {
                     run_times_.run_time_3 = 0.0; // Succesive matching run time
-                    run_times_.run_time_4 = 0.0; // Motion estimation run time
+                    run_times_.run_time_4 = 0.0; // Bucketing run time
+                    run_times_.run_time_5 = 0.0; // Motion estimation run time
                 }
                 break;
             }
@@ -292,19 +299,27 @@ namespace slamon
         int binning_y = l_info_msg->binning_y;
         if (binning_x > 1 || binning_y > 1)
         {
-        l_proj_mat_.at<double>(0,0) = l_proj_mat_.at<double>(0,0) / binning_x;
-        l_proj_mat_.at<double>(0,2) = l_proj_mat_.at<double>(0,2) / binning_x;
-        l_proj_mat_.at<double>(0,3) = l_proj_mat_.at<double>(0,3) / binning_x;
-        l_proj_mat_.at<double>(1,1) = l_proj_mat_.at<double>(1,1) / binning_y;
-        l_proj_mat_.at<double>(1,2) = l_proj_mat_.at<double>(1,2) / binning_y;
-        l_proj_mat_.at<double>(1,3) = l_proj_mat_.at<double>(1,3) / binning_y;
+            l_proj_mat_.at<double>(0,0) = l_proj_mat_.at<double>(0,0) / binning_x;
+            l_proj_mat_.at<double>(0,2) = l_proj_mat_.at<double>(0,2) / binning_x;
+            l_proj_mat_.at<double>(0,3) = l_proj_mat_.at<double>(0,3) / binning_x;
+            l_proj_mat_.at<double>(1,1) = l_proj_mat_.at<double>(1,1) / binning_y;
+            l_proj_mat_.at<double>(1,2) = l_proj_mat_.at<double>(1,2) / binning_y;
+            l_proj_mat_.at<double>(1,3) = l_proj_mat_.at<double>(1,3) / binning_y;
 
-        r_proj_mat_.at<double>(0,0) = r_proj_mat_.at<double>(0,0) / binning_x;
-        r_proj_mat_.at<double>(0,2) = r_proj_mat_.at<double>(0,2) / binning_x;
-        r_proj_mat_.at<double>(0,3) = r_proj_mat_.at<double>(0,3) / binning_x;
-        r_proj_mat_.at<double>(1,1) = r_proj_mat_.at<double>(1,1) / binning_y;
-        r_proj_mat_.at<double>(1,2) = r_proj_mat_.at<double>(1,2) / binning_y;
-        r_proj_mat_.at<double>(1,3) = r_proj_mat_.at<double>(1,3) / binning_y;
+            r_proj_mat_.at<double>(0,0) = r_proj_mat_.at<double>(0,0) / binning_x;
+            r_proj_mat_.at<double>(0,2) = r_proj_mat_.at<double>(0,2) / binning_x;
+            r_proj_mat_.at<double>(0,3) = r_proj_mat_.at<double>(0,3) / binning_x;
+            r_proj_mat_.at<double>(1,1) = r_proj_mat_.at<double>(1,1) / binning_y;
+            r_proj_mat_.at<double>(1,2) = r_proj_mat_.at<double>(1,2) / binning_y;
+            r_proj_mat_.at<double>(1,3) = r_proj_mat_.at<double>(1,3) / binning_y;
+
+            n_img_cols_ = l_info_msg->roi.width / binning_x;
+            n_img_rows_ = l_info_msg->roi.height / binning_y;
+        }
+        else
+        {
+            n_img_cols_ = l_info_msg->roi.width;
+            n_img_rows_ = l_info_msg->roi.height;
         }
 
         return true;
@@ -349,13 +364,13 @@ namespace slamon
 
         // Matching keypoints.
         start_module_time = ros::Time::now().toSec();
-        cv::Mat h_f_l_descs, h_f_r_descs;
-        std::vector<cv::KeyPoint> h_f_l_kpts, h_f_r_kpts;
-        matchStereoKeypoints(l_descs, r_descs, l_kpts, r_kpts, h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts);
+        cv::Mat m_l_descs, m_r_descs;
+        std::vector<cv::KeyPoint> m_l_kpts, m_r_kpts;
+        matchStereoKeypoints(l_descs, r_descs, l_kpts, r_kpts, m_l_descs, m_r_descs, m_l_kpts, m_r_kpts);
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Stereo matching run time.
 
         // Sanity check.
-        if (h_f_l_kpts.size() < (uint)(1.2 * min_inliers_))
+        if (m_l_kpts.size() < (uint)(1.2 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
@@ -368,7 +383,7 @@ namespace slamon
         cv::Mat f_l_descs, f_r_descs;
         std::vector<cv::Point3f> f_cam_pts;
         std::vector<cv::KeyPoint> f_l_kpts, f_r_kpts;
-        compute3DPoints(h_f_l_descs, h_f_r_descs, h_f_l_kpts, h_f_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_cam_pts);
+        compute3DPoints(m_l_descs, m_r_descs, m_l_kpts, m_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_cam_pts);
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
@@ -401,20 +416,21 @@ namespace slamon
 
         // Search for matches of keypoints between successive frames or pairs of frames.
         start_module_time = ros::Time::now().toSec();
-        std::vector<cv::Point3f> f_c_cam_pts, f_p_cam_pts;
-        std::vector<cv::KeyPoint> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
+        std::vector<cv::Point3f> m_c_cam_pts, m_p_cam_pts;
+        std::vector<cv::KeyPoint> m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts;
         matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), 
                                 c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), 
                                 c_frame.getCameraPoints(), p_frame_.getCameraPoints(),
-                                f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts);
+                                m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_cam_pts, m_p_cam_pts);
         run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Successive matching run time.
 
         // Sanity check.
-        if (f_c_l_kpts.size() < (uint)(1.2 * min_inliers_))
+        if (m_c_l_kpts.size() < (uint)(1.2 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
-            run_times_.run_time_4 = 0.0; // Motion estimation run time.
+            run_times_.run_time_4 = 0.0; // Bucketing run time.
+            run_times_.run_time_5 = 0.0; // Motion estimation run time.
             return false;
         }
         else
@@ -428,15 +444,35 @@ namespace slamon
         {
             if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
                 publishMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
-                               successive_matches_img_pub_, f_c_l_kpts, f_p_l_kpts);
+                               successive_matches_img_pub_, m_c_l_kpts, m_p_l_kpts);
 
             else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
                 publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                       c_frame.getTimestamp(), successive_matches_img_pub_, f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts);
+                                       c_frame.getTimestamp(), successive_matches_img_pub_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
 
             else
                 ROS_ERROR_STREAM("[VO->Non-stereo matcher debugger:] Unforeseen type of matching!");
         }
+
+        // Buckets keypoints.
+        start_module_time = ros::Time::now().toSec();
+        std::vector<cv::Point3f> f_c_cam_pts, f_p_cam_pts;
+        std::vector<cv::KeyPoint> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
+        if (enable_bucketing_)
+        {
+            bucketKeypoints(n_img_rows_, n_img_cols_, max_kpts_bucket_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_cam_pts, m_p_cam_pts,
+                            f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts);
+        }
+        else
+        {
+            f_c_l_kpts = m_c_l_kpts;
+            f_c_r_kpts = m_c_r_kpts;
+            f_p_l_kpts = m_p_l_kpts;
+            f_p_r_kpts = m_p_r_kpts;
+            f_c_cam_pts = m_c_cam_pts;
+            f_p_cam_pts = m_p_cam_pts;
+        }
+        run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Bucketing run time.
 
         // Estimate the motion.
         start_module_time = ros::Time::now().toSec();
@@ -446,7 +482,7 @@ namespace slamon
         estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts,
                        camera_rotation, camera_translation, 
                        i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_cam_pts, i_p_cam_pts);
-        run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
+        run_times_.run_time_5 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
 
         if (i_c_l_kpts.size() < (uint)(1.2 * min_inliers_))
         {

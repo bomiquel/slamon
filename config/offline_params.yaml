@@ -1,5 +1,6 @@
 slamon:
   enable_debugging: true
+  enable_bucketing: true
   enable_enhacement: true
   lc_candidates: 3
   lc_discard_window: 20
@@ -9,6 +10,7 @@ slamon:
   min_dist_keyframe: 0.5
   min_inliers: 60
   min_lc_inliers: 100
+  max_kpts_bucket: 3
   motion_estimation_type: ap3p
   robot_frame_id: /turbot/base_link
   # working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/portals_t0_test_clahe/ratio_matching/ap3p/execution_0/
