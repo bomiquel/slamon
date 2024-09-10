@@ -427,7 +427,7 @@ namespace slamon
         run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Successive matching run time.
 
         // Sanity check.
-        if (m_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
+        if (m_c_l_kpts.size() < (uint)(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
