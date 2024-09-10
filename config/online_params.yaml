@@ -8,7 +8,7 @@ slamon:
   lowe_ratio: 0.8
   matching_type: ratio_matching
   min_dist_keyframe: 0.5
-  min_inliers: 60
+  min_inliers: 40
   min_lc_inliers: 100
   max_kpts_bucket: 3
   motion_estimation_type: ap3p

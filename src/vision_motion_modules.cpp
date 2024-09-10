@@ -496,8 +496,6 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::buck
         buckets[bucket_idx].push_back(std::make_pair(i, l_kpts_0[i]));
     }
 
-    std::cout << "General Kenobi";
-
     // Remove excess keypoints from the buckets.
     int idx; 
     for (uint i = 0; i < buckets.size(); i++)

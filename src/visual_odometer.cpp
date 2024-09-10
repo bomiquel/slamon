@@ -7,6 +7,7 @@ namespace slamon
 
     VisualOdometer::VisualOdometer(double ratio,
                                    int min_inliers,
+                                   int min_lc_inliers,
                                    int max_kpts_bucket,
                                    bool enable_debugging,
                                    bool enable_bucketing,
@@ -20,6 +21,7 @@ namespace slamon
         // Inilitialises parameters.
         w_path_ = w_path;
         min_inliers_ = min_inliers;
+        min_lc_inliers_ = min_lc_inliers;
         robot_frame_id_ = robot_frame_id;
         max_kpts_bucket_ = max_kpts_bucket;
         enable_debugging_ = enable_debugging;
@@ -353,7 +355,7 @@ namespace slamon
             publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kps_img_pub_, l_kpts, r_kpts);
 
         // Sanity check.
-        if (l_kpts.size() < (uint)(1.2 * min_inliers_))
+        if (l_kpts.size() < (uint)(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo keypoints detector:] There are not enough keypoints to match and filter!");
@@ -370,7 +372,7 @@ namespace slamon
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Stereo matching run time.
 
         // Sanity check.
-        if (m_l_kpts.size() < (uint)(1.2 * min_inliers_))
+        if (m_l_kpts.size() < (uint)(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
@@ -387,7 +389,7 @@ namespace slamon
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
-        if (f_l_kpts.size() < (uint)(1.2 * min_inliers_))
+        if (f_l_kpts.size() < (uint)(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Triangulator:] There are not enough 3D points after triangulation!");
@@ -425,7 +427,7 @@ namespace slamon
         run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Successive matching run time.
 
         // Sanity check.
-        if (m_c_l_kpts.size() < (uint)(1.2 * min_inliers_))
+        if (m_c_l_kpts.size() < (uint)(1.5 * min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
@@ -484,7 +486,7 @@ namespace slamon
                        i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_cam_pts, i_p_cam_pts);
         run_times_.run_time_5 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
 
-        if (i_c_l_kpts.size() < (uint)(1.2 * min_inliers_))
+        if (i_c_l_kpts.size() < (uint)(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Motion estimator:] There are not enough inliers after motion estimation!");

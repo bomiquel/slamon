@@ -566,7 +566,7 @@ namespace slamon
 
     bool Map::addFrameToMap(Frame& c_frame)
     {
-        if (c_frame.getLeftKpts().size() > (long unsigned int)(min_lc_inliers_/2))
+        if (c_frame.getLeftKpts().size() > (uint)(min_lc_inliers_/2))
         {
             c_frame.regionClustering();
 

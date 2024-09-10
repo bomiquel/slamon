@@ -46,8 +46,9 @@ namespace slamon
 
             /** \brief Class constructor.
              *  \param ratio The ratio for Lowe's ratio test.
-             *  \param max_kpts_bucket The maximum number of keypoints per bucket.
-             *  \param min_inliers The minimum number of keypoints to estimate the movement.
+             *  \param min_inliers Minimum number of keypoints to estimate the movement.
+             *  \param min_lc_inliers Minimum number of inliers for loop closure (input).
+             *  \param max_kpts_bucket Maximum number of keypoints per bucket.
              *  \param enable_debugging Enabling or disabling debugging messages and topics.
              *  \param enable_bucketing Enabling or disabling keypoints bucketing.
              *  \param enable_enhacement Enabling or disabling image enhacement.
@@ -58,6 +59,7 @@ namespace slamon
              */
             VisualOdometer(double ratio,
                            int min_inliers,
+                           int min_lc_inliers,
                            int max_kpts_bucket,
                            bool enable_debugging,
                            bool enable_bucketing,
@@ -191,9 +193,11 @@ namespace slamon
 
             int n_img_cols_; //!> Number of image cols.
 
-            int min_inliers_; //!> The minimum number of inliers to estimate the movement.
+            int min_inliers_; //!> Minimum number of inliers to estimate the movement.
+
+            int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
             
-            int max_kpts_bucket_; //!> The maximum number of keypoints per bucket.
+            int max_kpts_bucket_; //!> Maximum number of keypoints per bucket.
 
             Frame p_frame_; //!> Previous frame.
             

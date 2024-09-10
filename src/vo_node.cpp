@@ -9,6 +9,7 @@
 
 
 void readParams(int& min_inliers,
+                int& min_lc_inliers,
                 int& max_kpts_bucket,
                 double& lowe_ratio, 
                 bool& enable_debugging,
@@ -23,6 +24,7 @@ void readParams(int& min_inliers,
     ros::NodeHandle nh;
     nh.param("slamon/lowe_ratio",             lowe_ratio,             0.8);
     nh.param("slamon/min_inliers",            min_inliers,            20);
+    nh.param("slamon/min_lc_inliers",         min_lc_inliers,         40);
     nh.param("slamon/working_path",           working_path,           ros::package::getPath("slamon") + "/output/");
     nh.param("slamon/matching_type",          matching_type,          std::string("ratio_matching"));
     nh.param("slamon/robot_frame_id",         robot_frame_id,         std::string("base_link"));
@@ -43,6 +45,7 @@ void readParams(int& min_inliers,
                     "Enable bucketing             = " << enable_bucketing << std::endl <<
                     "Enable enhacement            = " << enable_enhacement << std::endl <<
                     "Motion estimation type       = " << motion_estimation_type << std::endl <<
+                    "Min loop closing inliers     = " << min_lc_inliers << std::endl <<
                     "Maximum keypoints per bucket = " << max_kpts_bucket);
 
     // Checking the validity of the parameters
@@ -52,9 +55,14 @@ void readParams(int& min_inliers,
         lowe_ratio = 0.85;
         invalid_parameter = true;
     }
-    if (min_inliers < 10)
+    if (min_lc_inliers < 30)
     {
-        min_inliers = 10;
+        min_lc_inliers = 30;
+        invalid_parameter = true;
+    }
+    if (min_inliers < (int)(0.5 * min_lc_inliers))
+    {
+        min_inliers = 0.5 * min_lc_inliers;
         invalid_parameter = true;
     }
     if (working_path == "")
@@ -85,6 +93,7 @@ void readParams(int& min_inliers,
                         "Enable bucketing             = " << enable_bucketing << std::endl <<
                         "Enable enhacement            = " << enable_enhacement << std::endl <<
                         "Motion estimation type       = " << motion_estimation_type << std::endl <<
+                        "Min loop closing inliers     = " << min_lc_inliers << std::endl <<
                         "Maximum keypoints per bucket = " << max_kpts_bucket);
     }
 }
@@ -98,15 +107,16 @@ int main(int argc, char **argv)
 
     // Read parameters.
     double lowe_ratio;
-    int min_inliers, max_kpts_bucket;
+    int min_inliers, min_lc_inliers, max_kpts_bucket;
     bool enable_debugging, enable_bucketing, enable_enhacement;
     std::string working_path, matching_type, robot_frame_id, motion_estimation_type;
-    readParams(min_inliers, max_kpts_bucket, lowe_ratio, enable_debugging, enable_bucketing, 
+    readParams(min_inliers, min_lc_inliers, max_kpts_bucket, lowe_ratio, enable_debugging, enable_bucketing, 
                enable_enhacement, working_path, matching_type, robot_frame_id, motion_estimation_type);
 
     // Declare threads.
     slamon::VisualOdometer visual_odometer(lowe_ratio, 
                                            min_inliers,
+                                           min_lc_inliers,
                                            max_kpts_bucket, 
                                            enable_debugging, 
                                            enable_bucketing,
