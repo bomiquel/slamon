@@ -55,14 +55,14 @@ void readParams(int& min_inliers,
         lowe_ratio = 0.85;
         invalid_parameter = true;
     }
+    if (min_inliers < 20)
+    {
+        min_inliers = 20;
+        invalid_parameter = true;
+    }
     if (min_lc_inliers < 30)
     {
         min_lc_inliers = 30;
-        invalid_parameter = true;
-    }
-    if (min_inliers < (int)(0.5 * min_lc_inliers))
-    {
-        min_inliers = 0.5 * min_lc_inliers;
         invalid_parameter = true;
     }
     if (working_path == "")
