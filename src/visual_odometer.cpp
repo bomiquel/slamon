@@ -352,7 +352,7 @@ namespace slamon
 
         // Keypoint detection debugging.
         if (stereo_kps_img_pub_.getNumSubscribers() > 0)
-            publishStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kps_img_pub_, l_kpts, r_kpts);
+            publishImgStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kps_img_pub_, l_kpts, r_kpts);
 
         // Sanity check.
         if (l_kpts.size() < (uint)(min_lc_inliers_/2))
@@ -398,7 +398,7 @@ namespace slamon
 
         // Stereo matching keypoints debugging.
         if (stereo_matches_img_pub_.getNumSubscribers() > 0)
-            publishMatches(false, l_img, r_img, l_img_msg->header.stamp, stereo_matches_img_pub_, f_l_kpts, f_r_kpts);
+            publishImgMatches(false, l_img, r_img, l_img_msg->header.stamp, stereo_matches_img_pub_, f_l_kpts, f_r_kpts);
 
         // Fill Frame object
         c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_cam_pts);
@@ -445,11 +445,11 @@ namespace slamon
         if (successive_matches_img_pub_.getNumSubscribers() > 0)
         {
             if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
-                publishMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
+                publishImgMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
                                successive_matches_img_pub_, m_c_l_kpts, m_p_l_kpts);
 
             else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
-                publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
+                publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
                                        c_frame.getTimestamp(), successive_matches_img_pub_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
 
             else
@@ -502,11 +502,11 @@ namespace slamon
         if (inliers_img_pub_.getNumSubscribers() > 0)
         {
             if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
-                publishMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
+                publishImgMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
                                inliers_img_pub_, i_c_l_kpts, i_p_l_kpts);
 
             else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
-                publishCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
+                publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
                                        c_frame.getTimestamp(), inliers_img_pub_, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts);
 
             else

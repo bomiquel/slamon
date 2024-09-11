@@ -357,8 +357,8 @@ namespace slamon
                 cv::imwrite(keyframe_path_ + c_keyframe_name + "_left.png", c_frame.getLeftImg());
                 cv::imwrite(keyframe_path_ + c_keyframe_name + "_right.png", c_frame.getRightImg());
                 if (clustering_img_pub_.getNumSubscribers() > 0)
-                    publishKeypointsClustering(c_frame.getLeftImg(), stamp, clustering_img_pub_, l_kpts, clusters);
-                writeKeypointsClustering(c_frame.getLeftImg(), clusters_path_ + c_keyframe_name, l_kpts, clusters);
+                    publishImgKeypointsClustering(c_frame.getLeftImg(), stamp, clustering_img_pub_, l_kpts, clusters);
+                writeImgKeypointsClustering(c_frame.getLeftImg(), clusters_path_ + c_keyframe_name, l_kpts, clusters);
                 ROS_INFO_STREAM("[MAP->Includer]: Adding keyframe: " << c_keyframe_id_);
             }
 

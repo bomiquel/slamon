@@ -204,4 +204,4 @@ namespace slamon
 
 } // End namespace
 
-#endif // LOOP_CLOSER_HPPPP
+#endif // LOOP_CLOSER_HPP

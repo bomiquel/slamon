@@ -24,10 +24,10 @@ public:
     Params();
 
     // Class parameters
-    int num_proj;                   //!> Number of projections required
+    int proj_num;                   //!> Number of projections required
 
     // Default values
-    static const int              DEFAULT_NUM_PROJ = 3;
+    static const int              DEFAULT_PROJ_NUM = 3;
   };
 
   // Set the parameter struct

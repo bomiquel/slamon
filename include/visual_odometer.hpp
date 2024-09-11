@@ -235,21 +235,21 @@ namespace slamon
 
             ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
 
-            ros::Publisher inliers_img_pub_; // !> Publisher for the image with drawn inliers.
+            ros::Publisher inliers_img_pub_; //!> Publisher for the image with drawn inliers.
 
-            ros::Publisher stereo_kps_img_pub_; // !> Publisher for the image with drawn stereo keypoints.
+            ros::Publisher stereo_kps_img_pub_; //!> Publisher for the image with drawn stereo keypoints.
 
-            ros::Publisher stereo_matches_img_pub_; // !> Publisher for the image with drawn stereo matches.
+            ros::Publisher stereo_matches_img_pub_; //!> Publisher for the image with drawn stereo matches.
 
-            ros::Publisher successive_matches_img_pub_; // !> Publisher for the image with drawn successive matches.
+            ros::Publisher successive_matches_img_pub_; //!> Publisher for the image with drawn successive matches.
 
             ros::ServiceClient initial_odom_client_; //!> Service for requesting the initial position to the SLAM.
             
-            ros::ServiceServer robot2camera_server_; // !> Service for sending robot2camera transform.
+            ros::ServiceServer robot2camera_server_; //!> Service for sending robot2camera transform.
 
-            ros::ServiceServer proj_mat_server_; // !> Service for sending projection matrices.
+            ros::ServiceServer proj_mat_server_; //!> Service for sending projection matrices.
 
-            RunTimes run_times_; // !> Internal visual odometer execution times.
+            RunTimes run_times_; //!> Internal visual odometer execution times.
 
             // Topic sync
             typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,

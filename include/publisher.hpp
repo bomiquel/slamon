@@ -58,10 +58,10 @@ class Publisher
          *  file must be included (input).
          *  \param kpts The keypoints (input).
          */
-        void writeKeypoints(const cv::Mat& img,
-                            const cv::Scalar& color,
-                            const std::string& o_path,
-                            const std::vector<cv::KeyPoint> kpts);
+        void writeImgKeypoints(const cv::Mat& img,
+                               const cv::Scalar& color,
+                               const std::string& o_path,
+                               const std::vector<cv::KeyPoint> kpts);
 
 
         /** \brief Publishes stereo images with its keypoints drawn.
@@ -72,12 +72,12 @@ class Publisher
          *  \param l_kpts The left image keypoints (input).
          *  \param r_kpts The left image keypoints (input).
          */
-        void publishStereoKeypoints(const cv::Mat& l_img,
-                                    const cv::Mat& r_img,
-                                    const ros::Time& stamp,
-                                    const ros::Publisher& publisher,
-                                    const std::vector<cv::KeyPoint>& l_kpts,
-                                    const std::vector<cv::KeyPoint>& r_kpts);
+        void publishImgStereoKeypoints(const cv::Mat& l_img,
+                                       const cv::Mat& r_img,
+                                       const ros::Time& stamp,
+                                       const ros::Publisher& publisher,
+                                       const std::vector<cv::KeyPoint>& l_kpts,
+                                       const std::vector<cv::KeyPoint>& r_kpts);
 
 
         /** \brief Writes on disk the stereoscopic images with their
@@ -89,11 +89,11 @@ class Publisher
          *  \param l_kpts The left image keypoints (input).
          *  \param r_kpts The left image keypoints (input).
          */
-        void writeStereoKeypoints(const cv::Mat& l_img,
-                                  const cv::Mat& r_img,
-                                  const std::string& o_path,
-                                  const std::vector<cv::KeyPoint>& l_kpts,
-                                  const std::vector<cv::KeyPoint>& r_kpts);
+        void writeImgStereoKeypoints(const cv::Mat& l_img,
+                                     const cv::Mat& r_img,
+                                     const std::string& o_path,
+                                     const std::vector<cv::KeyPoint>& l_kpts,
+                                     const std::vector<cv::KeyPoint>& r_kpts);
 
 
         /** \brief Draws and publishes vertical (successive) or horizontal (stereo)
@@ -110,13 +110,13 @@ class Publisher
          *  \param m_kpts_0 Matched and sorted current/left keypoints (input).
          *  \param m_kpts_1 Matched and sorted previous/right keypoints (input).
          */
-        void publishMatches(const bool vertical, 
-                            const cv::Mat& img_0,
-                            const cv::Mat& img_1,
-                            const ros::Time& stamp,
-                            const ros::Publisher& publisher,
-                            const std::vector<cv::KeyPoint>& m_kpts_0,
-                            const std::vector<cv::KeyPoint>& m_kpts_1);
+        void publishImgMatches(const bool vertical, 
+                               const cv::Mat& img_0,
+                               const cv::Mat& img_1,
+                               const ros::Time& stamp,
+                               const ros::Publisher& publisher,
+                               const std::vector<cv::KeyPoint>& m_kpts_0,
+                               const std::vector<cv::KeyPoint>& m_kpts_1);
 
 
         /** \brief Draws and writes on disk vertical (successive) or horizontal (stereo)
@@ -133,12 +133,12 @@ class Publisher
          *  \param m_kpts_0 Matched and sorted current/left keypoints (input).
          *  \param m_kpts_1 Matched and sorted previous/right keypoints (input).
          */
-        void writeMatches(const bool vertical, 
-                          const cv::Mat& img_0,
-                          const cv::Mat& img_1,
-                          const std::string& o_path,
-                          const std::vector<cv::KeyPoint>& m_kpts_0,
-                          const std::vector<cv::KeyPoint>& m_kpts_1);
+        void writeImgMatches(const bool vertical, 
+                             const cv::Mat& img_0,
+                             const cv::Mat& img_1,
+                             const std::string& o_path,
+                             const std::vector<cv::KeyPoint>& m_kpts_0,
+                             const std::vector<cv::KeyPoint>& m_kpts_1);
 
 
         /** \brief Draws and publishes circular matches.
@@ -153,16 +153,16 @@ class Publisher
          *  \param m_p_l_kpts Matched and sorted previous left keypoints (input).
          *  \param m_p_r_kpts Matched and sorted previous right keypoints (input).
          */
-        void publishCircularMatches(const cv::Mat& c_l_img,                                    
-                                    const cv::Mat& c_r_img,
-                                    const cv::Mat& p_l_img,
-                                    const cv::Mat& p_r_img,
-                                    const ros::Time& stamp,
-                                    const ros::Publisher& publisher,
-                                    const std::vector<cv::KeyPoint>& m_c_l_kpts,
-                                    const std::vector<cv::KeyPoint>& m_c_r_kpts,
-                                    const std::vector<cv::KeyPoint>& m_p_l_kpts,
-                                    const std::vector<cv::KeyPoint>& m_p_r_kpts);
+        void publishImgCircularMatches(const cv::Mat& c_l_img,                                    
+                                       const cv::Mat& c_r_img,
+                                       const cv::Mat& p_l_img,
+                                       const cv::Mat& p_r_img,
+                                       const ros::Time& stamp,
+                                       const ros::Publisher& publisher,
+                                       const std::vector<cv::KeyPoint>& m_c_l_kpts,
+                                       const std::vector<cv::KeyPoint>& m_c_r_kpts,
+                                       const std::vector<cv::KeyPoint>& m_p_l_kpts,
+                                       const std::vector<cv::KeyPoint>& m_p_r_kpts);
 
 
         /** \brief Draws and writes on disk circular matches.
@@ -177,15 +177,15 @@ class Publisher
          *  \param m_p_l_kpts Matched and sorted previous left keypoints (input).
          *  \param m_p_r_kpts Matched and sorted previous right keypoints (input).
          */
-        void writeCircularMatches(const cv::Mat& c_l_img,
-                                  const cv::Mat& c_r_img,
-                                  const cv::Mat& p_l_img,
-                                  const cv::Mat& p_r_img,
-                                  const std::string& o_path,
-                                  const std::vector<cv::KeyPoint>& m_c_l_kpts,
-                                  const std::vector<cv::KeyPoint>& m_c_r_kpts,
-                                  const std::vector<cv::KeyPoint>& m_p_l_kpts,
-                                  const std::vector<cv::KeyPoint>& m_p_r_kpts);
+        void writeImgCircularMatches(const cv::Mat& c_l_img,
+                                     const cv::Mat& c_r_img,
+                                     const cv::Mat& p_l_img,
+                                     const cv::Mat& p_r_img,
+                                     const std::string& o_path,
+                                     const std::vector<cv::KeyPoint>& m_c_l_kpts,
+                                     const std::vector<cv::KeyPoint>& m_c_r_kpts,
+                                     const std::vector<cv::KeyPoint>& m_p_l_kpts,
+                                     const std::vector<cv::KeyPoint>& m_p_r_kpts);
 
 
         /** \brief Draws and publishes keypoints clustering.
@@ -195,11 +195,11 @@ class Publisher
          *  \param l_kpts Left keypoints (input).
          *  \param clusters Keypoints clustering (input).
          */
-        void publishKeypointsClustering(const cv::Mat& l_img,
-                                        const ros::Time& stamp,
-                                        const ros::Publisher& publisher,
-                                        const std::vector<cv::KeyPoint>& l_kpts,
-                                        const std::vector<std::vector<int>>& clusters);
+        void publishImgKeypointsClustering(const cv::Mat& l_img,
+                                           const ros::Time& stamp,
+                                           const ros::Publisher& publisher,
+                                           const std::vector<cv::KeyPoint>& l_kpts,
+                                           const std::vector<std::vector<int>>& clusters);
 
 
         /** \brief Draws and writes on disk keypoints clustering.
@@ -209,10 +209,10 @@ class Publisher
          *  file must be included (input).
          *  \param clusters Keypoints clustering (input).
          */
-        void writeKeypointsClustering(const cv::Mat& l_img,
-                                      const std::string& o_path,
-                                      const std::vector<cv::KeyPoint>& l_kpts,
-                                      const std::vector<std::vector<int>>& clusters);
+        void writeImgKeypointsClustering(const cv::Mat& l_img,
+                                         const std::string& o_path,
+                                         const std::vector<cv::KeyPoint>& l_kpts,
+                                         const std::vector<std::vector<int>>& clusters);
 
 
         /** \brief Draws and publishes a loop closure image with all the correspondences
@@ -239,20 +239,20 @@ class Publisher
          *  \param cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
          *  relation (cand_cluster_id, cand_keyframe_id) (input).
          */
-        void publishLoopClosure(const ros::Time& stamp,
-                                const ros::Publisher& publisher,
-                                const int q_keyframe_id,
-                                const std::string& i_path,
-                                const std::vector<int>& q_cluster_ids,
-                                const std::vector<int>& cand_cluster_ids,
-                                const std::vector<int>& cand_keyframe_ids,
-                                const std::vector<cv::KeyPoint>& f_q_l_kpts,
-                                const std::vector<cv::KeyPoint>& f_q_r_kpts,
-                                const std::vector<cv::KeyPoint>& f_cand_l_kpts,
-                                const std::vector<cv::KeyPoint>& f_cand_r_kpts,
-                                const std::vector<int>& definitive_inliers_per_pair,
-                                const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
-                                const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
+        void publishImgLoopClosure(const ros::Time& stamp,
+                                   const ros::Publisher& publisher,
+                                   const int q_keyframe_id,
+                                   const std::string& i_path,
+                                   const std::vector<int>& q_cluster_ids,
+                                   const std::vector<int>& cand_cluster_ids,
+                                   const std::vector<int>& cand_keyframe_ids,
+                                   const std::vector<cv::KeyPoint>& f_q_l_kpts,
+                                   const std::vector<cv::KeyPoint>& f_q_r_kpts,
+                                   const std::vector<cv::KeyPoint>& f_cand_l_kpts,
+                                   const std::vector<cv::KeyPoint>& f_cand_r_kpts,
+                                   const std::vector<int>& definitive_inliers_per_pair,
+                                   const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
+                                   const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
 
 
         /** \brief Draws and writes on disk a loop closure image with all the correspondences
@@ -279,19 +279,19 @@ class Publisher
          *  \param cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
          *  relation (cand_cluster_id, cand_keyframe_id) (input).
          */
-        void writeLoopClosure(const std::string& o_path,
-                              const int q_keyframe_id,
-                              const std::string& i_path,
-                              const std::vector<int>& q_cluster_ids,
-                              const std::vector<int>& cand_cluster_ids,
-                              const std::vector<int>& cand_keyframe_ids,
-                              const std::vector<cv::KeyPoint>& f_q_l_kpts,
-                              const std::vector<cv::KeyPoint>& f_q_r_kpts,
-                              const std::vector<cv::KeyPoint>& f_cand_l_kpts,
-                              const std::vector<cv::KeyPoint>& f_cand_r_kpts,
-                              const std::vector<int>& definitive_inliers_per_pair,
-                              const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
-                              const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
+        void writeImgLoopClosure(const std::string& o_path,
+                                 const int q_keyframe_id,
+                                 const std::string& i_path,
+                                 const std::vector<int>& q_cluster_ids,
+                                 const std::vector<int>& cand_cluster_ids,
+                                 const std::vector<int>& cand_keyframe_ids,
+                                 const std::vector<cv::KeyPoint>& f_q_l_kpts,
+                                 const std::vector<cv::KeyPoint>& f_q_r_kpts,
+                                 const std::vector<cv::KeyPoint>& f_cand_l_kpts,
+                                 const std::vector<cv::KeyPoint>& f_cand_r_kpts,
+                                 const std::vector<int>& definitive_inliers_per_pair,
+                                 const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
+                                 const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
 
 
         /** \brief Publishes current robot pose.
@@ -395,9 +395,9 @@ class Publisher
          *  \param kpts The points (input).
          *  @return The image with the points drawn.
          */
-        cv::Mat drawKeypoints(const cv::Mat& img,
-                              const cv::Scalar& color,
-                              const std::vector<cv::KeyPoint>& kpts);
+        cv::Mat drawImgKeypoints(const cv::Mat& img,
+                                 const cv::Scalar& color,
+                                 const std::vector<cv::KeyPoint>& kpts);
 
 
         /** \brief Writes text at the bottom of the image. 
@@ -409,10 +409,10 @@ class Publisher
          *  \param text The text (input).
          *  @return An image with the txt at the bottom.
          */
-        cv::Mat writeTxtInImage(const bool caption,
-                                const cv::Mat& img,
-                                const std::stringstream& text,
-                                const int extra_vertical_space);
+        cv::Mat drawTxtInImage(const bool caption,
+                               const cv::Mat& img,
+                               const std::stringstream& text,
+                               const int extra_vertical_space);
 
 
         /** \brief Concatenates the stereo images and draw their keypoints. 
@@ -423,11 +423,11 @@ class Publisher
          *  @return An image showing the stereo pair with its key points
          *  drawn and a text indicating the number of points.
          */
-        cv::Mat drawStereoKeypoints(const cv::Mat& l_img,
-                                    const cv::Mat& r_img,
-                                    const cv::Scalar& color,
-                                    const std::vector<cv::KeyPoint>& l_kpts,
-                                    const std::vector<cv::KeyPoint>& r_kpts);
+        cv::Mat drawImgStereoKeypoints(const cv::Mat& l_img,
+                                       const cv::Mat& r_img,
+                                       const cv::Scalar& color,
+                                       const std::vector<cv::KeyPoint>& l_kpts,
+                                       const std::vector<cv::KeyPoint>& r_kpts);
 
 
         /** \brief Draws vertical or horizontal matches between two images.
@@ -443,12 +443,12 @@ class Publisher
          *  \param m_kpts_1 Matched and sorted previous/right keypoints (input).
          *  @return a concatened and drawn image. 
          */
-        cv::Mat drawMatches(const bool vertical,
-                            const cv::Mat& img_0,
-                            const cv::Mat& img_1,
-                            const cv::Scalar& color,
-                            const std::vector<cv::KeyPoint>& m_kpts_0,
-                            const std::vector<cv::KeyPoint>& m_kpts_1);
+        cv::Mat drawImgMatches(const bool vertical,
+                               const cv::Mat& img_0,
+                               const cv::Mat& img_1,
+                               const cv::Scalar& color,
+                               const std::vector<cv::KeyPoint>& m_kpts_0,
+                               const std::vector<cv::KeyPoint>& m_kpts_1);
 
 
         /** \brief Draws circular matches.
@@ -464,15 +464,15 @@ class Publisher
          *  @return An image where the current stereo pair and the previous stereo
          *  pair are concatenated with the drawn matches.
          */
-        cv::Mat drawCircularMatches(const cv::Mat& c_l_img,                                    
-                                    const cv::Mat& c_r_img,
-                                    const cv::Mat& p_l_img,
-                                    const cv::Mat& p_r_img,
-                                    const cv::Scalar& color,
-                                    const std::vector<cv::KeyPoint>& m_c_l_kpts,
-                                    const std::vector<cv::KeyPoint>& m_c_r_kpts,
-                                    const std::vector<cv::KeyPoint>& m_p_l_kpts,
-                                    const std::vector<cv::KeyPoint>& m_p_r_kpts);
+        cv::Mat drawImgCircularMatches(const cv::Mat& c_l_img,                                    
+                                       const cv::Mat& c_r_img,
+                                       const cv::Mat& p_l_img,
+                                       const cv::Mat& p_r_img,
+                                       const cv::Scalar& color,
+                                       const std::vector<cv::KeyPoint>& m_c_l_kpts,
+                                       const std::vector<cv::KeyPoint>& m_c_r_kpts,
+                                       const std::vector<cv::KeyPoint>& m_p_l_kpts,
+                                       const std::vector<cv::KeyPoint>& m_p_r_kpts);
 
 
         /** \brief Draws keypoints clustering.
@@ -480,9 +480,9 @@ class Publisher
          *  \param kpts The keypoints (input).
          *  \param clusters Keypoints clustering (input).
          */
-        cv::Mat drawKeypointsClustering(const cv::Mat& img,
-                                        const std::vector<cv::KeyPoint>& kpts,
-                                        const std::vector<std::vector<int>>& clusters);
+        cv::Mat drawImgKeypointsClustering(const cv::Mat& img,
+                                           const std::vector<cv::KeyPoint>& kpts,
+                                           const std::vector<std::vector<int>>& clusters);
 
 
         /** \brief Draws a loop closure image with all the correspondences
@@ -507,18 +507,18 @@ class Publisher
          *  \param cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
          *  relation (cand_cluster_id, cand_keyframe_id) (input).
          */
-        cv::Mat drawLoopClosure(const int q_keyframe_id,
-                                const std::string& i_path,
-                                const std::vector<int>& q_cluster_ids,
-                                const std::vector<int>& cand_cluster_ids,
-                                const std::vector<int>& cand_keyframe_ids,
-                                const std::vector<cv::KeyPoint>& f_q_l_kpts,
-                                const std::vector<cv::KeyPoint>& f_q_r_kpts,
-                                const std::vector<cv::KeyPoint>& f_cand_l_kpts,
-                                const std::vector<cv::KeyPoint>& f_cand_r_kpts,
-                                const std::vector<int>& definitive_inliers_per_pair,
-                                const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
-                                const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
+        cv::Mat drawImgLoopClosure(const int q_keyframe_id,
+                                   const std::string& i_path,
+                                   const std::vector<int>& q_cluster_ids,
+                                   const std::vector<int>& cand_cluster_ids,
+                                   const std::vector<int>& cand_keyframe_ids,
+                                   const std::vector<cv::KeyPoint>& f_q_l_kpts,
+                                   const std::vector<cv::KeyPoint>& f_q_r_kpts,
+                                   const std::vector<cv::KeyPoint>& f_cand_l_kpts,
+                                   const std::vector<cv::KeyPoint>& f_cand_r_kpts,
+                                   const std::vector<int>& definitive_inliers_per_pair,
+                                   const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
+                                   const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
 
 
         /** \brief Builds nav_msgs::Odometry msg with current pose.
@@ -537,9 +537,9 @@ class Publisher
          *  \param stamp The ROS timestamp (input).
          *  \param publisher The ROS publisher (input).
          */
-        void publishImage(const cv::Mat& img,
-                          const ros::Time& stamp,
-                          const ros::Publisher& publisher);
+        void publishImg(const cv::Mat& img,
+                        const ros::Time& stamp,
+                        const ros::Publisher& publisher);
 };
 
 

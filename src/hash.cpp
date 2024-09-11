@@ -6,7 +6,7 @@
 /** \brief Parameter constructor. Sets the parameter struct to default values.
   */
 haloc::Hash::Params::Params() :
-  num_proj(DEFAULT_NUM_PROJ)
+  proj_num(DEFAULT_PROJ_NUM)
 {}
 
 /** \brief Hash class constructor
@@ -42,7 +42,7 @@ void haloc::Hash::init(cv::Mat desc)
   initProjections(desc.rows);
 
   // Set the size of the descriptors
-  h_size_ = params_.num_proj * desc.cols;
+  h_size_ = params_.proj_num * desc.cols;
 
   // Set initialized to true
   initialized_ = true;
@@ -98,10 +98,10 @@ void haloc::Hash::initProjections(int desc_size)
   std::vector<float> r = compute_random_vector(seed, v_size);
   r_.push_back(unit_vector(r));
 
-  std::cout << "params_.num_proj: " <<  params_.num_proj << std::endl;
+  std::cout << "params_.proj_num: " <<  params_.proj_num << std::endl;
 
   // Generate the set of orthogonal vectors
-  for (int i=1; i<params_.num_proj; i++)
+  for (int i=1; i<params_.proj_num; i++)
   {
     // Generate a random vector of the correct size
     std::vector<float> new_v = compute_random_vector(seed + i, v_size - i);

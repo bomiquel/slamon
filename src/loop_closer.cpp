@@ -648,7 +648,7 @@ namespace slamon
                         if (enable_debugging_)
                         {
                             if (loop_closure_img_pub_.getNumSubscribers() > 0)
-                                publishLoopClosure(ros::Time::now(), 
+                                publishImgLoopClosure(ros::Time::now(), 
                                                    loop_closure_img_pub_,
                                                    q_cluster.getKeyframeId(),
                                                    keyframe_path_,
@@ -663,7 +663,7 @@ namespace slamon
                                                    definitive_cluster_pairs,
                                                    cand_cluster_keyframe_relation);
 
-                            writeLoopClosure(lc_path_ + convertTo5Digits(loop_closure_num_),
+                            writeImgLoopClosure(lc_path_ + convertTo5Digits(loop_closure_num_),
                                              q_cluster.getKeyframeId(),
                                              keyframe_path_,
                                              i_q_cluster_ids,
