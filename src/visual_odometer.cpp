@@ -63,13 +63,16 @@ namespace slamon
         proj_mat_server_ = nhp.advertiseService("send_projection_matrices", &VisualOdometer::sendProjectionMatrices, this);
 
         // Publishers.
-        stereo_data_pub_ = nhp.advertise<slamon::StereoData>("stereo_data", 1);
         run_times_pub_ = nhp.advertise<slamon::Performance>("vo_performance", 1);
+        stereo_data_pub_ = nhp.advertise<slamon::StereoData>("stereo_data", 1);
         robot_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_odom", 1);
         camera_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_odom", 1);
+        inliers_num_pub_ = nhp.advertise<std_msgs::Int32>("inliers_num", 1);
         inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("inliers_img", 1);
-        stereo_kps_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
+        stereo_kpts_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
+        stereo_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("stereo_matches_num", 1);
         stereo_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_matches_img", 1);
+        successive_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("successive_matches_num", 1);
         successive_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("successive_matches_img", 1);
 
         // Subscribers.
@@ -351,8 +354,8 @@ namespace slamon
             return false;
 
         // Keypoint detection debugging.
-        if (stereo_kps_img_pub_.getNumSubscribers() > 0)
-            publishImgStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kps_img_pub_, l_kpts, r_kpts);
+        if (stereo_kpts_img_pub_.getNumSubscribers() > 0)
+            publishImgStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kpts_img_pub_, l_kpts, r_kpts);
 
         // Sanity check.
         if (l_kpts.size() < (uint)(min_lc_inliers_/2))
@@ -397,6 +400,8 @@ namespace slamon
         }
 
         // Stereo matching keypoints debugging.
+        if (stereo_matches_num_pub_.getNumSubscribers() > 0)
+            publishCounter(f_l_kpts.size(), stereo_matches_num_pub_);
         if (stereo_matches_img_pub_.getNumSubscribers() > 0)
             publishImgMatches(false, l_img, r_img, l_img_msg->header.stamp, stereo_matches_img_pub_, f_l_kpts, f_r_kpts);
 
@@ -426,6 +431,21 @@ namespace slamon
                                 m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_cam_pts, m_p_cam_pts);
         run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Successive matching run time.
 
+        // Non stereo matching keypoints debugging.
+        if (successive_matches_num_pub_.getNumSubscribers() > 0)
+            publishCounter(m_c_l_kpts.size(), successive_matches_num_pub_);
+        if (successive_matches_img_pub_.getNumSubscribers() > 0)
+        {
+            if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
+                publishImgMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
+                                  successive_matches_img_pub_, m_c_l_kpts, m_p_l_kpts);
+            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
+                publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
+                                          c_frame.getTimestamp(), successive_matches_img_pub_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
+            else
+                ROS_ERROR_STREAM("[VO->Non-stereo matcher debugger:] Unforeseen type of matching!");
+        }
+
         // Sanity check.
         if (m_c_l_kpts.size() < (uint)(min_inliers_))
         {
@@ -439,21 +459,6 @@ namespace slamon
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Non-stereo matcher:] Succesful matching!");
-        }
-
-        // Non stereo matching keypoints debugging.
-        if (successive_matches_img_pub_.getNumSubscribers() > 0)
-        {
-            if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
-                publishImgMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
-                               successive_matches_img_pub_, m_c_l_kpts, m_p_l_kpts);
-
-            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
-                publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                       c_frame.getTimestamp(), successive_matches_img_pub_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
-
-            else
-                ROS_ERROR_STREAM("[VO->Non-stereo matcher debugger:] Unforeseen type of matching!");
         }
 
         // Buckets keypoints.
@@ -486,6 +491,22 @@ namespace slamon
                        i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_cam_pts, i_p_cam_pts);
         run_times_.run_time_5 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
 
+        // Inliers debugging.
+        if (inliers_num_pub_.getNumSubscribers() > 0)
+            publishCounter(i_c_l_kpts.size(), inliers_num_pub_);
+        if (inliers_img_pub_.getNumSubscribers() > 0)
+        {
+            if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
+                publishImgMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
+                                  inliers_img_pub_, i_c_l_kpts, i_p_l_kpts);
+            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
+                publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
+                                          c_frame.getTimestamp(), inliers_img_pub_, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts);
+            else
+                ROS_ERROR_STREAM("[VO->Motion estimator debugger:] Unforeseen type of matching!");
+        }
+
+        // Sanity check.
         if (i_c_l_kpts.size() < (uint)(min_inliers_))
         {
             if (enable_debugging_)
@@ -496,21 +517,6 @@ namespace slamon
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Motion estimator:] Succesful motion estimation!");
-        }
-
-        // Inliers debugging.
-        if (inliers_img_pub_.getNumSubscribers() > 0)
-        {
-            if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
-                publishImgMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
-                               inliers_img_pub_, i_c_l_kpts, i_p_l_kpts);
-
-            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
-                publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                       c_frame.getTimestamp(), inliers_img_pub_, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts);
-
-            else
-                ROS_ERROR_STREAM("[VO->Motion estimator debugger:] Unforeseen type of matching!");
         }
 
         // Build a TF

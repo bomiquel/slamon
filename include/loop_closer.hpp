@@ -194,6 +194,10 @@ namespace slamon
 
             ros::Publisher loop_closure_img_pub_; //!> Loop closure image publisher.
 
+            ros::Publisher loop_closure_matches_num_pub_; //!> Multi-cluster matches number publisher.
+
+            ros::Publisher loop_closure_inliers_num_pub_; //!> Multi-cluster inliers number publisher.
+
             Map* map_; //!> Graph object pointer.
 
             haloc::Hash haloc_; //!> HAsh-based LOop Closure object.

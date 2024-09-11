@@ -227,19 +227,25 @@ namespace slamon
 
             tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.
 
+            ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
+
             ros::Publisher robot_odom_pub_; //!> Publishes current velocity and accumulated movement (odometry) relative to robot.
 
             ros::Publisher camera_odom_pub_; //!> Publishes current velocity and accumulated movement (odometry) relative to camera.
 
             ros::Publisher stereo_data_pub_; //!> Publishes current relevant information from a stereo pair of images.
 
-            ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
+            ros::Publisher inliers_num_pub_; //!> Publisher for the number of inliers.
 
             ros::Publisher inliers_img_pub_; //!> Publisher for the image with drawn inliers.
 
-            ros::Publisher stereo_kps_img_pub_; //!> Publisher for the image with drawn stereo keypoints.
+            ros::Publisher stereo_kpts_img_pub_; //!> Publisher for the image with drawn stereo keypoints.
+
+            ros::Publisher stereo_matches_num_pub_; //!> Publisher for the number of stereo matches.
 
             ros::Publisher stereo_matches_img_pub_; //!> Publisher for the image with drawn stereo matches.
+
+            ros::Publisher successive_matches_num_pub_; //!> Publisher for the number of successive matches.
 
             ros::Publisher successive_matches_img_pub_; //!> Publisher for the image with drawn successive matches.
 

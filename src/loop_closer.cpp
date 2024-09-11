@@ -62,6 +62,8 @@ namespace slamon
         cluster_num_pub_ = nhp.advertise<std_msgs::Int32>("cluster_num", 1);
         loop_closure_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_num", 1);
         loop_closure_img_pub_ = nhp.advertise<sensor_msgs::Image>("loop_closure_img", 1);
+        loop_closure_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_matches_num", 1);
+        loop_closure_inliers_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_inliers_num", 1);
 
         // Loop
         ros::Rate r(10);
@@ -518,6 +520,10 @@ namespace slamon
                                   f_cand_l_kpts, f_cand_r_kpts,
                                   f_q_cam_pts, f_cand_world_pts);
 
+            // Loop closure matches debugging.
+            if (loop_closure_matches_num_pub_.getNumSubscribers() > 0)
+                publishCounter(f_q_l_kpts.size(), loop_closure_matches_num_pub_);
+
             if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_))
             {
                 // Estimates motion.
@@ -528,6 +534,10 @@ namespace slamon
                 estimateMotion(f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_cam_pts, f_cand_world_pts,
                                estimated_rotation, estimated_translation,
                                i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_cam_pts, i_cand_world_pts);
+
+                // Loop closure inliers debugging.
+                if (loop_closure_inliers_num_pub_.getNumSubscribers() > 0)
+                    publishCounter(i_q_l_kpts.size(), loop_closure_inliers_num_pub_);
 
                 // Loop found!
                 if (i_q_l_kpts.size() >= (uint)(min_lc_inliers_))
@@ -649,33 +659,33 @@ namespace slamon
                         {
                             if (loop_closure_img_pub_.getNumSubscribers() > 0)
                                 publishImgLoopClosure(ros::Time::now(), 
-                                                   loop_closure_img_pub_,
-                                                   q_cluster.getKeyframeId(),
-                                                   keyframe_path_,
-                                                   i_q_cluster_ids,
-                                                   i_cand_cluster_ids,
-                                                   cand_keyframe_ids,
-                                                   i_q_l_kpts,
-                                                   i_q_r_kpts,
-                                                   i_cand_l_kpts,
-                                                   i_cand_r_kpts,
-                                                   definitive_inliers_per_pair,
-                                                   definitive_cluster_pairs,
-                                                   cand_cluster_keyframe_relation);
+                                                      loop_closure_img_pub_,
+                                                      q_cluster.getKeyframeId(),
+                                                      keyframe_path_,
+                                                      i_q_cluster_ids,
+                                                      i_cand_cluster_ids,
+                                                      cand_keyframe_ids,
+                                                      i_q_l_kpts,
+                                                      i_q_r_kpts,
+                                                      i_cand_l_kpts,
+                                                      i_cand_r_kpts,
+                                                      definitive_inliers_per_pair,
+                                                      definitive_cluster_pairs,
+                                                      cand_cluster_keyframe_relation);
 
                             writeImgLoopClosure(lc_path_ + convertTo5Digits(loop_closure_num_),
-                                             q_cluster.getKeyframeId(),
-                                             keyframe_path_,
-                                             i_q_cluster_ids,
-                                             i_cand_cluster_ids,
-                                             cand_keyframe_ids,
-                                             i_q_l_kpts,
-                                             i_q_r_kpts,
-                                             i_cand_l_kpts,
-                                             i_cand_r_kpts,
-                                             definitive_inliers_per_pair,
-                                             definitive_cluster_pairs,
-                                             cand_cluster_keyframe_relation);
+                                                q_cluster.getKeyframeId(),
+                                                keyframe_path_,
+                                                i_q_cluster_ids,
+                                                i_cand_cluster_ids,
+                                                cand_keyframe_ids,
+                                                i_q_l_kpts,
+                                                i_q_r_kpts,
+                                                i_cand_l_kpts,
+                                                i_cand_r_kpts,
+                                                definitive_inliers_per_pair,
+                                                definitive_cluster_pairs,
+                                                cand_cluster_keyframe_relation);
                         }
                         loop_closure_num_++;
                         return true;
