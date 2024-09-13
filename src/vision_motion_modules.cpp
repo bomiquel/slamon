@@ -522,6 +522,160 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::buck
 }
 
 
+std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::bucketKeypoints2(const int n_rows_img,
+                                                                                             const int n_cols_img,
+                                                                                             const uint n_kpts_bucket,
+                                                                                             const std::vector<cv::KeyPoint>& l_kpts_0,
+                                                                                             const std::vector<cv::KeyPoint>& r_kpts_0,
+                                                                                             const std::vector<cv::KeyPoint>& l_kpts_1,
+                                                                                             const std::vector<cv::KeyPoint>& r_kpts_1,
+                                                                                             const std::vector<cv::Point3f>& cam_pts_0,
+                                                                                             const std::vector<cv::Point3f>& cam_pts_1,
+                                                                                             std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                                                                             std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                                                                             std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                                                                             std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                                                                             std::vector<cv::Point3f>& f_cam_pts_0,
+                                                                                             std::vector<cv::Point3f>& f_cam_pts_1)
+{
+    // Sanity check.
+    f_l_kpts_0.clear();
+    f_r_kpts_0.clear();
+    f_l_kpts_1.clear();
+    f_r_kpts_1.clear();
+    f_cam_pts_0.clear();
+    f_cam_pts_1.clear();
+
+    // If there are no right keypoints, the filtered right verctor must not be filled.
+    bool fill_right;
+    if (r_kpts_0.size() > 0)
+        fill_right = true;
+    else
+        fill_right = false;
+
+    // Calculate the number of rows and columns that each bucket has.
+    float n_rows_bucket = (float)n_rows_img / 10.0;
+    float n_cols_bucket = (float)n_cols_img / 10.0;
+
+    // Fill buckets with keypoints and its indices.
+    int bucket_idx, bucket_row, bucket_col;
+    std::vector<std::vector<std::pair<int, cv::KeyPoint>>> buckets(100);
+    for (uint i = 0; i < l_kpts_0.size(); i++)
+    {
+        bucket_col = (int) floor(l_kpts_0[i].pt.x / n_cols_bucket);
+        bucket_row = (int) floor(l_kpts_0[i].pt.y / n_rows_bucket);
+        bucket_idx = (int) (10 * bucket_col + bucket_row);
+        buckets[bucket_idx].push_back(std::make_pair(i, l_kpts_0[i]));
+    }
+
+    // Remove excess keypoints from the buckets.
+    int idx;
+    float slope, delta_x;
+    cv::KeyPoint l_kpt_0, l_kpt_1;
+    std::vector<std::pair<float, std::pair<int, cv::KeyPoint>>> bucket_slopes;
+    for (uint i = 0; i < buckets.size(); i++)
+    {
+        if (buckets[i].size() > n_kpts_bucket)
+        {
+            // Calculate the coincidence slopes.
+            bucket_slopes.clear();
+            for (uint j = 0; j < buckets[i].size(); j++)
+            {
+                idx = buckets[i][j].first;
+                l_kpt_0 = l_kpts_0[idx];
+                l_kpt_1 = l_kpts_1[idx];
+                delta_x = l_kpt_1.pt.x - l_kpt_0.pt.x;
+                if (delta_x != 0)
+                    slope = (l_kpt_1.pt.y - l_kpt_0.pt.y) / (delta_x);
+                else
+                    slope = 0.0;
+                bucket_slopes.push_back(std::make_pair(slope, buckets[i][j]));
+            }
+
+            // Sort the keypoints of the bucket according to the slope of their matches.
+            std::sort(bucket_slopes.begin(), bucket_slopes.end(), SortAscending());
+
+            // Detects whether the number of keypoints is odd or even.
+            bool odd = true;
+            if (bucket_slopes.size() % 2 == 0)
+                odd = false;
+
+            // Gets n center values.
+            float median = 0.0;
+            bool init = false;
+            std::vector<std::pair<int, cv::KeyPoint>> inliers;
+            int half_longitude = std::ceil(bucket_slopes.size() / 2);
+            int idx_backwards = half_longitude - 1;
+            uint idx_forwards = half_longitude + 1;
+            while (inliers.size() < n_kpts_bucket)
+            {
+                if (!init)
+                {
+                    if (odd)
+                    {
+                        median = bucket_slopes[half_longitude].first;
+                        inliers.push_back(bucket_slopes[half_longitude].second);
+                    }
+                    else
+                    {
+                        median = ((bucket_slopes[half_longitude].first + bucket_slopes[idx_backwards].first) / 2);
+                        inliers.push_back(bucket_slopes[half_longitude].second);
+                        if (n_kpts_bucket > 1)
+                        {
+                            inliers.push_back(bucket_slopes[idx_backwards].second);
+                            idx_backwards--;
+                        }
+                    }
+                    init = true;
+                }
+                else
+                {
+                    if (idx_backwards < 0)
+                    {
+                        inliers.push_back(bucket_slopes[idx_forwards].second);
+                        idx_forwards++;
+                    }
+                    else if (idx_forwards >= bucket_slopes.size())
+                    {
+                        inliers.push_back(bucket_slopes[idx_backwards].second);
+                        idx_backwards--;
+                    }
+                    else if ((median - bucket_slopes[idx_backwards].first) < (bucket_slopes[idx_forwards].first - median))
+                    {
+                        inliers.push_back(bucket_slopes[idx_backwards].second);
+                        idx_backwards--;
+                    }
+                    else
+                    {
+                        inliers.push_back(bucket_slopes[idx_forwards].second);
+                        idx_forwards++;
+                    }
+                }
+            }
+
+            buckets[i] = inliers;
+        }
+
+        for (uint j = 0; j < buckets[i].size(); j++)
+        {
+            idx = buckets[i][j].first;
+            f_l_kpts_0.push_back(l_kpts_0[idx]);
+            f_l_kpts_1.push_back(l_kpts_1[idx]);
+            f_cam_pts_0.push_back(cam_pts_0[idx]);
+            f_cam_pts_1.push_back(cam_pts_1[idx]);
+
+            if (fill_right)
+            {
+                f_r_kpts_0.push_back(r_kpts_0[idx]);
+                f_r_kpts_1.push_back(r_kpts_1[idx]);
+            }
+        }
+    }
+
+    return buckets;
+}
+
+
 VisionMotionModules::MatchingType VisionMotionModules::selectMatchingType(std::string& matching_type)
 {
     // Sanity check

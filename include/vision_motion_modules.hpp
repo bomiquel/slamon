@@ -477,6 +477,9 @@ class VisionMotionModules
 
 
         /** \brief Homogenises the distribution of keypoints over the spatial domain of the image.
+         *  For this purpose, the image is divided into a grid and a maximum of n key points per
+         *  cell is imposed. To decide which keypoints to keep, the response of the features is
+         *  reviewed and those with the best response are retained.
          *  \param n_rows_img Number of rows in the image (input).
          *  \param n_cols_img Number of columns in the image (input).
          *  \param n_kpts_bucket Number of keypoints per bucket (input).
@@ -528,6 +531,65 @@ class VisionMotionModules
                                                                                std::vector<cv::Point3f>& f_cam_pts_1);
 
 
+        /** \brief Homogenises the distribution of keypoints over the spatial domain of the image.
+         *  For this purpose, the current left image is divided into a grid and a maximum of n 
+         *  keypoints per cell is imposed. The following procedure is used to decide which keypoints
+         *  to keep:
+         *  1. A line is calculated between each feature of the bucket and its correspondence in the previous image.
+         *  2. The slopes of the straight lines are ordered in order from the lowest to the highest slope.
+         *  3. The median of the set of slopes is computed.
+         *  4. Finally, the keypoints that generate the lines with slopes most similar to the median are retained.
+         *  \param n_rows_img Number of rows in the image (input).
+         *  \param n_cols_img Number of columns in the image (input).
+         *  \param n_kpts_bucket Number of keypoints per bucket (input).
+         *  \param l_kpts_0 Left keypoints of the first set (input). In consecutive images:
+         *  current left keypoints. In loop closing images: query left keypoints.
+         *  \param r_kpts_0 Right keypoints of the first set (input). In consecutive images:
+         *  current right keypoints. In loop closing images: query right keypoints.
+         *  \param l_kpts_1 Left keypoints of the second set (input). In consecutive images:
+         *  previous left keypoints. In loop closing images: candidate left keypoints.
+         *  \param r_kpts_1 Right keypoints of the second set (input). In consecutive images: 
+         *  previous right keypoints. In loop closing images: candidate right keypoints.
+         *  \param cam_pts_0 3D points relative to camera of the first set (input). In 
+         *  consecutive images: current 3D points. In loop closing images: query 3D points.
+         *  \param cam_pts_1 3D points relative to camera of the second set (input). In
+         *  consecutive images: previous 3D points. In loop closing images: candidate 3D points.
+         *  \param f_l_kpts_0 Bucketed left keypoints of the first set (output). In consecutive
+         *  images: bucketed current left keypoints. In loop closing images: bucketed query left 
+         *  keypoints.
+         *  \param f_r_kpts_0 Bucketed right keypoints of the first set (output). In consecutive
+         *  images: bucketed current right keypoints. In loop closing images: bucketed query right 
+         *  keypoints.
+         *  \param f_l_kpts_1 Bucketed left keypoints of the second set (output). In consecutive
+         *  images: bucketed previous left keypoints. In loop closing images: bucketed candidate left 
+         *  keypoints.
+         *  \param f_r_kpts_1 Bucketed right keypoints of the second set (output). In consecutive
+         *  images: bucketed previous right keypoints. In loop closing images: bucketed candidate right 
+         *  keypoints.
+         *  \param f_cam_pts_0 Bucketed 3D points relative to camera of the first set (output).
+         *  In consecutive images: bucketed current 3D points. In loop closing images: bucketed query
+         *  3D points filtered out.
+         *  \param f_cam_pts_1 Bucketed 3D points relative to camera of the second set (output).
+         *  In consecutive images: bucketed previous 3D points. In loop closing images: bucketed
+         *  candidate 3D points filtered out.
+         */
+        std::vector<std::vector<std::pair<int, cv::KeyPoint>>> bucketKeypoints2(const int n_rows_img,
+                                                                                const int n_cols_img,
+                                                                                const uint n_kpts_bucket,
+                                                                                const std::vector<cv::KeyPoint>& l_kpts_0,
+                                                                                const std::vector<cv::KeyPoint>& r_kpts_0,
+                                                                                const std::vector<cv::KeyPoint>& l_kpts_1,
+                                                                                const std::vector<cv::KeyPoint>& r_kpts_1,
+                                                                                const std::vector<cv::Point3f>& cam_pts_0,
+                                                                                const std::vector<cv::Point3f>& cam_pts_1,
+                                                                                std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                                                                std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                                                                std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                                                                std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                                                                std::vector<cv::Point3f>& f_cam_pts_0,
+                                                                                std::vector<cv::Point3f>& f_cam_pts_1);
+
+
     protected:
 
         
@@ -552,6 +614,15 @@ class VisionMotionModules
             }
         };
 
+
+        struct SortAscending 
+        {
+            inline bool operator() (const std::pair<float, std::pair<int, cv::KeyPoint>>& pair_0, 
+                                    const std::pair<float, std::pair<int, cv::KeyPoint>>& pair_1) const
+            {
+                return pair_0.first < pair_1.first;
+            }
+        };
 
 
         /** \brief Transforms a string into the correct MatchingType value.
