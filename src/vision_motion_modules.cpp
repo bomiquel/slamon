@@ -497,78 +497,6 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::buck
     }
 
     // Remove excess keypoints from the buckets.
-    int idx; 
-    for (uint i = 0; i < buckets.size(); i++)
-    {
-        if (buckets[i].size() > n_kpts_bucket)
-            retainBest(n_kpts_bucket, buckets[i]);
-        for (uint j = 0; j < buckets[i].size(); j++)
-        {
-            idx = buckets[i][j].first;
-            f_l_kpts_0.push_back(l_kpts_0[idx]);
-            f_l_kpts_1.push_back(l_kpts_1[idx]);
-            f_cam_pts_0.push_back(cam_pts_0[idx]);
-            f_cam_pts_1.push_back(cam_pts_1[idx]);
-
-            if (fill_right)
-            {
-                f_r_kpts_0.push_back(r_kpts_0[idx]);
-                f_r_kpts_1.push_back(r_kpts_1[idx]);
-            }
-        }
-    }
-
-    return buckets;
-}
-
-
-std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::bucketKeypoints2(const int n_rows_img,
-                                                                                             const int n_cols_img,
-                                                                                             const uint n_kpts_bucket,
-                                                                                             const std::vector<cv::KeyPoint>& l_kpts_0,
-                                                                                             const std::vector<cv::KeyPoint>& r_kpts_0,
-                                                                                             const std::vector<cv::KeyPoint>& l_kpts_1,
-                                                                                             const std::vector<cv::KeyPoint>& r_kpts_1,
-                                                                                             const std::vector<cv::Point3f>& cam_pts_0,
-                                                                                             const std::vector<cv::Point3f>& cam_pts_1,
-                                                                                             std::vector<cv::KeyPoint>& f_l_kpts_0,
-                                                                                             std::vector<cv::KeyPoint>& f_r_kpts_0,
-                                                                                             std::vector<cv::KeyPoint>& f_l_kpts_1,
-                                                                                             std::vector<cv::KeyPoint>& f_r_kpts_1,
-                                                                                             std::vector<cv::Point3f>& f_cam_pts_0,
-                                                                                             std::vector<cv::Point3f>& f_cam_pts_1)
-{
-    // Sanity check.
-    f_l_kpts_0.clear();
-    f_r_kpts_0.clear();
-    f_l_kpts_1.clear();
-    f_r_kpts_1.clear();
-    f_cam_pts_0.clear();
-    f_cam_pts_1.clear();
-
-    // If there are no right keypoints, the filtered right verctor must not be filled.
-    bool fill_right;
-    if (r_kpts_0.size() > 0)
-        fill_right = true;
-    else
-        fill_right = false;
-
-    // Calculate the number of rows and columns that each bucket has.
-    float n_rows_bucket = (float)n_rows_img / 10.0;
-    float n_cols_bucket = (float)n_cols_img / 10.0;
-
-    // Fill buckets with keypoints and its indices.
-    int bucket_idx, bucket_row, bucket_col;
-    std::vector<std::vector<std::pair<int, cv::KeyPoint>>> buckets(100);
-    for (uint i = 0; i < l_kpts_0.size(); i++)
-    {
-        bucket_col = (int) floor(l_kpts_0[i].pt.x / n_cols_bucket);
-        bucket_row = (int) floor(l_kpts_0[i].pt.y / n_rows_bucket);
-        bucket_idx = (int) (10 * bucket_col + bucket_row);
-        buckets[bucket_idx].push_back(std::make_pair(i, l_kpts_0[i]));
-    }
-
-    // Remove excess keypoints from the buckets.
     int idx;
     float slope, delta_x;
     cv::KeyPoint l_kpt_0, l_kpt_1;
@@ -593,7 +521,7 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> VisionMotionModules::buck
             }
 
             // Sort the keypoints of the bucket according to the slope of their matches.
-            std::sort(bucket_slopes.begin(), bucket_slopes.end(), SortAscending());
+            std::sort(bucket_slopes.begin(), bucket_slopes.end(), SortBucketsByMatchesSlopesAscending());
 
             // Detects whether the number of keypoints is odd or even.
             bool odd = true;
@@ -1065,24 +993,4 @@ bool VisionMotionModules::getImageMainStatisticalValues(const cv::Mat& img,
     }
 
     return true;
-}
-
-
-void VisionMotionModules::retainBest(int n_kpts, std::vector<std::pair<int, cv::KeyPoint>>& kpts)
-{
-    // This is only necessary if the keypoints size is greater than the number of desired points.
-    if (n_kpts > 0 && kpts.size() > (size_t) n_kpts)
-    {
-        // First use nth element to partition the keypoints into the best and worst.
-        std::nth_element(kpts.begin(), kpts.begin() + n_kpts - 1, kpts.end(), KeypointPairResponseGreater());
-
-        // This is the boundary response, and in the case of FAST may be ambiguous
-        float ambiguous_response = kpts[n_kpts - 1].second.response;
-
-        // Use std::partition to grab all of the keypoints with the boundary response.
-        std::vector<std::pair<int, cv::KeyPoint>>::const_iterator new_end = std::partition(kpts.begin() + n_kpts, kpts.end(), KeypointPairResponseGreaterThanThreshold(ambiguous_response));
-
-        // Resize the keypoints, given this new end point. nth_element and partition reordered the points inplace.
-        kpts.resize(new_end - kpts.begin());
-    }
 }
