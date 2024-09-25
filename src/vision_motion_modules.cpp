@@ -68,7 +68,8 @@ void VisionMotionModules::detectKeypoints(const cv::Mat& img,
     cv::Mat proc_img;
     if (enable_enhacement)
     {
-        proc_img = enhanceImage(g_img);
+        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(6, cv::Size(8, 8));
+        clahe->apply(g_img, proc_img);
         if (proc_img.rows == 0)
         {
             std::cerr << "Something went wrong with the image enhancement. Exiting!" << std::endl;
@@ -410,7 +411,7 @@ void VisionMotionModules::estimateMotion(const std::vector<int>& cluster_ids_0,
     cv::KeyPoint::convert(l_kpts_0, l_pts_0);
     cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
     cv::solvePnPRansac(cam_pts_1, l_pts_0, K, cv::Mat(), r_vec, t_vec, 
-                       false, 1000, 2.0, 0.99, inliers, motion_estimation_type_);
+                       false, 2000, 2.0, 0.99, inliers, motion_estimation_type_);
 
     // Filter keypoints, 3D points and clusters.
     for (uint i = 0; i < inliers.size(); i++)
@@ -430,23 +431,6 @@ void VisionMotionModules::estimateMotion(const std::vector<int>& cluster_ids_0,
             f_cluster_ids_1.push_back(cluster_ids_1[inliers[i]]);
         }
     }
-}
-
-
-cv::Mat VisionMotionModules::enhanceImage(const cv::Mat& img)
-{
-    // Gets main statistical values.
-    int min, max, median;
-    if (!getImageMainStatisticalValues(img, min, max, median))
-        return cv::Mat();
-
-    // Use CLAHE with adaptative threshold to overcome lighting conditions.
-    cv::Mat o_img;
-    double tau = (double)((max - min) / median);
-    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(tau, cv::Size(8, 8));
-    clahe->apply(img, o_img);    
-    
-    return o_img;
 }
 
 
@@ -945,52 +929,4 @@ void VisionMotionModules::assembleCircularMatchings(const std::vector<cv::KeyPoi
             }
         }
     }
-}
-
-
-bool VisionMotionModules::getImageMainStatisticalValues(const cv::Mat& img,
-                                                        int& min,
-                                                        int& max,
-                                                        int& median)
-{
-    // Sanity check
-    if (img.type() != CV_8UC1)
-    {
-        std::cout << "Invalid image type, only CV_8UC1 is available. Exiting!" << std::endl;
-        return false;
-    }
-
-    // Computes histogram.
-    cv::Mat hist;
-    int hist_size = 256;
-    float range[] = {0.0, (float)hist_size};
-    const float* hist_range[] = {range};
-    bool uniform = true, accumulate = false;
-    cv::calcHist(&img, 1, 0, cv::Mat(), hist, 1, &hist_size, hist_range, uniform, accumulate);
-
-    // Searches for min, max and median values.
-    max = 0;
-    min = 256;
-    median = 0;
-    float freq, acc_freq = 0.0;
-    bool median_obtained = false;
-    float half_img_size = (img.rows * img.cols) / 2;
-    for (int bin = 0; bin < hist.rows; bin++)
-    {
-        freq = hist.at<float>(bin, 0);
-        acc_freq += freq;
-        if (freq != 0.0)
-        {
-            max = bin;
-            if (min > bin)
-                min = bin;
-        }
-        if ((acc_freq >= half_img_size) && (median_obtained == false))
-        {
-            median = bin;
-            median_obtained = true;
-        }
-    }
-
-    return true;
 }

@@ -467,15 +467,6 @@ class VisionMotionModules
                             std::vector<cv::Point3f>& f_cam_pts_1);
 
 
-        /** \brief Enhances image using Contrast-Limited Adaptive Histogram Equalization (CLAHE),
-         *  with adaptive thresholding to dynamically overcome variable lighting conditions (Sabry
-         *  et al. 2022).
-         *  \param img The image (input).
-         *  @return The enhanced image. 
-         */
-        cv::Mat enhanceImage(const cv::Mat& img);
-
-
         /** \brief Homogenises the distribution of keypoints over the spatial domain of the image.
          *  For this purpose, the current left image is divided into a grid and a maximum of n 
          *  keypoints per cell is imposed. The following procedure is used to decide which keypoints
@@ -734,20 +725,6 @@ class VisionMotionModules
                                        std::vector<cv::Point3f>& f_cam_pts_1,
                                        std::vector<int>& f_cluster_ids_0,
                                        std::vector<int>& f_cluster_ids_1);
-
-
-        /** \brief Gets the minimum, maximum and median value of a greyscale image.
-         *  \param img The image (input).
-         *  \param min The minimum intensity value (output).
-         *  \param max The maximum intensity value (output).
-         *  \param median The median intensity value (output).
-         *  @return true if the image is in greyscale and therefore the desired 
-         *  values could be obtained.
-         */
-        bool getImageMainStatisticalValues(const cv::Mat& img,
-                                           int& min,
-                                           int& max,
-                                           int& median);
 
 
         double ratio_; //!> Lowe's ratio.
