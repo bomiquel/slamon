@@ -19,7 +19,6 @@ namespace slamon
                                    VisionMotionModules(ratio, matching_type, motion_estimation_type)
     {
         // Inilitialises parameters.
-        w_path_ = w_path;
         min_inliers_ = min_inliers;
         min_lc_inliers_ = min_lc_inliers;
         robot_frame_id_ = robot_frame_id;
@@ -40,7 +39,7 @@ namespace slamon
         // Create debugging directories.
         if (enable_debugging_)
         {
-            frame_path_ = w_path_ + "frames/";
+            frame_path_ = w_path + "frames/";
             if (std::filesystem::exists(frame_path_))
                 std::filesystem::remove_all(frame_path_);
             std::filesystem::create_directory(frame_path_);

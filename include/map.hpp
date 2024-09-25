@@ -283,7 +283,7 @@ namespace slamon
 
             double min_dist_keyframe_; //!> Minimum distance between keyframes.
 
-            std::string w_path_; //!> Path to working directory.
+            std::string poses_file_; //!> Path to the file where the keyframes positions are stored.
 
             std::string frame_path_; //!> Path to store frames with debugging purpose.
 

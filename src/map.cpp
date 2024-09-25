@@ -12,7 +12,6 @@ namespace slamon
              const std::string& robot_frame_id)
     {
         // Inilitialises parameters.
-        w_path_ = w_path;
         loop_closer_ = loop_closer;
         min_lc_inliers_ = min_lc_inliers;
         robot_frame_id_ = robot_frame_id;
@@ -34,15 +33,15 @@ namespace slamon
         // Create debugging directories.
         if (enable_debugging_)
         {
-            frame_path_ = w_path_ + "frames/";
-            keyframe_path_ = w_path_ + "keyframes/";
-            clusters_path_ = w_path_ + "clusters/";
-            std::string poses_file = w_path_ + "keyframes_poses.txt";
-            std::string lock_file = w_path_ + "keyframes_poses.txt.lock";
+            frame_path_ = w_path + "frames/";
+            keyframe_path_ = w_path + "keyframes/";
+            clusters_path_ = w_path + "clusters/";
+            poses_file_ = w_path + "keyframes_poses.txt";
+            std::string lock_file = w_path + "keyframes_poses.txt.lock";
             if (std::filesystem::exists(lock_file))
                 std::filesystem::remove(lock_file.c_str());
-            if (std::filesystem::exists(poses_file))
-                std::filesystem::remove(poses_file.c_str());
+            if (std::filesystem::exists(poses_file_))
+                std::filesystem::remove(poses_file_.c_str());
             if (std::filesystem::exists(keyframe_path_))
                 std::filesystem::remove_all(keyframe_path_);
             if (std::filesystem::exists(clusters_path_))
@@ -498,7 +497,7 @@ namespace slamon
                 std::vector<double> stamps;
                 std::vector<tf::Transform> keyframe_poses;
                 getKeyframePoses(stamps, keyframe_poses);
-                writePoses(w_path_ + "keyframes_poses.txt", stamps, keyframe_poses);
+                writePoses(poses_file_, stamps, keyframe_poses);
             }
 
             // Publish updated robot pose.

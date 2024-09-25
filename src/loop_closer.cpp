@@ -17,7 +17,6 @@ namespace slamon
                            VisionMotionModules(ratio, matching_type, motion_estimation_type)
     {
         // Initialises parameters.
-        w_path_ = w_path;
         lc_neighbors_ = lc_neighbors;
         lc_candidates_ = lc_candidates;
         min_lc_inliers_ = min_lc_inliers;
@@ -31,7 +30,7 @@ namespace slamon
         loop_closure_num_ = 0; 
 
         // Creates execution directory
-        execution_path_ = w_path_ + "haloc/";
+        execution_path_ = w_path + "haloc/";
         if (std::filesystem::exists(execution_path_))
             std::filesystem::remove_all(execution_path_);
         std::filesystem::create_directory(execution_path_);
@@ -39,8 +38,8 @@ namespace slamon
         // Creates debugging directories.
         if (enable_debugging_)
         {
-            keyframe_path_ = w_path_ + "keyframes/";
-            lc_path_ = w_path_ + "loop_closures/";
+            keyframe_path_ = w_path + "keyframes/";
+            lc_path_ = w_path + "loop_closures/";
             if (std::filesystem::exists(lc_path_))
                 std::filesystem::remove_all(lc_path_);
             std::filesystem::create_directory(lc_path_);

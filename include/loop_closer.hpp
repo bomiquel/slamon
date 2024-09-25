@@ -170,8 +170,6 @@ namespace slamon
 
             std::list<Cluster> cluster_queue_; //!> Clusters queue to be inserted into the graph
 
-            std::string w_path_; //!> Path to working directory.
-
             std::string lc_path_; //!> Path to store loop closures images with debugging purpose.
 
             std::string keyframe_path_; //!> Path to keyframes directories with debugging purpose.

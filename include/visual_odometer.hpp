@@ -211,8 +211,6 @@ namespace slamon
 
             bool initialised_odom_; //!> Flag that indicates if the robot's odom has been initialised.
 
-            std::string w_path_; //!> Path to working directory.
-
             std::string frame_path_; //!> Path to store frames with debugging purpose.
 
             std::string robot_frame_id_; //!> Robot odometry coordinate axis identficator.

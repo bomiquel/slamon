@@ -61,7 +61,7 @@ class Publisher
         void writeImgKeypoints(const cv::Mat& img,
                                const cv::Scalar& color,
                                const std::string& o_path,
-                               const std::vector<cv::KeyPoint> kpts);
+                               const std::vector<cv::KeyPoint>& kpts);
 
 
         /** \brief Publishes stereo images with its keypoints drawn.

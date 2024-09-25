@@ -4,7 +4,7 @@
 void Publisher::writeImgKeypoints(const cv::Mat& img,
                                   const cv::Scalar& color,
                                   const std::string& o_path,
-                                  const std::vector<cv::KeyPoint> kpts)
+                                  const std::vector<cv::KeyPoint>& kpts)
 {
     // Draws keypoints.
     cv::Mat o_img = drawImgKeypoints(img, color, kpts);
@@ -173,17 +173,17 @@ void Publisher::publishImgLoopClosure(const ros::Time& stamp,
 {
     // Draws loop closures.
     cv::Mat o_img = drawImgLoopClosure(q_keyframe_id,
-                                    i_path,
-                                    q_cluster_ids,
-                                    cand_cluster_ids,
-                                    cand_keyframe_ids,
-                                    f_q_l_kpts,
-                                    f_q_r_kpts,
-                                    f_cand_l_kpts,
-                                    f_cand_r_kpts,
-                                    definitive_inliers_per_pair,
-                                    definitive_cluster_pairs,
-                                    cand_cluster_keyframe_relation);
+                                       i_path,
+                                       q_cluster_ids,
+                                       cand_cluster_ids,
+                                       cand_keyframe_ids,
+                                       f_q_l_kpts,
+                                       f_q_r_kpts,
+                                       f_cand_l_kpts,
+                                       f_cand_r_kpts,
+                                       definitive_inliers_per_pair,
+                                       definitive_cluster_pairs,
+                                       cand_cluster_keyframe_relation);
 
     // Publish image.
     publishImg(o_img, stamp, publisher);
@@ -206,17 +206,17 @@ void Publisher::writeImgLoopClosure(const std::string& o_path,
 {
     // Draws loop closures.
     cv::Mat o_img = drawImgLoopClosure(q_keyframe_id,
-                                    i_path,
-                                    q_cluster_ids,
-                                    cand_cluster_ids,
-                                    cand_keyframe_ids,
-                                    f_q_l_kpts,
-                                    f_q_r_kpts,
-                                    f_cand_l_kpts,
-                                    f_cand_r_kpts,
-                                    definitive_inliers_per_pair,
-                                    definitive_cluster_pairs,
-                                    cand_cluster_keyframe_relation);
+                                       i_path,
+                                       q_cluster_ids,
+                                       cand_cluster_ids,
+                                       cand_keyframe_ids,
+                                       f_q_l_kpts,
+                                       f_q_r_kpts,
+                                       f_cand_l_kpts,
+                                       f_cand_r_kpts,
+                                       definitive_inliers_per_pair,
+                                       definitive_cluster_pairs,
+                                       cand_cluster_keyframe_relation);
 
      // Writes image.
     cv::imwrite(o_path + ".png", o_img);
