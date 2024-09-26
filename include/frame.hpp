@@ -75,6 +75,12 @@ class Frame
         inline void setRightImg(const cv::Mat r_img){r_img_ = r_img;}
 
 
+        /** \brief Set keyframe timestamp.
+         *  \param stamp Keyframe timestamp.
+         */
+        inline void setTimestamp(const ros::Time stamp){stamp_ = stamp;}
+
+
         /** \brief Get keyframe timestamp
          *  @return The time stamp when taking the image.
          */
