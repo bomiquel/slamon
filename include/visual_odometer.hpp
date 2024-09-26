@@ -39,7 +39,7 @@ namespace slamon
             enum VOStatus
             {
                 UNINITIALISED    = 0,
-                SEMI_INITIALISED = 1,
+                BOOTSTRAPPING    = 1,
                 RUNNING          = 2
             };
 

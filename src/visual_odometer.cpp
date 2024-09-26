@@ -124,17 +124,17 @@ namespace slamon
                 }
                 else
                 {
-                    status_ = SEMI_INITIALISED;
+                    status_ = BOOTSTRAPPING;
                 }
                 run_times_.run_time_3 = 0.0; // Succesive matching run time
                 run_times_.run_time_4 = 0.0; // Bucketing run time
                 run_times_.run_time_5 = 0.0; // Motion estimation run time
                 break;
             }
-            case SEMI_INITIALISED:
+            case BOOTSTRAPPING:
             {
                 if (enable_debugging_)
-                    ROS_INFO_STREAM("SEMI-INITIALISED");
+                    ROS_INFO_STREAM("BOOTSTRAPPING");
                 if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
                     status_ = RUNNING;
@@ -205,6 +205,7 @@ namespace slamon
                 }
                 else
                 {
+                    status_ = BOOTSTRAPPING;
                     run_times_.run_time_3 = 0.0; // Succesive matching run time
                     run_times_.run_time_4 = 0.0; // Bucketing run time
                     run_times_.run_time_5 = 0.0; // Motion estimation run time
