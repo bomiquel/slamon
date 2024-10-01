@@ -68,7 +68,7 @@ void VisionMotionModules::detectKeypoints(const cv::Mat& img,
     cv::Mat proc_img;
     if (enable_enhacement)
     {
-        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(6, cv::Size(8, 8));
+        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(5, cv::Size(8, 8));
         clahe->apply(g_img, proc_img);
         if (proc_img.rows == 0)
         {
@@ -85,7 +85,7 @@ void VisionMotionModules::detectKeypoints(const cv::Mat& img,
     cv::Ptr<cv::Feature2D> detector;
     if (detector_name == "sift")
     {
-        detector = cv::xfeatures2d::SIFT::create(1800, 3, 0.04, 10, 1.6);
+        detector = cv::xfeatures2d::SIFT::create(1500, 3, 0.04, 10, 1.6);
         detector->detectAndCompute(proc_img, cv::noArray(), kpts, descs);
     }
     else if (detector_name == "surf")

@@ -15,13 +15,11 @@
     <param name = "/use_sim_time"    value = "true"/>
 
     <!-- Portals Vells T0 -->
-    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_cut/images_2021-02-25-14-41-06_0.bag
-                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_cut/images_2021-02-25-14-47-26_1.bag
-                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_cut/images_2021-02-25-14-53-45_2.bag
-                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_cut/images_2021-02-25-15-00-04_3.bag
-                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_cut/images_2021-02-25-15-06-23_4.bag
-                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_cut/images_2021-02-25-15-12-43_5.bag
-                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_cut/topics_2021-02-25-14-41-52_0.bag"/>
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_full_cut/images_2021-02-25-14-41-06_0.bag
+                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_full_cut/images_2021-02-25-14-47-26_1.bag
+                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_full_cut/images_2021-02-25-14-53-45_2.bag
+                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_full_cut/images_2021-02-25-15-00-04_3.bag
+                                     /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_full_cut/images_2021-02-25-15-06-23_4.bag"/>
 
     <!-- Play bagfile -->
     <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/left/camera_info 
