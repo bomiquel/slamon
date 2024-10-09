@@ -16,7 +16,8 @@ namespace slamon
                                    std::string& matching_type,
                                    std::string& robot_frame_id,
                                    std::string& motion_estimation_type):
-                                   VisionMotionModules(ratio, matching_type, motion_estimation_type)
+                                   KeypointMatcher(ratio, matching_type), 
+                                   MotionEstimator(motion_estimation_type)
     {
         // Inilitialises parameters.
         min_inliers_ = min_inliers;
@@ -318,13 +319,13 @@ namespace slamon
             r_proj_mat_.at<double>(1,2) = r_proj_mat_.at<double>(1,2) / binning_y;
             r_proj_mat_.at<double>(1,3) = r_proj_mat_.at<double>(1,3) / binning_y;
 
-            n_img_cols_ = l_info_msg->roi.width / binning_x;
-            n_img_rows_ = l_info_msg->roi.height / binning_y;
+            img_width_ = l_info_msg->roi.width / binning_x;
+            img_height_ = l_info_msg->roi.height / binning_y;
         }
         else
         {
-            n_img_cols_ = l_info_msg->roi.width;
-            n_img_rows_ = l_info_msg->roi.height;
+            img_width_ = l_info_msg->roi.width;
+            img_height_ = l_info_msg->roi.height;
         }
 
         return true;
@@ -436,10 +437,10 @@ namespace slamon
             publishCounter(m_c_l_kpts.size(), successive_matches_num_pub_);
         if (successive_matches_img_pub_.getNumSubscribers() > 0)
         {
-            if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
+            if (matching_type_ == RATIO_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
                 publishImgMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
                                   successive_matches_img_pub_, m_c_l_kpts, m_p_l_kpts);
-            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
+            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
                 publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
                                           c_frame.getTimestamp(), successive_matches_img_pub_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
             else
@@ -467,7 +468,7 @@ namespace slamon
         std::vector<cv::KeyPoint> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
         if (enable_bucketing_)
         {
-            bucketKeypoints(n_img_rows_, n_img_cols_, max_kpts_bucket_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_cam_pts, m_p_cam_pts,
+            bucketKeypoints(max_kpts_bucket_, (float)img_width_, (float)img_height_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_cam_pts, m_p_cam_pts,
                             f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts);
         }
         else
@@ -496,10 +497,10 @@ namespace slamon
             publishCounter(i_c_l_kpts.size(), inliers_num_pub_);
         if (inliers_img_pub_.getNumSubscribers() > 0)
         {
-            if (matching_type_ == RATIO_MATCHING || matching_type_ == ESSENTIAL_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
+            if (matching_type_ == RATIO_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
                 publishImgMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
                                   inliers_img_pub_, i_c_l_kpts, i_p_l_kpts);
-            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_ESSENTIAL_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
+            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
                 publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
                                           c_frame.getTimestamp(), inliers_img_pub_, i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts);
             else

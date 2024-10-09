@@ -2,7 +2,7 @@
  *  @file
  *  @brief The Visual Odometer class is responsive to track consecutive image frames and compute their motion.
  *  @author Bo Miquel Nordfeldt-Fiol
- *  @date Winter-Spring 2024
+ *  @date 2024
  */
 
 #ifndef VISUAL_ODOMETER_HPP
@@ -22,7 +22,9 @@
 #include "frame.hpp"
 #include "tools.hpp"
 #include "publisher.hpp"
-#include "vision_motion_modules.hpp"
+#include "motion_estimator.hpp"
+#include "keypoint_matcher.hpp"
+#include "keypoint_detector.hpp"
 
 #include "slamon/GetTransform.h"
 #include "slamon/GetProjectionMatrices.h"
@@ -32,7 +34,7 @@ namespace slamon
 {
 
 
-    class VisualOdometer: protected Publisher, protected VisionMotionModules 
+    class VisualOdometer: protected KeypointDetector, protected KeypointMatcher, protected MotionEstimator, protected Publisher
     {
         public:
 
@@ -189,16 +191,16 @@ namespace slamon
             // Atributes
             int c_frame_id_; //!> Current frame id.
 
-            int n_img_rows_; //!> Number of image rows.
+            int img_height_; //!> Number of image rows.
 
-            int n_img_cols_; //!> Number of image cols.
+            int img_width_; //!> Number of image cols.
 
             int min_inliers_; //!> Minimum number of inliers to estimate the movement.
 
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
-            
-            int max_kpts_bucket_; //!> Maximum number of keypoints per bucket.
 
+            int max_kpts_bucket_; //!> Maximum number of keypoints per bucket.
+            
             Frame p_frame_; //!> Previous frame.
             
             VOStatus status_; //!> Visual odometer state.

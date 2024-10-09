@@ -3,7 +3,7 @@
  *  @brief Map class
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
- *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
+ *  @modified Bo Miquel Nordfeldt-Fiol 2024
  */
 
 #ifndef MAP_HPP

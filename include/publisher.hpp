@@ -3,7 +3,7 @@
  *  @brief The Publisher class is responsive to publish the image visualizations for debugging purposes.
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
- *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
+ *  @modified Bo Miquel Nordfeldt-Fiol 2024
  */
 
 #ifndef PUBLISHER_HPP

@@ -119,8 +119,10 @@ add_executable(vo_slamon
                src/frame.cpp
                src/vo_node.cpp
                src/publisher.cpp
-               src/vision_motion_modules.cpp
-               src/visual_odometer.cpp)
+               src/visual_odometer.cpp
+               src/motion_estimator.cpp
+               src/keypoint_matcher.cpp
+               src/keypoint_detector.cpp)
 add_executable(map_slamon
                src/map.cpp
                src/hash.cpp
@@ -129,7 +131,8 @@ add_executable(map_slamon
                src/map_node.cpp
                src/publisher.cpp
                src/loop_closer.cpp
-               src/vision_motion_modules.cpp)
+               src/motion_estimator.cpp
+               src/keypoint_matcher.cpp)
 add_executable(initial_pose_server_params src/initial_pose_server_params)
 
 # Dependencies

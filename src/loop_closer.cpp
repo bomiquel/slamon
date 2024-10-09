@@ -14,7 +14,8 @@ namespace slamon
                            const std::string& w_path,
                            std::string& matching_type,
                            std::string& motion_estimation_type):
-                           VisionMotionModules(ratio, matching_type, motion_estimation_type)
+                           KeypointMatcher(ratio, matching_type), 
+                           MotionEstimator(motion_estimation_type)
     {
         // Initialises parameters.
         lc_neighbors_ = lc_neighbors;

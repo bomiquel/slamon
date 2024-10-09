@@ -3,7 +3,7 @@
  *  @brief Loop closer class
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
- *  @modified Bo Miquel Nordfeldt-Fiol Winter-Spring 2024
+ *  @modified Bo Miquel Nordfeldt-Fiol 2024
  */
 
 #ifndef LOOP_CLOSER_HPP
@@ -21,7 +21,8 @@
 #include "tools.hpp"
 #include "cluster.hpp"
 #include "publisher.hpp"
-#include "vision_motion_modules.hpp"
+#include "motion_estimator.hpp"
+#include "keypoint_matcher.hpp"
 
 #include "slamon/GetProjectionMatrices.h"
 
@@ -33,7 +34,7 @@ namespace slamon
     class Map;
 
 
-    class LoopCloser: protected Publisher, protected VisionMotionModules
+    class LoopCloser: protected KeypointMatcher, protected MotionEstimator, protected Publisher
     {
         public:
 
