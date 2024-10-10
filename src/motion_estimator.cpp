@@ -449,7 +449,7 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
     {
         while (result == UPDATED)
         {
-            result = updateDualParams(1e-8, 1, inliers, l_pts_0, r_pts_0, cam_pts_1, J, tr_vec, obs_pts, pre_pts, res_pts);
+            result = updateDualParams(1e-7, 1, inliers, l_pts_0, r_pts_0, cam_pts_1, J, tr_vec, obs_pts, pre_pts, res_pts);
             if (iter++ > 100 || result == CONVERGED)
                 break;
         }
