@@ -60,7 +60,7 @@ void Publisher::publishImgMatches(const bool vertical,
     // Writes text.
     std::stringstream caption;
     caption << " Number of matches: " << m_kpts_0.size();
-    cv::Mat o_img = drawTxtInImage(true, drawn_img, caption, 20);
+    cv::Mat o_img = drawTxtInImg(true, drawn_img, caption, 20);
 
     // Publishes image.
     publishImg(o_img, stamp, publisher);
@@ -81,7 +81,7 @@ void Publisher::writeImgMatches(const bool vertical,
     // Writes text.
     std::stringstream caption;
     caption << " Number of matches: " << m_kpts_0.size();
-    cv::Mat o_img = drawTxtInImage(true, drawn_img, caption, 20);
+    cv::Mat o_img = drawTxtInImg(true, drawn_img, caption, 20);
 
     // Writes image.
     cv::imwrite(o_path + ".png", o_img);
@@ -421,10 +421,10 @@ cv::Mat Publisher::drawImgKeypoints(const cv::Mat& img,
 }
 
 
-cv::Mat Publisher::drawTxtInImage(const bool caption,
-                                  const cv::Mat& img,
-                                  const std::stringstream& text,
-                                  const int extra_vertical_space)
+cv::Mat Publisher::drawTxtInImg(const bool caption,
+                                const cv::Mat& img,
+                                const std::stringstream& text,
+                                const int extra_vertical_space)
 {
     
     int baseline = 0;
@@ -459,10 +459,10 @@ cv::Mat Publisher::drawImgStereoKeypoints(const cv::Mat& l_img,
     // Write text
     std::stringstream caption;
     caption << " Number of keypoints: " << l_kpts.size();
-    drawn_l_img = drawTxtInImage(true, drawn_l_img, caption, 20);
+    drawn_l_img = drawTxtInImg(true, drawn_l_img, caption, 20);
     caption.str("");
     caption << " Number of keypoints: " << r_kpts.size();
-    drawn_r_img = drawTxtInImage(true, drawn_r_img, caption, 20);
+    drawn_r_img = drawTxtInImg(true, drawn_r_img, caption, 20);
     
     // Concatenates horizontally the painted images.
     cv::Mat o_img;
@@ -554,7 +554,7 @@ cv::Mat Publisher::drawImgCircularMatches(const cv::Mat& c_l_img,
     // Writes text
     std::stringstream caption;
     caption << " Number of matches: " << m_c_l_kpts.size();
-    cv::Mat o_img = drawTxtInImage(true, drawn_stereo_img, caption, 20);
+    cv::Mat o_img = drawTxtInImg(true, drawn_stereo_img, caption, 20);
 
     return o_img;
 }
@@ -581,7 +581,7 @@ cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
     // Writes text
     std::stringstream caption;
     caption << " Number of clusters: " << clusters.size();
-    cv::Mat o_img = drawTxtInImage(true, drawn_img, caption, 20);
+    cv::Mat o_img = drawTxtInImg(true, drawn_img, caption, 20);
 
     return o_img;
 }
@@ -614,7 +614,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
         // Adds caption to candidate keyframe.
         text.str("");
         text << "Keyframe: " << cand_keyframe_ids[i];
-        written_img = drawTxtInImage(true, img, text, 20);
+        written_img = drawTxtInImg(true, img, text, 20);
 
         // Horizontal concatenation of candidate keyframes.
         if (cand_keyframe_vector_img.cols == 0)
@@ -634,7 +634,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
     // Adds title to query keyframe.
     text.str("");
     text << "Keyframe " << q_keyframe_id;
-    written_img = drawTxtInImage(false, img, text, 20);
+    written_img = drawTxtInImg(false, img, text, 20);
 
     // Gets query offset to compose query and candidates keyframes correctly and to draw the keypoints in the correct location.
     int q_y_offset = written_img.rows - img.rows;

@@ -402,17 +402,17 @@ class Publisher
 
         /** \brief Writes text at the bottom of the image. 
          *  \param caption If true, the text is written in the caption.
-         *  Otherwise it is written as a caption (input).
+         *  Otherwise it is written as a title (input).
          *  \param img The image (input).
          *  \param extra_vertical_space Extra vertical space to keep
          *  the text from touching the margins (input).
          *  \param text The text (input).
          *  @return An image with the txt at the bottom.
          */
-        cv::Mat drawTxtInImage(const bool caption,
-                               const cv::Mat& img,
-                               const std::stringstream& text,
-                               const int extra_vertical_space);
+        cv::Mat drawTxtInImg(const bool caption,
+                             const cv::Mat& img,
+                             const std::stringstream& text,
+                             const int extra_vertical_space);
 
 
         /** \brief Concatenates the stereo images and draw their keypoints. 
