@@ -1,7 +1,7 @@
 test/*
 haloc/*
-output/*
-*/output/*
+output*/*
+*/output*/*
 keyframes/*
 pointclouds/*
 loop_closures/*
