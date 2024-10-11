@@ -179,8 +179,8 @@ namespace slamon
         cv::write(fs, "r_kpts", c_cluster.getRightKpts());
         cv::write(fs, "l_descs", c_cluster.getLeftDescs());
         cv::write(fs, "r_descs", c_cluster.getRightDescs());
-        cv::write(fs, "cam_pts", c_cluster.getCameraPoints());
         cv::write(fs, "keyframe_id", c_cluster.getKeyframeId());
+        cv::write(fs, "l_cam_pts", c_cluster.getLeftCameraPoints());
         fs.release();
     }
 
@@ -341,19 +341,19 @@ namespace slamon
         // Reads cluster data.
         int keyframe_id;
         cv::Mat l_descs, r_descs;
-        std::vector<cv::Point3f> cam_pts;
+        std::vector<cv::Point3f> l_cam_pts;
         std::vector<cv::KeyPoint> l_kpts, r_kpts;
         fs["l_kpts"] >> l_kpts;
         fs["r_kpts"] >> r_kpts;
-        fs["cam_pts"] >> cam_pts;
         fs["l_descs"] >> l_descs;
         fs["r_descs"] >> r_descs;
+        fs["l_cam_pts"] >> l_cam_pts;
         fs["keyframe_id"] >> keyframe_id;
         fs.release();
 
         // Sets the properties of the cluster.
         tf::Transform camera_pose = map_->getVertexCameraPose(id, true);
-        Cluster cluster(id, keyframe_id, l_descs, r_descs, camera_pose, l_kpts, r_kpts, cam_pts);
+        Cluster cluster(id, keyframe_id, l_descs, r_descs, camera_pose, l_kpts, r_kpts, l_cam_pts);
         return cluster;
     }
 
@@ -369,18 +369,18 @@ namespace slamon
         std::vector<int> q_cluster_ids, cand_cluster_ids, f_q_cluster_ids, f_cand_cluster_ids;
 
         // First descriptor matching.
-        std::vector<cv::Point3f> f_q_cam_pts, f_cand_cam_pts;
+        std::vector<cv::Point3f> f_q_l_cam_pts, f_cand_l_cam_pts;
         std::vector<cv::KeyPoint> f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts;
         matchKeypointClusters(q_cluster.getLeftDescs(), q_cluster.getRightDescs(), 
                               cand_cluster.getLeftDescs(), cand_cluster.getRightDescs(),
                               q_cluster_ids, cand_cluster_ids, 
                               q_cluster.getLeftKpts(), q_cluster.getRightKpts(),
                               cand_cluster.getLeftKpts(), cand_cluster.getRightKpts(),
-                              q_cluster.getCameraPoints(), cand_cluster.getCameraPoints(),
+                              q_cluster.getLeftCameraPoints(), cand_cluster.getLeftCameraPoints(),
                               f_q_cluster_ids, f_cand_cluster_ids,
                               f_q_l_kpts, f_q_r_kpts, 
                               f_cand_l_kpts, f_cand_r_kpts,
-                              f_q_cam_pts, f_cand_cam_pts);
+                              f_q_l_cam_pts, f_cand_l_cam_pts);
 
         // Gets the neighbor clusters if enough matching percentage.
         if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_ / 2))
@@ -403,7 +403,7 @@ namespace slamon
             cv::Mat all_q_r_descs = q_cluster.getRightDescs();
             std::vector<cv::KeyPoint> all_q_l_kpts = q_cluster.getLeftKpts();
             std::vector<cv::KeyPoint> all_q_r_kpts = q_cluster.getRightKpts();
-            std::vector<cv::Point3f> all_q_cam_pts = q_cluster.getCameraPoints();
+            std::vector<cv::Point3f> all_q_l_cam_pts = q_cluster.getLeftCameraPoints();
 
             // Temporal variables.
             Cluster tmp_cluster;
@@ -478,14 +478,14 @@ namespace slamon
                 tmp_l_kpts = tmp_cluster.getLeftKpts();
                 tmp_r_kpts = tmp_cluster.getRightKpts();
                 tmp_r_descs = tmp_cluster.getRightDescs();
-                tmp_3d_pts = tmp_cluster.getCameraPoints();
+                tmp_3d_pts = tmp_cluster.getLeftCameraPoints();
 
                 // Concatenates query data.
                 cv::vconcat(all_q_l_descs, tmp_l_descs, all_q_l_descs);
                 cv::vconcat(all_q_r_descs, tmp_r_descs, all_q_r_descs);
                 all_q_l_kpts.insert(all_q_l_kpts.end(), tmp_l_kpts.begin(), tmp_l_kpts.end());
                 all_q_r_kpts.insert(all_q_r_kpts.end(), tmp_r_kpts.begin(), tmp_r_kpts.end());
-                all_q_cam_pts.insert(all_q_cam_pts.end(), tmp_3d_pts.begin(), tmp_3d_pts.end());
+                all_q_l_cam_pts.insert(all_q_l_cam_pts.end(), tmp_3d_pts.begin(), tmp_3d_pts.end());
 
                 // Save the query cluster's ith neighbour id for these points.
                 for (uint j = 0; j < tmp_l_kpts.size(); j++)
@@ -502,10 +502,10 @@ namespace slamon
             // Reuses variables.
             f_q_l_kpts.clear();
             f_q_r_kpts.clear();
-            f_q_cam_pts.clear();
+            f_q_l_cam_pts.clear();
             f_cand_l_kpts.clear();
             f_cand_r_kpts.clear();
-            f_cand_cam_pts.clear();
+            f_cand_l_cam_pts.clear();
 
             // Second descriptor matching.
             std::vector<cv::Point3f> f_cand_world_pts;
@@ -514,11 +514,11 @@ namespace slamon
                                   q_cluster_ids, cand_cluster_ids,
                                   all_q_l_kpts, all_q_r_kpts, 
                                   all_cand_l_kpts, all_cand_r_kpts,
-                                  all_q_cam_pts, all_cand_world_pts,
+                                  all_q_l_cam_pts, all_cand_world_pts,
                                   f_q_cluster_ids, f_cand_cluster_ids,
                                   f_q_l_kpts, f_q_r_kpts,
                                   f_cand_l_kpts, f_cand_r_kpts,
-                                  f_q_cam_pts, f_cand_world_pts);
+                                  f_q_l_cam_pts, f_cand_world_pts);
 
             // Loop closure matches debugging.
             if (loop_closure_matches_num_pub_.getNumSubscribers() > 0)
@@ -529,11 +529,11 @@ namespace slamon
                 // Estimates motion.
                 cv::Mat estimated_rotation, estimated_translation;
                 std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
-                std::vector<cv::Point3f> i_q_cam_pts, i_cand_world_pts;
+                std::vector<cv::Point3f> i_q_l_cam_pts, i_cand_world_pts;
                 std::vector<cv::KeyPoint> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
-                estimateMotion(f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_cam_pts, f_cand_world_pts,
+                estimateMotion(f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_l_cam_pts, f_cand_world_pts,
                                estimated_rotation, estimated_translation,
-                               i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_cam_pts, i_cand_world_pts);
+                               i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_l_cam_pts, i_cand_world_pts);
 
                 // Loop closure inliers debugging.
                 if (loop_closure_inliers_num_pub_.getNumSubscribers() > 0)

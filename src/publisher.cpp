@@ -102,7 +102,7 @@ void Publisher::publishImgCircularMatches(const cv::Mat& c_l_img,
     // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
     cv::Mat o_img = drawImgCircularMatches(c_l_img, c_r_img, p_l_img, p_r_img, color,
-                                        m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
+                                           m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
     
     // Publishes image
     publishImg(o_img, stamp, publisher);
@@ -122,7 +122,7 @@ void Publisher::writeImgCircularMatches(const cv::Mat& c_l_img,
     // Draws matches.
     cv::Scalar color(0.0, 0.0, 255);
     cv::Mat o_img = drawImgCircularMatches(c_l_img, c_r_img, p_l_img, p_r_img, color,
-                                        m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
+                                           m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
 
     // Writes image.
     cv::imwrite(o_path + ".png", o_img);
@@ -305,7 +305,7 @@ void Publisher::publishStereoData(const cv::Mat& l_descs,
                                   const ros::Publisher& publisher,
                                   const std::vector<cv::KeyPoint>& l_kpts,
                                   const std::vector<cv::KeyPoint>& r_kpts,
-                                  const std::vector<cv::Point3f>& cam_pts)
+                                  const std::vector<cv::Point3f>& l_cam_pts)
 {
     // Create and fill StereoData msg.
     slamon::StereoData msg;
@@ -315,9 +315,9 @@ void Publisher::publishStereoData(const cv::Mat& l_descs,
     for (uint i = 0; i < l_kpts.size(); i++)
     {
         // Fill base msgs
-        cam_pt_msg.x = cam_pts[i].x;
-        cam_pt_msg.y = cam_pts[i].y;
-        cam_pt_msg.z = cam_pts[i].z;
+        cam_pt_msg.x = l_cam_pts[i].x;
+        cam_pt_msg.y = l_cam_pts[i].y;
+        cam_pt_msg.z = l_cam_pts[i].z;
         l_kpt_msg.pt.x = l_kpts[i].pt.x;
         l_kpt_msg.pt.y = l_kpts[i].pt.y;
         r_kpt_msg.pt.x = r_kpts[i].pt.x;
@@ -330,7 +330,7 @@ void Publisher::publishStereoData(const cv::Mat& l_descs,
         // Fill StereoData msg.
         msg.l_kpts.push_back(l_kpt_msg);
         msg.r_kpts.push_back(r_kpt_msg);
-        msg.cam_pts.push_back(cam_pt_msg);
+        msg.l_cam_pts.push_back(cam_pt_msg);
     }
 
     // Publishes.
@@ -380,11 +380,9 @@ void Publisher::writePoses(const std::string& o_path,
         pose.getRotation().getZ() << "," <<
         pose.getRotation().getW() << std::endl;
     }
-
     poses_file.close();
 
     // Unlock
-    poses_file.close();
     bool ok = std::filesystem::remove(l_path.c_str());
     if (!ok)
         ROS_ERROR("[Publisher->writePoses]: Error deleting the locking file!");

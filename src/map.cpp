@@ -345,7 +345,7 @@ namespace slamon
             cv::Mat r_descs = c_frame.getRightDescs();
             std::vector<cv::KeyPoint> l_kpts = c_frame.getLeftKpts();
             std::vector<cv::KeyPoint> r_kpts = c_frame.getRightKpts();
-            std::vector<cv::Point3f> cam_pts = c_frame.getCameraPoints();
+            std::vector<cv::Point3f> l_cam_pts = c_frame.getLeftCameraPoints();
             std::vector<cv::Point3f> cluster_centroids = c_frame.getClustersCentroids();
             std::vector<std::vector<int>> clusters = c_frame.getClusters();
 
@@ -369,7 +369,7 @@ namespace slamon
             int cluster_id, idx;
             std::vector<int> c_vertex_ids;
             cv::Mat cluster_l_descs, cluster_r_descs;
-            std::vector<cv::Point3f> cluster_cam_pts;
+            std::vector<cv::Point3f> cluster_l_cam_pts;
             std::vector<cv::KeyPoint> cluster_l_kpts, cluster_r_kpts;
             std::vector<Cluster> clusters_to_close_loop;
             tf::Transform local_cluster_pose, c_cluster_pose;
@@ -398,17 +398,17 @@ namespace slamon
                     idx = clusters[i][j];
                     cluster_l_kpts.push_back(l_kpts[idx]);
                     cluster_r_kpts.push_back(r_kpts[idx]);
-                    cluster_cam_pts.push_back(cam_pts[idx]);
+                    cluster_l_cam_pts.push_back(l_cam_pts[idx]);
                     cluster_l_descs.push_back(l_descs.row(idx));
                     cluster_r_descs.push_back(r_descs.row(idx));
                 }
-                Cluster cluster(cluster_id, c_keyframe_id_, cluster_l_descs, cluster_r_descs, c_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_cam_pts);
+                Cluster cluster(cluster_id, c_keyframe_id_, cluster_l_descs, cluster_r_descs, c_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_l_cam_pts);
                 clusters_to_close_loop.push_back(cluster);
 
                 // Clear variables
                 cluster_l_kpts.clear();
                 cluster_r_kpts.clear();
-                cluster_cam_pts.clear();
+                cluster_l_cam_pts.clear();
                 cluster_l_descs.release();
                 cluster_r_descs.release();
             }
@@ -682,7 +682,7 @@ namespace slamon
         cv::Point3f cam_pt;
         std::vector<float> desc;
         cv::Mat l_descs, r_descs;
-        std::vector<cv::Point3f> cam_pts;
+        std::vector<cv::Point3f> l_cam_pts;
         std::vector<cv::KeyPoint> l_kpts, r_kpts;
         for (uint i = 0; i < msg->l_kpts.size(); i++)
         {
@@ -698,13 +698,13 @@ namespace slamon
             l_descs.push_back(cv::Mat(1, desc.size(), CV_32F, desc.data()));
             desc = msg->r_kpts[i].desc;
             r_descs.push_back(cv::Mat(1, desc.size(), CV_32F, desc.data()));
-            cam_pt.x = msg->cam_pts[i].x;
-            cam_pt.y = msg->cam_pts[i].y;
-            cam_pt.z = msg->cam_pts[i].z;
-            cam_pts.push_back(cam_pt);
+            cam_pt.x = msg->l_cam_pts[i].x;
+            cam_pt.y = msg->l_cam_pts[i].y;
+            cam_pt.z = msg->l_cam_pts[i].z;
+            l_cam_pts.push_back(cam_pt);
         }
 
-        frame = Frame(l_descs, r_descs, msg->header.stamp, l_kpts, r_kpts, cam_pts);
+        frame = Frame(l_descs, r_descs, msg->header.stamp, l_kpts, r_kpts, l_cam_pts);
     }
 
 

@@ -33,14 +33,14 @@ class Frame
          *  \param stamp Time stamp in which the frame was obtained.
          *  \param l_kpts Left keypoints.
          *  \param r_kpts Right keypoints.
-         *  \param cam_pts 3D points relative to camera.
+         *  \param l_cam_pts 3D points relative to left camera.
          */
         Frame(cv::Mat l_descs,
               cv::Mat r_descs,
               ros::Time stamp,
               std::vector<cv::KeyPoint> l_kpts,
               std::vector<cv::KeyPoint> r_kpts,
-              std::vector<cv::Point3f> cam_pts);
+              std::vector<cv::Point3f> l_cam_pts);
 
 
         /** \brief Full class constructor
@@ -51,7 +51,7 @@ class Frame
          *  \param stamp Time stamp in which the frame was obtained.
          *  \param l_kpts Left keypoints.
          *  \param r_kpts Right keypoints.
-         *  \param cam_pts 3D points relative to camera.
+         *  \param l_cam_pts 3D points relative to left camera.
          */
         Frame(cv::Mat l_img,
               cv::Mat r_img,
@@ -60,7 +60,7 @@ class Frame
               ros::Time stamp,
               std::vector<cv::KeyPoint> l_kpts,
               std::vector<cv::KeyPoint> r_kpts,
-              std::vector<cv::Point3f> cam_pts);
+              std::vector<cv::Point3f> l_cam_pts);
 
 
         /** \brief Set left image.
@@ -123,9 +123,9 @@ class Frame
         inline std::vector<cv::KeyPoint> getRightKpts() const {return r_kpts_;}
         
 
-        /** \brief Get 3D points relative to camera.
+        /** \brief Get 3D points relative to left camera.
          */
-        inline std::vector<cv::Point3f> getCameraPoints() const {return cam_pts_;}
+        inline std::vector<cv::Point3f> getLeftCameraPoints() const {return l_cam_pts_;}
 
 
         /** \brief Set camera pose.
@@ -191,7 +191,7 @@ class Frame
         std::vector<cv::KeyPoint> l_kpts_; //!> Left keypoints.
         std::vector<cv::KeyPoint> r_kpts_; //!> Right keypoints.
 
-        std::vector<cv::Point3f> cam_pts_; //!> Stereo 3D points relative to camera.
+        std::vector<cv::Point3f> l_cam_pts_; //!> Stereo 3D points relative to left camera.
 
         tf::Transform camera_pose_; //!> Camera world position for this frame.
 

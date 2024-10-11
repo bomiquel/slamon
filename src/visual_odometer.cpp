@@ -45,6 +45,12 @@ namespace slamon
                 std::filesystem::remove_all(frame_path_);
             std::filesystem::create_directory(frame_path_);
         }
+
+        emergency_frame_path_ = w_path + "emergency_frames/";
+        if (std::filesystem::exists(emergency_frame_path_))
+            std::filesystem::remove_all(emergency_frame_path_);
+        std::filesystem::create_directory(emergency_frame_path_);
+
     }
 
 
@@ -116,7 +122,7 @@ namespace slamon
             case UNINITIALISED:
             {
                 if (enable_debugging_)
-                    ROS_INFO_STREAM("UNINITIALIZED");
+                    ROS_INFO_STREAM("[VO->status:] UNINITIALIZED");
                 if (!initialisation(l_info_msg, r_info_msg))
                     break;
                 if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
@@ -135,7 +141,7 @@ namespace slamon
             case BOOTSTRAPPING:
             {
                 if (enable_debugging_)
-                    ROS_INFO_STREAM("BOOTSTRAPPING");
+                    ROS_INFO_STREAM("[VO->status:] BOOTSTRAPPING");
                 if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
                     status_ = RUNNING;
@@ -148,7 +154,7 @@ namespace slamon
             case RUNNING:
             {
                 if (enable_debugging_)
-                    ROS_INFO_STREAM("RUNNING");
+                    ROS_INFO_STREAM("[VO->status:] RUNNING");
                 if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
                     valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);
@@ -167,7 +173,7 @@ namespace slamon
                                 cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                             }
                             publishStereoData(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
-                                              stereo_data_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getCameraPoints());
+                                              stereo_data_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getLeftCameraPoints());
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_camera_odom_, tf::Transform(),
                                                    camera_odom_pub_, camera_frame_id_);
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_robot_odom_, tf::Transform(),
@@ -197,7 +203,7 @@ namespace slamon
                             cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                         }
                         publishStereoData(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
-                                          stereo_data_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getCameraPoints());
+                                          stereo_data_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getLeftCameraPoints());
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_camera_odom_, c_camera_motion,
                                                camera_odom_pub_, camera_frame_id_);
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_robot_odom_, c_robot_motion,
@@ -387,9 +393,9 @@ namespace slamon
         // Compute 3D keypoints. 
         start_module_time = ros::Time::now().toSec();
         cv::Mat f_l_descs, f_r_descs;
-        std::vector<cv::Point3f> f_cam_pts;
+        std::vector<cv::Point3f> f_l_cam_pts;
         std::vector<cv::KeyPoint> f_l_kpts, f_r_kpts;
-        compute3DPoints(m_l_descs, m_r_descs, m_l_kpts, m_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_cam_pts);
+        compute3DPoints(m_l_descs, m_r_descs, m_l_kpts, m_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_l_cam_pts);
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
@@ -407,7 +413,7 @@ namespace slamon
             publishImgMatches(false, l_img, r_img, l_img_msg->header.stamp, stereo_matches_img_pub_, f_l_kpts, f_r_kpts);
 
         // Fill Frame object
-        c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_cam_pts);
+        c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_l_cam_pts);
 
         if (enable_debugging_)
             ROS_INFO_STREAM("[VO->Stereo frame processor:] Stereoscopic image processed successfully!");
@@ -424,12 +430,12 @@ namespace slamon
 
         // Search for matches of keypoints between successive frames or pairs of frames.
         start_module_time = ros::Time::now().toSec();
-        std::vector<cv::Point3f> m_c_cam_pts, m_p_cam_pts;
+        std::vector<cv::Point3f> m_c_l_cam_pts, m_p_l_cam_pts;
         std::vector<cv::KeyPoint> m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts;
         matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), 
                                 c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), 
-                                c_frame.getCameraPoints(), p_frame_.getCameraPoints(),
-                                m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_cam_pts, m_p_cam_pts);
+                                c_frame.getLeftCameraPoints(), p_frame_.getLeftCameraPoints(),
+                                m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_l_cam_pts, m_p_l_cam_pts);
         run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Successive matching run time.
 
         // Non stereo matching keypoints debugging.
@@ -464,12 +470,13 @@ namespace slamon
 
         // Buckets keypoints.
         start_module_time = ros::Time::now().toSec();
-        std::vector<cv::Point3f> f_c_cam_pts, f_p_cam_pts;
+        std::vector<cv::Point3f> f_c_l_cam_pts, f_p_l_cam_pts;
         std::vector<cv::KeyPoint> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
         if (enable_bucketing_)
         {
-            bucketKeypoints(max_kpts_bucket_, (float)img_width_, (float)img_height_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_cam_pts, m_p_cam_pts,
-                            f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts);
+            bucketKeypoints(max_kpts_bucket_, img_width_, img_height_,
+                            m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_l_cam_pts, m_p_l_cam_pts,
+                            f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts);
         }
         else
         {
@@ -477,19 +484,19 @@ namespace slamon
             f_c_r_kpts = m_c_r_kpts;
             f_p_l_kpts = m_p_l_kpts;
             f_p_r_kpts = m_p_r_kpts;
-            f_c_cam_pts = m_c_cam_pts;
-            f_p_cam_pts = m_p_cam_pts;
+            f_c_l_cam_pts = m_c_l_cam_pts;
+            f_p_l_cam_pts = m_p_l_cam_pts;
         }
         run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Bucketing run time.
 
         // Estimate the motion.
         start_module_time = ros::Time::now().toSec();
         cv::Mat camera_rotation, camera_translation;
-        std::vector<cv::Point3f> i_c_cam_pts, i_p_cam_pts;
+        std::vector<cv::Point3f> i_c_l_cam_pts, i_p_l_cam_pts;
         std::vector<cv::KeyPoint> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
-        estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_cam_pts, f_p_cam_pts,
+        estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts,
                        camera_rotation, camera_translation, 
-                       i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_cam_pts, i_p_cam_pts);
+                       i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_l_cam_pts, i_p_l_cam_pts);
         run_times_.run_time_5 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
 
         // Inliers debugging.
@@ -522,7 +529,13 @@ namespace slamon
 
         // Build a TF
         if(!fromMatToTf(camera_rotation, camera_translation, c_camera_motion))
+        {
+            cv::imwrite(emergency_frame_path_ + convertTo5Digits(c_frame_id_ - 1) + "_left.png", p_frame_.getLeftImg());
+            cv::imwrite(emergency_frame_path_ + convertTo5Digits(c_frame_id_ - 1) + "_right.png", p_frame_.getRightImg());
+            cv::imwrite(emergency_frame_path_ + convertTo5Digits(c_frame_id_) + "_left.png", c_frame.getLeftImg());
+            cv::imwrite(emergency_frame_path_ + convertTo5Digits(c_frame_id_) + "_right.png", c_frame.getRightImg());
             return false;
+        }
 
         return true;
     }
