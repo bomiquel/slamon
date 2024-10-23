@@ -45,12 +45,6 @@ namespace slamon
                 std::filesystem::remove_all(frame_path_);
             std::filesystem::create_directory(frame_path_);
         }
-
-        emergency_frame_path_ = w_path + "emergency_frames/";
-        if (std::filesystem::exists(emergency_frame_path_))
-            std::filesystem::remove_all(emergency_frame_path_);
-        std::filesystem::create_directory(emergency_frame_path_);
-
     }
 
 
@@ -529,13 +523,7 @@ namespace slamon
 
         // Build a TF
         if(!fromMatToTf(camera_rotation, camera_translation, c_camera_motion))
-        {
-            cv::imwrite(emergency_frame_path_ + convertTo5Digits(c_frame_id_ - 1) + "_left.png", p_frame_.getLeftImg());
-            cv::imwrite(emergency_frame_path_ + convertTo5Digits(c_frame_id_ - 1) + "_right.png", p_frame_.getRightImg());
-            cv::imwrite(emergency_frame_path_ + convertTo5Digits(c_frame_id_) + "_left.png", c_frame.getLeftImg());
-            cv::imwrite(emergency_frame_path_ + convertTo5Digits(c_frame_id_) + "_right.png", c_frame.getRightImg());
             return false;
-        }
 
         return true;
     }

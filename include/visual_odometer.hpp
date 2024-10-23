@@ -213,8 +213,6 @@ namespace slamon
 
             bool initialised_odom_; //!> Flag that indicates if the robot's odom has been initialised.
 
-            std::string emergency_frame_path_; //!> Path to store problematic frames.
-
             std::string frame_path_; //!> Path to store frames with debugging purpose.
 
             std::string robot_frame_id_; //!> Robot odometry coordinate axis identficator.
