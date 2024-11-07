@@ -324,8 +324,6 @@ void Publisher::publishStereoData(const cv::Mat& l_descs,
         r_kpt_msg.pt.y = r_kpts[i].pt.y;
         l_kpt_msg.desc = l_descs.row(i);
         r_kpt_msg.desc = r_descs.row(i);
-        l_kpt_msg.response = l_kpts[i].response;
-        r_kpt_msg.response = r_kpts[i].response;
 
         // Fill StereoData msg.
         msg.l_kpts.push_back(l_kpt_msg);

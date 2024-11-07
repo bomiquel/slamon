@@ -577,13 +577,13 @@ namespace slamon
             }
             else
             {
-                ROS_WARN_STREAM("[GRAPH->Map includer]: Image produces 0 clusters.");
+                ROS_WARN_STREAM("[MAP->Includer]: Image produces 0 clusters.");
                 return false;
             }
         }
         else
         {
-            ROS_WARN_STREAM("[GRAPH->Map includer]: Not enough keypoints in this frame (" << c_frame.getLeftKpts().size() << ")");
+            ROS_WARN_STREAM("[MAP->Includer]: Not enough keypoints in this frame (" << c_frame.getLeftKpts().size() << ")");
             return false;
         }
     }
@@ -603,7 +603,7 @@ namespace slamon
             double qz = srv.response.tf.pose.orientation.z;
             double qw = srv.response.tf.pose.orientation.w;
 
-            ROS_WARN_STREAM("[GRAPH->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
+            ROS_WARN_STREAM("[MAP->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
                             "tx: " << tx << std::endl << 
                             "ty: " << ty << std::endl << 
                             "tz: " << tz << std::endl << 
@@ -619,7 +619,7 @@ namespace slamon
         }
         else
         {
-            ROS_WARN_STREAM("[GRAPH->Static transform:] Failed to call GetTransform service. The robot2camera transform will be assumed as the identity.");
+            ROS_WARN_STREAM("[MAP->Static transform:] Failed to call GetTransform service. The robot2camera transform will be assumed as the identity.");
             robot2camera_.setIdentity();
         }
     }
@@ -688,11 +688,9 @@ namespace slamon
         {
             kpt.pt.x = msg->l_kpts[i].pt.x;
             kpt.pt.y = msg->l_kpts[i].pt.y;
-            kpt.response = msg->l_kpts[i].response;
             l_kpts.push_back(kpt);
             kpt.pt.x = msg->r_kpts[i].pt.x;
             kpt.pt.y = msg->r_kpts[i].pt.y;
-            kpt.response = msg->r_kpts[i].response;
             r_kpts.push_back(kpt);
             desc = msg->l_kpts[i].desc;
             l_descs.push_back(cv::Mat(1, desc.size(), CV_32F, desc.data()));
