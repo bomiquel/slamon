@@ -370,10 +370,12 @@ class Publisher
         /** \brief Writes a list of poses.
          *  \param o_path File output path. The name of the final 
          *  file must be included (input).
+         *  \param ids The list of keyframe ids to be written in the file (input).
          *  \param stamps Poses timestamps (input).
          *  \param poses The list of poses to be written in the file (input).
          */
         void writePoses(const std::string& o_path,
+                        const std::vector<int>& ids,
                         const std::vector<double>& stamps,
                         const std::vector<tf::Transform>& poses);
 

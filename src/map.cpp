@@ -167,24 +167,26 @@ namespace slamon
 
 
     void Map::getKeyframePoses(std::vector<double>& stamps,
+                               std::vector<int>& keyframe_ids,
                                std::vector<tf::Transform>& keyframe_poses)
     {
         // Locks graph
         std::scoped_lock lock(mutex_graph_);
 
+        keyframe_ids.clear();
+
         // Get keyframe poses
         bool found;
         int keyframe_id;
-        std::vector<int> processed_keyframes;
         for (uint vertex_id = 0; vertex_id < graph_.vertices().size(); vertex_id++)
         {
             // Is this keyframe processed?
             found = false;
             keyframe_id = getVertexKeyframeId(vertex_id);
             // for (uint processed_keyframe_id = processed_keyframes.size() - 1; processed_keyframe_id >= 0; processed_keyframe_id--)
-            for (uint processed_keyframe_id = 0; processed_keyframe_id < processed_keyframes.size(); processed_keyframe_id++)
+            for (uint processed_keyframe_id = 0; processed_keyframe_id < keyframe_ids.size(); processed_keyframe_id++)
             {
-                if (processed_keyframes[processed_keyframe_id] == keyframe_id)
+                if (keyframe_ids[processed_keyframe_id] == keyframe_id)
                 {
                     found = true;
                     break;
@@ -193,7 +195,7 @@ namespace slamon
             if (found)
                 continue;
 
-            processed_keyframes.push_back(keyframe_id);
+            keyframe_ids.push_back(keyframe_id);
             stamps.push_back(keyframe_stamps_[keyframe_id]);
             keyframe_poses.push_back(getVertexCameraPose(vertex_id, false) * robot2camera_.inverse());
         }
@@ -495,9 +497,10 @@ namespace slamon
             if (enable_debugging_)
             {
                 std::vector<double> stamps;
+                std::vector<int> keyframe_ids;
                 std::vector<tf::Transform> keyframe_poses;
-                getKeyframePoses(stamps, keyframe_poses);
-                writePoses(poses_file_, stamps, keyframe_poses);
+                getKeyframePoses(stamps, keyframe_ids, keyframe_poses);
+                writePoses(poses_file_, keyframe_ids, stamps, keyframe_poses);
             }
 
             // Publish updated robot pose.

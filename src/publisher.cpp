@@ -346,6 +346,7 @@ void Publisher::publishCounter(const int counter,
 
 
 void Publisher::writePoses(const std::string& o_path,
+                           const std::vector<int>& ids,
                            const std::vector<double>& stamps,
                            const std::vector<tf::Transform>& poses)
 {
@@ -361,7 +362,7 @@ void Publisher::writePoses(const std::string& o_path,
     std::fstream poses_file(o_path.c_str(), std::ios::out | std::ios::trunc);
 
     // First line
-    poses_file << std::fixed << std::setprecision(9) << "timestamp,x,y,z,qx,qy,qz,qw" << std::endl;
+    poses_file << std::fixed << std::setprecision(9) << "timestamp,id,x,y,z,qx,qy,qz,qw" << std::endl;
 
     // Write poses and timestamps
     tf::Transform pose;
@@ -370,6 +371,7 @@ void Publisher::writePoses(const std::string& o_path,
         pose = poses[i];
         poses_file << 
         stamps[i] << "," <<
+        ids[i] << "," <<
         pose.getOrigin().getX() << "," <<
         pose.getOrigin().getY() << "," <<
         pose.getOrigin().getZ() << "," <<
