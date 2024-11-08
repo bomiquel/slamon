@@ -55,22 +55,22 @@ void MotionEstimator::compute3DPoints(const cv::Mat& l_descs,
     double b = (t_x / -f_u);
 
     // Filters "far" keypoints.
-    cv::Point3f pt;
+    cv::Point3f l_cam_pt;
     double z_limit = 40 * b;
     for (int i = 0; i < l_cam_pts.rows; i++)
     {
-        pt.x = l_cam_pts.at<float>(i, 0);
-        pt.y = l_cam_pts.at<float>(i, 1);
-        pt.z = l_cam_pts.at<float>(i, 2);
-        if (std::isfinite(pt.x) &&
-            std::isfinite(pt.y) &&
-            std::isfinite(pt.z) &&
-            pt.z > 0.0 &&
-            pt.z <= z_limit)
+        l_cam_pt.x = l_cam_pts.at<float>(i, 0);
+        l_cam_pt.y = l_cam_pts.at<float>(i, 1);
+        l_cam_pt.z = l_cam_pts.at<float>(i, 2);
+        if (std::isfinite(l_cam_pt.x) &&
+            std::isfinite(l_cam_pt.y) &&
+            std::isfinite(l_cam_pt.z) &&
+            l_cam_pt.z > 0.0 &&
+            l_cam_pt.z <= z_limit)
         {
-            f_l_cam_pts.push_back(pt);
             f_l_kpts.push_back(l_kpts[i]);
             f_r_kpts.push_back(r_kpts[i]);
+            f_l_cam_pts.push_back(l_cam_pt);
             f_l_descs.push_back(l_descs.row(i));
             f_r_descs.push_back(r_descs.row(i));
         }
@@ -81,30 +81,30 @@ void MotionEstimator::compute3DPoints(const cv::Mat& l_descs,
 std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKeypoints(const uint max_kpts,
                                                                                         const float img_width,
                                                                                         const float img_height,
-                                                                                        const std::vector<cv::KeyPoint>& l_kpts_0,
-                                                                                        const std::vector<cv::KeyPoint>& r_kpts_0,
-                                                                                        const std::vector<cv::KeyPoint>& l_kpts_1,
-                                                                                        const std::vector<cv::KeyPoint>& r_kpts_1,
-                                                                                        const std::vector<cv::Point3f>& l_cam_pts_0,
-                                                                                        const std::vector<cv::Point3f>& l_cam_pts_1,
-                                                                                        std::vector<cv::KeyPoint>& f_l_kpts_0,
-                                                                                        std::vector<cv::KeyPoint>& f_r_kpts_0,
-                                                                                        std::vector<cv::KeyPoint>& f_l_kpts_1,
-                                                                                        std::vector<cv::KeyPoint>& f_r_kpts_1,
-                                                                                        std::vector<cv::Point3f>& f_l_cam_pts_0,
-                                                                                        std::vector<cv::Point3f>& f_l_cam_pts_1)
+                                                                                        const std::vector<cv::KeyPoint>& c_l_kpts,
+                                                                                        const std::vector<cv::KeyPoint>& c_r_kpts,
+                                                                                        const std::vector<cv::KeyPoint>& p_l_kpts,
+                                                                                        const std::vector<cv::KeyPoint>& p_r_kpts,
+                                                                                        const std::vector<cv::Point3f>& c_l_cam_pts,
+                                                                                        const std::vector<cv::Point3f>& p_l_cam_pts,
+                                                                                        std::vector<cv::KeyPoint>& f_c_l_kpts,
+                                                                                        std::vector<cv::KeyPoint>& f_c_r_kpts,
+                                                                                        std::vector<cv::KeyPoint>& f_p_l_kpts,
+                                                                                        std::vector<cv::KeyPoint>& f_p_r_kpts,
+                                                                                        std::vector<cv::Point3f>& f_c_l_cam_pts,
+                                                                                        std::vector<cv::Point3f>& f_p_l_cam_pts)
 {
     // Sanity check.
-    f_l_kpts_0.clear();
-    f_r_kpts_0.clear();
-    f_l_kpts_1.clear();
-    f_r_kpts_1.clear();
-    f_l_cam_pts_0.clear();
-    f_l_cam_pts_1.clear();
+    f_c_l_kpts.clear();
+    f_c_r_kpts.clear();
+    f_p_l_kpts.clear();
+    f_p_r_kpts.clear();
+    f_c_l_cam_pts.clear();
+    f_p_l_cam_pts.clear();
 
     // If there are no right keypoints, the filtered right verctor must not be filled.
     bool fill_right;
-    if (r_kpts_0.size() > 0)
+    if (c_r_kpts.size() > 0)
         fill_right = true;
     else
         fill_right = false;
@@ -116,12 +116,12 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKe
     // Fill buckets with keypoints and its indices.
     int bucket_idx, bucket_row, bucket_col;
     std::vector<std::vector<std::pair<int, cv::KeyPoint>>> buckets(100);
-    for (uint i = 0; i < l_kpts_0.size(); i++)
+    for (uint i = 0; i < c_l_kpts.size(); i++)
     {
-        bucket_col = (int) floor(l_kpts_0[i].pt.x / bucket_width);
-        bucket_row = (int) floor(l_kpts_0[i].pt.y / bucket_height);
+        bucket_col = (int) floor(c_l_kpts[i].pt.x / bucket_width);
+        bucket_row = (int) floor(c_l_kpts[i].pt.y / bucket_height);
         bucket_idx = (int) (10 * bucket_col + bucket_row);
-        buckets[bucket_idx].push_back(std::make_pair(i, l_kpts_0[i]));
+        buckets[bucket_idx].push_back(std::make_pair(i, c_l_kpts[i]));
     }
 
     // Remove excess keypoints from the buckets.
@@ -138,8 +138,8 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKe
             for (uint j = 0; j < buckets[i].size(); j++)
             {
                 idx = buckets[i][j].first;
-                l_kpt_0 = l_kpts_0[idx];
-                l_kpt_1 = l_kpts_1[idx];
+                l_kpt_0 = c_l_kpts[idx];
+                l_kpt_1 = p_l_kpts[idx];
                 delta_x = l_kpt_1.pt.x - l_kpt_0.pt.x;
                 if (delta_x != 0)
                     slope = (l_kpt_1.pt.y - l_kpt_0.pt.y) / (delta_x);
@@ -215,15 +215,15 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKe
         for (uint j = 0; j < buckets[i].size(); j++)
         {
             idx = buckets[i][j].first;
-            f_l_kpts_0.push_back(l_kpts_0[idx]);
-            f_l_kpts_1.push_back(l_kpts_1[idx]);
-            f_l_cam_pts_0.push_back(l_cam_pts_0[idx]);
-            f_l_cam_pts_1.push_back(l_cam_pts_1[idx]);
+            f_c_l_kpts.push_back(c_l_kpts[idx]);
+            f_p_l_kpts.push_back(p_l_kpts[idx]);
+            f_c_l_cam_pts.push_back(c_l_cam_pts[idx]);
+            f_p_l_cam_pts.push_back(p_l_cam_pts[idx]);
 
             if (fill_right)
             {
-                f_r_kpts_0.push_back(r_kpts_0[idx]);
-                f_r_kpts_1.push_back(r_kpts_1[idx]);
+                f_c_r_kpts.push_back(c_r_kpts[idx]);
+                f_p_r_kpts.push_back(p_r_kpts[idx]);
             }
         }
     }
@@ -236,21 +236,28 @@ void MotionEstimator::estimateMotion(const std::vector<cv::KeyPoint>& l_kpts_0,
                                      const std::vector<cv::KeyPoint>& r_kpts_0,
                                      const std::vector<cv::KeyPoint>& l_kpts_1,
                                      const std::vector<cv::KeyPoint>& r_kpts_1,
-                                     const std::vector<cv::Point3f>& l_cam_pts_0,
-                                     const std::vector<cv::Point3f>& l_cam_pts_1,
+                                     const std::vector<cv::Point3f>& scene_pts_0,
+                                     const std::vector<cv::Point3f>& scene_pts_1,
                                      cv::Mat& r_vec,
                                      cv::Mat& t_vec,
                                      std::vector<cv::KeyPoint>& f_l_kpts_0,
                                      std::vector<cv::KeyPoint>& f_r_kpts_0,
                                      std::vector<cv::KeyPoint>& f_l_kpts_1,
                                      std::vector<cv::KeyPoint>& f_r_kpts_1,
-                                     std::vector<cv::Point3f>& f_l_cam_pts_0,
-                                     std::vector<cv::Point3f>& f_l_cam_pts_1)
+                                     std::vector<cv::Point3f>& f_scene_pts_0,
+                                     std::vector<cv::Point3f>& f_scene_pts_1)
 {
     // Dummy variables.
     std::vector<int> cluster_ids_0, cluster_ids_1, f_cluster_ids_0, f_cluster_ids_1;
-    estimateMotion(cluster_ids_0, cluster_ids_1, l_kpts_0, r_kpts_0, l_kpts_1, r_kpts_1, l_cam_pts_0, l_cam_pts_1,
-                   r_vec, t_vec, f_cluster_ids_0, f_cluster_ids_1, f_l_kpts_0, f_r_kpts_0, f_l_kpts_1, f_r_kpts_1, f_l_cam_pts_0, f_l_cam_pts_1);
+    estimateMotion(cluster_ids_0, cluster_ids_1, 
+                   l_kpts_0, r_kpts_0, 
+                   l_kpts_1, r_kpts_1, 
+                   scene_pts_0, scene_pts_1,
+                   r_vec, t_vec, 
+                   f_cluster_ids_0, f_cluster_ids_1, 
+                   f_l_kpts_0, f_r_kpts_0, 
+                   f_l_kpts_1, f_r_kpts_1, 
+                   f_scene_pts_0, f_scene_pts_1);
 }
 
 
@@ -260,8 +267,8 @@ void MotionEstimator::estimateMotion(const std::vector<int>& cluster_ids_0,
                                      const std::vector<cv::KeyPoint>& r_kpts_0,
                                      const std::vector<cv::KeyPoint>& l_kpts_1,
                                      const std::vector<cv::KeyPoint>& r_kpts_1,
-                                     const std::vector<cv::Point3f>& l_cam_pts_0,
-                                     const std::vector<cv::Point3f>& l_cam_pts_1,
+                                     const std::vector<cv::Point3f>& scene_pts_0,
+                                     const std::vector<cv::Point3f>& scene_pts_1,
                                      cv::Mat& r_vec,
                                      cv::Mat& t_vec,
                                      std::vector<int>& f_cluster_ids_0,
@@ -270,8 +277,8 @@ void MotionEstimator::estimateMotion(const std::vector<int>& cluster_ids_0,
                                      std::vector<cv::KeyPoint>& f_r_kpts_0,
                                      std::vector<cv::KeyPoint>& f_l_kpts_1,
                                      std::vector<cv::KeyPoint>& f_r_kpts_1,
-                                     std::vector<cv::Point3f>& f_l_cam_pts_0,
-                                     std::vector<cv::Point3f>& f_l_cam_pts_1)
+                                     std::vector<cv::Point3f>& f_scene_pts_0,
+                                     std::vector<cv::Point3f>& f_scene_pts_1)
 {
     // Sanity check.
     r_vec.release();
@@ -298,12 +305,12 @@ void MotionEstimator::estimateMotion(const std::vector<int>& cluster_ids_0,
     cv::KeyPoint::convert(r_kpts_0, r_pts_0);
     if (motion_estimation_type_ == DUAL)
     {
-        solveDualPnPRansac(2000, l_pts_0, r_pts_0, l_cam_pts_1, r_vec, t_vec, inliers);
+        solveDualPnPRansac(2000, l_pts_0, r_pts_0, scene_pts_1, r_vec, t_vec, inliers);
     }
     else
     {
         cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
-        cv::solvePnPRansac(l_cam_pts_1, l_pts_0, K, cv::Mat(), r_vec, t_vec, 
+        cv::solvePnPRansac(scene_pts_1, l_pts_0, K, cv::Mat(), r_vec, t_vec, 
                            false, 2000, 2.0, 0.99, inliers, motion_estimation_type_);
     }
 
@@ -312,8 +319,8 @@ void MotionEstimator::estimateMotion(const std::vector<int>& cluster_ids_0,
     {
         f_l_kpts_0.push_back(l_kpts_0[inliers[i]]);
         f_l_kpts_1.push_back(l_kpts_1[inliers[i]]);
-        f_l_cam_pts_0.push_back(l_cam_pts_0[inliers[i]]);
-        f_l_cam_pts_1.push_back(l_cam_pts_1[inliers[i]]);
+        f_scene_pts_0.push_back(scene_pts_0[inliers[i]]);
+        f_scene_pts_1.push_back(scene_pts_1[inliers[i]]);
         if (fill_right)
         {
             f_r_kpts_0.push_back(r_kpts_0[inliers[i]]);
@@ -382,7 +389,7 @@ cv::Mat MotionEstimator::computeProjectionMatrix(const double b,
 void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
                                          const std::vector<cv::Point2f>& l_pts_0,
                                          const std::vector<cv::Point2f>& r_pts_0,
-                                         const std::vector<cv::Point3f>& l_cam_pts_1,
+                                         const std::vector<cv::Point3f>& scene_pts_1,
                                          cv::Mat& r_vec,
                                          cv::Mat& t_vec,
                                          std::vector<int>& inliers)
@@ -417,7 +424,7 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
         c_idxs = getRandomIndices(n, 3);
 
         // Clears current parameters.
-        for (uint j = 0; j < 3; j++)
+        for (uint j = 0; j < c_tr_vec.size(); j++)
             c_tr_vec[j] = 0;
 
         // Minimizes reprojection errors.
@@ -425,7 +432,8 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
         result = UPDATED;
         while (result == UPDATED)
         {
-            result = updateDualParams(1e-6, 1, c_idxs, l_pts_0, r_pts_0, l_cam_pts_1, J, c_tr_vec, obs_pts, pre_pts, res_pts);
+            result = updateDualParams(1e-6, 1, c_idxs, l_pts_0, r_pts_0, scene_pts_1, 
+                                      J, c_tr_vec, obs_pts, pre_pts, res_pts);
             if (iter++ > 20 || result == CONVERGED)
                 break;
         }
@@ -433,7 +441,8 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
         // Overwrite best parameters if there are more inliers.
         if (result != FAILED)
         {
-            c_inliers = getInliers(l_pts_0, r_pts_0, l_cam_pts_1, J, c_tr_vec, obs_pts, pre_pts, res_pts);
+            c_inliers = getInliers(2.0, l_pts_0, r_pts_0, scene_pts_1, 
+                                   J, c_tr_vec, obs_pts, pre_pts, res_pts);
             if (c_inliers.size() > inliers.size())
             {
                 tr_vec = c_tr_vec;
@@ -449,7 +458,9 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
     {
         while (result == UPDATED)
         {
-            result = updateDualParams(1e-7, 1, inliers, l_pts_0, r_pts_0, l_cam_pts_1, J, tr_vec, obs_pts, pre_pts, res_pts);
+            result = updateDualParams(1e-7, 1, inliers, 
+                                      l_pts_0, r_pts_0, scene_pts_1, 
+                                      J, tr_vec, obs_pts, pre_pts, res_pts);
             if (iter++ > 100 || result == CONVERGED)
                 break;
         }
@@ -501,7 +512,7 @@ MotionEstimator::DualResult MotionEstimator::updateDualParams(const double eps,
                                                               const std::vector<int>& c_idxs,
                                                               const std::vector<cv::Point2f>& l_pts_0,
                                                               const std::vector<cv::Point2f>& r_pts_0,
-                                                              const std::vector<cv::Point3f>& l_cam_pts_1,
+                                                              const std::vector<cv::Point3f>& scene_pts_1,
                                                               std::vector<double>& J,
                                                               std::vector<double>& tr,
                                                               std::vector<double>& obs_pts,
@@ -516,7 +527,7 @@ MotionEstimator::DualResult MotionEstimator::updateDualParams(const double eps,
     computeVectorsAndJacobians(c_idxs,
                                l_pts_0,
                                r_pts_0,
-                               l_cam_pts_1,
+                               scene_pts_1,
                                J,
                                tr,
                                obs_pts,
@@ -571,7 +582,7 @@ MotionEstimator::DualResult MotionEstimator::updateDualParams(const double eps,
 void MotionEstimator::computeVectorsAndJacobians(const std::vector<int>& c_idxs,
                                                  const std::vector<cv::Point2f>& l_pts_0,
                                                  const std::vector<cv::Point2f>& r_pts_0,
-                                                 const std::vector<cv::Point3f>& l_cam_pts_1,
+                                                 const std::vector<cv::Point3f>& scene_pts_1,
                                                  std::vector<double>& J,
                                                  std::vector<double>& tr,
                                                  std::vector<double>& obs_pts,
@@ -599,15 +610,15 @@ void MotionEstimator::computeVectorsAndJacobians(const std::vector<int>& c_idxs,
     double rdrz10 = -sx*sy*sz+cx*cz; double rdrz11 = -sx*sy*cz-cx*sz;
     double rdrz20 = +cx*sy*sz+sx*cz; double rdrz21 = +cx*sy*cz-sx*sz;
 
+    cv::Point3f l_scene_pt_1; // Previous/candidate 3D point relative to previous left camera/world.
+    cv::Point3f l_scene_pt_1_tr_0; // Previous/candidate 3D point relative to current/query left camera.
+    cv::Point3f r_scene_pt_1_tr_0; // Previous/candidate 3D point relative to current/query right camera.
+    cv::Point3f l_scene_pt_1_tr_0_d; // Derived previous/candidate 3D point relative current/query left camera.
+
     // Computes baseline.
     double f_u = l_proj_mat_.at<double>(0, 0);
     double t_x = r_proj_mat_.at<double>(0, 3);
     double b = (t_x / -f_u);
-
-    cv::Point3f cam_pt_1; // Previous/candidate camera point relative to previous/candidate left camera.
-    cv::Point3f cam_pt_1_tr_0; // Previous/candidate camera point relative to current/query left camera.
-    cv::Point3f cam_pt_1_tr_0_r; // Previous/candidate camera point relative to current/query right camera.
-    cv::Point3f cam_pt_1_tr_0_d; // Derived previous/candidate camera point relative to current/query left camera.
 
     // For all observations do
     for (uint i = 0; i < c_idxs.size(); i++)
@@ -619,15 +630,16 @@ void MotionEstimator::computeVectorsAndJacobians(const std::vector<int>& c_idxs,
         obs_pts[4 * i + 3] = r_pts_0[c_idxs[i]].y;
 
         // Gets ith previous/candidate 3d camera point (respect left image).
-        cam_pt_1 = l_cam_pts_1[c_idxs[i]];
+        l_scene_pt_1 = scene_pts_1[c_idxs[i]];
 
         // Transforms to current/query left coordinate system.
-        cam_pt_1_tr_0.x = r00 * cam_pt_1.x + r01 * cam_pt_1.y + r02 * cam_pt_1.z + tx;
-        cam_pt_1_tr_0.y = r10 * cam_pt_1.x + r11 * cam_pt_1.y + r12 * cam_pt_1.z + ty;
-        cam_pt_1_tr_0.z = r20 * cam_pt_1.x + r21 * cam_pt_1.y + r22 * cam_pt_1.z + tz;
+        l_scene_pt_1_tr_0.x = r00 * l_scene_pt_1.x + r01 * l_scene_pt_1.y + r02 * l_scene_pt_1.z + tx;
+        l_scene_pt_1_tr_0.y = r10 * l_scene_pt_1.x + r11 * l_scene_pt_1.y + r12 * l_scene_pt_1.z + ty;
+        l_scene_pt_1_tr_0.z = r20 * l_scene_pt_1.x + r21 * l_scene_pt_1.y + r22 * l_scene_pt_1.z + tz;
 
         // Computes 3d point in current/query right coordinate system
-        cam_pt_1_tr_0_r.x = cam_pt_1_tr_0.x - b;
+        r_scene_pt_1_tr_0 = l_scene_pt_1_tr_0;
+        r_scene_pt_1_tr_0.x = l_scene_pt_1_tr_0.x - b;
 
         // For all paramters do
         for (int32_t j=0; j<6; j++) 
@@ -635,35 +647,35 @@ void MotionEstimator::computeVectorsAndJacobians(const std::vector<int>& c_idxs,
             // derivatives of 3d pt. in curr. left coordinates wrt. param j
             switch (j) 
             {
-                case 0: cam_pt_1_tr_0_d.x = 0;
-                        cam_pt_1_tr_0_d.y = rdrx10 * cam_pt_1.x + rdrx11 * cam_pt_1.y + rdrx12 * cam_pt_1.z;
-                        cam_pt_1_tr_0_d.z = rdrx20 * cam_pt_1.x + rdrx21 * cam_pt_1.y + rdrx22 * cam_pt_1.z;
+                case 0: l_scene_pt_1_tr_0_d.x = 0;
+                        l_scene_pt_1_tr_0_d.y = rdrx10 * l_scene_pt_1.x + rdrx11 * l_scene_pt_1.y + rdrx12 * l_scene_pt_1.z;
+                        l_scene_pt_1_tr_0_d.z = rdrx20 * l_scene_pt_1.x + rdrx21 * l_scene_pt_1.y + rdrx22 * l_scene_pt_1.z;
                         break;
-                case 1: cam_pt_1_tr_0_d.x = rdry00 * cam_pt_1.x + rdry01 * cam_pt_1.y + rdry02 * cam_pt_1.z;
-                        cam_pt_1_tr_0_d.y = rdry10 * cam_pt_1.x + rdry11 * cam_pt_1.y + rdry12 * cam_pt_1.z;
-                        cam_pt_1_tr_0_d.z = rdry20 * cam_pt_1.x + rdry21 * cam_pt_1.y + rdry22 * cam_pt_1.z;
+                case 1: l_scene_pt_1_tr_0_d.x = rdry00 * l_scene_pt_1.x + rdry01 * l_scene_pt_1.y + rdry02 * l_scene_pt_1.z;
+                        l_scene_pt_1_tr_0_d.y = rdry10 * l_scene_pt_1.x + rdry11 * l_scene_pt_1.y + rdry12 * l_scene_pt_1.z;
+                        l_scene_pt_1_tr_0_d.z = rdry20 * l_scene_pt_1.x + rdry21 * l_scene_pt_1.y + rdry22 * l_scene_pt_1.z;
                         break;
-                case 2: cam_pt_1_tr_0_d.x = rdrz00 * cam_pt_1.x + rdrz01 * cam_pt_1.y;
-                        cam_pt_1_tr_0_d.y = rdrz10 * cam_pt_1.x + rdrz11 * cam_pt_1.y;
-                        cam_pt_1_tr_0_d.z = rdrz20 * cam_pt_1.x + rdrz21 * cam_pt_1.y;
+                case 2: l_scene_pt_1_tr_0_d.x = rdrz00 * l_scene_pt_1.x + rdrz01 * l_scene_pt_1.y;
+                        l_scene_pt_1_tr_0_d.y = rdrz10 * l_scene_pt_1.x + rdrz11 * l_scene_pt_1.y;
+                        l_scene_pt_1_tr_0_d.z = rdrz20 * l_scene_pt_1.x + rdrz21 * l_scene_pt_1.y;
                         break;
-                case 3: cam_pt_1_tr_0_d.x = 1; cam_pt_1_tr_0_d.y = 0; cam_pt_1_tr_0_d.z = 0; break;
-                case 4: cam_pt_1_tr_0_d.x = 0; cam_pt_1_tr_0_d.y = 1; cam_pt_1_tr_0_d.z = 0; break;
-                case 5: cam_pt_1_tr_0_d.x = 0; cam_pt_1_tr_0_d.y = 0; cam_pt_1_tr_0_d.z = 1; break;
+                case 3: l_scene_pt_1_tr_0_d.x = 1; l_scene_pt_1_tr_0_d.y = 0; l_scene_pt_1_tr_0_d.z = 0; break;
+                case 4: l_scene_pt_1_tr_0_d.x = 0; l_scene_pt_1_tr_0_d.y = 1; l_scene_pt_1_tr_0_d.z = 0; break;
+                case 5: l_scene_pt_1_tr_0_d.x = 0; l_scene_pt_1_tr_0_d.y = 0; l_scene_pt_1_tr_0_d.z = 1; break;
             }
 
             // Sets jacobian entries (project via K)
-            J[(4*i+0)*6+j] = l_proj_mat_.at<double>(0, 0) * (cam_pt_1_tr_0_d.x * cam_pt_1_tr_0.z - cam_pt_1_tr_0.x * cam_pt_1_tr_0_d.z) / (cam_pt_1_tr_0.z * cam_pt_1_tr_0.z); // left u'
-            J[(4*i+1)*6+j] = l_proj_mat_.at<double>(0, 0) * (cam_pt_1_tr_0_d.y * cam_pt_1_tr_0.z - cam_pt_1_tr_0.y * cam_pt_1_tr_0_d.z) / (cam_pt_1_tr_0.z * cam_pt_1_tr_0.z); // left v'
-            J[(4*i+2)*6+j] = l_proj_mat_.at<double>(0, 0) * (cam_pt_1_tr_0_d.x * cam_pt_1_tr_0.z - cam_pt_1_tr_0_r.x * cam_pt_1_tr_0_d.z) / (cam_pt_1_tr_0.z * cam_pt_1_tr_0.z); // right u'
-            J[(4*i+3)*6+j] = l_proj_mat_.at<double>(0, 0) * (cam_pt_1_tr_0_d.y * cam_pt_1_tr_0.z - cam_pt_1_tr_0.y * cam_pt_1_tr_0_d.z) / (cam_pt_1_tr_0.z * cam_pt_1_tr_0.z); // right v'
+            J[(4*i+0)*6+j] = l_proj_mat_.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.x * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.x * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // left u'
+            J[(4*i+1)*6+j] = l_proj_mat_.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.y * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.y * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // left v'
+            J[(4*i+2)*6+j] = l_proj_mat_.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.x * l_scene_pt_1_tr_0.z - r_scene_pt_1_tr_0.x * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // right u'
+            J[(4*i+3)*6+j] = l_proj_mat_.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.y * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.y * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // right v'
         }
 
         // Sets prediction (project via K)
-        pre_pts[4*i+0] = l_proj_mat_.at<double>(0, 0) * cam_pt_1_tr_0.x / cam_pt_1_tr_0.z + l_proj_mat_.at<double>(0, 2); // left u
-        pre_pts[4*i+1] = l_proj_mat_.at<double>(0, 0) * cam_pt_1_tr_0.y / cam_pt_1_tr_0.z + l_proj_mat_.at<double>(1, 2); // left v
-        pre_pts[4*i+2] = l_proj_mat_.at<double>(0, 0) * cam_pt_1_tr_0_r.x / cam_pt_1_tr_0.z + l_proj_mat_.at<double>(0, 2); // right u
-        pre_pts[4*i+3] = l_proj_mat_.at<double>(0, 0) * cam_pt_1_tr_0.y / cam_pt_1_tr_0.z + l_proj_mat_.at<double>(1, 2); // right v
+        pre_pts[4*i+0] = l_proj_mat_.at<double>(0, 0) * l_scene_pt_1_tr_0.x / l_scene_pt_1_tr_0.z + l_proj_mat_.at<double>(0, 2); // left u
+        pre_pts[4*i+1] = l_proj_mat_.at<double>(0, 0) * l_scene_pt_1_tr_0.y / l_scene_pt_1_tr_0.z + l_proj_mat_.at<double>(1, 2); // left v
+        pre_pts[4*i+2] = l_proj_mat_.at<double>(0, 0) * r_scene_pt_1_tr_0.x / l_scene_pt_1_tr_0.z + l_proj_mat_.at<double>(0, 2); // right u
+        pre_pts[4*i+3] = l_proj_mat_.at<double>(0, 0) * l_scene_pt_1_tr_0.y / l_scene_pt_1_tr_0.z + l_proj_mat_.at<double>(1, 2); // right v
 
         // Sets residuals
         res_pts[4*i+0] = (obs_pts[4 * i + 0] - pre_pts[4 * i + 0]);
@@ -674,9 +686,10 @@ void MotionEstimator::computeVectorsAndJacobians(const std::vector<int>& c_idxs,
 }
 
 
-std::vector<int> MotionEstimator::getInliers(const std::vector<cv::Point2f>& l_pts_0,
+std::vector<int> MotionEstimator::getInliers(double reproj_error,
+                                             const std::vector<cv::Point2f>& l_pts_0,
                                              const std::vector<cv::Point2f>& r_pts_0,
-                                             const std::vector<cv::Point3f>& l_cam_pts_1,
+                                             const std::vector<cv::Point3f>& scene_pts_1,
                                              std::vector<double>& J,
                                              std::vector<double>& tr,
                                              std::vector<double>& obs_pts,
@@ -692,7 +705,7 @@ std::vector<int> MotionEstimator::getInliers(const std::vector<cv::Point2f>& l_p
     computeVectorsAndJacobians(c_idxs,
                                l_pts_0,
                                r_pts_0,
-                               l_cam_pts_1,
+                               scene_pts_1,
                                J,
                                tr,
                                obs_pts,
@@ -704,7 +717,7 @@ std::vector<int> MotionEstimator::getInliers(const std::vector<cv::Point2f>& l_p
     for (uint i = 0; i < l_pts_0.size(); i++)
     {
         if ((pow(obs_pts[4 * i + 0] - pre_pts[4 * i + 0], 2) + pow(obs_pts[4 * i + 1] - pre_pts[4 * i + 1], 2) +
-             pow(obs_pts[4 * i + 2] - pre_pts[4 * i + 2], 2) + pow(obs_pts[4 * i + 3] - pre_pts[4 * i + 3], 2)) < (2.0 * 2.0))
+             pow(obs_pts[4 * i + 2] - pre_pts[4 * i + 2], 2) + pow(obs_pts[4 * i + 3] - pre_pts[4 * i + 3], 2)) < (reproj_error * reproj_error))
             inliers.push_back(i);
     }
 

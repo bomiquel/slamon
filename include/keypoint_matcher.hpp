@@ -77,52 +77,50 @@ class KeypointMatcher
          *  "Plain" involves only left keypoints, "Circular" left and right keypoints.
          *  To select the desired outlier remover, the appropriate matcher (enum type:
          *  MatchingType) must be chosen.
-         *  \param l_descs_0 Left descriptors of the first stereo image (input). In 
-         *  consecutive images: current left descriptors. In loop closing images: query
-         *  left descriptors.
-         *  \param r_descs_0 Right descriptors of the first stereo image (input). In
-         *  consecutive images: current right descriptors. In loop closing images: query
-         *  right descriptors.
-         *  \param l_descs_1 Left descriptors of the second stereo image (input). In
-         *  consecutive images: previous left descriptors. In loop closing images: 
-         *  candidate left descriptors.
-         *  \param r_descs_1 Right descriptors of the second stereo image (input). In
-         *  consecutive images: previous left descriptors. In loop closing images:
-         *  candidate left descriptors.
-         *  \param l_kpts_0 Left keypoints of the first stereo image (input). In
-         *  consecutive images: current left keypoints. In loop closing images: 
-         *  query left keypoints.
-         *  \param r_kpts_0 Right keypoints of the first stereo image (input). In
-         *  consecutive images: current right keypoints. In loop closing images: 
-         *  query right keypoints.
-         *  \param l_kpts_1 Left keypoints of the second stereo image (input). In
-         *  consecutive images: previous left keypoints. In loop closing images:
-         *  candidate left keypoints.
-         *  \param r_kpts_1 Right keypoints of the second stereo image (input). In
-         *  consecutive images: previous right keypoints. In loop closing images:
-         *  candidate right keypoints.
-         *  \param l_cam_pts_0 3D points relative to left camera of the first stereo image (input).
-         *  In consecutive images: current 3D points. In loop closing images: query 3D points.
-         *  \param l_cam_pts_1 3D points relative to left camera of the second stereo image (input).
-         *  In consecutive images: previous 3D points. In loop closing images: candidate 3D points.
-         *  \param f_l_kpts_0 Filtered left keypoints of the first stereo image (output).
-         *  In consecutive images: current left keypoints filtered out. In loop closing images:
-         *  query left keypoints filtered out.
-         *  \param f_r_kpts_0 Filtered right keypoints of the first stereo image (output).
-         *  In consecutive images: current right keypoints filtered out. In loop closing images:
-         *  query right keypoints filtered out.
-         *  \param f_l_kpts_1 Filtered left keypoints of the second stereo image (output). 
-         *  In consecutive images: previous left keypoints filtered out. In loop closing images:
-         *  candidate left keypoints filtered out.
-         *  \param f_r_kpts_1 Filtered right keypoints of the second stereo image (output).
-         *  In consecutive images: previous right keypoints filtered out. In loop closing images:
-         *  candidate right keypoints filtered out.
-         *  \param f_l_cam_pts_0 Filtered 3D points relative to left camera of the first stereo image (output).
-         *  In consecutive images: current 3D points filtered out. In loop closing images: query
-         *  3D points filtered out.
-         *  \param f_l_cam_pts_1 Filtered 3D points relative to left camera of the second stereo image (output).
-         *  In consecutive images: previous 3D points filtered out. In loop closing images: 
-         *  candidate 3D points filtered out.
+         *  \param l_descs_0 Left descriptors of the first stereo image. In consecutive 
+         *  images: current left descriptors. In loop closing images: query left descriptors 
+         *  (input).
+         *  \param r_descs_0 Right descriptors of the first stereo image. In consecutive
+         *  images: current right descriptors. In loop closing images: query right descriptors
+         *  (input)
+         *  \param l_descs_1 Left descriptors of the second stereo image. In consecutive 
+         *  images: previous left descriptors. In loop closing images: candidate left descriptors
+         *  (input).
+         *  \param r_descs_1 Right descriptors of the second stereo image. In consecutive
+         *  images: previous left descriptors. In loop closing images: candidate left descriptors
+         *  (input).
+         *  \param l_kpts_0 Left keypoints of the first stereo image. In consecutive images:
+         *  current left keypoints. In loop closing images: query left keypoints (input).
+         *  \param r_kpts_0 Right keypoints of the first stereo image. In consecutive images: 
+         *  current right keypoints. In loop closing images: query right keypoints (input).
+         *  \param l_kpts_1 Left keypoints of the second stereo image. In consecutive images:
+         *  previous left keypoints. In loop closing images: candidate left keypoints (input).
+         *  \param r_kpts_1 Right keypoints of the second stereo image. In consecutive images: 
+         *  previous right keypoints. In loop closing images: candidate right keypoints (input).
+         *  \param scene_pts_0 3D points of the first stereo image. In consecutive images:
+         *  current 3D points relative to left camera. In loop closing images: query 3D points
+         *  relative to left camera (input).
+         *  \param scene_pts_1 3D points of the second stereo image. In consecutive images: 
+         *  previous 3D points relative to left camera. In loop closing images: candidate
+         *  3D points relative to world (input).
+         *  \param f_l_kpts_0 Filtered left keypoints of the first stereo image. In consecutive
+         *  images: current left keypoints filtered out. In loop closing images: query left
+         *  keypoints filtered out (output).
+         *  \param f_r_kpts_0 Filtered right keypoints of the first stereo image. In consecutive
+         *  images: current right keypoints filtered out. In loop closing images: query right 
+         *  keypoints filtered out (output).
+         *  \param f_l_kpts_1 Filtered left keypoints of the second stereo image. In consecutive
+         *  images: previous left keypoints filtered out. In loop closing images: candidate left 
+         *  keypoints filtered out (output).
+         *  \param f_r_kpts_1 Filtered right keypoints of the second stereo image. In consecutive
+         *  images: previous right keypoints filtered out. In loop closing images: candidate right 
+         *  keypoints filtered out (output).
+         *  \param f_scene_pts_0 Filtered 3D points of the first stereo image. In consecutive images:
+         *  current 3D points relative to left camera filtered out. In loop closing images: query 3D
+         *  points relative to left camera filtered out (output).
+         *  \param f_scene_pts_1 Filtered 3D points of the second stereo image. In consecutive images: 
+         *  previous 3D points relative to left camera filtered out. In loop closing images: candidate
+         *  3D points relative to world filtered out (output).
          */
         void matchNonStereoKeypoints(const cv::Mat& l_descs_0,
                                      const cv::Mat& r_descs_0,
@@ -156,54 +154,56 @@ class KeypointMatcher
          *  "Plain" involves only left keypoints, "Circular" left and right keypoints. To 
          *  select the desired outlier remover, the appropriate matcher (enum type: MatchingType)
          *  must be chosen.
-         *  \param l_descs_0 Left descriptors of the first set (input). In consecutive images:
-         *  current left descriptors. In loop closing images: query left descriptors.
-         *  \param r_descs_0 Right descriptors of the first set (input). In consecutive images:
-         *  current right descriptors. In loop closing images: query right descriptors.
-         *  \param l_descs_1 Left descriptors of the second set (input). In consecutive images:
-         *  previous left descriptors. In loop closing images: candidate left descriptors.
-         *  \param r_descs_1 Right descriptors of the second set (input). In consecutive images:
-         *  previous left descriptors. In loop closing images: candidate left descriptors.
-         *  \param cluster_ids_0 Subset identifiers of the first set (input). In consecutive
-         *  images: current identifiers. In loop closing images: query identifiers.
-         *  \param cluster_ids_1 Subset identifiers of the second set (input). In consecutive
-         *  images: previous identifiers. In loop closing images: candidate identifiers.
-         *  \param l_kpts_0 Left keypoints of the first set (input). In consecutive images:
-         *  current left keypoints. In loop closing images: query left keypoints.
-         *  \param r_kpts_0 Right keypoints of the first set (input). In consecutive images:
-         *  current right keypoints. In loop closing images: query right keypoints.
-         *  \param l_kpts_1 Left keypoints of the second set (input). In consecutive images:
-         *  previous left keypoints. In loop closing images: candidate left keypoints.
-         *  \param r_kpts_1 Right keypoints of the second set (input). In consecutive images: 
-         *  previous right keypoints. In loop closing images: candidate right keypoints.
-         *  \param l_cam_pts_0 3D points relative to left camera of the first set (input). In 
-         *  consecutive images: current 3D points. In loop closing images: query 3D points.
-         *  \param l_cam_pts_1 3D points relative to left camera of the second set (input). In
-         *  consecutive images: previous 3D points. In loop closing images: candidate 3D points.
-         *  \param f_cluster_ids_0 Filtered subset identifiers of the first set (output). In
+         *  \param l_descs_0 Left descriptors of the first set. In consecutive images:
+         *  current left descriptors. In loop closing images: query left descriptors (input).
+         *  \param r_descs_0 Right descriptors of the first set. In consecutive images:
+         *  current right descriptors. In loop closing images: query right descriptors (input).
+         *  \param l_descs_1 Left descriptors of the second set. In consecutive images:
+         *  previous left descriptors. In loop closing images: candidate left descriptors (input).
+         *  \param r_descs_1 Right descriptors of the second set. In consecutive images:
+         *  previous left descriptors. In loop closing images: candidate left descriptors (input).
+         *  \param cluster_ids_0 Subset identifiers of the first set. In consecutive
+         *  images: current identifiers. In loop closing images: query identifiers (input).
+         *  \param cluster_ids_1 Subset identifiers of the second set. In consecutive
+         *  images: previous identifiers. In loop closing images: candidate identifiers (input).
+         *  \param l_kpts_0 Left keypoints of the first set. In consecutive images:
+         *  current left keypoints. In loop closing images: query left keypoints (input).
+         *  \param r_kpts_0 Right keypoints of the first set. In consecutive images:
+         *  current right keypoints. In loop closing images: query right keypoints (input).
+         *  \param l_kpts_1 Left keypoints of the second set. In consecutive images:
+         *  previous left keypoints. In loop closing images: candidate left keypoints (input).
+         *  \param r_kpts_1 Right keypoints of the second set. In consecutive images: 
+         *  previous right keypoints. In loop closing images: candidate right keypoints (input).
+         *  \param scene_pts_0 3D points of the first set. In consecutive images: current
+         *  3D points relative to left camera. In loop closing images: query 3D points
+         *  relative to left camera (input).
+         *  \param scene_pts_1 3D points of the second set. In consecutive images: previous
+         *  3D points relative to left camera. In loop closing images: candidate 3D points
+         *  relative to world (input).
+         *  \param f_cluster_ids_0 Filtered subset identifiers of the first set. In
          *  consecutive images: current identifiers filtered out. In loop closing images: 
-         *  query identifiers filtered out.
-         *  \param f_cluster_ids_1 Filtered subset identifiers of the second set (output). In
+         *  query identifiers filtered out (output).
+         *  \param f_cluster_ids_1 Filtered subset identifiers of the second set. In
          *  consecutive images: previous identifiers filtered out. In loop closing images:
-         *  candidate identifiers filtered out.
-         *  \param f_l_kpts_0 Filtered left keypoints of the first set (output). In consecutive
+         *  candidate identifiers filtered out (output).
+         *  \param f_l_kpts_0 Filtered left keypoints of the first set. In consecutive
          *  images: current left keypoints filtered out. In loop closing images: query left
-         *  keypoints filtered out.
-         *  \param f_r_kpts_0 Filtered right keypoints of the first set (output). In consecutive
+         *  keypoints filtered out (output).
+         *  \param f_r_kpts_0 Filtered right keypoints of the first set. In consecutive
          *  images: current right keypoints filtered out. In loop closing images: query right
-         *  keypoints filtered out.
-         *  \param f_l_kpts_1 Filtered left keypoints of the second set (output). In consecutive
+         *  keypoints filtered out (output).
+         *  \param f_l_kpts_1 Filtered left keypoints of the second set. In consecutive
          *  images: previous left keypoints filtered out. In loop closing images: candidate left
-         *  keypoints filtered out.
-         *  \param f_r_kpts_1 Filtered right keypoints of the second set (output). In consecutive
+         *  keypoints filtered out (output).
+         *  \param f_r_kpts_1 Filtered right keypoints of the second set. In consecutive
          *  images: previous right keypoints filtered out. In loop closing images: candidate right
-         *  keypoints filtered out.
-         *  \param f_l_cam_pts_0 Filtered 3D points relative to left camera left of the first set (output).
-         *  In consecutive images: current 3D points filtered out. In loop closing images: query
-         *  3D points filtered out.
-         *  \param f_l_cam_pts_1 Filtered 3D points relative to left camera left of the second set (output).
-         *  In consecutive images: previous 3D points filtered out. In loop closing images: 
-         *  candidate 3D points filtered out.
+         *  keypoints filtered out (output).
+         *  \param f_scene_pts_0 Filtered 3D points of the first set. In consecutive images: current
+         *  3D points relative to left camera filtered out. In loop closing images: query 3D points 
+         *  relative to left camera filtered out (output).
+         *  \param f_scene_pts_1 Filtered 3D points of the second set. In consecutive images: previous
+         *  3D points relative to left camera filtered out. In loop closing images: candidate 3D points 
+         *  relative to world filtered out (output).
          */
         void matchKeypointClusters(const cv::Mat& l_descs_0,
                                    const cv::Mat& r_descs_0,
@@ -215,16 +215,16 @@ class KeypointMatcher
                                    const std::vector<cv::KeyPoint>& r_kpts_0,
                                    const std::vector<cv::KeyPoint>& l_kpts_1,
                                    const std::vector<cv::KeyPoint>& r_kpts_1,
-                                   const std::vector<cv::Point3f>& l_cam_pts_0,
-                                   const std::vector<cv::Point3f>& l_cam_pts_1,
+                                   const std::vector<cv::Point3f>& scene_pts_0,
+                                   const std::vector<cv::Point3f>& scene_pts_1,
                                    std::vector<int>& f_cluster_ids_0,
                                    std::vector<int>& f_cluster_ids_1,
                                    std::vector<cv::KeyPoint>& f_l_kpts_0,
                                    std::vector<cv::KeyPoint>& f_r_kpts_0,
                                    std::vector<cv::KeyPoint>& f_l_kpts_1,
                                    std::vector<cv::KeyPoint>& f_r_kpts_1,
-                                   std::vector<cv::Point3f>& f_l_cam_pts_0,
-                                   std::vector<cv::Point3f>& f_l_cam_pts_1);
+                                   std::vector<cv::Point3f>& f_scene_pts_0,
+                                   std::vector<cv::Point3f>& f_scene_pts_1);
 
     protected:
 
@@ -257,16 +257,16 @@ class KeypointMatcher
          *  \param cluster_ids_1 Subset identifier of the second set (input).
          *  \param kpts_0 Keypoints of the first set (input).
          *  \param kpts_1 Keypoints of the second set (input).
-         *  \param l_cam_pts_0 3D points relative to left camera of the first set (input).
-         *  \param l_cam_pts_1 3D points relative to left camera of the second set (input).
+         *  \param scene_pts_0 3D points of the first set (input).
+         *  \param scene_pts_1 3D points of the second set (input).
          *  \param f_descs_0 Filtered descriptors of the first set (output).
          *  \param f_descs_1 Filtered descriptors of the second set (output).
          *  \param f_cluster_ids_0 Filtered subset identifier of the first set (output).
          *  \param f_cluster_ids_1 Filtered subset identifier of the second set (output).
          *  \param f_kpts_0 Filtered keypoints of the first set (output).
          *  \param f_kpts_1 Filtered keypoints of the second set (output).
-         *  \param f_l_cam_pts_0 Filtered 3D points relative to left camera of the first set (output).
-         *  \param f_l_cam_pts_1 Filtered 3D points relative to left camera of the second set (output).
+         *  \param f_scene_pts_0 Filtered 3D points of the first set (output).
+         *  \param f_scene_pts_1 Filtered 3D points of the second set (output).
          */
         void ratioMatching(const cv::Mat& descs_0, 
                            const cv::Mat& descs_1,
@@ -274,16 +274,16 @@ class KeypointMatcher
                            const std::vector<int>& cluster_ids_1,
                            const std::vector<cv::KeyPoint>& kpts_0,
                            const std::vector<cv::KeyPoint>& kpts_1,
-                           const std::vector<cv::Point3f>& l_cam_pts_0,
-                           const std::vector<cv::Point3f>& l_cam_pts_1,
+                           const std::vector<cv::Point3f>& scene_pts_0,
+                           const std::vector<cv::Point3f>& scene_pts_1,
                            cv::Mat& f_descs_0,
                            cv::Mat& f_descs_1,
                            std::vector<int>& f_cluster_ids_0,
                            std::vector<int>& f_cluster_ids_1,
                            std::vector<cv::KeyPoint>& f_kpts_0,
                            std::vector<cv::KeyPoint>& f_kpts_1,
-                           std::vector<cv::Point3f>& f_l_cam_pts_0,
-                           std::vector<cv::Point3f>& f_l_cam_pts_1);
+                           std::vector<cv::Point3f>& f_scene_pts_0,
+                           std::vector<cv::Point3f>& f_scene_pts_1);
 
 
         /** \brief Matches the visual keypoints of two different sets. These sets must come
@@ -299,16 +299,16 @@ class KeypointMatcher
          *  \param cluster_ids_1 Subset identifier of the second set (input).
          *  \param kpts_0 Keypoints of the first set (input).
          *  \param kpts_1 Keypoints of the second set (input).
-         *  \param l_cam_pts_0 3D points relative to left camera of the first set (input).
-         *  \param l_cam_pts_1 3D points relative to left camera of the second set (input).
+         *  \param scene_pts_0 3D points of the first set (input).
+         *  \param scene_pts_1 3D points of the second set (input).
          *  \param f_descs_0 Filtered descriptors of the first set (output).
          *  \param f_descs_1 Filtered descriptors of the second set (output).
          *  \param f_cluster_ids_0 Filtered subset identifier of the first set (output).
          *  \param f_cluster_ids_1 Filtered subset identifier of the second set (output).
          *  \param f_kpts_0 Filtered keypoints of the first set (output).
          *  \param f_kpts_1 Filtered keypoints of the second set (output).
-         *  \param f_l_cam_pts_0 Filtered 3D points relative to left camera of the first set (output).
-         *  \param f_l_cam_pts_1 Filtered 3D points relative to left camera of the second set (output).
+         *  \param f_scene_pts_0 Filtered 3D points of the first set (output).
+         *  \param f_scene_pts_1 Filtered 3D points of the second set (output).
          */
         void geometricalMatching(const cv::Mat& descs_0, 
                                  const cv::Mat& descs_1,
@@ -316,16 +316,16 @@ class KeypointMatcher
                                  const std::vector<int>& cluster_ids_1,
                                  const std::vector<cv::KeyPoint>& kpts_0,
                                  const std::vector<cv::KeyPoint>& kpts_1,
-                                 const std::vector<cv::Point3f>& l_cam_pts_0,
-                                 const std::vector<cv::Point3f>& l_cam_pts_1,
+                                 const std::vector<cv::Point3f>& scene_pts_0,
+                                 const std::vector<cv::Point3f>& scene_pts_1,
                                  cv::Mat& f_descs_0,
                                  cv::Mat& f_descs_1,
                                  std::vector<int>& f_cluster_ids_0,
                                  std::vector<int>& f_cluster_ids_1,
                                  std::vector<cv::KeyPoint>& f_kpts_0,
                                  std::vector<cv::KeyPoint>& f_kpts_1,
-                                 std::vector<cv::Point3f>& f_l_cam_pts_0,
-                                 std::vector<cv::Point3f>& f_l_cam_pts_1);
+                                 std::vector<cv::Point3f>& f_scene_pts_0,
+                                 std::vector<cv::Point3f>& f_scene_pts_1);
 
 
         /** \brief Assemble four matchings to build circular matches.
@@ -349,10 +349,10 @@ class KeypointMatcher
          *  number of keypoints after successive matching (input).
          *  \param successive_kpts_1_highest Keypoint vector of the second set with the highest
          *  number of keypoints after successive matching (input).
-         *  \param successive_l_cam_pts_0 3D points vector relative to left camera of the first set with
-         *  the lowest number of 3D points after successive matching (input).
-         *  \param successive_l_cam_pts_1 3D points vector relative to left camera of the second set with
-         *  the lowest number of 3D points after successive matching (input).
+         *  \param successive_scene_pts_0 3D points vector of the first set with the lowest number
+         *  of 3D points after successive matching (input).
+         *  \param successive_scene_pts_1 3D points vector of the second set with the lowest number
+         *  of 3D points after successive matching (input).
          *  \param successive_cluster_ids_0 Cluster ids of the first set with the lowest number
          *  of ids after successive matching (input).
          *  \param successive_cluster_ids_1 Cluster ids of the second set with the lowest number
@@ -361,8 +361,8 @@ class KeypointMatcher
          *  \param f_kpts_0_highest Filtered successive_kpts_0_highest (output).
          *  \param f_kpts_1_lowest Filtered successive_kpts_1_lowest (output). 
          *  \param f_kpts_1_highest Filtered successive_kpts_1_highest (output). 
-         *  \param f_l_cam_pts_0 Filtered successive_l_cam_pts_0 (output).
-         *  \param f_l_cam_pts_1 Filtered successive_l_cam_pts_1 (output).
+         *  \param f_scene_pts_0 Filtered successive_scene_pts_0 (output).
+         *  \param f_scene_pts_1 Filtered successive_scene_pts_1 (output).
          *  \param f_cluster_ids_0 Filtered successive_cluster_ids_0 (output).
          *  \param f_cluster_ids_1 Filtered successive_cluster_ids_1 (output).
          */
