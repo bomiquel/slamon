@@ -34,20 +34,31 @@ namespace slamon
         if (enable_debugging_)
         {
             frame_path_ = w_path + "frames/";
+
             keyframe_path_ = w_path + "keyframes/";
+            if (std::filesystem::exists(keyframe_path_))
+                std::filesystem::remove_all(keyframe_path_);
+            std::filesystem::create_directory(keyframe_path_);
+
             clusters_path_ = w_path + "clusters/";
+            if (std::filesystem::exists(clusters_path_))
+                std::filesystem::remove_all(clusters_path_);
+            std::filesystem::create_directory(clusters_path_);
+
             poses_file_ = w_path + "keyframes_poses.txt";
+            if (std::filesystem::exists(poses_file_))
+                std::filesystem::remove(poses_file_.c_str());
+
+            edges_file_ = w_path + "loop_closure_edges.txt";
+            if (std::filesystem::exists(edges_file_))
+                std::filesystem::remove(edges_file_.c_str());
+
             std::string lock_file = w_path + "keyframes_poses.txt.lock";
             if (std::filesystem::exists(lock_file))
                 std::filesystem::remove(lock_file.c_str());
-            if (std::filesystem::exists(poses_file_))
-                std::filesystem::remove(poses_file_.c_str());
-            if (std::filesystem::exists(keyframe_path_))
-                std::filesystem::remove_all(keyframe_path_);
-            if (std::filesystem::exists(clusters_path_))
-                std::filesystem::remove_all(clusters_path_);
-            std::filesystem::create_directory(keyframe_path_);
-            std::filesystem::create_directory(clusters_path_);
+            lock_file = w_path + "loop_closure_edges.txt.lock";
+            if (std::filesystem::exists(lock_file))
+                std::filesystem::remove(lock_file.c_str());
         }
     }
 
@@ -173,7 +184,10 @@ namespace slamon
         // Locks graph
         std::scoped_lock lock(mutex_graph_);
 
+        // Sanity check
+        stamps.clear();
         keyframe_ids.clear();
+        keyframe_poses.clear();
 
         // Get keyframe poses
         bool found;
@@ -195,9 +209,49 @@ namespace slamon
             if (found)
                 continue;
 
+            // Save data.
             keyframe_ids.push_back(keyframe_id);
             stamps.push_back(keyframe_stamps_[keyframe_id]);
             keyframe_poses.push_back(getVertexCameraPose(vertex_id, false) * robot2camera_.inverse());
+        }
+    }
+
+
+    void Map::getLoopClosureEdges(std::vector<std::pair<int, int>>& keyframe_ids,
+                                  std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses)
+    {
+        // Locks graph
+        std::scoped_lock lock(mutex_graph_);
+
+        // Sanity check
+        keyframe_ids.clear();
+        keyframe_poses.clear();
+
+        // Gets loop closure edges.
+        g2o::EdgeSE3* e;
+        int keyframe_0, keyframe_1;
+        tf::Transform pose_0, pose_1;
+        for (g2o::OptimizableGraph::EdgeSet::iterator it = graph_.edges().begin(); it != graph_.edges().end(); it++)
+        {
+            e = dynamic_cast<g2o::EdgeSE3*> (*it);
+            if (e)
+            {
+                // Get the keyframes corresponding to this edge.
+                keyframe_0 = getVertexKeyframeId(e->vertices()[0]->id());
+                keyframe_1 = getVertexKeyframeId(e->vertices()[1]->id());
+
+                if (abs(keyframe_0 - keyframe_1) > 1)
+                {
+                    // Get the keyframes robot pose.
+                    pose_0 = getVertexCameraPose(e->vertices()[0]->id(), false) * robot2camera_.inverse();
+                    pose_1 = getVertexCameraPose(e->vertices()[1]->id(), false) * robot2camera_.inverse();
+
+                    // Save data.
+                    keyframe_ids.push_back(std::make_pair(keyframe_0, keyframe_1));
+                    keyframe_poses.push_back(std::make_pair(pose_0, pose_1));
+                }
+            }
+
         }
     }
 
@@ -501,6 +555,11 @@ namespace slamon
                 std::vector<tf::Transform> keyframe_poses;
                 getKeyframePoses(stamps, keyframe_ids, keyframe_poses);
                 writePoses(poses_file_, keyframe_ids, stamps, keyframe_poses);
+
+                std::vector<std::pair<int, int>> edges_keyframe_ids;
+                std::vector<std::pair<tf::Transform, tf::Transform>> edges_keyframe_poses;
+                getLoopClosureEdges(edges_keyframe_ids, edges_keyframe_poses);
+                writeLoopClosureEdges(edges_file_, edges_keyframe_ids, edges_keyframe_poses);
             }
 
             // Publish updated robot pose.

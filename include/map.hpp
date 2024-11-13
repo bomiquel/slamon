@@ -114,12 +114,20 @@ namespace slamon
 
             /** \brief Gets the poses of each keyframe in the graph.
              *  \param stamps The timestamp of each pose (output).
-             *  \param keyfrmae_ids A list containing the id of each keyframe (output).
+             *  \param keyframe_ids A list containing the id of each keyframe (output).
              *  \param keyframe_poses A list containing the poses of each keyframe (output).
              */
             void getKeyframePoses(std::vector<double>& stamps,
                                   std::vector<int>& keyframe_ids,
                                   std::vector<tf::Transform>& keyframe_poses);
+
+
+            /** \brief Gets all loop closure edge information.
+             *  \param keyframe_ids A list of the identifiers of the keyframe pairs that close a loop (output).
+             *  \param keyframe_poses A list of the poses of the keyframe pairs that close a loop (output).
+             */
+            void getLoopClosureEdges(std::vector<std::pair<int, int>>& keyframe_ids,
+                                     std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses);
 
 
             /** \brief Add an edge to the graph.
@@ -286,6 +294,8 @@ namespace slamon
             double min_dist_keyframe_; //!> Minimum distance between keyframes.
 
             std::string poses_file_; //!> Path to the file where the keyframes positions are stored.
+
+            std::string edges_file_; //!> Path to the file where the loop closure edges are stored.
 
             std::string frame_path_; //!> Path to store frames with debugging purpose.
 

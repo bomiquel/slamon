@@ -358,29 +358,75 @@ void Publisher::writePoses(const std::string& o_path,
     // Create a locking element.
     std::fstream lock_file(l_path.c_str(), std::ios::out | std::ios::trunc);
 
-    // Open to append.
+    // Open to write.
     std::fstream poses_file(o_path.c_str(), std::ios::out | std::ios::trunc);
 
     // First line
     poses_file << std::fixed << std::setprecision(9) << "timestamp,id,x,y,z,qx,qy,qz,qw" << std::endl;
 
     // Write poses and timestamps
-    tf::Transform pose;
     for (uint i = 0; i < poses.size(); i++)
     {
-        pose = poses[i];
         poses_file << 
         stamps[i] << "," <<
         ids[i] << "," <<
-        pose.getOrigin().getX() << "," <<
-        pose.getOrigin().getY() << "," <<
-        pose.getOrigin().getZ() << "," <<
-        pose.getRotation().getX() << "," <<
-        pose.getRotation().getY() << "," <<
-        pose.getRotation().getZ() << "," <<
-        pose.getRotation().getW() << std::endl;
+        poses[i].getOrigin().getX() << "," <<
+        poses[i].getOrigin().getY() << "," <<
+        poses[i].getOrigin().getZ() << "," <<
+        poses[i].getRotation().getX() << "," <<
+        poses[i].getRotation().getY() << "," <<
+        poses[i].getRotation().getZ() << "," <<
+        poses[i].getRotation().getW() << std::endl;
     }
     poses_file.close();
+
+    // Unlock
+    bool ok = std::filesystem::remove(l_path.c_str());
+    if (!ok)
+        ROS_ERROR("[Publisher->writePoses]: Error deleting the locking file!");
+}
+
+
+void Publisher::writeLoopClosureEdges(const std::string& o_path,
+                                      const std::vector<std::pair<int, int>> edges_ids,
+                                      const std::vector<std::pair<tf::Transform, tf::Transform>>& edges_poses)
+{
+    std::string l_path = o_path + ".lock";
+
+     // Wait until lock file has been released.
+    while(std::filesystem::exists(l_path));
+
+    // Create a locking element.
+    std::fstream lock_file(l_path.c_str(), std::ios::out | std::ios::trunc);
+
+    // Open to write.
+    std::fstream edges_file(o_path.c_str(), std::ios::out | std::ios::trunc);
+
+    // First line
+    edges_file << std::fixed << std::setprecision(9) << "frame a,frame b,ax,ay,az,aqx,aqy,aqz,aqw,bx,by,bz,bqx,bqy,bqz,bqw" << std::endl;
+
+    // Write 
+    for (uint i = 0; i < edges_ids.size(); i++)
+    {
+        edges_file <<
+        edges_ids[i].first << "," <<
+        edges_ids[i].second << "," <<
+        edges_poses[i].first.getOrigin().getX() << "," <<
+        edges_poses[i].first.getOrigin().getY() << "," <<
+        edges_poses[i].first.getOrigin().getZ() << "," <<
+        edges_poses[i].first.getRotation().getX() << "," <<
+        edges_poses[i].first.getRotation().getY() << "," <<
+        edges_poses[i].first.getRotation().getZ() << "," <<
+        edges_poses[i].first.getRotation().getW() << "," <<
+        edges_poses[i].second.getOrigin().getX() << "," <<
+        edges_poses[i].second.getOrigin().getY() << "," <<
+        edges_poses[i].second.getOrigin().getZ() << "," <<
+        edges_poses[i].second.getRotation().getX() << "," <<
+        edges_poses[i].second.getRotation().getY() << "," <<
+        edges_poses[i].second.getRotation().getZ() << "," <<
+        edges_poses[i].second.getRotation().getW() << std::endl;
+    }
+    edges_file.close();
 
     // Unlock
     bool ok = std::filesystem::remove(l_path.c_str());

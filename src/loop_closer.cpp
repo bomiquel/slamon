@@ -40,6 +40,7 @@ namespace slamon
         if (enable_debugging_)
         {
             keyframe_path_ = w_path + "keyframes/";
+            
             lc_path_ = w_path + "loop_closures/";
             if (std::filesystem::exists(lc_path_))
                 std::filesystem::remove_all(lc_path_);

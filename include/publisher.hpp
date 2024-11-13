@@ -380,6 +380,19 @@ class Publisher
                         const std::vector<tf::Transform>& poses);
 
 
+        /** \brief Writes a list of edges.
+         *  \param o_path File output path. The name of the final 
+         *  file must be included (input).
+         *  \param edges_ids A list of the identifiers of the keyframe
+         *  pairs that close a loop (input).
+         *  \param edges_poses A list of the poses of the keyframe pairs
+         *  that close a loop (input).
+         */
+        void writeLoopClosureEdges(const std::string& o_path,
+                                   const std::vector<std::pair<int, int>> edges_ids,
+                                   const std::vector<std::pair<tf::Transform, tf::Transform>>& edges_poses);
+
+
         /** \brief Converts an integer to a string containing a
          *  five-digit number.
          *  \param in Input integer (input).
