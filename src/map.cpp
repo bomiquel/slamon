@@ -479,7 +479,7 @@ namespace slamon
             if (clusters.size() > 1)
             {
                 // Retrieve all possible combinations.
-                std::vector<std::vector<int>> combinations = createComb(c_vertex_ids);
+                std::vector<std::vector<int>> combinations = createCombinations(c_vertex_ids.size(), 2);
 
                 int vertex_0_id, vertex_1_id;
                 tf::Transform edge, vertex_0_pose, vertex_1_pose;
@@ -714,22 +714,23 @@ namespace slamon
     }
 
 
-    std::vector<std::vector<int>> Map::createComb(const std::vector<int>& vec)
+    std::vector<std::vector<int>> Map::createCombinations(const uint n,
+                                                          const uint r)
     {
-        std::string bitmask(2, 1);
-        bitmask.resize(vec.size(), 0);
+        std::string bitmask(r, 1);
+        bitmask.resize(n, 0);
 
-        std::vector<int> comb;
+        std::vector<int> combination;
         std::vector<std::vector<int>> combinations;
         do
         {
-            for (uint i = 0; i < vec.size(); i++)
+            for (uint i = 0; i < n; i++)
             {
                 if (bitmask[i])
-                    comb.push_back(i);
+                    combination.push_back(i);
             }
-            combinations.push_back(comb);
-            comb.clear();
+            combinations.push_back(combination);
+            combination.clear();
         }
         while (std::prev_permutation(bitmask.begin(), bitmask.end()));
 

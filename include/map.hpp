@@ -201,11 +201,14 @@ namespace slamon
             int addVertex(tf::Transform pose);
 
 
-            /** \brief Return all possible combinations of 2 elements of the input vector.
-             *  \param Vec Input vector with all values.
+            /** \brief Given a set of n elements, returns a vector with all possible
+             *  combinations of r elements.
+             *  \param n Total number of elements.
+             *  \param r Number of elements in each combination.
              *  @return the list of combinations.
              */
-            std::vector<std::vector<int>> createComb(const std::vector<int>& vec);
+            std::vector<std::vector<int>> createCombinations(const uint n,
+                                                             const uint r);
             
 
             /** \brief Convert custom ROS stereo data msg to frame object (slam::Frame)
