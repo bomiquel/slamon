@@ -74,10 +74,10 @@ namespace slamon
             int getVertexKeyframeId(int vertex_id);
 
 
-            /** \brief Get the world vertex pose from the graph.
+            /** \brief Get the world-map vertex pose from the graph.
              *  \param vertex_id The id of the vertex for which the pose is desired (input).
              *  \param lock Set to true if graph locking is required (input/optional).
-             *  @return Tf with world vertex pose.
+             *  @return Tf with world-map vertex pose.
              */
             tf::Transform getVertexPose(int vertex_id, bool lock);
 
@@ -89,10 +89,10 @@ namespace slamon
             tf::Transform getVertexPoseRelativeToCamera(int vertex_id);
 
 
-            /** \brief Get the world camera pose of some specific vertex.
+            /** \brief Get the world-map camera pose of some specific vertex.
              *  \param vertex_id The id of the vertex for which the pose is desired (input).
              *  \param lock Set to true if graph locking is required (input/optional).
-             *  @return Tf with the world camera pose.
+             *  @return Tf with the world-map camera pose.
              */
             tf::Transform getVertexCameraPose(int vertex_id, bool lock);
             
@@ -107,7 +107,7 @@ namespace slamon
 
             /** \brief Gets the absolute pose of a specific keyframe.
              *  \param keyframe_id The id of the keyframe for which the pose is desired (input).
-             *  @return Tf with the world camera pose.
+             *  @return Tf with the world-map camera pose.
              */
             tf::Transform getKeyframePose(int keyframe_id);
 
@@ -173,11 +173,11 @@ namespace slamon
 
 
             /** \brief Decides if new keyframe is needed.
-             *  \param c_robot_odom Current robot odom (input).
+             *  \param c_odom_robot_pose Current world-odom robot pose (input).
              *  \param c_frame Current frame (input/output).
              *  @return True if new keyframe will be inserted into the graph.
              */
-            bool needNewKeyFrame(const tf::Transform& c_robot_odom,
+            bool needNewKeyFrame(const tf::Transform& c_odom_robot_pose,
                                  Frame& c_frame);
 
 
@@ -312,7 +312,7 @@ namespace slamon
 
             std::string camera_frame_id_; //!> Camera coordinate axis identficator.
 
-            tf::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
+            tf::Transform p_odom_robot_pose_; //!> The robot's odometry the last time a keyframe was inserted.
 
             std::vector<double> keyframe_stamps_; //> Stores the frame timestamps
 

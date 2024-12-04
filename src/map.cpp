@@ -343,9 +343,9 @@ namespace slamon
         // From ROS messages to local objects.
         start_module_time = ros::Time::now().toSec();
         Frame c_frame;
-        tf::Transform c_robot_odom;
+        tf::Transform c_odom_robot_pose;
         fromStereoDataToFrame(stereo_data_msg, c_frame);
-        tf::poseMsgToTF(odom_msg->pose.pose, c_robot_odom);
+        tf::poseMsgToTF(odom_msg->pose.pose, c_odom_robot_pose);
         run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // From StereoData msg to Frame object run time.
 
         // If enable debugging gets images from disk.
@@ -359,41 +359,41 @@ namespace slamon
 
         // Does the map need a new keyframe?
         start_module_time = ros::Time::now().toSec();
-        bool add_keyframe = needNewKeyFrame(c_robot_odom, c_frame);
+        bool add_keyframe = needNewKeyFrame(c_odom_robot_pose, c_frame);
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Need new keyframe? run time.
 
         // Includes a keyframe if the map needs one.
         if (add_keyframe)
         {
-            tf::Transform c_camera_pose;
+            tf::Transform c_map_camera_pose;
             if (init_map_)
             {
-                // {o}^T_{c_cam} = {o}^T_{c_robot} * {robot}^T_{cam}.
-                tf::Transform c_camera_odom = c_robot_odom * robot2camera_;
+                // {wo}^T_{c_cam} = {wo}^T_{c_robot} * {robot}^T_{cam}.
+                tf::Transform c_odom_camera_pose = c_odom_robot_pose * robot2camera_;
 
-                // {o}^T_{p_cam} = {o}^T_{p_robot} * {robot}^T_{cam}.
-                tf::Transform p_camera_odom = p_robot_odom_ * robot2camera_;
+                // {wo}^T_{p_cam} = {wo}^T_{p_robot} * {robot}^T_{cam}.
+                tf::Transform p_odom_camera_pose = p_odom_robot_pose_ * robot2camera_;
 
-                // {p_cam}^T_{c_cam} = {p_cam}^T_{o} * {o}^T_{c_cam}.
-                tf::Transform c_camera_motion = p_camera_odom.inverse() * c_camera_odom;
+                // {p_cam}^T_{c_cam} = {p_cam}^T_{wo} * {wo}^T_{c_cam}.
+                tf::Transform c_camera_motion = p_odom_camera_pose.inverse() * c_odom_camera_pose;
 
-                // Gets {w}^T_{p_cam}.
-                tf::Transform p_camera_pose = getKeyframePose(c_keyframe_id_);
+                // Gets {wm}^T_{p_cam}.
+                tf::Transform p_map_camera_pose = getKeyframePose(c_keyframe_id_);
 
-                // {w}^T_{c_cam} = {w}^T_{p_cam} * {p_cam}^T_{c_cam}.
-                c_camera_pose = p_camera_pose * c_camera_motion;
+                // {wm}^T_{c_cam} = {wm}^T_{p_cam} * {p_cam}^T_{c_cam}.
+                c_map_camera_pose = p_map_camera_pose * c_camera_motion;
             }
             else
             {
                 // The first SLAM position is the same as the odometry.
-                // {w}^T_{c_cam} = {w}^T_{c_robot} * {robot}^T_{cam}.
-                c_camera_pose = c_robot_odom * robot2camera_;
+                // {wm}^T_{c_cam} = {wo}^T_{c_robot} * {robot}^T_{cam}.
+                c_map_camera_pose = c_odom_robot_pose * robot2camera_;
             }
 
             // Updates global variables.
             init_map_ = true;
             c_keyframe_id_++;
-            p_robot_odom_ = c_robot_odom;
+            p_odom_robot_pose_ = c_odom_robot_pose;
             
             // Get frame visual information.
             ros::Time stamp = c_frame.getTimestamp();
@@ -435,7 +435,7 @@ namespace slamon
                 local_cluster_pose = fromPoint3DToTf(cluster_centroids[i]);
 
                 // {w}^T_{c_cluster} = {w}^T_{c_cam} * {c_cam}^T_{c_cluster}.
-                c_cluster_pose = c_camera_pose * local_cluster_pose; 
+                c_cluster_pose = c_map_camera_pose * local_cluster_pose; 
 
                 // Store current cluster pose.
                 initial_cluster_pose_history_.push_back(c_cluster_pose);
@@ -458,7 +458,7 @@ namespace slamon
                     cluster_l_descs.push_back(l_descs.row(idx));
                     cluster_r_descs.push_back(r_descs.row(idx));
                 }
-                Cluster cluster(cluster_id, c_keyframe_id_, cluster_l_descs, cluster_r_descs, c_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_l_cam_pts);
+                Cluster cluster(cluster_id, c_keyframe_id_, cluster_l_descs, cluster_r_descs, c_map_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_l_cam_pts);
                 clusters_to_close_loop.push_back(cluster);
 
                 // Clear variables
@@ -568,10 +568,10 @@ namespace slamon
                 std::scoped_lock lock(mutex_graph_);
                 c_vertex_id = graph_.vertices().size() - 1;
             }
-            tf::Transform updated_camera_pose = getVertexCameraPose(c_vertex_id, true);
-            publishPose(stamp, updated_camera_pose, camera_map_pub_, camera_frame_id_);
-            tf::Transform updated_robot_pose = updated_camera_pose * robot2camera_.inverse();
-            publishPose(stamp, updated_robot_pose, robot_map_pub_, robot_frame_id_);
+            tf::Transform updated_map_camera_pose = getVertexCameraPose(c_vertex_id, true);
+            publishPose(stamp, updated_map_camera_pose, camera_map_pub_, camera_frame_id_);
+            tf::Transform updated_map_robot_pose = updated_map_camera_pose * robot2camera_.inverse();
+            publishPose(stamp, updated_map_robot_pose, robot_map_pub_, robot_frame_id_);
             run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Write graph to disk and publish updated robot pose run time.
 
             // Publish number of keyframes.
@@ -599,7 +599,7 @@ namespace slamon
     }
 
 
-    bool Map::needNewKeyFrame(const tf::Transform& c_robot_odom,
+    bool Map::needNewKeyFrame(const tf::Transform& c_odom_robot_pose,
                               Frame& c_frame)
     {
         if (!init_map_)
@@ -614,7 +614,7 @@ namespace slamon
                 return false;
             }
         }
-        else if (poseDiff2D(p_robot_odom_, c_robot_odom) > min_dist_keyframe_)
+        else if (poseDiff2D(p_odom_robot_pose_, c_odom_robot_pose) > min_dist_keyframe_)
         {
             return addFrameToMap(c_frame);
         }

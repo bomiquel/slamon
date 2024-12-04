@@ -32,7 +32,7 @@ class Cluster
          *  \param keyframe_id Keyframe id.
          *  \param l_descs Cluster left descriptors.
          *  \param r_descs Cluster right descriptors.
-         *  \param camera_pose World camera pose when the cluster was obtained.
+         *  \param map_camera_pose World-map camera pose when the cluster was obtained.
          *  \param l_kpts Cluster left keypoints.
          *  \param r_kpts Cluster right keypoints.
          *  \param l_cam_pts Cluster 3D points relative to left camera.
@@ -41,7 +41,7 @@ class Cluster
                 int keyframe_id,
                 cv::Mat l_descs,
                 cv::Mat r_descs,
-                tf::Transform camera_pose,
+                tf::Transform map_camera_pose,
                 std::vector<cv::KeyPoint> l_kpts,
                 std::vector<cv::KeyPoint> r_kpts,
                 std::vector<cv::Point3f> l_cam_pts);
@@ -77,10 +77,10 @@ class Cluster
         inline std::vector<cv::KeyPoint> getLeftKpts() const {return l_kpts_;}
 
 
-        /** \brief Get camera world position.
-         *  @return The camera world position.
+        /** \brief Get camera world-map pose.
+         *  @return The camera world-map pose.
          */
-        inline tf::Transform getCameraPose() const {return camera_pose_;}
+        inline tf::Transform getCameraPose() const {return map_camera_pose_;}
 
 
         /** \brief Get cluster right keypoints.
@@ -96,8 +96,8 @@ class Cluster
 
 
         /** \brief Transforms 3D points relative to the camera to relative to the
-         *  world coordinate axis. 
-         *  @return The cluster 3D points relative to world.
+         *  world-map coordinate axis. 
+         *  @return The cluster 3D points relative to world-map.
          */
         std::vector<cv::Point3f> getWorldPoints();
     
@@ -112,7 +112,7 @@ class Cluster
 
         cv::Mat r_descs_; //!> Cluster right descriptors.
 
-        tf::Transform camera_pose_; //!> World camera pose when the cluster was obtained.
+        tf::Transform map_camera_pose_; //!> World-map camera pose when the cluster was obtained.
 
         std::vector<cv::KeyPoint> l_kpts_; //!> Cluster left keypoints.
 

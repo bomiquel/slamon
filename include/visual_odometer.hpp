@@ -229,9 +229,9 @@ namespace slamon
 
             std::string camera_frame_id_; //!> Camera odometry coordinate axis identficator.
 
-            tf::Transform c_robot_odom_; //!> Current robot odometry.
+            tf::Transform c_odom_robot_pose_; //!> Current robot odometry.
 
-            tf::Transform c_camera_odom_; //!> Current camera odometry.
+            tf::Transform c_odom_camera_pose_; //!> Current world-odom camera pose.
 
             tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 

@@ -128,16 +128,16 @@ class Frame
         inline std::vector<cv::Point3f> getLeftCameraPoints() const {return l_cam_pts_;}
 
 
-        /** \brief Set camera pose.
-         *  \param camera_pose Camera pose when taking the image.
+        /** \brief Set world-odom camera pose.
+         *  \param odom_camera_pose World-odom camera pose when taking the image.
          */
-        inline void setCameraPose(const tf::Transform& camera_pose){camera_pose_ = camera_pose;}
+        inline void setCameraPose(const tf::Transform& odom_camera_pose){odom_camera_pose_ = odom_camera_pose;}
 
 
-        /** \brief Get camera pose
-         *  @return The camera pose when taking the image.
+        /** \brief Get world-odom camera pose.
+         *  @return The world-odom camera pose when taking the image.
          */
-        inline tf::Transform getCameraPose() const {return camera_pose_;}
+        inline tf::Transform getCameraPose() const {return odom_camera_pose_;}
 
 
         /** \brief Get the clustering for the current frame.
@@ -193,7 +193,7 @@ class Frame
 
         std::vector<cv::Point3f> l_cam_pts_; //!> Stereo 3D points relative to left camera.
 
-        tf::Transform camera_pose_; //!> Camera world position for this frame.
+        tf::Transform odom_camera_pose_; //!> World-odom camera pose for this frame.
 
         std::vector<std::vector<int>> clusters_; //!> Keypoints clustering.
 

@@ -353,8 +353,8 @@ namespace slamon
         fs.release();
 
         // Sets the properties of the cluster.
-        tf::Transform camera_pose = map_->getVertexCameraPose(id, true);
-        Cluster cluster(id, keyframe_id, l_descs, r_descs, camera_pose, l_kpts, r_kpts, l_cam_pts);
+        tf::Transform map_camera_pose = map_->getVertexCameraPose(id, true);
+        Cluster cluster(id, keyframe_id, l_descs, r_descs, map_camera_pose, l_kpts, r_kpts, l_cam_pts);
         return cluster;
     }
 
