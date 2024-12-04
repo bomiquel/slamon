@@ -187,6 +187,16 @@ namespace slamon
              */
             bool fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
                                  cv::Mat& img);
+
+
+            /** \brief Computes the current depth by averaging all z-values of the 3D points 
+             *  in the current image (which come from the keypoints).
+             *  \param cam_pts Current left camera points (input).
+             *  @return The current depth. 
+             */
+            double computeCurrentDepth(const std::vector<cv::Point3f>& cam_pts);
+
+
             
             // Atributes
             int c_frame_id_; //!> Current frame id.

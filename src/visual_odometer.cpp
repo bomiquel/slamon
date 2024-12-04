@@ -175,6 +175,10 @@ namespace slamon
                         }
                         c_frame_id_++;
 
+                        double altitude = computeCurrentDepth(c_frame.getLeftCameraPoints());
+
+                        ROS_INFO_STREAM("Altitude: " << altitude);
+
                         // From {c_cam}^T_{p_cam} to {p_cam}^T_{c_cam}.
                         c_camera_motion = c_camera_motion.inverse();
 
@@ -601,6 +605,20 @@ namespace slamon
         img = img_ptr->image;
         
         return true;
+    }
+
+
+    double VisualOdometer::computeCurrentDepth(const std::vector<cv::Point3f>& cam_pts)
+    {
+        double depth_mean = 0.0;
+        if (cam_pts.size() > 0)
+        {
+            for (uint i = 0; i < cam_pts.size(); i++)
+                depth_mean += cam_pts[i].z;
+
+            depth_mean /= cam_pts.size();
+        }
+        return depth_mean;
     }
 
     
