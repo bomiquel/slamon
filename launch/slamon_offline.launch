@@ -28,7 +28,7 @@
                                                                                                     /$(arg camera_name)/right/image_raw" required = "true" />
 
     <!-- Static TF's -->
-    <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_base_link_to_stereo_stick" args = "0.4 0.0 0.8 0.0 0.0 0.0 /$(arg robot_name)/base_link /$(arg robot_name)/stereo_stick 30" />
+    <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_base_link_to_stereo_stick" args = "0.75 0.0 0.08 0.0 0.0 0.0 /$(arg robot_name)/base_link /$(arg robot_name)/stereo_stick 30" />
     <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_stereo_stick_to_stereo_base" args = "0.0 0.0 0.0 1.57 0.0 1.57 /$(arg robot_name)/stereo_stick /$(arg robot_name)/stereo_down/base 30" />
     <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_stereo_base_to_stereo" args = "0.0 0.0 0.0 0.0 0.0 -1.57 /$(arg robot_name)/stereo_down/base /$(arg robot_name)/stereo_down 30" />
     <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_stereo_to_left" args = "-0.06 0.0 0.0 0.0 0.0 0.0 /$(arg robot_name)/stereo_down /$(arg robot_name)/stereo_down/left_optical 30" />
