@@ -130,14 +130,14 @@ class KeypointMatcher
                                      const std::vector<cv::KeyPoint>& r_kpts_0,
                                      const std::vector<cv::KeyPoint>& l_kpts_1,
                                      const std::vector<cv::KeyPoint>& r_kpts_1,
-                                     const std::vector<cv::Point3f>& l_cam_pts_0,
-                                     const std::vector<cv::Point3f>& l_cam_pts_1,
+                                     const std::vector<cv::Point3f>& scene_pts_0,
+                                     const std::vector<cv::Point3f>& scene_pts_1,
                                      std::vector<cv::KeyPoint>& f_l_kpts_0,
                                      std::vector<cv::KeyPoint>& f_r_kpts_0,
                                      std::vector<cv::KeyPoint>& f_l_kpts_1,
                                      std::vector<cv::KeyPoint>& f_r_kpts_1,
-                                     std::vector<cv::Point3f>& f_l_cam_pts_0,
-                                     std::vector<cv::Point3f>& f_l_cam_pts_1);
+                                     std::vector<cv::Point3f>& f_scene_pts_0,
+                                     std::vector<cv::Point3f>& f_scene_pts_1);
 
 
         /** \brief Matches the visual keypoints of two different sets. These sets must come
@@ -374,16 +374,16 @@ class KeypointMatcher
                                        const std::vector<cv::KeyPoint>& successive_kpts_0_highest,
                                        const std::vector<cv::KeyPoint>& successive_kpts_1_lowest,
                                        const std::vector<cv::KeyPoint>& successive_kpts_1_highest,
-                                       const std::vector<cv::Point3f>& successive_l_cam_pts_0,
-                                       const std::vector<cv::Point3f>& successive_l_cam_pts_1,
+                                       const std::vector<cv::Point3f>& successive_scene_pts_0,
+                                       const std::vector<cv::Point3f>& successive_scene_pts_1,
                                        const std::vector<int>& successive_cluster_ids_0,
                                        const std::vector<int>& successive_cluster_ids_1,
                                        std::vector<cv::KeyPoint>& f_kpts_0_lowest,
                                        std::vector<cv::KeyPoint>& f_kpts_0_highest,
                                        std::vector<cv::KeyPoint>& f_kpts_1_lowest,
                                        std::vector<cv::KeyPoint>& f_kpts_1_highest,
-                                       std::vector<cv::Point3f>& f_l_cam_pts_0,
-                                       std::vector<cv::Point3f>& f_l_cam_pts_1,
+                                       std::vector<cv::Point3f>& f_scene_pts_0,
+                                       std::vector<cv::Point3f>& f_scene_pts_1,
                                        std::vector<int>& f_cluster_ids_0,
                                        std::vector<int>& f_cluster_ids_1);
 

@@ -79,14 +79,14 @@ void KeypointMatcher::matchNonStereoKeypoints(const cv::Mat& l_descs_0,
                                               const std::vector<cv::KeyPoint>& r_kpts_0,
                                               const std::vector<cv::KeyPoint>& l_kpts_1,
                                               const std::vector<cv::KeyPoint>& r_kpts_1,
-                                              const std::vector<cv::Point3f>& l_cam_pts_0,
-                                              const std::vector<cv::Point3f>& l_cam_pts_1,
+                                              const std::vector<cv::Point3f>& scene_pts_0,
+                                              const std::vector<cv::Point3f>& scene_pts_1,
                                               std::vector<cv::KeyPoint>& f_l_kpts_0,
                                               std::vector<cv::KeyPoint>& f_r_kpts_0,
                                               std::vector<cv::KeyPoint>& f_l_kpts_1,
                                               std::vector<cv::KeyPoint>& f_r_kpts_1,
-                                              std::vector<cv::Point3f>& f_l_cam_pts_0,
-                                              std::vector<cv::Point3f>& f_l_cam_pts_1)
+                                              std::vector<cv::Point3f>& f_scene_pts_0,
+                                              std::vector<cv::Point3f>& f_scene_pts_1)
 {
     // Dummy variables.
     std::vector<int> cluster_ids_0, cluster_ids_1, f_cluster_ids_0, f_cluster_ids_1;
@@ -97,11 +97,11 @@ void KeypointMatcher::matchNonStereoKeypoints(const cv::Mat& l_descs_0,
                           cluster_ids_0, cluster_ids_1, 
                           l_kpts_0, r_kpts_0, 
                           l_kpts_1, r_kpts_1, 
-                          l_cam_pts_0, l_cam_pts_1,
+                          scene_pts_0, scene_pts_1,
                           f_cluster_ids_0, f_cluster_ids_1,
                           f_l_kpts_0, f_r_kpts_0, 
                           f_l_kpts_1, f_r_kpts_1, 
-                          f_l_cam_pts_0, f_l_cam_pts_1);
+                          f_scene_pts_0, f_scene_pts_1);
 }
 
 
