@@ -609,18 +609,4 @@ namespace slamon
     }
 
 
-    double VisualOdometer::computeCurrentDepth(const std::vector<cv::Point3f>& cam_pts)
-    {
-        double depth_mean = 0.0;
-        if (cam_pts.size() > 0)
-        {
-            for (uint i = 0; i < cam_pts.size(); i++)
-                depth_mean += cam_pts[i].z;
-
-            depth_mean /= cam_pts.size();
-        }
-        return depth_mean;
-    }
-
-    
 }
