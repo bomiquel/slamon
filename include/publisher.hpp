@@ -11,9 +11,11 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 #include <filesystem>
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include <ros/ros.h>
 #include <tf/tf.h>

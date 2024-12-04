@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 
 #include <ros/ros.h>
 #include <tf/tf.h>
