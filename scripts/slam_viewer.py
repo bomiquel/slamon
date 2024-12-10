@@ -26,8 +26,8 @@ ax_edges = []
 lock_file = ""
 ax_vertices = None
 edges_shown = True
-graph_edges_path = ""
 legend_edited = False
+loop_closing_edges_data_path = ""
 
 
 def isFull(path_to_file):
@@ -165,13 +165,13 @@ def drawEdges():
   """ 
   Draws the loop's closing edges.
   """
-  global lock_file, graph_edges_path, ax_edges, edges_shown, plot_dim
+  global lock_file, loop_closing_edges_data_path, ax_edges, edges_shown, plot_dim
 
   # First, remove previous edges.
   removeEdges()
 
   # Load SLAM edges (file saved with SLAM node)
-  if (os.path.isfile(graph_edges_path) and isFull(graph_edges_path)):
+  if (os.path.isfile(loop_closing_edges_data_path) and isFull(loop_closing_edges_data_path)):
 
     # Check if file is blocked
     while (os.path.exists(lock_file)):
@@ -179,7 +179,7 @@ def drawEdges():
 
     # Read the data
     try:
-      data = np.loadtxt(graph_edges_path, delimiter = ",", skiprows = 1, usecols = (0, 1, 2, 3, 4, 9, 10, 11))
+      data = np.loadtxt(loop_closing_edges_data_path, delimiter = ",", skiprows = 1, usecols = (0, 1, 2, 3, 4, 9, 10, 11))
     except Exception as e:
       print(f"The following exception was detected while trying to load the SLAM algorithm edges: {e} ")
       return
@@ -313,7 +313,7 @@ if __name__ == "__main__":
   # Save global variables
   plot_dim = args.dim
   lock_file = args.o + ".lock"
-  graph_edges_path = args.e
+  loop_closing_edges_data_path = args.e
 
   # Init figure
   fig = plt.figure(1)
