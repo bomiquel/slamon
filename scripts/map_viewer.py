@@ -11,14 +11,11 @@
 
 import os
 import sys
-import cv2
 import time
-import pylab
 import weakref
 import argparse
 import numpy as np
-from matplotlib import pyplot
-from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
 
 
 # Global variables
@@ -30,7 +27,7 @@ ax_edges = []
 lock_file = ""
 ax_vertices = None
 edges_shown = True
-graph_edges_file = ""
+graph_edges_path = ""
 legend_edited = False
 
 
@@ -38,12 +35,14 @@ class Error(Exception):
   """ Base class for exceptions in this module. """
   pass
 
-def check_file_len(file):
+
+def file_is_full(path_to_file):
   """ Check if the file length is > 0 """
-  f = open(file)
+  f = open(path_to_file)
   lines = f.readlines()
   f.close()
   return len(lines) > 0
+
 
 def rm_ax(ax_id):
   """ Remove the axes lines """
@@ -53,8 +52,9 @@ def rm_ax(ax_id):
     l.remove()
     del l
 
-def real_time_plot(gt_file, odom_file, graph_vertices_file):
-  """ Function to plot the data saved into the files in real time """
+
+def real_time_plot(gt_path, odom_path, graph_vertices_path):
+  """ Function to plot the data saved into the files in real time. """
 
   global lock_file, legend_edited, ax_gt, ax_odom, ax_vertices, edges_shown, gt_data, plot_dim
 
@@ -63,44 +63,60 @@ def real_time_plot(gt_file, odom_file, graph_vertices_file):
   rm_ax(ax_odom)
   rm_ax(ax_vertices)
 
-  # Ground truth
-  if (gt_file != "" and os.path.exists(gt_file) and check_file_len(gt_file) and gt_file != "none"):
+  # Ground truth.
+  if (gt_path is not None and os.path.isfile(gt_path) and file_is_full(gt_path)):
 
-    # Check gt file type
-    f = open(gt_file)
+    # Check gt file type.
+    f = open(gt_path)
     lines = f.readlines()
     f.close()
     size = lines[1].split(",")
     if (len(size) > 12):
-      data = pylab.loadtxt(gt_file, delimiter=',', skiprows=1, usecols=(0,5,6,7,8,9,10,11))
+      try:
+        data = np.loadtxt(gt_path, delimiter = ",", skiprows = 1, usecols = (0, 5, 6, 7, 8, 9, 10, 11))
+      except Exception as e:
+        print(f"The following exception was detected while trying to load the GT: {e} ")
+        return
     else:
-      data = pylab.loadtxt(gt_file, delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7))
+      try:
+        data = np.loadtxt(gt_path, delimiter=',', skiprows = 1, usecols = (0, 1, 2, 3, 4, 5, 6, 7))
+      except Exception as e:
+        print(f"The following exception was detected while trying to load the GT: {e} ")
+        return
 
-    # Plot
-    if (len(data.shape) == 1):
-      data = [data]
-      data = np.array(data)
-    if (plot_dim == 3):
-      ax_gt = ax.plot(data[:,1], data[:,2], data[:,3],'k', label='Ground Truth')
-    else:
-      ax_gt = ax.plot(data[:,1], data[:,2], 'k', label='Ground Truth')
-
-  # Load visual odometry data (saved with rostopic echo -p /stereo_odometer/odometry > file.txt)
-  if (odom_file != "" and os.path.exists(odom_file) and check_file_len(odom_file)):
-    # Read the data
-    data = pylab.loadtxt(odom_file, delimiter=',', skiprows=1, usecols=(5,6,7,8,9,10,11))
-    # data = pylab.loadtxt(odom_file, delimiter=',', skiprows=1, usecols=(4,5,6,7,8,9,10))
-
-    # Plot
+    # Pre-process plot if necessary.
     if (len(data.shape) == 1):
       data = np.array([data])
+  
+    # Plot.
     if (plot_dim == 3):
-      ax_odom = ax.plot(data[:,0], data[:,1], data[:,2], 'c', label='Visual Odometry')
+      ax_gt = ax.plot(data[:, 1], data[:, 2], data[:, 3], "k", label = "Ground Truth")
     else:
-      ax_odom = ax.plot(data[:,0], data[:,1], 'c', label='Visual Odometry')
+      ax_gt = ax.plot(data[:, 1], data[:, 2], "k", label = "Ground Truth")
 
-  # Load stereo slam vertices (file saved with node stereo_slam)
-  if (graph_vertices_file != "" and os.path.exists(graph_vertices_file) and check_file_len(graph_vertices_file)):
+  # Load visual odometry data (saved with rostopic echo -p /stereo_odometer/odometry > file.txt).
+  if (os.path.isfile(odom_path) and file_is_full(odom_path)):
+
+    # Read the data
+    try:
+      data = np.loadtxt(odom_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
+      # data = pylab.loadtxt(odom_file, delimiter=',', skiprows=1, usecols=(4, 5, 6, 7, 8, 9, 10))
+    except:
+      print("Problems loading odometry data.")
+      return
+
+    # Pre-process plot if necessary.
+    if (len(data.shape) == 1):
+      data = np.array([data])
+
+    # Plot.
+    if (plot_dim == 3):
+      ax_odom = ax.plot(data[:, 0], data[:, 1], data[:, 2], "c", label = "Odometry")
+    else:
+      ax_odom = ax.plot(data[:, 0], data[:, 1], "c", label = "Odometry")
+
+  # Load stereo slam vertices (file saved with node slamon)
+  if (os.path.isfile(graph_vertices_path) and file_is_full(graph_vertices_path)):
 
     # Check if file is blocked
     while (os.path.exists(lock_file)):
@@ -108,17 +124,20 @@ def real_time_plot(gt_file, odom_file, graph_vertices_file):
 
     # Read the data
     try:
-      data = pylab.loadtxt(graph_vertices_file, delimiter=',', skiprows=1, usecols=(2,3,4,5,6,7,8))
-    except:
+      data = np.loadtxt(graph_vertices_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
+    except Exception as e:
+      print(f"The following exception was detected while trying to load the SLAM algorithm vertices: {e} ")
       return
 
-    # Plot
+    # Pre-process plot if necessary.
     if (len(data.shape) == 1):
       data = np.array([data])
+
+    # Plot.
     if (plot_dim == 3):
-      ax_vertices = ax.plot(data[:,0], data[:,1], data[:,2], 'b', label='Stereo slam', marker='o', zorder=1)
+      ax_vertices = ax.plot(data[:, 0], data[:, 1], data[:, 2], "b", label = "SLAM", marker = "o", zorder = 1)
     else:
-      ax_vertices = ax.plot(data[:,0], data[:,1], 'b', label='Stereo slam', marker='o', zorder=1)
+      ax_vertices = ax.plot(data[:, 0], data[:, 1], "b", label = "SLAM", marker = "o", zorder = 1)
 
   # Show the edges
   if (edges_shown == True):
@@ -127,22 +146,23 @@ def real_time_plot(gt_file, odom_file, graph_vertices_file):
     remove_edges()
 
   # Update the plot
-  pyplot.draw()
+  plt.draw()
 
   # Show legend only once
   if (ax_vertices is not None and legend_edited is False):
-    #ax.legend()
+    ax.legend()
     legend_edited = True
+
 
 def draw_edges():
   """ Draw the edges """
-  global lock_file, graph_edges_file, ax_edges, edges_shown, plot_dim
+  global lock_file, graph_edges_path, ax_edges, edges_shown, plot_dim
 
-  # First, remove previous edges
+  # First, remove previous edges.
   remove_edges()
 
   # Load stereo slam edges (file saved with node stereo_slam)
-  if (graph_edges_file != "" and os.path.exists(graph_edges_file) and check_file_len(graph_edges_file)):
+  if (os.path.isfile(graph_edges_path) and file_is_full(graph_edges_path)):
 
     # Check if file is blocked
     while (os.path.exists(lock_file)):
@@ -150,8 +170,9 @@ def draw_edges():
 
     # Read the data
     try:
-      data = pylab.loadtxt(graph_edges_file, delimiter=',', skiprows=0, usecols=(0,1,2,3,4,5,10,11,12))
-    except:
+      data = np.loadtxt(graph_edges_path, delimiter = ",", skiprows = 1, usecols = (0, 1, 2, 3, 4, 9, 10, 11))
+    except Exception as e:
+      print(f"The following exception was detected while trying to load the SLAM algorithm edges: {e} ")
       return
 
     # Sanity check
@@ -159,55 +180,61 @@ def draw_edges():
       edges_shown = True
       return
 
-    # Inliers column
-    inliers = data[:,2]
-    max_inliers = max(inliers)
-    min_inliers = min(inliers)
+    valid_color = False
 
-    valid_color = True
-    if (min_inliers - max_inliers == 0):
-      valid_color = False
+    # # Inliers column
+    # inliers = data[:,2]
+    # max_inliers = max(inliers)
+    # min_inliers = min(inliers)
 
-    if (valid_color):
-      # red color
-      m_red = (255) / (min_inliers - max_inliers)
-      n_red = -m_red * max_inliers
+    # valid_color = True
+    # if (min_inliers - max_inliers == 0):
+    #   valid_color = False
 
-      # blue color
-      m_blue = (255) / (max_inliers - min_inliers)
-      n_blue = -m_blue * min_inliers
+    # if (valid_color):
+    #   # red color
+    #   m_red = (255) / (min_inliers - max_inliers)
+    #   n_red = -m_red * max_inliers
 
-    # Plot current
+    #   # blue color
+    #   m_blue = (255) / (max_inliers - min_inliers)
+    #   n_blue = -m_blue * min_inliers
+
+    # Pre-process plot if necessary.
     if (len(data.shape) == 1):
       data = np.array([data])
+
+    # Plot.
     ax_edges = []
     for i in range(len(data)):
-
       # Get the color depending on the inlier value
       if (valid_color):
-        red = hex(int(m_red * data[i,2] + n_red))
-        blue = hex(int(m_blue * data[i,2] + n_blue))
-        red = red[2:]
-        blue = blue[2:]
-        if (len(red) == 1):
-          red += '0'
-        if (len(blue) == 1):
-          blue += '0'
-        color = '#' + red + '00' + blue
+        # red = hex(int(m_red * data[i,2] + n_red))
+        # blue = hex(int(m_blue * data[i,2] + n_blue))
+        # red = red[2:]
+        # blue = blue[2:]
+        # if (len(red) == 1):
+        #   red += '0'
+        # if (len(blue) == 1):
+        #   blue += '0'
+        # color = '#' + red + '00' + blue
+        color = "r"
       else:
-        color = 'b'
-
+        color = "b"
       vect = []
-      vect.append([data[i,3], data[i,4], data[i,5]])
-      vect.append([data[i,6], data[i,7], data[i,8]])
+      vect.append([data[i, 2], data[i, 3], data[i, 4]])
+      vect.append([data[i, 5], data[i, 6], data[i, 7]])
       vect =  np.array(vect)
       if (plot_dim == 3):
-        ax_edge = ax.plot(vect[:,0], vect[:,1], vect[:,2], color, linestyle='-', zorder=1)
+        ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, linestyle = "-", zorder = 1)
       else:
-        ax_edge = ax.plot(vect[:,0], vect[:,1], color, linestyle='-', zorder=1)
+        ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, linestyle = "-", zorder = 1)
       ax_edges.append(ax_edge)
+
   edges_shown = True
+
   return
+
 
 def remove_edges():
   """ Remove the edges """
@@ -218,9 +245,9 @@ def remove_edges():
     wl = weakref.ref(l)
     l.remove()
     del l
-
   ax_edges = []
   edges_shown = False
+
 
 def onclick(event):
   """ Handle the click event """
@@ -231,32 +258,32 @@ def onclick(event):
       remove_edges()
     else:
       draw_edges()
-    pyplot.draw()
+    plt.draw()
 
 
 if __name__ == "__main__":
   
   parser = argparse.ArgumentParser(
-          description='Plot 3D graphics of odometry data files in real time.',
-          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-  parser.add_argument('-d','--d',
-          help='directory with the files: gt.txt (optional), odom.txt, graph_vertices.txt, graph_edges.txt',
-          default=".")
-  parser.add_argument('-gt','--gt',
-          help='file with ground truth',
-          default="")
-  parser.add_argument('-o','--o',
-          help='file with visual odometry',
-          default="")
-  parser.add_argument('-v','--v',
-          help='file with the vertices of stereo slam',
-          default="")
-  parser.add_argument('-e','--e',
-          help='file with the edges of stereo slam',
-          default="")
-  parser.add_argument('-dim','--dim', type=int,
-          help='defines the plot dimensions: 2 for xy and 3 for xyz',
-          default=3)
+          description = "Plot in 2D or 3D graphics of odometry data files in online.",
+          formatter_class = argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument("-d", "--d", type = str, 
+          help = "directory with the files: gt.txt (optional), odom.txt, graph_vertices.txt, graph_edges.txt",
+          default = "")
+  parser.add_argument("-gt", "--gt", type = str, 
+          help = "file with ground truth",
+          default = "")
+  parser.add_argument("-o", "--o", type = str, 
+          help = "file with visual odometry",
+          default = "")
+  parser.add_argument("-v", "--v", type = str, 
+          help = "file with the vertices of stereo slam",
+          default = "")
+  parser.add_argument("-e", "--e", type = str, 
+          help = "file with the edges of slamon",
+          default = "")
+  parser.add_argument("-dim", "--dim", type = int,
+          help = "defines the plot dimensions: 2 for xy and 3 for xyz",
+          default = 3)
   args = parser.parse_args()
   plot_dim = args.dim
 
@@ -269,28 +296,19 @@ if __name__ == "__main__":
   print("GRAPH VIEWER MOUSE INPUTS:")
   print(" - Right button: activates/deactivates the visualization of graph edges.")
 
-  # Set parameters
-  # global_dir            = args.d
-  # ground_truth_file     = args.gt
-  # visual_odometry_file  = args.o
-  # graph_vertices_file   = args.v
-  # graph_edges_file      = args.e
-
   # Default parameters
   if(args.d != ""):
 
-    if(args.d[:-1] != "/"):
-      args.d += "/"
-
     if os.path.exists(args.d):
-      visual_odometry_file = args.d + args.o
-      graph_vertices_file = args.d + args.v
-      graph_edges_file = args.d + args.e
+      visual_odometry_path = os.path.join(args.d, args.o)
+      graph_vertices_path = os.path.join(args.d, args.v)
+      graph_edges_path = os.path.join(args.d, args.e)
 
       if args.gt != "":
-        ground_truth_file = args.d + args.gt
+        ground_truth_path = os.path.join(args.d, args.gt)
       else:
-        ground_truth_file = "none"
+        ground_truth_path = None
+
     else:
       print("The path to the working directory doesn't exist. Exiting.")
       sys.exit()
@@ -300,35 +318,30 @@ if __name__ == "__main__":
     sys.exit()
 
   # Save blocking file into global
-  lock_file = os.path.dirname(graph_vertices_file) + "/graph.lock"
+  lock_file = graph_vertices_path + ".lock"
 
   # Init figure
-  fig = pylab.figure(1)
+  fig = plt.figure(1)
   if (plot_dim == 3):
-    ax = Axes3D(fig)
+    ax = fig.add_subplot(111, projection = '3d')
     ax.set_zlabel("z (m)")
   else:
-    ax = fig.gca()
-    img = cv2.imread("/tmp/mosaic1.jpg", cv2.IMREAD_COLOR)
-    ax.imshow(img, zorder=0, extent=[-13.5, 34.5, -17, 9])
-    ax.set_axis_bgcolor('black')
+    ax = fig.add_subplot(111)
+    ax.grid()
 
-  ax.grid(True)
-  # ax.set_title("Graph Viewer")
+  ax.set_title("Map Viewer")
   ax.set_xlabel("x (m)")
   ax.set_ylabel("y (m)")
-  # ax.set_xlim([0, 28])
-  # ax.set_ylim([-10, 23])
 
   # Handle on click callback
   fig.canvas.mpl_connect('button_press_event', onclick)
 
   # Start timer for real time plot
   timer = fig.canvas.new_timer(2500)
-  real_time_plot(ground_truth_file, visual_odometry_file, graph_vertices_file)
-  timer.add_callback( real_time_plot,
-                      ground_truth_file,
-                      visual_odometry_file,
-                      graph_vertices_file)
+  real_time_plot(ground_truth_path, visual_odometry_path, graph_vertices_path)
+  timer.add_callback(real_time_plot,
+                     ground_truth_path,
+                     visual_odometry_path,
+                     graph_vertices_path)
   timer.start()
-  pylab.show()
+  plt.show()
