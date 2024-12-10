@@ -23,10 +23,11 @@ ax_gt = None
 plot_dim = 3
 ax_odom = None
 ax_edges = []
-lock_file = ""
 ax_vertices = None
 edges_shown = True
 legend_edited = True
+edges_lock_file = ""
+vertices_lock_file = ""
 loop_closing_edges_data_path = ""
 
 
@@ -36,7 +37,6 @@ def isFull(path_to_file):
   @param path_to_file: path to the file to be analysed.
   @return if file length is > 0.
   """
-
   f = open(path_to_file)
   lines = f.readlines()
   f.close()
@@ -48,7 +48,6 @@ def removeAxes(ax_id):
   Removes the axes lines.
   @param ax_id: the axes.  
   """
-
   if (ax_id is not None and ax_id):
     l = ax_id.pop(0)
     wl = weakref.ref(l)
@@ -84,7 +83,7 @@ def drawEdges():
   """ 
   Draws the loop's closing edges.
   """
-  global lock_file, loop_closing_edges_data_path, ax_edges, edges_shown, plot_dim
+  global edges_lock_file, loop_closing_edges_data_path, ax_edges, edges_shown, plot_dim
 
   # First, remove previous edges.
   removeEdges()
@@ -93,7 +92,7 @@ def drawEdges():
   if (os.path.isfile(loop_closing_edges_data_path) and isFull(loop_closing_edges_data_path)):
 
     # Check if file is blocked
-    while (os.path.exists(lock_file)):
+    while (os.path.exists(edges_lock_file)):
       time.sleep(0.5)
 
     # Read the data
@@ -193,7 +192,7 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
   @param odom_data_path: Path to the file with the odometry data.
   @param slam_data_path: Path to the file with the slam data.
   """
-  global lock_file, legend_edited, ax_gt, ax_odom, ax_vertices, edges_shown, gt_data, plot_dim
+  global vertices_lock_file, legend_edited, ax_gt, ax_odom, ax_vertices, edges_shown, plot_dim
 
   # Remove the main axes
   removeAxes(ax_gt)
@@ -256,7 +255,7 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
   if (os.path.isfile(slam_data_path) and isFull(slam_data_path)):
 
     # Check if file is blocked
-    while (os.path.exists(lock_file)):
+    while (os.path.exists(vertices_lock_file)):
       time.sleep(0.5)
 
     # Read the data
@@ -327,7 +326,8 @@ if __name__ == "__main__":
 
   # Save global variables
   plot_dim = args.dim
-  lock_file = args.o + ".lock"
+  edges_lock_file = args.e + ".lock"
+  vertices_lock_file = args.v + ".lock"
   loop_closing_edges_data_path = args.e
 
   # Init figure
