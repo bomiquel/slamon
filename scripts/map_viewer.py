@@ -31,21 +31,25 @@ graph_edges_path = ""
 legend_edited = False
 
 
-class Error(Exception):
-  """ Base class for exceptions in this module. """
-  pass
+def isFull(path_to_file):
+  """ 
+  Check if the file length is > 0 
+  @param path_to_file: path to the file to be analysed.
+  @return if file length is > 0.
+  """
 
-
-def file_is_full(path_to_file):
-  """ Check if the file length is > 0 """
   f = open(path_to_file)
   lines = f.readlines()
   f.close()
   return len(lines) > 0
 
 
-def rm_ax(ax_id):
-  """ Remove the axes lines """
+def removeAxes(ax_id):
+  """ 
+  Removes the axes lines.
+  @param ax_id: the axes.  
+  """
+
   if (ax_id is not None and ax_id):
     l = ax_id.pop(0)
     wl = weakref.ref(l)
@@ -53,33 +57,37 @@ def rm_ax(ax_id):
     del l
 
 
-def real_time_plot(gt_path, odom_path, graph_vertices_path):
-  """ Function to plot the data saved into the files in real time. """
-
+def plotOnline(gt_data_path, odom_data_path, slam_data_path):
+  """ 
+  Function to plot the data saved into the files online. 
+  @param gt_data_path: Path to the file with the ground truth data.
+  @param odom_data_path: Path to the file with the odometry data.
+  @param slam_data_path: Path to the file with the slam data.
+  """
   global lock_file, legend_edited, ax_gt, ax_odom, ax_vertices, edges_shown, gt_data, plot_dim
 
   # Remove the main axes
-  rm_ax(ax_gt)
-  rm_ax(ax_odom)
-  rm_ax(ax_vertices)
+  removeAxes(ax_gt)
+  removeAxes(ax_odom)
+  removeAxes(ax_vertices)
 
   # Ground truth.
-  if (gt_path is not None and os.path.isfile(gt_path) and file_is_full(gt_path)):
+  if (gt_data_path is not None and os.path.isfile(gt_data_path) and isFull(gt_data_path)):
 
     # Check gt file type.
-    f = open(gt_path)
+    f = open(gt_data_path)
     lines = f.readlines()
     f.close()
     size = lines[1].split(",")
     if (len(size) > 12):
       try:
-        data = np.loadtxt(gt_path, delimiter = ",", skiprows = 1, usecols = (0, 5, 6, 7, 8, 9, 10, 11))
+        data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 5, 6, 7, 8, 9, 10, 11))
       except Exception as e:
         print(f"The following exception was detected while trying to load the GT: {e} ")
         return
     else:
       try:
-        data = np.loadtxt(gt_path, delimiter=',', skiprows = 1, usecols = (0, 1, 2, 3, 4, 5, 6, 7))
+        data = np.loadtxt(gt_data_path, delimiter=',', skiprows = 1, usecols = (0, 1, 2, 3, 4, 5, 6, 7))
       except Exception as e:
         print(f"The following exception was detected while trying to load the GT: {e} ")
         return
@@ -90,16 +98,16 @@ def real_time_plot(gt_path, odom_path, graph_vertices_path):
   
     # Plot.
     if (plot_dim == 3):
-      ax_gt = ax.plot(data[:, 1], data[:, 2], data[:, 3], "k", label = "Ground Truth")
+      ax_gt = ax.plot(data[:, 1], data[:, 2], data[:, 3], "orange", label = "Ground Truth")
     else:
-      ax_gt = ax.plot(data[:, 1], data[:, 2], "k", label = "Ground Truth")
+      ax_gt = ax.plot(data[:, 1], data[:, 2], "orange", label = "Ground Truth")
 
   # Load visual odometry data (saved with rostopic echo -p /stereo_odometer/odometry > file.txt).
-  if (os.path.isfile(odom_path) and file_is_full(odom_path)):
+  if (os.path.isfile(odom_data_path) and isFull(odom_data_path)):
 
     # Read the data
     try:
-      data = np.loadtxt(odom_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
+      data = np.loadtxt(odom_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
       # data = pylab.loadtxt(odom_file, delimiter=',', skiprows=1, usecols=(4, 5, 6, 7, 8, 9, 10))
     except:
       print("Problems loading odometry data.")
@@ -111,12 +119,12 @@ def real_time_plot(gt_path, odom_path, graph_vertices_path):
 
     # Plot.
     if (plot_dim == 3):
-      ax_odom = ax.plot(data[:, 0], data[:, 1], data[:, 2], "c", label = "Odometry")
+      ax_odom = ax.plot(data[:, 0], data[:, 1], data[:, 2], "blue", label = "Odometry")
     else:
-      ax_odom = ax.plot(data[:, 0], data[:, 1], "c", label = "Odometry")
+      ax_odom = ax.plot(data[:, 0], data[:, 1], "blue", label = "Odometry")
 
   # Load stereo slam vertices (file saved with node slamon)
-  if (os.path.isfile(graph_vertices_path) and file_is_full(graph_vertices_path)):
+  if (os.path.isfile(slam_data_path) and isFull(slam_data_path)):
 
     # Check if file is blocked
     while (os.path.exists(lock_file)):
@@ -124,7 +132,7 @@ def real_time_plot(gt_path, odom_path, graph_vertices_path):
 
     # Read the data
     try:
-      data = np.loadtxt(graph_vertices_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
+      data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
     except Exception as e:
       print(f"The following exception was detected while trying to load the SLAM algorithm vertices: {e} ")
       return
@@ -135,15 +143,15 @@ def real_time_plot(gt_path, odom_path, graph_vertices_path):
 
     # Plot.
     if (plot_dim == 3):
-      ax_vertices = ax.plot(data[:, 0], data[:, 1], data[:, 2], "b", label = "SLAM", marker = "o", zorder = 1)
+      ax_vertices = ax.plot(data[:, 0], data[:, 1], data[:, 2], "green", label = "SLAM", marker = "o", zorder = 1)
     else:
-      ax_vertices = ax.plot(data[:, 0], data[:, 1], "b", label = "SLAM", marker = "o", zorder = 1)
+      ax_vertices = ax.plot(data[:, 0], data[:, 1], "green", label = "SLAM", marker = "o", zorder = 1)
 
   # Show the edges
   if (edges_shown == True):
-    draw_edges()
+    drawEdges()
   else:
-    remove_edges()
+    removeEdges()
 
   # Update the plot
   plt.draw()
@@ -154,15 +162,17 @@ def real_time_plot(gt_path, odom_path, graph_vertices_path):
     legend_edited = True
 
 
-def draw_edges():
-  """ Draw the edges """
+def drawEdges():
+  """ 
+  Draws the loop's closing edges.
+  """
   global lock_file, graph_edges_path, ax_edges, edges_shown, plot_dim
 
   # First, remove previous edges.
-  remove_edges()
+  removeEdges()
 
   # Load stereo slam edges (file saved with node stereo_slam)
-  if (os.path.isfile(graph_edges_path) and file_is_full(graph_edges_path)):
+  if (os.path.isfile(graph_edges_path) and isFull(graph_edges_path)):
 
     # Check if file is blocked
     while (os.path.exists(lock_file)):
@@ -218,9 +228,9 @@ def draw_edges():
         # if (len(blue) == 1):
         #   blue += '0'
         # color = '#' + red + '00' + blue
-        color = "r"
+        color = "green"
       else:
-        color = "b"
+        color = "red"
       vect = []
       vect.append([data[i, 2], data[i, 3], data[i, 4]])
       vect.append([data[i, 5], data[i, 6], data[i, 7]])
@@ -236,8 +246,10 @@ def draw_edges():
   return
 
 
-def remove_edges():
-  """ Remove the edges """
+def removeEdges():
+  """ 
+  Removes the loop's closing edges.
+  """
   global ax_edges, edges_shown
 
   for i in range(len(ax_edges)):
@@ -249,15 +261,18 @@ def remove_edges():
   edges_shown = False
 
 
-def onclick(event):
-  """ Handle the click event """
+def onClick(event):
+  """ 
+  Handle the click event
+  @param event: click event.
+  """
   global edges_shown
 
   if (event.button == 3):
     if (edges_shown):
-      remove_edges()
+      removeEdges()
     else:
-      draw_edges()
+      drawEdges()
     plt.draw()
 
 
@@ -301,7 +316,7 @@ if __name__ == "__main__":
 
     if os.path.exists(args.d):
       visual_odometry_path = os.path.join(args.d, args.o)
-      graph_vertices_path = os.path.join(args.d, args.v)
+      slam_data_path = os.path.join(args.d, args.v)
       graph_edges_path = os.path.join(args.d, args.e)
 
       if args.gt != "":
@@ -318,7 +333,7 @@ if __name__ == "__main__":
     sys.exit()
 
   # Save blocking file into global
-  lock_file = graph_vertices_path + ".lock"
+  lock_file = slam_data_path + ".lock"
 
   # Init figure
   fig = plt.figure(1)
@@ -334,14 +349,14 @@ if __name__ == "__main__":
   ax.set_ylabel("y (m)")
 
   # Handle on click callback
-  fig.canvas.mpl_connect('button_press_event', onclick)
+  fig.canvas.mpl_connect('button_press_event', onClick)
 
   # Start timer for real time plot
   timer = fig.canvas.new_timer(2500)
-  real_time_plot(ground_truth_path, visual_odometry_path, graph_vertices_path)
-  timer.add_callback(real_time_plot,
+  plotOnline(ground_truth_path, visual_odometry_path, slam_data_path)
+  timer.add_callback(plotOnline,
                      ground_truth_path,
                      visual_odometry_path,
-                     graph_vertices_path)
+                     slam_data_path)
   timer.start()
   plt.show()
