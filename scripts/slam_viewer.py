@@ -21,7 +21,6 @@ import matplotlib.pyplot as plt
 # Global variables
 ax_gt = None
 plot_dim = 3
-gt_data = []
 ax_odom = None
 ax_edges = []
 lock_file = ""
@@ -279,28 +278,24 @@ def onClick(event):
 if __name__ == "__main__":
   
   parser = argparse.ArgumentParser(
-          description = "Plot in 2D or 3D graphics of odometry data files in online.",
+          description = "SLAM online viewer.",
           formatter_class = argparse.ArgumentDefaultsHelpFormatter)
-  parser.add_argument("-d", "--d", type = str, 
-          help = "directory with the files: gt.txt (optional), odom.txt, graph_vertices.txt, graph_edges.txt",
-          default = "")
   parser.add_argument("-gt", "--gt", type = str, 
-          help = "file with ground truth",
-          default = "")
+          help = "Path to the file containing the ground truth data (optional).",
+          default = "/home/user/gt.txt")
   parser.add_argument("-o", "--o", type = str, 
-          help = "file with visual odometry",
-          default = "")
+          help = "Path to the file containing the odometry data (required).",
+          default = "/home/user/odom.txt")
   parser.add_argument("-v", "--v", type = str, 
-          help = "file with the vertices of slam",
-          default = "")
+          help = "Path to the file containing the SLAM vertices data (required).",
+          default = "/home/user/vertices.txt")
   parser.add_argument("-e", "--e", type = str, 
-          help = "file with the edges of slam",
-          default = "")
+          help = "Path to the file containing the SLAM loop closing edges data (optional).",
+          default = "/home/user/edges.txt")
   parser.add_argument("-dim", "--dim", type = int,
-          help = "defines the plot dimensions: 2 for xy and 3 for xyz",
+          help = "Defines the plot dimensions: 2 for xy and 3 for xyz.",
           default = 3)
   args = parser.parse_args()
-  plot_dim = args.dim
 
   # Some hardcode parameters
   # font = {'family' : 'Sans',
@@ -308,32 +303,17 @@ if __name__ == "__main__":
   #         'size'   : 30}
   # pylab.rc('font', **font)
 
+  # Sanity check
+  if (not os.path.isfile(args.v) or not os.path.isfile(args.o)):
+    sys.exit()
+
   print("GRAPH VIEWER MOUSE INPUTS:")
   print(" - Right button: activates/deactivates the visualization of graph edges.")
 
-  # Default parameters
-  if(args.d != ""):
-
-    if os.path.exists(args.d):
-      visual_odometry_path = os.path.join(args.d, args.o)
-      slam_data_path = os.path.join(args.d, args.v)
-      graph_edges_path = os.path.join(args.d, args.e)
-
-      if args.gt != "":
-        ground_truth_path = os.path.join(args.d, args.gt)
-      else:
-        ground_truth_path = None
-
-    else:
-      print("The path to the working directory doesn't exist. Exiting.")
-      sys.exit()
-
-  else:
-    print("You have not inserted the path to the working directory. Exiting.")
-    sys.exit()
-
-  # Save blocking file into global
-  lock_file = slam_data_path + ".lock"
+  # Save global variables
+  plot_dim = args.dim
+  lock_file = args.o + ".lock"
+  graph_edges_path = args.e
 
   # Init figure
   fig = plt.figure(1)
@@ -344,7 +324,7 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111)
     ax.grid()
 
-  ax.set_title("Map Viewer")
+  ax.set_title("Online viewer")
   ax.set_xlabel("x (m)")
   ax.set_ylabel("y (m)")
 
@@ -353,10 +333,7 @@ if __name__ == "__main__":
 
   # Start timer for real time plot
   timer = fig.canvas.new_timer(2500)
-  plotOnline(ground_truth_path, visual_odometry_path, slam_data_path)
-  timer.add_callback(plotOnline,
-                     ground_truth_path,
-                     visual_odometry_path,
-                     slam_data_path)
+  plotOnline(args.gt, args.o, args.v)
+  timer.add_callback(plotOnline, args.gt, args.o, args.v)
   timer.start()
   plt.show()
