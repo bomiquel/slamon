@@ -65,6 +65,127 @@ def updateLegend():
   legend_edited = False
 
 
+def removeEdges():
+  """ 
+  Removes the loop's closing edges.
+  """
+  global ax_edges, edges_shown
+
+  for i in range(len(ax_edges)):
+    l = ax_edges[i].pop(0)
+    wl = weakref.ref(l)
+    l.remove()
+    del l
+  ax_edges = []
+  edges_shown = False
+
+
+def drawEdges():
+  """ 
+  Draws the loop's closing edges.
+  """
+  global lock_file, loop_closing_edges_data_path, ax_edges, edges_shown, plot_dim
+
+  # First, remove previous edges.
+  removeEdges()
+
+  # Load SLAM edges (file saved with SLAM node)
+  if (os.path.isfile(loop_closing_edges_data_path) and isFull(loop_closing_edges_data_path)):
+
+    # Check if file is blocked
+    while (os.path.exists(lock_file)):
+      time.sleep(0.5)
+
+    # Read the data
+    try:
+      data = np.loadtxt(loop_closing_edges_data_path, delimiter = ",", skiprows = 1, usecols = (0, 1, 2, 3, 4, 9, 10, 11))
+    except Exception as e:
+      print(f"The following exception was detected while trying to load the SLAM algorithm edges: {e} ")
+      return
+
+    # Sanity check
+    if (len(data.shape) == 1):
+      edges_shown = True
+      return
+
+    valid_color = False
+
+    # # Inliers column
+    # inliers = data[:,2]
+    # max_inliers = max(inliers)
+    # min_inliers = min(inliers)
+
+    # valid_color = True
+    # if (min_inliers - max_inliers == 0):
+    #   valid_color = False
+
+    # if (valid_color):
+    #   # red color
+    #   m_red = (255) / (min_inliers - max_inliers)
+    #   n_red = -m_red * max_inliers
+
+    #   # blue color
+    #   m_blue = (255) / (max_inliers - min_inliers)
+    #   n_blue = -m_blue * min_inliers
+
+    # Pre-process plot if necessary.
+    if (len(data.shape) == 1):
+      data = np.array([data])
+
+    # Plot.
+    ax_edges = []
+    for i in range(len(data)):
+      # Get the color depending on the inlier value
+      if (valid_color):
+        # red = hex(int(m_red * data[i,2] + n_red))
+        # blue = hex(int(m_blue * data[i,2] + n_blue))
+        # red = red[2:]
+        # blue = blue[2:]
+        # if (len(red) == 1):
+        #   red += '0'
+        # if (len(blue) == 1):
+        #   blue += '0'
+        # color = '#' + red + '00' + blue
+        color = "green"
+      else:
+        color = "red"
+      vect = []
+      vect.append([data[i, 2], data[i, 3], data[i, 4]])
+      vect.append([data[i, 5], data[i, 6], data[i, 7]])
+      vect =  np.array(vect)
+      if (plot_dim == 3):
+        if i == 0:
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, label = "Loop closing edges", linestyle = "-", zorder = 1)
+        else:
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, linestyle = "-", zorder = 1)
+      else:
+        if i == 0:
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, label = "Loop closing edges", linestyle = "-", zorder = 1)
+        else:
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, linestyle = "-", zorder = 1)
+      ax_edges.append(ax_edge)
+
+  edges_shown = True
+
+  return
+
+
+def onClick(event):
+  """ 
+  Handle the click event
+  @param event: click event.
+  """
+  global edges_shown
+
+  if (event.button == 3):
+    if (edges_shown):
+      removeEdges()
+    else:
+      drawEdges()
+    updateLegend()
+    plt.draw()
+
+
 def plotOnline(gt_data_path, odom_data_path, slam_data_path):
   """ 
   Function to plot the data saved into the files online. 
@@ -167,128 +288,6 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
   # Show legend only once
   if (ax_vertices is not None and legend_edited is True):
     updateLegend()
-
-
-def drawEdges():
-  """ 
-  Draws the loop's closing edges.
-  """
-  global lock_file, loop_closing_edges_data_path, ax_edges, edges_shown, plot_dim
-
-  # First, remove previous edges.
-  removeEdges()
-
-  # Load SLAM edges (file saved with SLAM node)
-  if (os.path.isfile(loop_closing_edges_data_path) and isFull(loop_closing_edges_data_path)):
-
-    # Check if file is blocked
-    while (os.path.exists(lock_file)):
-      time.sleep(0.5)
-
-    # Read the data
-    try:
-      data = np.loadtxt(loop_closing_edges_data_path, delimiter = ",", skiprows = 1, usecols = (0, 1, 2, 3, 4, 9, 10, 11))
-    except Exception as e:
-      print(f"The following exception was detected while trying to load the SLAM algorithm edges: {e} ")
-      return
-
-    # Sanity check
-    if (len(data.shape) == 1):
-      edges_shown = True
-      return
-
-    valid_color = False
-
-    # # Inliers column
-    # inliers = data[:,2]
-    # max_inliers = max(inliers)
-    # min_inliers = min(inliers)
-
-    # valid_color = True
-    # if (min_inliers - max_inliers == 0):
-    #   valid_color = False
-
-    # if (valid_color):
-    #   # red color
-    #   m_red = (255) / (min_inliers - max_inliers)
-    #   n_red = -m_red * max_inliers
-
-    #   # blue color
-    #   m_blue = (255) / (max_inliers - min_inliers)
-    #   n_blue = -m_blue * min_inliers
-
-    # Pre-process plot if necessary.
-    if (len(data.shape) == 1):
-      data = np.array([data])
-
-    # Plot.
-    ax_edges = []
-    for i in range(len(data)):
-      # Get the color depending on the inlier value
-      if (valid_color):
-        # red = hex(int(m_red * data[i,2] + n_red))
-        # blue = hex(int(m_blue * data[i,2] + n_blue))
-        # red = red[2:]
-        # blue = blue[2:]
-        # if (len(red) == 1):
-        #   red += '0'
-        # if (len(blue) == 1):
-        #   blue += '0'
-        # color = '#' + red + '00' + blue
-        color = "green"
-      else:
-        color = "red"
-      vect = []
-      vect.append([data[i, 2], data[i, 3], data[i, 4]])
-      vect.append([data[i, 5], data[i, 6], data[i, 7]])
-      vect =  np.array(vect)
-      if (plot_dim == 3):
-        if i == 0:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, label = "Loop closing edges", linestyle = "-", zorder = 1)
-        else:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, linestyle = "-", zorder = 1)
-      else:
-        if i == 0:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, label = "Loop closing edges", linestyle = "-", zorder = 1)
-        else:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, linestyle = "-", zorder = 1)
-      ax_edges.append(ax_edge)
-
-  edges_shown = True
-  updateLegend()
-
-  return
-
-
-def removeEdges():
-  """ 
-  Removes the loop's closing edges.
-  """
-  global ax_edges, edges_shown
-
-  for i in range(len(ax_edges)):
-    l = ax_edges[i].pop(0)
-    wl = weakref.ref(l)
-    l.remove()
-    del l
-  ax_edges = []
-  edges_shown = False
-  updateLegend()
-
-
-def onClick(event):
-  """ 
-  Handle the click event
-  @param event: click event.
-  """
-  global edges_shown
-
-  if (event.button == 3):
-    if (edges_shown):
-      removeEdges()
-    else:
-      drawEdges()
-    plt.draw()
 
 
 if __name__ == "__main__":
