@@ -2,7 +2,7 @@
 
 """
 @file
-@brief Real-time map viewer.
+@brief SLAM online viewer.
 @author Pep Lluís Negre-Carrasco
 @date 2014-2016
 @modified Bo Miquel Nordfeldt-Fiol 2024
@@ -102,7 +102,7 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
     else:
       ax_gt = ax.plot(data[:, 1], data[:, 2], "orange", label = "Ground Truth")
 
-  # Load visual odometry data (saved with rostopic echo -p /stereo_odometer/odometry > file.txt).
+  # Load visual odometry data (saved with rostopic echo -p /namespace/topic > file.txt).
   if (os.path.isfile(odom_data_path) and isFull(odom_data_path)):
 
     # Read the data
@@ -123,7 +123,7 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
     else:
       ax_odom = ax.plot(data[:, 0], data[:, 1], "blue", label = "Odometry")
 
-  # Load stereo slam vertices (file saved with node slamon)
+  # Load SLAM vertices (file saved with SLAM node)
   if (os.path.isfile(slam_data_path) and isFull(slam_data_path)):
 
     # Check if file is blocked
@@ -171,7 +171,7 @@ def drawEdges():
   # First, remove previous edges.
   removeEdges()
 
-  # Load stereo slam edges (file saved with node stereo_slam)
+  # Load SLAM edges (file saved with SLAM node)
   if (os.path.isfile(graph_edges_path) and isFull(graph_edges_path)):
 
     # Check if file is blocked
@@ -291,10 +291,10 @@ if __name__ == "__main__":
           help = "file with visual odometry",
           default = "")
   parser.add_argument("-v", "--v", type = str, 
-          help = "file with the vertices of stereo slam",
+          help = "file with the vertices of slam",
           default = "")
   parser.add_argument("-e", "--e", type = str, 
-          help = "file with the edges of slamon",
+          help = "file with the edges of slam",
           default = "")
   parser.add_argument("-dim", "--dim", type = int,
           help = "defines the plot dimensions: 2 for xy and 3 for xyz",
