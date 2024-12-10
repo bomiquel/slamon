@@ -26,7 +26,7 @@ ax_edges = []
 lock_file = ""
 ax_vertices = None
 edges_shown = True
-legend_edited = False
+legend_edited = True
 loop_closing_edges_data_path = ""
 
 
@@ -54,6 +54,15 @@ def removeAxes(ax_id):
     wl = weakref.ref(l)
     l.remove()
     del l
+
+
+def updateLegend():
+  """
+  Updates legend.
+  """
+  global legend_edited
+  ax.legend()
+  legend_edited = False
 
 
 def plotOnline(gt_data_path, odom_data_path, slam_data_path):
@@ -156,9 +165,8 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
   plt.draw()
 
   # Show legend only once
-  if (ax_vertices is not None and legend_edited is False):
-    ax.legend()
-    legend_edited = True
+  if (ax_vertices is not None and legend_edited is True):
+    updateLegend()
 
 
 def drawEdges():
@@ -235,12 +243,19 @@ def drawEdges():
       vect.append([data[i, 5], data[i, 6], data[i, 7]])
       vect =  np.array(vect)
       if (plot_dim == 3):
-        ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, linestyle = "-", zorder = 1)
+        if i == 0:
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, label = "Loop closing edges", linestyle = "-", zorder = 1)
+        else:
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, linestyle = "-", zorder = 1)
       else:
-        ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, linestyle = "-", zorder = 1)
+        if i == 0:
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, label = "Loop closing edges", linestyle = "-", zorder = 1)
+        else:
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, linestyle = "-", zorder = 1)
       ax_edges.append(ax_edge)
 
   edges_shown = True
+  updateLegend()
 
   return
 
@@ -258,6 +273,7 @@ def removeEdges():
     del l
   ax_edges = []
   edges_shown = False
+  updateLegend()
 
 
 def onClick(event):
