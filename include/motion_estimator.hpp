@@ -28,6 +28,7 @@ class MotionEstimator
             EPNP = cv::SOLVEPNP_EPNP,
             P3P = cv::SOLVEPNP_P3P,
             AP3P = cv::SOLVEPNP_AP3P,
+            IPPE = cv::SOLVEPNP_IPPE,
             DUAL = 10
         };
 

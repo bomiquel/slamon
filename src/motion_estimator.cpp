@@ -4,6 +4,7 @@
 MotionEstimator::MotionEstimator(std::string& motion_estimation_type)
 {
     motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
+    std::cout << "Motion estimation type: " << motion_estimation_type_ << std::endl;
 }
 
 
@@ -14,6 +15,7 @@ MotionEstimator::MotionEstimator(const cv::Mat& l_proj_mat,
     l_proj_mat_ = l_proj_mat;
     r_proj_mat_ = r_proj_mat;
     motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
+    std::cout << "Motion estimation type: " << motion_estimation_type_ << std::endl;
 }
 
 
@@ -27,6 +29,7 @@ MotionEstimator::MotionEstimator(const double b,
     r_proj_mat_ = computeProjectionMatrix(b, f_x, f_x, c_x, c_y);
     l_proj_mat_ = computeProjectionMatrix(0.0, f_x, f_x, c_x, c_y);
     motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
+    std::cout << "Motion estimation type: " << motion_estimation_type_ << std::endl;
 }
 
 
@@ -350,6 +353,8 @@ MotionEstimator::Type MotionEstimator::selectMotionEstimationType(std::string& m
         return AP3P;
     else if (motion_estimation_type == "solvepnp_epnp" || motion_estimation_type == "epnp")
         return EPNP;
+    else if (motion_estimation_type == "solvepnp_ippe" || motion_estimation_type == "ippe")
+        return IPPE;
     else if (motion_estimation_type == "solvepnp_dual" || motion_estimation_type == "dual")
         return DUAL;
     else
