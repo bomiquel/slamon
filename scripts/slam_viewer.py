@@ -211,13 +211,13 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
       try:
         data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 5, 6, 7, 8, 9, 10, 11))
       except Exception as e:
-        print(f"The following exception was detected while trying to load the GT: {e} ")
+        print(f"The following exception was detected while trying to load the GT (size > 12): {e} ")
         return
     else:
       try:
         data = np.loadtxt(gt_data_path, delimiter=',', skiprows = 1, usecols = (0, 1, 2, 3, 4, 5, 6, 7))
       except Exception as e:
-        print(f"The following exception was detected while trying to load the GT: {e} ")
+        print(f"The following exception was detected while trying to load the GT (size <= 12): {e} ")
         return
 
     # Pre-process plot if necessary.
@@ -237,8 +237,8 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
     try:
       data = np.loadtxt(odom_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
       # data = pylab.loadtxt(odom_file, delimiter=',', skiprows=1, usecols=(4, 5, 6, 7, 8, 9, 10))
-    except:
-      print("Problems loading odometry data.")
+    except Exception as e:
+      print(f"The following exception was detected while trying to load the odometry: {e} ")
       return
 
     # Pre-process plot if necessary.
@@ -259,10 +259,24 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
       time.sleep(0.5)
 
     # Read the data
-    try:
-      data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
-    except Exception as e:
-      print(f"The following exception was detected while trying to load the SLAM algorithm vertices: {e} ")
+    f = open(slam_data_path)
+    lines = f.readlines()
+    f.close()
+    size = lines[1].split(",")
+    if len(size) == 9:
+      try:
+        data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
+      except Exception as e:
+        print(f"The following exception was detected while trying to load the SLAM algorithm vertices (size 9): {e} ")
+        return
+    elif len(size) == 8:
+      try:
+        data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (1, 2, 3, 4, 5, 6, 7))
+      except Exception as e:
+        print(f"The following exception was detected while trying to load the SLAM algorithm vertices (size 8): {e} ")
+        return
+    else:
+      print(f"Wrong number of columns")
       return
 
     # Pre-process plot if necessary.
