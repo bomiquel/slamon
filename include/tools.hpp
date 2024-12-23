@@ -53,23 +53,4 @@ static inline bool fromMatToTf(const cv::Mat& r_vec,
 }
 
 
-/** \brief Computes the current depth by averaging all z-values of the 3D points 
- *  in the current image (which come from the keypoints).
- *  \param cam_pts Current left camera points (input).
- *  @return The current depth. 
- */
-static inline double computeCurrentDepth(const std::vector<cv::Point3f>& cam_pts)
-{
-    double depth_mean = 0.0;
-    if (cam_pts.size() > 0)
-    {
-        for (uint i = 0; i < cam_pts.size(); i++)
-            depth_mean += cam_pts[i].z;
-
-        depth_mean /= cam_pts.size();
-    }
-    return depth_mean;
-}
-
-
 #endif // TOOLS_HPP

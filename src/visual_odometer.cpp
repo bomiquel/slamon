@@ -175,10 +175,6 @@ namespace slamon
                         }
                         c_frame_id_++;
 
-                        // Compute alitude
-                        double altitude = computeCurrentDepth(c_frame.getLeftCameraPoints());
-                        ROS_INFO_STREAM("Altitude: " << altitude);
-
                         // From {c_cam}^T_{p_cam} to {p_cam}^T_{c_cam}.
                         c_camera_motion = c_camera_motion.inverse();
 
