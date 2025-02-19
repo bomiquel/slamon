@@ -54,11 +54,11 @@ class Publisher
 
 
         /** \brief Writes on disk a image with its keypoints drawn.
-         *  \param img The image (input).
-         *  \param color The keypoints color (input).
-         *  \param o_path Image output path. The name of the final 
-         *  file must be included (input).
-         *  \param kpts The keypoints (input).
+         *  \param[in] img The image.
+         *  \param[in] color The keypoints color.
+         *  \param[in] o_path Image output path. The name of the final 
+         *  file must be included.
+         *  \param[in] kpts The keypoints.
          */
         void writeImgKeypoints(const cv::Mat& img,
                                const cv::Scalar& color,
@@ -67,12 +67,12 @@ class Publisher
 
 
         /** \brief Publishes stereo images with its keypoints drawn.
-         *  \param l_img The left image (input). 
-         *  \param r_img The right image (input).
-         *  \param stamp The ROS timestamp (input).
-         *  \param publisher The ROS publisher (input).
-         *  \param l_kpts The left image keypoints (input).
-         *  \param r_kpts The left image keypoints (input).
+         *  \param[in] l_img The left image. 
+         *  \param[in] r_img The right image.
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] l_kpts The left image keypoints.
+         *  \param[in] r_kpts The left image keypoints.
          */
         void publishImgStereoKeypoints(const cv::Mat& l_img,
                                        const cv::Mat& r_img,
@@ -84,12 +84,12 @@ class Publisher
 
         /** \brief Writes on disk the stereoscopic images with their
          *  keypoints drawn.
-         *  \param l_img The left image (input). 
-         *  \param r_img The right image (input).
-         *  \param o_path Image output path. The name of the final
-         *  file must be included (input).
-         *  \param l_kpts The left image keypoints (input).
-         *  \param r_kpts The left image keypoints (input).
+         *  \param[in] l_img The left image. 
+         *  \param[in] r_img The right image.
+         *  \param[in] o_path Image output path. The name of the final
+         *  file must be included.
+         *  \param[in] l_kpts The left image keypoints.
+         *  \param[in] r_kpts The left image keypoints.
          */
         void writeImgStereoKeypoints(const cv::Mat& l_img,
                                      const cv::Mat& r_img,
@@ -100,17 +100,17 @@ class Publisher
 
         /** \brief Draws and publishes vertical (successive) or horizontal (stereo)
          *  matches between two images.
-         *  \param vertical If true, draws and publishes vertical matches 
+         *  \param[in] vertical If true, draws and publishes vertical matches 
          *  (case for the successive images). If false, draws and publishes horizontal
-         *  matches (case for stereo pair) (input).
-         *  \param img_0 In the case of successive images, it is the current image.
-         *  In the stereo case, it is the left image (input).
-         *  \param img_1 In the case of successive images, it is the previous image.
-         *  In the stereo case, it is the right image (input).
-         *  \param stamp The ROS timestamp (input).
-         *  \param publisher The ROS publisher (input).
-         *  \param m_kpts_0 Matched and sorted current/left keypoints (input).
-         *  \param m_kpts_1 Matched and sorted previous/right keypoints (input).
+         *  matches (case for stereo pair).
+         *  \param[in] img_0 In the case of successive images, it is the current image.
+         *  In the stereo case, it is the left image.
+         *  \param[in] img_1 In the case of successive images, it is the previous image.
+         *  In the stereo case, it is the right image.
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] m_kpts_0 Matched and sorted current/left keypoints.
+         *  \param[in] m_kpts_1 Matched and sorted previous/right keypoints.
          */
         void publishImgMatches(const bool vertical, 
                                const cv::Mat& img_0,
@@ -123,17 +123,17 @@ class Publisher
 
         /** \brief Draws and writes on disk vertical (successive) or horizontal (stereo)
          *  matches between two images.
-         *  \param vertical If true, draws and publishes vertical matches 
+         *  \param[in] vertical If true, draws and publishes vertical matches 
          *  (case for the successive images). If false, draws and publishes horizontal
-         *  matches (case for stereo pair) (input).
-         *  \param img_0 In the case of successive images, it is the current image.
-         *  In the stereo case, it is the left image (input).
-         *  \param img_1 In the case of successive images, it is the previous image.
-         *  In the stereo case, it is the right image (input).
-         *  \param o_path Image output path. The name of the final
-         *  file must be included (input).
-         *  \param m_kpts_0 Matched and sorted current/left keypoints (input).
-         *  \param m_kpts_1 Matched and sorted previous/right keypoints (input).
+         *  matches (case for stereo pair).
+         *  \param[in] img_0 In the case of successive images, it is the current image.
+         *  In the stereo case, it is the left image.
+         *  \param[in] img_1 In the case of successive images, it is the previous image.
+         *  In the stereo case, it is the right image.
+         *  \param[in] o_path Image output path. The name of the final
+         *  file must be included.
+         *  \param[in] m_kpts_0 Matched and sorted current/left keypoints.
+         *  \param[in] m_kpts_1 Matched and sorted previous/right keypoints.
          */
         void writeImgMatches(const bool vertical, 
                              const cv::Mat& img_0,
@@ -144,16 +144,16 @@ class Publisher
 
 
         /** \brief Draws and publishes circular matches.
-         *  \param c_l_img Current left image (input).
-         *  \param c_r_img Current right image (input).
-         *  \param p_l_img Previous left image (input).
-         *  \param p_r_img Previous right image (input).
-         *  \param stamp The ROS timestamp (input).
-         *  \param publisher The ROS publisher (input).
-         *  \param m_c_l_kpts Matched and sorted current left keypoints (input).
-         *  \param m_c_r_kpts Matched and sorted current right keypoints (input).
-         *  \param m_p_l_kpts Matched and sorted previous left keypoints (input).
-         *  \param m_p_r_kpts Matched and sorted previous right keypoints (input).
+         *  \param[in] c_l_img Current left image.
+         *  \param[in] c_r_img Current right image.
+         *  \param[in] p_l_img Previous left image.
+         *  \param[in] p_r_img Previous right image.
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] m_c_l_kpts Matched and sorted current left keypoints.
+         *  \param[in] m_c_r_kpts Matched and sorted current right keypoints.
+         *  \param[in] m_p_l_kpts Matched and sorted previous left keypoints.
+         *  \param[in] m_p_r_kpts Matched and sorted previous right keypoints.
          */
         void publishImgCircularMatches(const cv::Mat& c_l_img,                                    
                                        const cv::Mat& c_r_img,
@@ -168,16 +168,16 @@ class Publisher
 
 
         /** \brief Draws and writes on disk circular matches.
-         *  \param c_l_img Current left image (input).
-         *  \param c_r_img Current right image (input).
-         *  \param p_l_img Previous left image (input).
-         *  \param p_r_img Previous right image (input).
-         *  \param o_path Image output path. The name of the final
-         *  file must be included (input).
-         *  \param m_c_l_kpts Matched and sorted current left keypoints (input).
-         *  \param m_c_r_kpts Matched and sorted current right keypoints (input).
-         *  \param m_p_l_kpts Matched and sorted previous left keypoints (input).
-         *  \param m_p_r_kpts Matched and sorted previous right keypoints (input).
+         *  \param[in] c_l_img Current left image.
+         *  \param[in] c_r_img Current right image.
+         *  \param[in] p_l_img Previous left image.
+         *  \param[in] p_r_img Previous right image.
+         *  \param[in] o_path Image output path. The name of the final
+         *  file must be included.
+         *  \param[in] m_c_l_kpts Matched and sorted current left keypoints.
+         *  \param[in] m_c_r_kpts Matched and sorted current right keypoints.
+         *  \param[in] m_p_l_kpts Matched and sorted previous left keypoints.
+         *  \param[in] m_p_r_kpts Matched and sorted previous right keypoints.
          */
         void writeImgCircularMatches(const cv::Mat& c_l_img,
                                      const cv::Mat& c_r_img,
@@ -191,11 +191,11 @@ class Publisher
 
 
         /** \brief Draws and publishes keypoints clustering.
-         *  \param l_img Left image (input).
-         *  \param stamp The ROS timestamp (input).
-         *  \param publisher The ROS publisher (input).
-         *  \param l_kpts Left keypoints (input).
-         *  \param clusters Keypoints clustering (input).
+         *  \param[in] l_img Left image.
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] l_kpts Left keypoints.
+         *  \param[in] clusters Keypoints clustering.
          */
         void publishImgKeypointsClustering(const cv::Mat& l_img,
                                            const ros::Time& stamp,
@@ -205,11 +205,11 @@ class Publisher
 
 
         /** \brief Draws and writes on disk keypoints clustering.
-         *  \param l_img Left image (input).
-         *  \param l_kpts Left keypoints (input).
-         *  \param o_path Image output path. The name of the final
-         *  file must be included (input).
-         *  \param clusters Keypoints clustering (input).
+         *  \param[in] l_img Left image.
+         *  \param[in] l_kpts Left keypoints.
+         *  \param[in] o_path Image output path. The name of the final
+         *  file must be included.
+         *  \param[in] clusters Keypoints clustering.
          */
         void writeImgKeypointsClustering(const cv::Mat& l_img,
                                          const std::string& o_path,
@@ -219,27 +219,25 @@ class Publisher
 
         /** \brief Draws and publishes a loop closure image with all the correspondences
          *  between query keyframe and all the loop closing keyframes.
-         *  \param stamp The ROS timestamp (input).
-         *  \param publisher The ROS publisher (input).
-         *  \param q_keyframe_id Keyframe identifier to which the query cluster belongs
-         *  (input).
-         *  \param i_path Path to keyframes saved on disk.
-         *  \param q_cluster_ids Identifiers of the query clusters that have 
-         *  closed the loop (input).
-         *  \param cand_cluster_ids Identifiers of the candidate clusters that have 
-         *  closed the loop (input).
-         *  \param cand_keyframe_ids Identifiers of keyframes containing candidate 
-         *  clusters that have closed loops (input).
-         *  \param f_q_l_kpts Filtered query left keypoints (input).
-         *  \param f_q_r_kpts Filtered query right keypoints (input).
-         *  \param f_cand_l_kpts Filtered candidate left keypoints (input).
-         *  \param f_cand_r_kpts Filtered candidate right keypoints (input).
-         *  \param definitive_inliers_per_pair The number of inliers for every loop
-         *  closure cluster pair (input).
-         *  \param definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id)
-         *  (input).
-         *  \param cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
-         *  relation (cand_cluster_id, cand_keyframe_id) (input).
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] q_keyframe_id Keyframe identifier to which the query cluster belongs.
+         *  \param[in] i_path Path to keyframes saved on disk.
+         *  \param[in] q_cluster_ids Identifiers of the query clusters that have 
+         *  closed the loop.
+         *  \param[in] cand_cluster_ids Identifiers of the candidate clusters that have 
+         *  closed the loop.
+         *  \param[in] cand_keyframe_ids Identifiers of keyframes containing candidate 
+         *  clusters that have closed loops.
+         *  \param[in] f_q_l_kpts Filtered query left keypoints.
+         *  \param[in] f_q_r_kpts Filtered query right keypoints.
+         *  \param[in] f_cand_l_kpts Filtered candidate left keypoints.
+         *  \param[in] f_cand_r_kpts Filtered candidate right keypoints.
+         *  \param[in] definitive_inliers_per_pair The number of inliers for every loop
+         *  closure cluster pair.
+         *  \param[in] definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id).
+         *  \param[in] cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
+         *  relation (cand_cluster_id, cand_keyframe_id).
          */
         void publishImgLoopClosure(const ros::Time& stamp,
                                    const ros::Publisher& publisher,
@@ -259,27 +257,25 @@ class Publisher
 
         /** \brief Draws and writes on disk a loop closure image with all the correspondences
          *  between query keyframe and all the loop closing keyframes.
-         *  \param o_path Image output path. The name of the final
-         *  file must be included (input).
-         *  \param q_keyframe_id Keyframe identifier to which the query cluster belongs
-         *  (input).
-         *  \param i_path Path to keyframes saved on disk.
-         *  \param q_cluster_ids Identifiers of the query clusters that have 
-         *  closed the loop (input).
-         *  \param cand_cluster_ids Identifiers of the candidate clusters that have 
-         *  closed the loop (input).
-         *  \param cand_keyframe_ids Identifiers of keyframes containing candidate 
-         *  clusters that have closed loops (input).
-         *  \param f_q_l_kpts Filtered query left keypoints (input).
-         *  \param f_q_r_kpts Filtered query right keypoints (input).
-         *  \param f_cand_l_kpts Filtered candidate left keypoints (input).
-         *  \param f_cand_r_kpts Filtered candidate right keypoints (input).
-         *  \param definitive_inliers_per_pair The number of inliers for every loop
-         *  closure cluster pair (input).
-         *  \param definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id)
-         *  (input).
-         *  \param cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
-         *  relation (cand_cluster_id, cand_keyframe_id) (input).
+         *  \param[in] o_path Image output path. The name of the final
+         *  file must be included.
+         *  \param[in] q_keyframe_id Keyframe identifier to which the query cluster belongs.
+         *  \param[in] i_path Path to keyframes saved on disk.
+         *  \param[in] q_cluster_ids Identifiers of the query clusters that have 
+         *  closed the loop.
+         *  \param[in] cand_cluster_ids Identifiers of the candidate clusters that have 
+         *  closed the loop.
+         *  \param[in] cand_keyframe_ids Identifiers of keyframes containing candidate 
+         *  clusters that have closed loops.
+         *  \param[in] f_q_l_kpts Filtered query left keypoints.
+         *  \param[in] f_q_r_kpts Filtered query right keypoints.
+         *  \param[in] f_cand_l_kpts Filtered candidate left keypoints.
+         *  \param[in] f_cand_r_kpts Filtered candidate right keypoints.
+         *  \param[in] definitive_inliers_per_pair The number of inliers for every loop
+         *  closure cluster pair.
+         *  \param[in] definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id).
+         *  \param[in] cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
+         *  relation (cand_cluster_id, cand_keyframe_id).
          */
         void writeImgLoopClosure(const std::string& o_path,
                                  const int q_keyframe_id,
@@ -297,11 +293,11 @@ class Publisher
 
 
         /** \brief Publishes current robot pose.
-         *  \param c_stamp Current pose timestamp (input).
-         *  \param c_pose The current pose to be published (input).
-         *  \param publisher The ROS publisher (input).
-         *  \param reference_frame_id The ID of the frame to which the pose
-         *  is relative (input).
+         *  \param[in] c_stamp Current pose timestamp.
+         *  \param[in] c_pose The current pose to be published.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] reference_frame_id The ID of the frame to which the pose
+         *  is relative.
          */
         void publishPose(const ros::Time& c_stamp,
                          const tf::Transform& c_pose,
@@ -310,14 +306,14 @@ class Publisher
 
 
         /** \brief Publishes current pose and velocity.
-         *  \param c_stamp Current ROS timestamp (input).
-         *  \param p_stamp Previous ROS timestamp (input).
-         *  \param c_pose The current pose to be published (input).
-         *  \param c_motion The movement between current and previous frames.
-         *  Used to calculate velocity (input).
-         *  \param publisher The ROS publisher (input).
-         *  \param reference_frame_id The ID of the frame to which the pose and 
-         *  velocity are relative (input).
+         *  \param[in] c_stamp Current ROS timestamp.
+         *  \param[in] p_stamp Previous ROS timestamp.
+         *  \param[in] c_pose The current pose to be published.
+         *  \param[in] c_motion The movement between current and previous frames.
+         *  Used to calculate velocity.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] reference_frame_id The ID of the frame to which the pose and 
+         *  velocity are relative.
          */
         void publishPoseAndVelocity(const ros::Time& c_stamp,
                                     const ros::Time& p_stamp,
@@ -328,13 +324,13 @@ class Publisher
 
 
         /** \brief Publishes SLAMON performance.
-         *  \param stamp Message timestamp. VO: current frame timestamp,
-         *   MAP: current time or LC: current time (input).
-         *  \param successes_num Successes in the last iteration of the
-         *  thread in question. (input).
-         *  \param run_times Structure with all the execution times of
-         *  the thread in question. (input).
-         *  \param publisher The ROS publisher (input).
+         *  \param[in] stamp Message timestamp. VO: current frame timestamp,
+         *   MAP: current time or LC: current time.
+         *  \param[in] successes_num Successes in the last iteration of the
+         *  thread in question..
+         *  \param[in] run_times Structure with all the execution times of
+         *  the thread in question..
+         *  \param[in] publisher The ROS publisher.
          */
         void publishPerformance(const ros::Time& stamp,
                                 const int successes_num,
@@ -343,14 +339,14 @@ class Publisher
 
 
         /** \brief Publishes relevant information from a stereo pair of images.
-         *  \param stamp Current image ROS timestamp (input).
-         *  \param l_descs The left image keypoints descriptors (input).
-         *  \param r_descs The right image keypoints descriptors (input).
-         *  \param l_kpts The left image keypoints (input).
-         *  \param r_kpts The right image keypoints (input).
-         *  \param l_cam_pts 3D points of the scene obtained from the stereo data
-         *  and relative to left camera (input).
-         *  \param publisher The ROS publisher (input).
+         *  \param[in] stamp Current image ROS timestamp.
+         *  \param[in] l_descs The left image keypoints descriptors.
+         *  \param[in] r_descs The right image keypoints descriptors.
+         *  \param[in] l_kpts The left image keypoints.
+         *  \param[in] r_kpts The right image keypoints.
+         *  \param[in] l_cam_pts 3D points of the scene obtained from the stereo data
+         *  and relative to left camera.
+         *  \param[in] publisher The ROS publisher.
         */
         void publishStereoData(const cv::Mat& l_descs,
                                const cv::Mat& r_descs,
@@ -362,19 +358,19 @@ class Publisher
 
 
         /** \brief Publishes counters to ROS.
-         *  \param counter The data to be published (input).
-         *  \param publisher The ROS publisher (input). 
+         *  \param[in] counter The data to be published.
+         *  \param[in] publisher The ROS publisher. 
          */
         void publishCounter(const int counter,
                             const ros::Publisher& publisher);
 
 
         /** \brief Writes a list of poses.
-         *  \param o_path File output path. The name of the final 
-         *  file must be included (input).
-         *  \param ids The list of keyframe ids to be written in the file (input).
-         *  \param stamps Poses timestamps (input).
-         *  \param poses The list of poses to be written in the file (input).
+         *  \param[in] o_path File output path. The name of the final 
+         *  file must be included.
+         *  \param[in] ids The list of keyframe ids to be written in the file.
+         *  \param[in] stamps Poses timestamps.
+         *  \param[in] poses The list of poses to be written in the file.
          */
         void writePoses(const std::string& o_path,
                         const std::vector<int>& ids,
@@ -383,12 +379,12 @@ class Publisher
 
 
         /** \brief Writes a list of edges.
-         *  \param o_path File output path. The name of the final 
-         *  file must be included (input).
-         *  \param edges_ids A list of the identifiers of the keyframe
-         *  pairs that close a loop (input).
-         *  \param edges_poses A list of the poses of the keyframe pairs
-         *  that close a loop (input).
+         *  \param[in] o_path File output path. The name of the final 
+         *  file must be included.
+         *  \param[in] edges_ids A list of the identifiers of the keyframe
+         *  pairs that close a loop.
+         *  \param[in] edges_poses A list of the poses of the keyframe pairs
+         *  that close a loop.
          */
         void writeLoopClosureEdges(const std::string& o_path,
                                    const std::vector<std::pair<int, int>> edges_ids,
@@ -397,7 +393,7 @@ class Publisher
 
         /** \brief Converts an integer to a string containing a
          *  five-digit number.
-         *  \param in Input integer (input).
+         *  \param[in] in Input integer.
          *  @return The string containing the five-digit number.
          */
         std::string convertTo5Digits(int in);
@@ -407,9 +403,9 @@ class Publisher
 
 
         /** \brief Draws points to image.
-         *  \param img Original image (input).
-         *  \param color The colour desired to be used to paint the points (input).
-         *  \param kpts The points (input).
+         *  \param[in] img Original image.
+         *  \param[in] color The colour desired to be used to paint the points.
+         *  \param[in] kpts The points.
          *  @return The image with the points drawn.
          */
         cv::Mat drawImgKeypoints(const cv::Mat& img,
@@ -418,12 +414,12 @@ class Publisher
 
 
         /** \brief Writes text at the bottom of the image. 
-         *  \param caption If true, the text is written in the caption.
-         *  Otherwise it is written as a title (input).
-         *  \param img The image (input).
-         *  \param extra_vertical_space Extra vertical space to keep
-         *  the text from touching the margins (input).
-         *  \param text The text (input).
+         *  \param[in] caption If true, the text is written in the caption.
+         *  Otherwise it is written as a title.
+         *  \param[in] img The image.
+         *  \param[in] extra_vertical_space Extra vertical space to keep
+         *  the text from touching the margins.
+         *  \param[in] text The text.
          *  @return An image with the txt at the bottom.
          */
         cv::Mat drawTxtInImg(const bool caption,
@@ -433,10 +429,10 @@ class Publisher
 
 
         /** \brief Concatenates the stereo images and draw their keypoints. 
-         *  \param l_img The left image (input). 
-         *  \param r_img The right image (input).
-         *  \param l_kpts The left image keypoints (input).
-         *  \param r_kpts The left image keypoints (input).
+         *  \param[in] l_img The left image. 
+         *  \param[in] r_img The right image.
+         *  \param[in] l_kpts The left image keypoints.
+         *  \param[in] r_kpts The left image keypoints.
          *  @return An image showing the stereo pair with its key points
          *  drawn and a text indicating the number of points.
          */
@@ -448,16 +444,16 @@ class Publisher
 
 
         /** \brief Draws vertical or horizontal matches between two images.
-         *  \param vertical If true, the function concatenates the two images
+         *  \param[in] vertical If true, the function concatenates the two images
          *  and paints the matchings vertically (case for the successive images). 
-         *  In false, it does it horizontally (case for stereo pair) (input).
-         *  \param img_0 In the case of successive images, it is the current image.
-         *  In the stereo case, it is the left image (input).
-         *  \param img_1 In the case of successive images, it is the previous image.
-         *  In the stereo case, it is the right image (input).
-         *  \param color Color of the keypoints and matches (input).
-         *  \param m_kpts_0 Matched and sorted current/left keypoints (input).
-         *  \param m_kpts_1 Matched and sorted previous/right keypoints (input).
+         *  In false, it does it horizontally (case for stereo pair).
+         *  \param[in] img_0 In the case of successive images, it is the current image.
+         *  In the stereo case, it is the left image.
+         *  \param[in] img_1 In the case of successive images, it is the previous image.
+         *  In the stereo case, it is the right image.
+         *  \param[in] color Color of the keypoints and matches.
+         *  \param[in] m_kpts_0 Matched and sorted current/left keypoints.
+         *  \param[in] m_kpts_1 Matched and sorted previous/right keypoints.
          *  @return a concatened and drawn image. 
          */
         cv::Mat drawImgMatches(const bool vertical,
@@ -469,15 +465,15 @@ class Publisher
 
 
         /** \brief Draws circular matches.
-         *  \param c_l_img Current left image (input).
-         *  \param c_r_img Current right image (input).
-         *  \param p_l_img Previous left image (input).
-         *  \param p_r_img Previous right image (input).
-         *  \param color Color of the keypoints and matches (input).
-         *  \param m_c_l_kpts Matched and sorted current left keypoints (input).
-         *  \param m_c_r_kpts Matched and sorted current right keypoints (input).
-         *  \param m_p_l_kpts Matched and sorted previous left keypoints (input).
-         *  \param m_p_r_kpts Matched and sorted previous right keypoints (input).
+         *  \param[in] c_l_img Current left image.
+         *  \param[in] c_r_img Current right image.
+         *  \param[in] p_l_img Previous left image.
+         *  \param[in] p_r_img Previous right image.
+         *  \param[in] color Color of the keypoints and matches.
+         *  \param[in] m_c_l_kpts Matched and sorted current left keypoints.
+         *  \param[in] m_c_r_kpts Matched and sorted current right keypoints.
+         *  \param[in] m_p_l_kpts Matched and sorted previous left keypoints.
+         *  \param[in] m_p_r_kpts Matched and sorted previous right keypoints.
          *  @return An image where the current stereo pair and the previous stereo
          *  pair are concatenated with the drawn matches.
          */
@@ -493,9 +489,9 @@ class Publisher
 
 
         /** \brief Draws keypoints clustering.
-         *  \param img The image where draw the keypoints clusters (input).
-         *  \param kpts The keypoints (input).
-         *  \param clusters Keypoints clustering (input).
+         *  \param[in] img The image where draw the keypoints clusters.
+         *  \param[in] kpts The keypoints.
+         *  \param[in] clusters Keypoints clustering.
          */
         cv::Mat drawImgKeypointsClustering(const cv::Mat& img,
                                            const std::vector<cv::KeyPoint>& kpts,
@@ -504,25 +500,23 @@ class Publisher
 
         /** \brief Draws a loop closure image with all the correspondences
          *  between query keyframe and all the loop closing keyframes.
-         *  \param q_keyframe_id Keyframe identifier to which the query cluster belongs
-         *  (input).
-         *  \param i_path Path to keyframes saved on disk.
-         *  \param q_cluster_ids Identifiers of the query clusters that have 
-         *  closed the loop (input).
-         *  \param cand_cluster_ids Identifiers of the candidate clusters that have 
-         *  closed the loop (input).
-         *  \param cand_keyframe_ids Identifiers of keyframes containing candidate 
-         *  clusters that have closed loops (input).
-         *  \param f_q_l_kpts Filtered query left keypoints (input).
-         *  \param f_q_r_kpts Filtered query right keypoints (input).
-         *  \param f_cand_l_kpts Filtered candidate left keypoints (input).
-         *  \param f_cand_r_kpts Filtered candidate right keypoints (input).
-         *  \param definitive_inliers_per_pair The number of inliers for every loop
-         *  closure cluster pair (input).
-         *  \param definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id)
-         *  (input).
-         *  \param cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
-         *  relation (cand_cluster_id, cand_keyframe_id) (input).
+         *  \param[in] q_keyframe_id Keyframe identifier to which the query cluster belongs.
+         *  \param[in] i_path Path to keyframes saved on disk.
+         *  \param[in] q_cluster_ids Identifiers of the query clusters that have 
+         *  closed the loop.
+         *  \param[in] cand_cluster_ids Identifiers of the candidate clusters that have 
+         *  closed the loop.
+         *  \param[in] cand_keyframe_ids Identifiers of keyframes containing candidate 
+         *  clusters that have closed loops.
+         *  \param[in] f_q_l_kpts Filtered query left keypoints.
+         *  \param[in] f_q_r_kpts Filtered query right keypoints.
+         *  \param[in] f_cand_l_kpts Filtered candidate left keypoints.
+         *  \param[in] f_cand_r_kpts Filtered candidate right keypoints.
+         *  \param[in] definitive_inliers_per_pair The number of inliers for every loop
+         *  closure cluster pair.
+         *  \param[in] definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id).
+         *  \param[in] cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
+         *  relation (cand_cluster_id, cand_keyframe_id).
          */
         cv::Mat drawImgLoopClosure(const int q_keyframe_id,
                                    const std::string& i_path,
@@ -539,10 +533,10 @@ class Publisher
 
 
         /** \brief Builds nav_msgs::Odometry msg with current pose.
-         *  \param c_stamp Current pose timestamp (input).
-         *  \param c_pose The current pose to be published (input).
-         *  \param reference_frame_id The ID of the frame to which 
-         *  the current pose is relative (input).
+         *  \param[in] c_stamp Current pose timestamp.
+         *  \param[in] c_pose The current pose to be published.
+         *  \param[in] reference_frame_id The ID of the frame to which 
+         *  the current pose is relative.
          */
         nav_msgs::Odometry buildPoseMsg(const ros::Time& c_stamp,
                                         const tf::Transform& c_pose,
@@ -550,9 +544,9 @@ class Publisher
 
 
         /** \brief Publishes images.
-         *  \param img The image (input).
-         *  \param stamp The ROS timestamp (input).
-         *  \param publisher The ROS publisher (input).
+         *  \param[in] img The image.
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
          */
         void publishImg(const cv::Mat& img,
                         const ros::Time& stamp,

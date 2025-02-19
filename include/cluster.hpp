@@ -28,14 +28,14 @@ class Cluster
 
 
         /** \brief Class constructor
-         *  \param id Cluster id.
-         *  \param keyframe_id Keyframe id.
-         *  \param l_descs Cluster left descriptors.
-         *  \param r_descs Cluster right descriptors.
-         *  \param map_camera_pose World-map camera pose when the cluster was obtained.
-         *  \param l_kpts Cluster left keypoints.
-         *  \param r_kpts Cluster right keypoints.
-         *  \param l_cam_pts Cluster 3D points relative to left camera.
+         *  \param[in] id Cluster id.
+         *  \param[in] keyframe_id Keyframe id.
+         *  \param[in] l_descs Cluster left descriptors.
+         *  \param[in] r_descs Cluster right descriptors.
+         *  \param[in] map_camera_pose World-map camera pose when the cluster was obtained.
+         *  \param[in] l_kpts Cluster left keypoints.
+         *  \param[in] r_kpts Cluster right keypoints.
+         *  \param[in] l_cam_pts Cluster 3D points relative to left camera.
          */
         Cluster(int id,
                 int keyframe_id,

@@ -40,16 +40,16 @@ namespace slamon
 
 
             /** \brief Class constructor
-             *  \param ratio The ratio for Lowe's ratio test (input).
-             *  \param lc_neighbors Number of neighbours to recover in order to 
-             *  increase the possibility of closing a loop (input).
-             *  \param lc_candidates Number of candidates to close a loop (input).
-             *  \param min_lc_inliers Minimum number of inliers for loop closure (input).
-             *  \param lc_discard_window Window size of discarded graph vertices (input).
-             *  \param enable_debugging Enabling or disabling debugging (input).
-             *  \param w_path Working path for debugging purpose (input).
-             *  \param matching_type Desired matching type name (input).
-             *  \param motion_estimation_type Desired motion type name (input).
+             *  \param[in] ratio The ratio for Lowe's ratio test.
+             *  \param[in] lc_neighbors Number of neighbours to recover in order to 
+             *  increase the possibility of closing a loop.
+             *  \param[in] lc_candidates Number of candidates to close a loop.
+             *  \param[in] min_lc_inliers Minimum number of inliers for loop closure.
+             *  \param[in] lc_discard_window Window size of discarded graph vertices.
+             *  \param[in] enable_debugging Enabling or disabling debugging.
+             *  \param[in] w_path Working path for debugging purpose.
+             *  \param[in] matching_type Desired matching type name.
+             *  \param[in] motion_estimation_type Desired motion type name.
              */
             LoopCloser(double ratio,
                        int lc_neighbors,
@@ -63,7 +63,7 @@ namespace slamon
 
 
             /** \brief Set the graph object.
-             *  \param map The object pointer (input).
+             *  \param[in] map The object pointer.
              */
             inline void setMap(Map *map) {map_ = map;}
 
@@ -74,7 +74,7 @@ namespace slamon
 
 
             /** \brief Add a cluster to the queue of clusters.
-             *  \param Cluster The cluster to be inserted (input).
+             *  \param[in] Cluster The cluster to be inserted.
              */
             void addClusterToQueue(Cluster cluster);
 
@@ -95,29 +95,29 @@ namespace slamon
 
 
             /** \brief Processes the new cluster.
-             *  \param c_cluster The current cluster (output).
+             *  \param[out] c_cluster The current cluster.
              */
             void processNewCluster(Cluster& c_cluster);
 
 
             /** \brief Searches a loop closing between current
              *  cluster and its closest neighbors
-             *  \param c_cluster The current clusters (input).
+             *  \param[in] c_cluster The current clusters.
              */
             void searchByProximity(const Cluster& c_cluster);
 
 
             /** \brief Searches a loop closing between current
              *  cluster and all other clusters using the hash
-             *  \param c_cluster The current clusters (input).
+             *  \param[in] c_cluster The current clusters.
              */
             void searchByHash(const Cluster& c_cluster);
 
 
             /** \brief Get the best candidates to close a loop by hash.
-             *  \param c_cluster_id The current cluster id (input).
-             *  \param closest_candidates_num The number of best candidates to be retrieved (input).
-             *  \param candidates The list of best candidates (output).
+             *  \param[in] c_cluster_id The current cluster id.
+             *  \param[in] closest_candidates_num The number of best candidates to be retrieved.
+             *  \param[out] candidates The list of best candidates.
              */
             void getHashCandidates(int c_cluster_id, 
                                    uint closest_candidates_num,
@@ -126,8 +126,8 @@ namespace slamon
 
             /** \brief Returns whether the second element of the first
              *  std::pair is less than the second element of the second std::pair.
-             *  \param d_0 First pair (input).
-             *  \param d_1 Second pair (input).
+             *  \param[in] d_0 First pair.
+             *  \param[in] d_1 Second pair.
              *  @return true if first pair is smaller than second pair.
              */
             static inline bool sortByMatching(const std::pair<int, float> d_0, const std::pair<int, float> d_1)
@@ -137,7 +137,7 @@ namespace slamon
 
 
             /** \brief Reads cluster data from file.
-             *  \param id Cluster id (input).
+             *  \param[in] id Cluster id.
              *  @return The cluster.
              */
             Cluster readCluster(int id);
@@ -145,9 +145,9 @@ namespace slamon
 
             /** \brief Tries to close a loop between query and candidate cluster.
              *  If a loop is closed, the graph is updated.
-             *  \param q_cluster Query cluster (input).
-             *  \param cand_cluster Candidate cluster (input).
-             *  \param seach_method Type of search used (proximity or hash (input).
+             *  \param[in] q_cluster Query cluster.
+             *  \param[in] cand_cluster Candidate cluster.
+             *  \param[in] seach_method Type of search used (proximity or hash).
              *  @return True if loop closing.
              */
             bool closeLoopBetween(Cluster q_cluster,

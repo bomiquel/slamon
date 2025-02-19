@@ -3,14 +3,11 @@
 #include <opencv2/core/eigen.hpp>
 
 
-/** \brief Parameter constructor. Sets the parameter struct to default values.
-  */
 haloc::Hash::Params::Params() :
   proj_num(DEFAULT_PROJ_NUM)
 {}
 
-/** \brief Hash class constructor
-  */
+
 haloc::Hash::Hash()
 {
   // Initializations
@@ -18,24 +15,19 @@ haloc::Hash::Hash()
   initialized_ = false;
 }
 
-/** \brief Return true if the class has been initialized
-  * @return
-  */
+
 bool haloc::Hash::isInitialized()
 {
   return initialized_;
 }
 
-/** \brief Sets the class parameters
-  * @return
-  * \param stuct of parameters
-  */
+
 void haloc::Hash::setParams(const Params& params)
 {
   params_ = params;
 }
 
-// Class initialization
+
 void haloc::Hash::init(cv::Mat desc)
 {
   // Create the random projections vectors
@@ -48,10 +40,7 @@ void haloc::Hash::init(cv::Mat desc)
   initialized_ = true;
 }
 
-/** \brief Compute the hash
-  * @return hash vector
-  * \param cvMat containing the descriptors of the image
-  */
+
 std::vector<float> haloc::Hash::getHash(cv::Mat desc)
 {
   // Initialize the histogram with 0's
@@ -78,11 +67,18 @@ std::vector<float> haloc::Hash::getHash(cv::Mat desc)
   return hash;
 }
 
-/** \brief Compute the random vector/s needed to generate the hash
-  * @return
-  * \param size of the initial descriptor matrix.
-  * \param true to generate 'n' random orthogonal projections, false to generate 'n' random non-orthogonal projections.
-  */
+
+float haloc::Hash::match(std::vector<float> hash_1, std::vector<float> hash_2)
+{
+  // Compute the distance
+  float sum = 0.0;
+  for (uint i=0; i<hash_1.size(); i++)
+    sum += fabs(hash_1[i] - hash_2[i]);
+
+  return sum;
+}
+
+
 void haloc::Hash::initProjections(int desc_size)
 {
   // Initializations
@@ -144,11 +140,7 @@ void haloc::Hash::initProjections(int desc_size)
   }
 }
 
-/** \brief Computes a random vector of some size
-  * @return random vector
-  * \param seed to generate the random values
-  * \param desired size
-  */
+
 std::vector<float> haloc::Hash::compute_random_vector(uint seed, int size)
 {
   srand(seed);
@@ -158,10 +150,7 @@ std::vector<float> haloc::Hash::compute_random_vector(uint seed, int size)
   return h;
 }
 
-/** \brief Make a vector unit
-  * @return the "unitized" vector
-  * \param the "non-unitized" vector
-  */
+
 std::vector<float> haloc::Hash::unit_vector(std::vector<float> x)
 {
   // Compute the norm
@@ -175,19 +164,4 @@ std::vector<float> haloc::Hash::unit_vector(std::vector<float> x)
     x[i] = x[i] / x_norm;
 
   return x;
-}
-
-/** \brief Compute the distance between 2 hashes
-  * @return the distance
-  * \param hash 1
-  * \param hash 2
-  */
-float haloc::Hash::match(std::vector<float> hash_1, std::vector<float> hash_2)
-{
-  // Compute the distance
-  float sum = 0.0;
-  for (uint i=0; i<hash_1.size(); i++)
-    sum += fabs(hash_1[i] - hash_2[i]);
-
-  return sum;
 }

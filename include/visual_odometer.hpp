@@ -47,17 +47,17 @@ namespace slamon
 
 
             /** \brief Class constructor.
-             *  \param ratio The ratio for Lowe's ratio test.
-             *  \param min_inliers Minimum number of keypoints to estimate the movement.
-             *  \param min_lc_inliers Minimum number of inliers for loop closure (input).
-             *  \param max_kpts_bucket Maximum number of keypoints per bucket.
-             *  \param enable_debugging Enabling or disabling debugging messages and topics.
-             *  \param enable_bucketing Enabling or disabling keypoints bucketing.
-             *  \param enable_enhacement Enabling or disabling image enhacement.
-             *  \param w_path Working path for debugging purpose.
-             *  \param matching_type Matching type.
-             *  \param robot_frame_id Robot odometry coordinate axis identficator.
-             *  \param motion_estimation_type Motion estimation type.
+             *  \param[in] ratio The ratio for Lowe's ratio test.
+             *  \param[in] min_inliers Minimum number of keypoints to estimate the movement.
+             *  \param[in] min_lc_inliers Minimum number of inliers for loop closure.
+             *  \param[in] max_kpts_bucket Maximum number of keypoints per bucket.
+             *  \param[in] enable_debugging Enabling or disabling debugging messages and topics.
+             *  \param[in] enable_bucketing Enabling or disabling keypoints bucketing.
+             *  \param[in] enable_enhacement Enabling or disabling image enhacement.
+             *  \param[in] w_path Working path for debugging purpose.
+             *  \param[in] matching_type Matching type.
+             *  \param[in] robot_frame_id Robot odometry coordinate axis identficator.
+             *  \param[in] motion_estimation_type Motion estimation type.
              */
             VisualOdometer(double ratio,
                            int min_inliers,
@@ -82,10 +82,10 @@ namespace slamon
 
             /** \brief Image callback. This function is called when synchronized stereo image
              *  messages are received.
-             *  \param l_img_msg ROS message containing the left image (input).
-             *  \param r_img_msg ROS message containing the right image (input).
-             *  \param l_info_msg ROS message containing the info of the left image (input).
-             *  \param r_info_msg ROS message containing the info of the right image (input).
+             *  \param[in] l_img_msg ROS message containing the left image.
+             *  \param[in] r_img_msg ROS message containing the right image.
+             *  \param[in] l_info_msg ROS message containing the info of the left image.
+             *  \param[in] r_info_msg ROS message containing the info of the right image.
              */  
             void callback(const sensor_msgs::ImageConstPtr& l_img_msg,
                           const sensor_msgs::ImageConstPtr& r_img_msg,
@@ -96,8 +96,8 @@ namespace slamon
             /** \brief Service callback. This function is called when another part of the
              *  system requests the transform between the robot centre (base_link) and the
              *  sensor (camera).
-             *  \param req The service request (input).
-             *  \param res The service response (output).
+             *  \param[in] req The service request.
+             *  \param[out] res The service response.
              */
             bool sendRobot2Camera(slamon::GetTransform::Request& req,
                                   slamon::GetTransform::Response& res);
@@ -105,8 +105,8 @@ namespace slamon
 
             /** \brief Service callback. This function is called when another part of the
              *  system requests the stereo camera projection matrices.
-             *  \param req The service request (input).
-             *  \param res The service response (output).
+             *  \param[in] req The service request.
+             *  \param[out] res The service response.
              */
             bool sendProjectionMatrices(slamon::GetProjectionMatrices::Request& req,
                                         slamon::GetProjectionMatrices::Response& res);
@@ -114,8 +114,8 @@ namespace slamon
 
             /** \brief Initialise the visual odometer by setting the transform between the camera
              *  and the centre of the robot and the projection matrices.
-             *  \param l_info_msg ROS message containing the info of the left image (input).
-             *  \param r_info_msg ROS message containing the info of the right image (input).
+             *  \param[in] l_info_msg ROS message containing the info of the left image.
+             *  \param[in] r_info_msg ROS message containing the info of the right image.
              *  @return Whether the SLAM could be initialised.
              */
             bool initialisation(const sensor_msgs::CameraInfoConstPtr& l_info_msg,
@@ -128,9 +128,9 @@ namespace slamon
              *  the stereo baseline. "Far" 3D keypoints are removed because they do not provide
              *  accurate scale and translation information (Paz et al. 2008 and Mur-Artal et al.
              *  2017).
-             *  \param l_img_msg ROS message containing the left image (input).
-             *  \param r_img_msg ROS message containing the right image (input).
-             *  \param c_frame Will contain all the corresponfing data of the current frame (output).
+             *  \param[in] l_img_msg ROS message containing the left image.
+             *  \param[in] r_img_msg ROS message containing the right image.
+             *  \param[out] c_frame Will contain all the corresponfing data of the current frame.
              *  @return Whether the current frame could be processed.
              */
             bool processCurrentFrame(const sensor_msgs::ImageConstPtr& l_img_msg,
@@ -143,8 +143,8 @@ namespace slamon
              *  Filtering is performed using Lowe's ratio, computing the best homography (with RANSAC)
              *  or computing the best essential matrix (with RANSAC). Finally, the movement between
              *  frames is estimated using the 3D to 2D method (PnP + RANSAC).
-             *  \param c_frame Current stereo frame (input).
-             *  \param robot_motion Estimated movement between the two images, referenced to
+             *  \param[in] c_frame Current stereo frame.
+             *  \param[out] robot_motion Estimated movement between the two images, referenced to
              *  robot coordinate axis.
              *  @return Whether it was possible to match keypoints, filter outliers and estimate movement. 
              */ 
@@ -163,13 +163,13 @@ namespace slamon
             /** \brief Detects keypoints in ROS images. To do this, it transforms images of 
              *  sensor_msgs::ImageConstPtr type to cv::Mat type, and then detects the
              *  keypoints and calculates the descriptors.
-             *  \param enable_enhacement If true, the image is enhanced using CLAHE (input).
-             *  \param feature_detector_type String containing the name of the desired detector for detecting
-             *  image keypoints (input).
-             *  \param img_msg ROS message containing an image (input).
-             *  \param img cv::Mat image (output).
-             *  \param descs Descriptors (output).
-             *  \param kpts Keypoints (output).
+             *  \param[in] enable_enhacement If true, the image is enhanced using CLAHE.
+             *  \param[in] feature_detector_type String containing the name of the desired detector for detecting
+             *  image keypoints.
+             *  \param[in] img_msg ROS message containing an image.
+             *  \param[out] img cv::Mat image.
+             *  \param[out] descs Descriptors.
+             *  \param[out] kpts Keypoints.
              *  @return If the conversion has been possible.
              */
             bool detectROSKeypoints(const bool enable_enhacement,
@@ -181,8 +181,8 @@ namespace slamon
 
 
             /** \brief Convert ROS image message to cv::Mat
-             *  \param msg ROS message containing an img (input).
-             *  \param img Will contain the image in cv::Mat type (output).
+             *  \param[in] msg ROS message containing an img.
+             *  \param[out] img Will contain the image in cv::Mat type.
              *  @return If the conversion has been possible.
              */
             bool fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,

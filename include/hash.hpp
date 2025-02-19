@@ -16,9 +16,8 @@ class Hash
 
 public:
 
-  // Class constructor
-  Hash();
-
+  /** \brief Parameter constructor. Sets the parameter struct to default values.
+   */
   struct Params
   {
     //Default constructor sets all values to defaults.
@@ -31,35 +30,73 @@ public:
     static const int              DEFAULT_PROJ_NUM = 3;
   };
 
-  // Set the parameter struct
-  void setParams(const Params& params);
 
-  // Returns true if the class has been initialized
+  /** \brief Hash class constructor
+   */
+  Hash();
+
+
+  /** \brief Return true if the class has been initialized.
+   */
   bool isInitialized();
 
-  // Return current parameters
+
+  /** \brief Sets the class parameters.
+   *  \param[in] stuct of parameters.
+   */
+  void setParams(const Params& params);
+
+
+  /** \brief Return current parameters
+   */
   inline Params params() const { return params_; }
 
-  // Initialize class
+
+  /** \brief Class initialization.
+   *  \param[in] desc Image keypoint descriptors.
+   */
   void init(cv::Mat desc);
 
-  // Compute the hash
+
+  /** \brief Compute the hash.
+   *  \param[in] desc Containing the descriptors of the image.
+   *  @return hash vector.
+   */
   std::vector<float> getHash(cv::Mat desc);
 
-  // Compute the distance between 2 hashes
+
+  /** \brief Compute the distance between 2 hashes.
+   * \param[in] hash_1 First hash.
+   * \param[in] hash_2 Second hash.
+   * @return the distance.
+   */
   float match(std::vector<float> hash_1, std::vector<float> hash_2);
+
 
 private:
 
-  // Init the random vectors for projections
+
+  /** \brief Compute the random vector/s needed to generate the hash.
+   *  \param[in] desc_size of the initial descriptor matrix.
+   */
   void initProjections(int desc_size);
 
-  // Compute a random vector
+
+  /** \brief Computes a random vector of some size.
+   *  \param[in] seed to generate the random values.
+   *  \param[in] desired size.
+   *  @return random vector.
+   */
   std::vector<float> compute_random_vector(uint seed, int size);
 
-  // Make a vector unit
+
+  /** \brief Make a vector unit.
+   *  \param[in] the "non-unitized" vector.
+   *  @return the "unitized" vector.
+   */
   std::vector<float> unit_vector(std::vector<float> x);
 
+  
   // Properties
   int h_size_;                              //!> Size of the hash
   Params params_;                           //!> Stores parameters

@@ -28,12 +28,12 @@ class Frame
 
 
         /** \brief Class constructor without images.
-         *  \param l_descs Left descriptors.
-         *  \param r_descs Right descriptors.
-         *  \param stamp Time stamp in which the frame was obtained.
-         *  \param l_kpts Left keypoints.
-         *  \param r_kpts Right keypoints.
-         *  \param l_cam_pts 3D points relative to left camera.
+         *  \param[in] l_descs Left descriptors.
+         *  \param[in] r_descs Right descriptors.
+         *  \param[in] stamp Time stamp in which the frame was obtained.
+         *  \param[in] l_kpts Left keypoints.
+         *  \param[in] r_kpts Right keypoints.
+         *  \param[in] l_cam_pts 3D points relative to left camera.
          */
         Frame(cv::Mat l_descs,
               cv::Mat r_descs,
@@ -44,14 +44,14 @@ class Frame
 
 
         /** \brief Full class constructor
-         *  \param l_img Left image.
-         *  \param r_img Right image.
-         *  \param l_descs Left descriptors.
-         *  \param r_descs Right descriptors.
-         *  \param stamp Time stamp in which the frame was obtained.
-         *  \param l_kpts Left keypoints.
-         *  \param r_kpts Right keypoints.
-         *  \param l_cam_pts 3D points relative to left camera.
+         *  \param[in] l_img Left image.
+         *  \param[in] r_img Right image.
+         *  \param[in] l_descs Left descriptors.
+         *  \param[in] r_descs Right descriptors.
+         *  \param[in] stamp Time stamp in which the frame was obtained.
+         *  \param[in] l_kpts Left keypoints.
+         *  \param[in] r_kpts Right keypoints.
+         *  \param[in] l_cam_pts 3D points relative to left camera.
          */
         Frame(cv::Mat l_img,
               cv::Mat r_img,
@@ -64,19 +64,19 @@ class Frame
 
 
         /** \brief Set left image.
-         *  \param l_img Left image.
+         *  \param[in] l_img Left image.
          */
         inline void setLeftImg(const cv::Mat l_img){l_img_ = l_img;}
 
 
         /** \brief Set right image.
-         *  \param r_img Right image.
+         *  \param[in] r_img Right image.
          */
         inline void setRightImg(const cv::Mat r_img){r_img_ = r_img;}
 
 
         /** \brief Set keyframe timestamp.
-         *  \param stamp Keyframe timestamp.
+         *  \param[in] stamp Keyframe timestamp.
          */
         inline void setTimestamp(const ros::Time stamp){stamp_ = stamp;}
 
@@ -129,7 +129,7 @@ class Frame
 
 
         /** \brief Set world-odom camera pose.
-         *  \param odom_camera_pose World-odom camera pose when taking the image.
+         *  \param[in] odom_camera_pose World-odom camera pose when taking the image.
          */
         inline void setCameraPose(const tf::Transform& odom_camera_pose){odom_camera_pose_ = odom_camera_pose;}
 
@@ -161,9 +161,9 @@ class Frame
 
 
         /** \brief Search keypoints into region
-         *  \param eps maximum distance to considerate a keypoint into the region.
-         *  \param keypoint query keypoint.
-         *  \param keypoints list of keypoints.
+         *  \param[in] eps maximum distance to considerate a keypoint into the region.
+         *  \param[in] keypoint query keypoint.
+         *  \param[in] keypoints list of keypoints.
          *  @return the list of keypoints into a certain region
          */
         std::vector<int> regionQuery(float eps, 
@@ -172,7 +172,7 @@ class Frame
 
 
         /** \brief Given a 3D point vector, calculate its centroid.
-         *  \param pts The 3D points.
+         *  \param[in] pts The 3D points.
          *  @return The 3D centroid.
          */
         cv::Point3f compute3DCentroid(const std::vector<cv::Point3f>& pts);

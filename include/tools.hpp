@@ -17,9 +17,9 @@
 
 
 /** \brief Converts cv::Mat into tf::Transform.
- *  \param r_vec cv::Mat containing the Euler angles (input).
- *  \param t_vec cv::Mat containing the translation vector (input).
- *  \param tf The resulting transform (output).
+ *  \param[in] r_vec cv::Mat containing the Euler angles.
+ *  \param[in] t_vec cv::Mat containing the translation vector.
+ *  \param[out] tf The resulting transform.
  *  @return whether the conversion could be done.
  */
 static inline bool fromMatToTf(const cv::Mat& r_vec,
