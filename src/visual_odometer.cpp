@@ -9,10 +9,12 @@ namespace slamon
                                    int min_inliers,
                                    int min_lc_inliers,
                                    int max_kpts_bucket,
+                                   int max_kpts_retained,
                                    bool enable_debugging,
                                    bool enable_bucketing,
                                    bool enable_enhacement,
                                    const std::string& w_path,
+                                   const std::string& feature_detector_name,
                                    std::string& matching_type,
                                    std::string& robot_frame_id,
                                    std::string& motion_estimation_type):
@@ -27,6 +29,8 @@ namespace slamon
         enable_debugging_ = enable_debugging;
         enable_bucketing_ = enable_bucketing;
         enable_enhacement_ = enable_enhacement;
+        max_kpts_retained_ = max_kpts_retained;
+        feature_detector_name_ = feature_detector_name;
 
         // Set "uninitialised" status to visual odometer.
         status_ = UNINITIALISED;
@@ -345,9 +349,10 @@ namespace slamon
         bool l_result, r_result;
         cv::Mat l_img, r_img, l_descs, r_descs;
         std::vector<cv::KeyPoint> l_kpts, r_kpts;
-        std::string feature_detector_type = "sift";
-        std::thread l_detector([&] {l_result = detectROSKeypoints(enable_enhacement_, feature_detector_type, l_img_msg, l_img, l_descs, l_kpts);});
-        std::thread r_detector([&] {r_result = detectROSKeypoints(enable_enhacement_, feature_detector_type, r_img_msg, r_img, r_descs, r_kpts);});
+        std::thread l_detector([&] {l_result = detectROSKeypoints(max_kpts_retained_, enable_enhacement_, feature_detector_name_, 
+                                                                  std::ref(l_img_msg), std::ref(l_img), std::ref(l_descs), std::ref(l_kpts));});
+        std::thread r_detector([&] {r_result = detectROSKeypoints(max_kpts_retained_, enable_enhacement_, feature_detector_name_, 
+                                                                  std::ref(r_img_msg), std::ref(r_img), std::ref(r_descs), std::ref(r_kpts));});
         l_detector.join();
         r_detector.join();
         run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Feature extraction run time.
@@ -566,8 +571,9 @@ namespace slamon
     }
 
 
-    bool VisualOdometer::detectROSKeypoints(const bool enable_enhacement,
-                                            const std::string& feature_detector_type,
+    bool VisualOdometer::detectROSKeypoints(const int max_kpts,
+                                            const bool enable_enhacement,
+                                            const std::string feature_detector_type,
                                             const sensor_msgs::ImageConstPtr& img_msg,
                                             cv::Mat& img,
                                             cv::Mat& descs,
@@ -577,7 +583,7 @@ namespace slamon
         if (!fromImgMsgToMat(img_msg, img))
             return false;
 
-        detectKeypoints(img, enable_enhacement, feature_detector_type, descs, kpts);
+        detectKeypoints(img, max_kpts, enable_enhacement, feature_detector_type, descs, kpts);
         return true;
     }
 

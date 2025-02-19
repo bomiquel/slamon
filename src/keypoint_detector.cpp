@@ -2,6 +2,7 @@
 
 
 void KeypointDetector::detectKeypoints(const cv::Mat& img,
+                                       const int max_kpts,
                                        const bool enable_enhacement,
                                        const std::string& detector_name,
                                        cv::Mat& descs,
@@ -27,7 +28,7 @@ void KeypointDetector::detectKeypoints(const cv::Mat& img,
     cv::Mat proc_img;
     if (enable_enhacement)
     {
-        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(5, cv::Size(8, 8));
+        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2, cv::Size(8, 8));
         clahe->apply(g_img, proc_img);
         if (proc_img.rows == 0)
         {
@@ -40,33 +41,28 @@ void KeypointDetector::detectKeypoints(const cv::Mat& img,
         proc_img = g_img;
     }
 
-    // Select detector and extract keypoints
+    // Selects detector.
     cv::Ptr<cv::Feature2D> detector;
     if (detector_name == "sift")
-    {
-        detector = cv::xfeatures2d::SIFT::create(1500, 3, 0.04, 10, 1.6);
-        detector->detectAndCompute(proc_img, cv::noArray(), kpts, descs);
-    }
+        detector = cv::xfeatures2d::SIFT::create(0, 3, 0.04, 10, 1.6);
     else if (detector_name == "surf")
-    {
-        detector = cv::xfeatures2d::SURF::create(100, 4, 3, false, false);
-        detector->detectAndCompute(proc_img, cv::noArray(), kpts, descs);
-    }
+        detector = cv::xfeatures2d::SURF::create(100, 4, 3, true, false);
     else if (detector_name == "orb")
-    {  
-        detector = cv::ORB::create(1500, 1.2, 8, 31, 0, 2, cv::ORB::HARRIS_SCORE, 31, 20);
-        detector->detectAndCompute(proc_img, cv::noArray(), kpts, descs);
-    }
+        detector = cv::ORB::create(0, 1.2, 8, 31, 0, 2, cv::ORB::HARRIS_SCORE, 31, 20);
     else
-    {
-        detector = cv::xfeatures2d::SIFT::create(1500, 3, 0.04, 10, 1.6);
-        detector->detectAndCompute(proc_img, cv::noArray(), kpts, descs);
-    }
+        detector = cv::xfeatures2d::SIFT::create(0, 3, 0.04, 10, 1.6);
+
+    // Detects keypoints and computes descriptors.
+    detector->detect(proc_img, kpts, cv::noArray());
+    if (max_kpts > 0)
+        cv::KeyPointsFilter::retainBest(kpts, max_kpts);
+    detector->compute(proc_img, kpts, descs);
 }
 
 
 void KeypointDetector::detectStereoKeypoints(const cv::Mat& l_img,
                                              const cv::Mat& r_img,
+                                             const int max_kpts,
                                              const bool enable_enhacement,
                                              const std::string& detector_name,
                                              cv::Mat& l_descs,
@@ -75,10 +71,10 @@ void KeypointDetector::detectStereoKeypoints(const cv::Mat& l_img,
                                              std::vector<cv::KeyPoint>& r_kpts)
 { 
     std::thread l_detection(&KeypointDetector::detectKeypoints, this, std::ref(l_img), 
-                            enable_enhacement, std::ref(detector_name), 
+                            max_kpts, enable_enhacement, std::ref(detector_name), 
                             std::ref(l_descs), std::ref(l_kpts));
     std::thread r_detection(&KeypointDetector::detectKeypoints, this, std::ref(r_img),
-                            enable_enhacement, std::ref(detector_name), 
+                            max_kpts, enable_enhacement, std::ref(detector_name), 
                             std::ref(r_descs), std::ref(r_kpts));
     l_detection.join();
     r_detection.join();

@@ -1,16 +1,18 @@
 slamon:
-  enable_bucketing: true
+  enable_bucketing: false
   enable_debugging: true
   enable_enhacement: true
+  feature_detector_name: sift
   lc_candidates: 3
   lc_discard_window: 20
   lc_neighbors: 3
   lowe_ratio: 0.8
   matching_type: ratio_matching
   max_kpts_bucket: 3
+  max_kpts_retained: 1500
   min_dist_keyframe: 0.5
   min_inliers: 40
   min_lc_inliers: 100
   motion_estimation_type: ap3p
   robot_frame_id: /turbot/base_link
-  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/portals/full_cut/altitude/ratio_matching/ap3p/execution_0/
+  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/portals/full_cut/sift_vs_surf_clahe_2/ratio_matching/ap3p/execution_1/

@@ -32,6 +32,7 @@ class KeypointDetector
 
         /** \brief Detects keypoints of an image.
          *  \param[in] img The image.
+         *  \param[in] max_kpts Maximum number of keypoints to be retained.
          *  \param[in] enable_enhacement If true, the image is enhanced using CLAHE.
          *  \param[in] detector_name String containing the name of the desired detector for
          *  detecting image keypoints.
@@ -39,6 +40,7 @@ class KeypointDetector
          *  \param[out] kpts The image keypoints.
          */
         void detectKeypoints(const cv::Mat& img,
+                             const int max_kpts,
                              const bool enable_enhacement,
                              const std::string& detector_name,
                              cv::Mat& descs,
@@ -48,9 +50,10 @@ class KeypointDetector
         /** \brief Parallelizes stereo image keypoint detection.
          *  \param[in] l_img The left image.
          *  \param[in] r_img The right image.
+         *  \param[in] max_kpts Maximum number of keypoints to be retained.
          *  \param[in] enable_enhacement If true, the image is enhanced using CLAHE.
-         *  \param[in] detector_name String containing the name of the 
-         *  desired detector for detecting image keypoints.
+         *  \param[in] detector_name String containing the name of the desired detector for 
+         *  detecting image keypoints.
          *  \param[out] l_descs The left image keypoints descriptors.
          *  \param[out] r_descs The right image keypoints descriptors.
          *  \param[out] l_kpts The left image keypoints.
@@ -58,6 +61,7 @@ class KeypointDetector
          */
         void detectStereoKeypoints(const cv::Mat& l_img,
                                    const cv::Mat& r_img,
+                                   const int max_kpts,
                                    const bool enable_enhacement,
                                    const std::string& detector_name,
                                    cv::Mat& l_descs,

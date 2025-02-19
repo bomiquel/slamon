@@ -51,10 +51,13 @@ namespace slamon
              *  \param[in] min_inliers Minimum number of keypoints to estimate the movement.
              *  \param[in] min_lc_inliers Minimum number of inliers for loop closure.
              *  \param[in] max_kpts_bucket Maximum number of keypoints per bucket.
+             *  \param[in] max_kpts Maximum number of keypoints to be retained.
              *  \param[in] enable_debugging Enabling or disabling debugging messages and topics.
              *  \param[in] enable_bucketing Enabling or disabling keypoints bucketing.
              *  \param[in] enable_enhacement Enabling or disabling image enhacement.
              *  \param[in] w_path Working path for debugging purpose.
+             *  \param[in] feature_detector_type String containing the name of the desired detector for detecting
+             *  image keypoints.
              *  \param[in] matching_type Matching type.
              *  \param[in] robot_frame_id Robot odometry coordinate axis identficator.
              *  \param[in] motion_estimation_type Motion estimation type.
@@ -63,10 +66,12 @@ namespace slamon
                            int min_inliers,
                            int min_lc_inliers,
                            int max_kpts_bucket,
+                           int max_kpts_retained,
                            bool enable_debugging,
                            bool enable_bucketing,
                            bool enable_enhacement,
                            const std::string& w_path,
+                           const std::string& feature_detector_name,
                            std::string& matching_type,
                            std::string& robot_frame_id,
                            std::string& motion_estimation_type);
@@ -163,6 +168,7 @@ namespace slamon
             /** \brief Detects keypoints in ROS images. To do this, it transforms images of 
              *  sensor_msgs::ImageConstPtr type to cv::Mat type, and then detects the
              *  keypoints and calculates the descriptors.
+             *  \param[in] max_kpts Maximum number of keypoints to be retained.
              *  \param[in] enable_enhacement If true, the image is enhanced using CLAHE.
              *  \param[in] feature_detector_type String containing the name of the desired detector for detecting
              *  image keypoints.
@@ -172,8 +178,9 @@ namespace slamon
              *  \param[out] kpts Keypoints.
              *  @return If the conversion has been possible.
              */
-            bool detectROSKeypoints(const bool enable_enhacement,
-                                    const std::string& feature_detector_type,
+            bool detectROSKeypoints(const int max_kpts,
+                                    const bool enable_enhacement,
+                                    const std::string feature_detector_type,
                                     const sensor_msgs::ImageConstPtr& img_msg,
                                     cv::Mat& img,
                                     cv::Mat& descs,
@@ -201,6 +208,8 @@ namespace slamon
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
 
             int max_kpts_bucket_; //!> Maximum number of keypoints per bucket.
+
+            int max_kpts_retained_; //!> Maximum number of keypoints retained at the detection stage.
             
             Frame p_frame_; //!> Previous frame.
             
@@ -213,6 +222,8 @@ namespace slamon
             bool enable_enhacement_; //!> Enabling or disabling image enhacement.
 
             bool initialised_odom_; //!> Flag that indicates if the robot's odom has been initialised.
+
+            std::string feature_detector_name_; //!> The name of the feature detector.
 
             std::string frame_path_; //!> Path to store frames with debugging purpose.
 
