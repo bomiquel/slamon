@@ -15,22 +15,22 @@
 
         <!-- VO SLAMON -->
         <rosparam command = "load" file = "$(find slamon)/config/online_params.yaml"/>
-        <node pkg = "slamon" type = "vo_slamon" name = "vo_slamon" output = "screen" if = "$(eval enable_decimate_x1 == true)">
-            <remap from = "get_first_pose"              to = "vo_slamon/get_first_pose"/>
+        <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x1 == true)">
+            <remap from = "get_first_pose"              to = "slamon_vo/get_first_pose"/>
             <remap from = "left_camera_info"            to = "/$(arg camera_name)/left/camera_info"/>
             <remap from = "right_camera_info"           to = "/$(arg camera_name)/right/camera_info"/>
             <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/left/image_rect_color"/>
             <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/right/image_rect_color"/> 
         </node>
-        <node pkg = "slamon" type = "vo_slamon" name = "vo_slamon" output = "screen" if = "$(eval enable_decimate_x2 == true)">
-            <remap from = "get_first_pose"              to = "vo_slamon/get_first_pose"/>
+        <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x2 == true)">
+            <remap from = "get_first_pose"              to = "slamon_vo/get_first_pose"/>
             <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x2/left/camera_info"/>
             <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x2/right/camera_info"/>
             <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x2/left/image_rect_color"/>
             <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/scaled_x2/right/image_rect_color"/> 
         </node>
-        <node pkg = "slamon" type = "vo_slamon" name = "vo_slamon" output = "screen" if = "$(eval enable_decimate_x4 == true)">
-            <remap from = "get_first_pose"              to = "vo_slamon/get_first_pose"/>
+        <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x4 == true)">
+            <remap from = "get_first_pose"              to = "slamon_vo/get_first_pose"/>
             <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x4/left/camera_info"/>
             <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x4/right/camera_info"/>
             <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x4/left/image_rect_color"/>
@@ -38,11 +38,11 @@
         </node>
 
         <!-- MAP SLAMON -->
-        <node pkg = "slamon" type = "map_slamon" name = "map_slamon" output = "screen">
-            <remap from = "odom"                        to = "vo_slamon/robot_odom"/>
-            <remap from = "stereo_data"                 to = "vo_slamon/stereo_data"/>
-            <remap from = "get_robot_to_camera_tf"      to = "vo_slamon/send_robot_to_camera_tf"/>
-            <remap from = "get_projection_matrices"     to = "vo_slamon/send_projection_matrices"/>
+        <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen">
+            <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
+            <remap from = "stereo_data"                 to = "slamon_vo/stereo_data"/>
+            <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
+            <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
         </node>
 
     </group>

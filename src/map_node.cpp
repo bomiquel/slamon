@@ -117,7 +117,7 @@ void readParams(int& lc_neighbors,
 int main(int argc, char **argv)
 {
     // Init ROS.
-    ros::init(argc, argv, "map_slamon");
+    ros::init(argc, argv, "slamon_map");
     ros::start();
 
     // Read parameters.

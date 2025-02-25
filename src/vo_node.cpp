@@ -115,7 +115,7 @@ void readParams(int& min_inliers,
 int main(int argc, char **argv)
 {
     // Init ROS.
-    ros::init(argc, argv, "vo_slamon");
+    ros::init(argc, argv, "slamon_vo");
     ros::start();
 
     // Read parameters.

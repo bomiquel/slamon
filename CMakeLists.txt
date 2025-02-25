@@ -115,7 +115,7 @@ include_directories(include
 link_directories(${OpenCV_INCLUDE_DIRS})
 
 # Executables
-add_executable(vo_slamon 
+add_executable(slamon_vo 
                src/frame.cpp
                src/vo_node.cpp
                src/publisher.cpp
@@ -123,7 +123,7 @@ add_executable(vo_slamon
                src/motion_estimator.cpp
                src/keypoint_matcher.cpp
                src/keypoint_detector.cpp)
-add_executable(map_slamon
+add_executable(slamon_map
                src/map.cpp
                src/hash.cpp
                src/frame.cpp
@@ -136,11 +136,11 @@ add_executable(map_slamon
 add_executable(initial_pose_server_params src/initial_pose_server_params)
 
 # Dependencies
-add_dependencies(vo_slamon ${catkin_EXPORTED_TARGETS})
-add_dependencies(map_slamon ${catkin_EXPORTED_TARGETS})
+add_dependencies(slamon_vo ${catkin_EXPORTED_TARGETS})
+add_dependencies(slamon_map ${catkin_EXPORTED_TARGETS})
 add_dependencies(initial_pose_server_params ${catkin_EXPORTED_TARGETS})
 
 # Linking
-target_link_libraries(vo_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(map_slamon ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(slamon_vo ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(slamon_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(initial_pose_server_params ${catkin_LIBRARIES})
