@@ -71,28 +71,28 @@ void KeypointMatcher::matchStereoKeypoints(const cv::Mat& l_descs,
 }
 
 
-void KeypointMatcher::matchNonStereoKeypoints(const cv::Mat& l_descs_0,
-                                              const cv::Mat& r_descs_0,
-                                              const cv::Mat& l_descs_1,
-                                              const cv::Mat& r_descs_1,
-                                              const std::vector<cv::KeyPoint>& l_kpts_0,
-                                              const std::vector<cv::KeyPoint>& r_kpts_0,
-                                              const std::vector<cv::KeyPoint>& l_kpts_1,
-                                              const std::vector<cv::KeyPoint>& r_kpts_1,
-                                              const std::vector<cv::Point3f>& scene_pts_0,
-                                              const std::vector<cv::Point3f>& scene_pts_1,
-                                              std::vector<cv::KeyPoint>& f_l_kpts_0,
-                                              std::vector<cv::KeyPoint>& f_r_kpts_0,
-                                              std::vector<cv::KeyPoint>& f_l_kpts_1,
-                                              std::vector<cv::KeyPoint>& f_r_kpts_1,
-                                              std::vector<cv::Point3f>& f_scene_pts_0,
-                                              std::vector<cv::Point3f>& f_scene_pts_1)
+void KeypointMatcher::matchTemporalKeypoints(const cv::Mat& l_descs_0,
+                                             const cv::Mat& r_descs_0,
+                                             const cv::Mat& l_descs_1,
+                                             const cv::Mat& r_descs_1,
+                                             const std::vector<cv::KeyPoint>& l_kpts_0,
+                                             const std::vector<cv::KeyPoint>& r_kpts_0,
+                                             const std::vector<cv::KeyPoint>& l_kpts_1,
+                                             const std::vector<cv::KeyPoint>& r_kpts_1,
+                                             const std::vector<cv::Point3f>& scene_pts_0,
+                                             const std::vector<cv::Point3f>& scene_pts_1,
+                                             std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                             std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                             std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                             std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                             std::vector<cv::Point3f>& f_scene_pts_0,
+                                             std::vector<cv::Point3f>& f_scene_pts_1)
 {
     // Dummy variables.
     std::vector<int> cluster_ids_0, cluster_ids_1, f_cluster_ids_0, f_cluster_ids_1;
     
     // Matches keypoints and removes outliers using a general function.
-    matchKeypointClusters(l_descs_0, r_descs_0, 
+    matchTemporalClusters(l_descs_0, r_descs_0, 
                           l_descs_1, r_descs_1, 
                           cluster_ids_0, cluster_ids_1, 
                           l_kpts_0, r_kpts_0, 
@@ -105,7 +105,7 @@ void KeypointMatcher::matchNonStereoKeypoints(const cv::Mat& l_descs_0,
 }
 
 
-void KeypointMatcher::matchKeypointClusters(const cv::Mat& l_descs_0,
+void KeypointMatcher::matchTemporalClusters(const cv::Mat& l_descs_0,
                                             const cv::Mat& r_descs_0,
                                             const cv::Mat& l_descs_1,
                                             const cv::Mat& r_descs_1,
@@ -382,14 +382,14 @@ void KeypointMatcher::assembleCircularMatchings(const std::vector<cv::KeyPoint>&
                                                 const std::vector<cv::KeyPoint>& stereo_kpts_0_highest,
                                                 const std::vector<cv::KeyPoint>& stereo_kpts_1_lowest,
                                                 const std::vector<cv::KeyPoint>& stereo_kpts_1_highest,
-                                                const std::vector<cv::KeyPoint>& successive_kpts_0_lowest,
-                                                const std::vector<cv::KeyPoint>& successive_kpts_0_highest,
-                                                const std::vector<cv::KeyPoint>& successive_kpts_1_lowest,
-                                                const std::vector<cv::KeyPoint>& successive_kpts_1_highest,
-                                                const std::vector<cv::Point3f>& successive_scene_pts_0,
-                                                const std::vector<cv::Point3f>& successive_scene_pts_1,
-                                                const std::vector<int>& successive_cluster_ids_0,
-                                                const std::vector<int>& successive_cluster_ids_1,
+                                                const std::vector<cv::KeyPoint>& temporal_kpts_0_lowest,
+                                                const std::vector<cv::KeyPoint>& temporal_kpts_0_highest,
+                                                const std::vector<cv::KeyPoint>& temporal_kpts_1_lowest,
+                                                const std::vector<cv::KeyPoint>& temporal_kpts_1_highest,
+                                                const std::vector<cv::Point3f>& temporal_scene_pts_0,
+                                                const std::vector<cv::Point3f>& temporal_scene_pts_1,
+                                                const std::vector<int>& temporal_cluster_ids_0,
+                                                const std::vector<int>& temporal_cluster_ids_1,
                                                 std::vector<cv::KeyPoint>& f_kpts_0_lowest,
                                                 std::vector<cv::KeyPoint>& f_kpts_0_highest,
                                                 std::vector<cv::KeyPoint>& f_kpts_1_lowest,
@@ -401,7 +401,7 @@ void KeypointMatcher::assembleCircularMatchings(const std::vector<cv::KeyPoint>&
 {
     // If there are no clusters, the filtered clusters vectors must not be filled.
     bool fill_clusters;
-    if (successive_cluster_ids_0.size() > 0)
+    if (temporal_cluster_ids_0.size() > 0)
         fill_clusters = true;
     else
         fill_clusters = false;
@@ -410,32 +410,32 @@ void KeypointMatcher::assembleCircularMatchings(const std::vector<cv::KeyPoint>&
     uint j;
     uint k;
     uint l;
-    for (uint i = 0; i < successive_kpts_1_lowest.size(); i++)
+    for (uint i = 0; i < temporal_kpts_1_lowest.size(); i++)
     {
         for (j = 0; j < stereo_kpts_1_lowest.size(); j++)
         {
-            if (successive_kpts_1_lowest[i].pt == stereo_kpts_1_lowest[j].pt)
+            if (temporal_kpts_1_lowest[i].pt == stereo_kpts_1_lowest[j].pt)
             {
-                for (k = 0; k < successive_kpts_1_highest.size(); k++)
+                for (k = 0; k < temporal_kpts_1_highest.size(); k++)
                 {
-                    if (stereo_kpts_1_highest[j].pt == successive_kpts_1_highest[k].pt)
+                    if (stereo_kpts_1_highest[j].pt == temporal_kpts_1_highest[k].pt)
                     {
                         for (l = 0; l < stereo_kpts_0_highest.size(); l++)
                         {
-                            if (successive_kpts_0_highest[k].pt == stereo_kpts_0_highest[l].pt)
+                            if (temporal_kpts_0_highest[k].pt == stereo_kpts_0_highest[l].pt)
                             {
-                                if (stereo_kpts_0_lowest[l].pt == successive_kpts_0_lowest[i].pt)
+                                if (stereo_kpts_0_lowest[l].pt == temporal_kpts_0_lowest[i].pt)
                                 {
-                                    f_kpts_0_lowest.push_back(successive_kpts_0_lowest[i]);
-                                    f_kpts_0_highest.push_back(successive_kpts_0_highest[k]);
-                                    f_kpts_1_lowest.push_back(successive_kpts_1_lowest[i]);
-                                    f_kpts_1_highest.push_back(successive_kpts_1_highest[k]);
-                                    f_scene_pts_0.push_back(successive_scene_pts_0[i]);
-                                    f_scene_pts_1.push_back(successive_scene_pts_1[i]);
+                                    f_kpts_0_lowest.push_back(temporal_kpts_0_lowest[i]);
+                                    f_kpts_0_highest.push_back(temporal_kpts_0_highest[k]);
+                                    f_kpts_1_lowest.push_back(temporal_kpts_1_lowest[i]);
+                                    f_kpts_1_highest.push_back(temporal_kpts_1_highest[k]);
+                                    f_scene_pts_0.push_back(temporal_scene_pts_0[i]);
+                                    f_scene_pts_1.push_back(temporal_scene_pts_1[i]);
                                     if (fill_clusters)
                                     {
-                                        f_cluster_ids_0.push_back(successive_cluster_ids_0[i]);
-                                        f_cluster_ids_1.push_back(successive_cluster_ids_1[i]);
+                                        f_cluster_ids_0.push_back(temporal_cluster_ids_0[i]);
+                                        f_cluster_ids_1.push_back(temporal_cluster_ids_1[i]);
                                     }
                                     break;
                                 }

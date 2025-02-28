@@ -16,10 +16,10 @@
 
 #include <ros/ros.h>
 
-#include "map.hpp"
 #include "hash.hpp"
 #include "tools.hpp"
 #include "cluster.hpp"
+#include "mapmaker.hpp"
 #include "publisher.hpp"
 #include "motion_estimator.hpp"
 #include "keypoint_matcher.hpp"
@@ -31,7 +31,7 @@ namespace slamon
 {
     
 
-    class Map;
+    class Mapmaker;
 
 
     class LoopCloser: protected KeypointMatcher, protected MotionEstimator, protected Publisher
@@ -63,9 +63,9 @@ namespace slamon
 
 
             /** \brief Set the graph object.
-             *  \param[in] map The object pointer.
+             *  \param[in] mapmaker The object pointer.
              */
-            inline void setMap(Map *map) {map_ = map;}
+            inline void setMapmaker(Mapmaker *mapmaker) {mapmaker_ = mapmaker;}
 
 
             /** \brief Starts loop closer.
@@ -197,7 +197,7 @@ namespace slamon
 
             ros::Publisher loop_closure_inliers_num_pub_; //!> Multi-cluster inliers number publisher.
 
-            Map* map_; //!> Graph object pointer.
+            Mapmaker* mapmaker_; //!> Mapmaker object pointer.
 
             haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
 

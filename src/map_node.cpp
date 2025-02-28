@@ -5,7 +5,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 
-#include "map.hpp"
+#include "mapmaker.hpp"
 #include "loop_closer.hpp"
 
 
@@ -147,16 +147,16 @@ int main(int argc, char **argv)
                                    working_path,
                                    matching_type,
                                    motion_estimation_type);
-    slamon::Map map(min_lc_inliers, 
-                    enable_debugging, 
-                    &loop_closer, 
-                    min_dist_keyframe, 
-                    working_path, 
-                    robot_frame_id);
-    loop_closer.setMap(&map);
+    slamon::Mapmaker mapmaker(min_lc_inliers, 
+                              enable_debugging, 
+                              &loop_closer, 
+                              min_dist_keyframe, 
+                              working_path, 
+                              robot_frame_id);
+    loop_closer.setMapmaker(&mapmaker);
 
     // Launch threads.
-    std::thread map_thread(&slamon::Map::run, &map);
+    std::thread map_thread(&slamon::Mapmaker::run, &mapmaker);
     std::thread loop_closer_thread(&slamon::LoopCloser::run, &loop_closer);
 
     // ROS wait

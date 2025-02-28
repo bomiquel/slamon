@@ -74,8 +74,8 @@ add_message_files(
         msg 
     FILES
         Keypoint.msg
-        StereoData.msg
         Performance.msg
+        StereoImageAttributes.msg
 )
 
 # Declare custom ROS services
@@ -115,7 +115,7 @@ include_directories(include
 link_directories(${OpenCV_INCLUDE_DIRS})
 
 # Executables
-add_executable(slamon_vo 
+add_executable(slamon_vo
                src/frame.cpp
                src/vo_node.cpp
                src/publisher.cpp
@@ -124,11 +124,11 @@ add_executable(slamon_vo
                src/keypoint_matcher.cpp
                src/keypoint_detector.cpp)
 add_executable(slamon_map
-               src/map.cpp
                src/hash.cpp
                src/frame.cpp
                src/cluster.cpp
                src/map_node.cpp
+               src/mapmaker.cpp
                src/publisher.cpp
                src/loop_closer.cpp
                src/motion_estimator.cpp

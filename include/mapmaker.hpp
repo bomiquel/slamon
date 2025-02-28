@@ -1,13 +1,13 @@
 /**
  *  @file
- *  @brief Map class
+ *  @brief Mapmaker class
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
  *  @modified Bo Miquel Nordfeldt-Fiol 2024
  */
 
-#ifndef MAP_HPP
-#define MAP_HPP
+#ifndef MAPMAKER_HPP
+#define MAPMAKER_HPP
 
 
 #include <string>
@@ -41,7 +41,7 @@ namespace slamon
     class LoopCloser;
 
 
-    class Map: protected Publisher
+    class Mapmaker: protected Publisher
     {
         public:
 
@@ -54,15 +54,15 @@ namespace slamon
              *  \param[in] loop_closer Loop closer object pointer.
              *  \param[in] robot_frame_id Robot coordinate axis identficator (base link).
              */
-            Map(int min_lc_inliers,
-                bool enable_debugging,
-                LoopCloser* loop_closer,
-                double min_dist_keyframe,
-                const std::string& w_path,
-                const std::string& robot_frame_id);
+            Mapmaker(int min_lc_inliers,
+                     bool enable_debugging,
+                     LoopCloser* loop_closer,
+                     double min_dist_keyframe,
+                     const std::string& w_path,
+                     const std::string& robot_frame_id);
 
 
-            /** \brief Starts map.
+            /** \brief Starts mapmaker.
              */
             void run();
 
@@ -165,11 +165,11 @@ namespace slamon
             /** \brief Messages callback. This function is called when synchronized stereo
              *  data and odom messages are received.
              *  \param[in] odom_msg ROS message containing current robot odometry.
-             *  \param[in] stereo_data_msg Custom ROS message containing current stereo pair image
-             *  relevant information.
+             *  \param[in] stereo_attributes_msg Custom ROS message containing current 
+             *  stereo pair image relevant information.
              */  
             void callback(const nav_msgs::OdometryConstPtr& odom_msg,
-                          const slamon::StereoDataConstPtr& stereo_data_msg);
+                          const slamon::StereoImageAttributesConstPtr& stereo_attributes_msg);
 
 
             /** \brief Decides if new keyframe is needed.
@@ -211,12 +211,13 @@ namespace slamon
                                                              const uint r);
             
 
-            /** \brief Convert custom ROS stereo data msg to frame object (slam::Frame)
+            /** \brief Convert custom ROS stereo image attributes msg to frame 
+             *  object (slam::Frame)
              *  \param[in] msg ROS message with relevant visual information.
              *  \param[out] frame Will contain the relevant visual information.
              */
-            void fromStereoDataToFrame(const slamon::StereoDataConstPtr& msg,
-                                       Frame& frame);
+            void fromStereoAttributesToFrame(const slamon::StereoImageAttributesConstPtr& msg,
+                                             Frame& frame);
 
 
             /** \brief Convert cv::Point3f to tf::Transform.
@@ -345,7 +346,7 @@ namespace slamon
 
             // Topic sync
             typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,
-                                                                    slamon::StereoData> SyncPolicy_;
+                                                                    slamon::StereoImageAttributes> SyncPolicy_;
 
             typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
 
@@ -355,4 +356,4 @@ namespace slamon
 } // End namespace
 
 
-#endif // MAP_HPP
+#endif // MAPMAKER_HPP

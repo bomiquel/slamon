@@ -118,22 +118,22 @@ class KeypointMatcher
          *  previous 3D points relative to left camera filtered out. In loop closing images: candidate
          *  3D points relative to world filtered out.
          */
-        void matchNonStereoKeypoints(const cv::Mat& l_descs_0,
-                                     const cv::Mat& r_descs_0,
-                                     const cv::Mat& l_descs_1,
-                                     const cv::Mat& r_descs_1,
-                                     const std::vector<cv::KeyPoint>& l_kpts_0,
-                                     const std::vector<cv::KeyPoint>& r_kpts_0,
-                                     const std::vector<cv::KeyPoint>& l_kpts_1,
-                                     const std::vector<cv::KeyPoint>& r_kpts_1,
-                                     const std::vector<cv::Point3f>& scene_pts_0,
-                                     const std::vector<cv::Point3f>& scene_pts_1,
-                                     std::vector<cv::KeyPoint>& f_l_kpts_0,
-                                     std::vector<cv::KeyPoint>& f_r_kpts_0,
-                                     std::vector<cv::KeyPoint>& f_l_kpts_1,
-                                     std::vector<cv::KeyPoint>& f_r_kpts_1,
-                                     std::vector<cv::Point3f>& f_scene_pts_0,
-                                     std::vector<cv::Point3f>& f_scene_pts_1);
+        void matchTemporalKeypoints(const cv::Mat& l_descs_0,
+                                    const cv::Mat& r_descs_0,
+                                    const cv::Mat& l_descs_1,
+                                    const cv::Mat& r_descs_1,
+                                    const std::vector<cv::KeyPoint>& l_kpts_0,
+                                    const std::vector<cv::KeyPoint>& r_kpts_0,
+                                    const std::vector<cv::KeyPoint>& l_kpts_1,
+                                    const std::vector<cv::KeyPoint>& r_kpts_1,
+                                    const std::vector<cv::Point3f>& scene_pts_0,
+                                    const std::vector<cv::Point3f>& scene_pts_1,
+                                    std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                    std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                    std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                    std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                    std::vector<cv::Point3f>& f_scene_pts_0,
+                                    std::vector<cv::Point3f>& f_scene_pts_1);
 
 
         /** \brief Matches the visual keypoints of two different sets. These sets must come
@@ -201,7 +201,7 @@ class KeypointMatcher
          *  3D points relative to left camera filtered out. In loop closing images: candidate 3D points 
          *  relative to world filtered out.
          */
-        void matchKeypointClusters(const cv::Mat& l_descs_0,
+        void matchTemporalClusters(const cv::Mat& l_descs_0,
                                    const cv::Mat& r_descs_0,
                                    const cv::Mat& l_descs_1,
                                    const cv::Mat& r_descs_1,
@@ -327,53 +327,53 @@ class KeypointMatcher
         /** \brief Assemble four matchings to build circular matches.
          *  \param[in] stereo_kpts_0_lowest Keypoints of the first set matched in stereo matching.
          *  Must belong to the side (left/right) with the lowest number of keypoints after the
-         *  successive matching.
+         *  temporal matching.
          *  \param[in] stereo_kpts_0_highest Keypoints of the first set matched in stereo matching.
          *  Must belong to the side (left/right) with the highest number of keypoints after the
-         *  successive matching.
+         *  temporal matching.
          *  \param[in] stereo_kpts_1_lowest Keypoints of the second set matched in stereo matching.
          *  Must belong to the side (left/right) with the lowest number of keypoints after the
-         *  successive matching.
+         *  temporal matching.
          *  \param[in] stereo_kpts_1_highest Keypoints of the second set matched in stereo matching.
          *  Must belong to the side (left/right) with the highest number of keypoints after the
-         *  successive matching.
-         *  \param[in] successive_kpts_0_lowest Keypoint vector of the first set with the lowest 
-         *  number of keypoints after successive matching.
-         *  \param[in] successive_kpts_0_highest Keypoint vector of the first set with the highest
-         *  number of keypoints after successive matching.
-         *  \param[in] successive_kpts_1_lowest Keypoint vector of the second set with the lowest 
-         *  number of keypoints after successive matching.
-         *  \param[in] successive_kpts_1_highest Keypoint vector of the second set with the highest
-         *  number of keypoints after successive matching.
-         *  \param[in] successive_scene_pts_0 3D points vector of the first set with the lowest number
-         *  of 3D points after successive matching.
-         *  \param[in] successive_scene_pts_1 3D points vector of the second set with the lowest number
-         *  of 3D points after successive matching.
-         *  \param[in] successive_cluster_ids_0 Cluster ids of the first set with the lowest number
-         *  of ids after successive matching.
-         *  \param[in] successive_cluster_ids_1 Cluster ids of the second set with the lowest number
-         *  of ids after successive matching.
-         *  \param[out] f_kpts_0_lowest Filtered successive_kpts_0_lowest. 
-         *  \param[out] f_kpts_0_highest Filtered successive_kpts_0_highest.
-         *  \param[out] f_kpts_1_lowest Filtered successive_kpts_1_lowest. 
-         *  \param[out] f_kpts_1_highest Filtered successive_kpts_1_highest. 
-         *  \param[out] f_scene_pts_0 Filtered successive_scene_pts_0.
-         *  \param[out] f_scene_pts_1 Filtered successive_scene_pts_1.
-         *  \param[out] f_cluster_ids_0 Filtered successive_cluster_ids_0.
-         *  \param[out] f_cluster_ids_1 Filtered successive_cluster_ids_1.
+         *  temporal matching.
+         *  \param[in] temporal_kpts_0_lowest Keypoint vector of the first set with the lowest 
+         *  number of keypoints after temporal matching.
+         *  \param[in] temporal_kpts_0_highest Keypoint vector of the first set with the highest
+         *  number of keypoints after temporal matching.
+         *  \param[in] temporal_kpts_1_lowest Keypoint vector of the second set with the lowest 
+         *  number of keypoints after temporal matching.
+         *  \param[in] temporal_kpts_1_highest Keypoint vector of the second set with the highest
+         *  number of keypoints after temporal matching.
+         *  \param[in] temporal_scene_pts_0 3D points vector of the first set with the lowest number
+         *  of 3D points after temporal matching.
+         *  \param[in] temporal_scene_pts_1 3D points vector of the second set with the lowest number
+         *  of 3D points after temporal matching.
+         *  \param[in] temporal_cluster_ids_0 Cluster ids of the first set with the lowest number
+         *  of ids after temporal matching.
+         *  \param[in] temporal_cluster_ids_1 Cluster ids of the second set with the lowest number
+         *  of ids after temporal matching.
+         *  \param[out] f_kpts_0_lowest Filtered temporal_kpts_0_lowest. 
+         *  \param[out] f_kpts_0_highest Filtered temporal_kpts_0_highest.
+         *  \param[out] f_kpts_1_lowest Filtered temporal_kpts_1_lowest. 
+         *  \param[out] f_kpts_1_highest Filtered temporal_kpts_1_highest. 
+         *  \param[out] f_scene_pts_0 Filtered temporal_scene_pts_0.
+         *  \param[out] f_scene_pts_1 Filtered temporal_scene_pts_1.
+         *  \param[out] f_cluster_ids_0 Filtered temporal_cluster_ids_0.
+         *  \param[out] f_cluster_ids_1 Filtered temporal_cluster_ids_1.
          */
         void assembleCircularMatchings(const std::vector<cv::KeyPoint>& stereo_kpts_0_lowest,
                                        const std::vector<cv::KeyPoint>& stereo_kpts_0_highest,
                                        const std::vector<cv::KeyPoint>& stereo_kpts_1_lowest,
                                        const std::vector<cv::KeyPoint>& stereo_kpts_1_highest,
-                                       const std::vector<cv::KeyPoint>& successive_kpts_0_lowest,
-                                       const std::vector<cv::KeyPoint>& successive_kpts_0_highest,
-                                       const std::vector<cv::KeyPoint>& successive_kpts_1_lowest,
-                                       const std::vector<cv::KeyPoint>& successive_kpts_1_highest,
-                                       const std::vector<cv::Point3f>& successive_scene_pts_0,
-                                       const std::vector<cv::Point3f>& successive_scene_pts_1,
-                                       const std::vector<int>& successive_cluster_ids_0,
-                                       const std::vector<int>& successive_cluster_ids_1,
+                                       const std::vector<cv::KeyPoint>& temporal_kpts_0_lowest,
+                                       const std::vector<cv::KeyPoint>& temporal_kpts_0_highest,
+                                       const std::vector<cv::KeyPoint>& temporal_kpts_1_lowest,
+                                       const std::vector<cv::KeyPoint>& temporal_kpts_1_highest,
+                                       const std::vector<cv::Point3f>& temporal_scene_pts_0,
+                                       const std::vector<cv::Point3f>& temporal_scene_pts_1,
+                                       const std::vector<int>& temporal_cluster_ids_0,
+                                       const std::vector<int>& temporal_cluster_ids_1,
                                        std::vector<cv::KeyPoint>& f_kpts_0_lowest,
                                        std::vector<cv::KeyPoint>& f_kpts_0_highest,
                                        std::vector<cv::KeyPoint>& f_kpts_1_lowest,

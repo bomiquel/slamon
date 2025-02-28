@@ -1,15 +1,15 @@
-#include "map.hpp"
+#include "mapmaker.hpp"
 
 
 namespace slamon
 {
 
-    Map::Map(int min_lc_inliers,
-             bool enable_debugging,
-             LoopCloser* loop_closer,
-             double min_dist_keyframe,
-             const std::string& w_path,
-             const std::string& robot_frame_id)
+    Mapmaker::Mapmaker(int min_lc_inliers,
+                       bool enable_debugging,
+                       LoopCloser* loop_closer,
+                       double min_dist_keyframe,
+                       const std::string& w_path,
+                       const std::string& robot_frame_id)
     {
         // Inilitialises parameters.
         loop_closer_ = loop_closer;
@@ -63,7 +63,7 @@ namespace slamon
     }
 
 
-    void Map::run()
+    void Mapmaker::run()
     {
         // Create ROS node.
         ros::NodeHandle nh;
@@ -75,27 +75,27 @@ namespace slamon
         // Publishers.
         robot_map_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_map", 1);
         camera_map_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_map", 1);
-        run_times_pub_ = nhp.advertise<slamon::Performance>("map_performance", 1);
+        run_times_pub_ = nhp.advertise<slamon::Performance>("mapmaker_performance", 1);
         keyframes_num_pub_ = nhp.advertise<std_msgs::Int32>("keyframe_num", 1);
         clustering_img_pub_ = nhp.advertise<sensor_msgs::Image>("keypoints_clustering_img", 1);
 
         // Subscribers.
         message_filters::Subscriber<nav_msgs::Odometry> odom_sub;
-        message_filters::Subscriber<slamon::StereoData> stereo_data_sub;
+        message_filters::Subscriber<slamon::StereoImageAttributes> stereo_attributes_sub;
 
         // Message sync.
         boost::shared_ptr<Sync_> sync;
         odom_sub.subscribe(nh, "odom", 1);
-        stereo_data_sub.subscribe(nh, "stereo_data", 1);
-        sync.reset(new Sync_(SyncPolicy_(10), odom_sub, stereo_data_sub));
-        sync->registerCallback(boost::bind(&Map::callback, this, _1, _2));
+        stereo_attributes_sub.subscribe(nh, "stereo_attributes", 1);
+        sync.reset(new Sync_(SyncPolicy_(10), odom_sub, stereo_attributes_sub));
+        sync->registerCallback(boost::bind(&Mapmaker::callback, this, _1, _2));
 
         // Calls callback when synchronised messages arrive
         ros::spin();
     }
 
 
-    int Map::getVertexKeyframeId(int vertex_id)
+    int Mapmaker::getVertexKeyframeId(int vertex_id)
     {
         int frame_id = -1;
         for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
@@ -110,7 +110,7 @@ namespace slamon
     }
     
 
-    tf::Transform Map::getVertexPose(int vertex_id, bool lock = true)
+    tf::Transform Mapmaker::getVertexPose(int vertex_id, bool lock = true)
     {
         if (lock)
         {
@@ -145,20 +145,20 @@ namespace slamon
     }
 
 
-    tf::Transform Map::getVertexPoseRelativeToCamera(int vertex_id)
+    tf::Transform Mapmaker::getVertexPoseRelativeToCamera(int vertex_id)
     {
         return local_cluster_poses_[vertex_id];
     }
 
 
-    tf::Transform Map::getVertexCameraPose(int vertex_id, bool lock = true)
+    tf::Transform Mapmaker::getVertexCameraPose(int vertex_id, bool lock = true)
     {
         tf::Transform vertex_pose = getVertexPose(vertex_id, lock);
         return vertex_pose * local_cluster_poses_[vertex_id].inverse();
     }
 
 
-    void Map::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
+    void Mapmaker::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
     {
         vertices.clear();
         for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
@@ -169,7 +169,7 @@ namespace slamon
     }
 
 
-    tf::Transform Map::getKeyframePose(int keyframe_id)
+    tf::Transform Mapmaker::getKeyframePose(int keyframe_id)
     {
         std::vector<int> keyframe_vertices;
         getKeyframeVertices(keyframe_id, keyframe_vertices);
@@ -177,9 +177,9 @@ namespace slamon
     }
 
 
-    void Map::getKeyframePoses(std::vector<double>& stamps,
-                               std::vector<int>& keyframe_ids,
-                               std::vector<tf::Transform>& keyframe_poses)
+    void Mapmaker::getKeyframePoses(std::vector<double>& stamps,
+                                    std::vector<int>& keyframe_ids,
+                                    std::vector<tf::Transform>& keyframe_poses)
     {
         // Locks graph
         std::scoped_lock lock(mutex_graph_);
@@ -217,8 +217,8 @@ namespace slamon
     }
 
 
-    void Map::getLoopClosureEdges(std::vector<std::pair<int, int>>& keyframe_ids,
-                                  std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses)
+    void Mapmaker::getLoopClosureEdges(std::vector<std::pair<int, int>>& keyframe_ids,
+                                       std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses)
     {
         // Locks graph
         std::scoped_lock lock(mutex_graph_);
@@ -256,9 +256,9 @@ namespace slamon
     }
 
 
-    void Map::addEdge(int vertex_0_id,
-                      int vertex_1_id,
-                      tf::Transform tf_edge)
+    void Mapmaker::addEdge(int vertex_0_id,
+                           int vertex_1_id,
+                           tf::Transform tf_edge)
     {
         std::scoped_lock lock(mutex_graph_);
 
@@ -277,11 +277,11 @@ namespace slamon
     }
 
 
-    void Map::findClosestVertices(int vertex_id,
-                                  int security_window,
-                                  int critical_vertex_id,
-                                  uint closest_neighbors_num,
-                                  std::vector<int>& closest_neighbors)
+    void Mapmaker::findClosestVertices(int vertex_id,
+                                       int security_window,
+                                       int critical_vertex_id,
+                                       uint closest_neighbors_num,
+                                       std::vector<int>& closest_neighbors)
     {
         // Init.
         closest_neighbors.clear();
@@ -319,7 +319,7 @@ namespace slamon
     }
 
 
-    void Map::update()
+    void Mapmaker::update()
     {
         std::scoped_lock lock(mutex_graph_);
 
@@ -331,8 +331,8 @@ namespace slamon
     }
 
 
-    void Map::callback(const nav_msgs::OdometryConstPtr& odom_msg,
-                       const slamon::StereoDataConstPtr& stereo_data_msg)
+    void Mapmaker::callback(const nav_msgs::OdometryConstPtr& odom_msg,
+                            const slamon::StereoImageAttributesConstPtr& stereo_attributes_msg)
     {
         // Time at which the program enters into the callback.
         double start_callback_time = ros::Time::now().toSec();
@@ -344,15 +344,15 @@ namespace slamon
         start_module_time = ros::Time::now().toSec();
         Frame c_frame;
         tf::Transform c_odom_robot_pose;
-        fromStereoDataToFrame(stereo_data_msg, c_frame);
+        fromStereoAttributesToFrame(stereo_attributes_msg, c_frame);
         tf::poseMsgToTF(odom_msg->pose.pose, c_odom_robot_pose);
-        run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // From StereoData msg to Frame object run time.
+        run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // From StereoImageAttributes msg to Frame object run time.
 
         // If enable debugging gets images from disk.
         std::string c_frame_name;
         if (enable_debugging_)
         {
-            c_frame_name = convertTo5Digits(stereo_data_msg->header.seq);
+            c_frame_name = convertTo5Digits(stereo_attributes_msg->header.seq);
             c_frame.setLeftImg(cv::imread(frame_path_ + c_frame_name + "_left.png", cv::IMREAD_COLOR));
             c_frame.setRightImg(cv::imread(frame_path_ + c_frame_name + "_right.png", cv::IMREAD_COLOR));
         }
@@ -414,7 +414,7 @@ namespace slamon
                 if (clustering_img_pub_.getNumSubscribers() > 0)
                     publishImgKeypointsClustering(c_frame.getLeftImg(), stamp, clustering_img_pub_, l_kpts, clusters);
                 writeImgKeypointsClustering(c_frame.getLeftImg(), clusters_path_ + c_keyframe_name, l_kpts, clusters);
-                ROS_INFO_STREAM("[MAP->Includer]: Adding keyframe: " << c_keyframe_id_);
+                ROS_INFO_STREAM("[MAPMAKER->Includer]: Adding keyframe: " << c_keyframe_id_);
             }
 
             // Save the frame timestamp
@@ -541,7 +541,7 @@ namespace slamon
                 }
                 else
                 {
-                    ROS_ERROR("[MAP->Includer]: Impossible to connect current and previous keyframe. Graph will have non-connected parts!");
+                    ROS_ERROR("[MAPMAKER->Includer]: Impossible to connect current and previous keyframe. Graph will have non-connected parts!");
                 }
             }
             run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Add edges to graph run time.
@@ -599,8 +599,8 @@ namespace slamon
     }
 
 
-    bool Map::needNewKeyFrame(const tf::Transform& c_odom_robot_pose,
-                              Frame& c_frame)
+    bool Mapmaker::needNewKeyFrame(const tf::Transform& c_odom_robot_pose,
+                                   Frame& c_frame)
     {
         if (!init_map_)
         {
@@ -625,7 +625,7 @@ namespace slamon
     }
 
 
-    bool Map::addFrameToMap(Frame& c_frame)
+    bool Mapmaker::addFrameToMap(Frame& c_frame)
     {
         if (c_frame.getLeftKpts().size() > (uint)(min_lc_inliers_/2))
         {
@@ -639,19 +639,19 @@ namespace slamon
             }
             else
             {
-                ROS_WARN_STREAM("[MAP->Includer]: Image produces 0 clusters.");
+                ROS_WARN_STREAM("[MAPMAKER->Includer]: Image produces 0 clusters.");
                 return false;
             }
         }
         else
         {
-            ROS_WARN_STREAM("[MAP->Includer]: Not enough keypoints in this frame (" << c_frame.getLeftKpts().size() << ")");
+            ROS_WARN_STREAM("[MAPMAKER->Includer]: Not enough keypoints in this frame (" << c_frame.getLeftKpts().size() << ")");
             return false;
         }
     }
 
 
-    void Map::getRobot2Camera()
+    void Mapmaker::getRobot2Camera()
     {
         slamon::GetTransform srv;
         if (robot2camera_client_.call(srv))
@@ -665,7 +665,7 @@ namespace slamon
             double qz = srv.response.tf.pose.orientation.z;
             double qw = srv.response.tf.pose.orientation.w;
 
-            ROS_WARN_STREAM("[MAP->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
+            ROS_WARN_STREAM("[MAPMAKER->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
                             "tx: " << tx << std::endl << 
                             "ty: " << ty << std::endl << 
                             "tz: " << tz << std::endl << 
@@ -681,13 +681,13 @@ namespace slamon
         }
         else
         {
-            ROS_WARN_STREAM("[MAP->Static transform:] Failed to call GetTransform service. The robot2camera transform will be assumed as the identity.");
+            ROS_WARN_STREAM("[MAPMAKER->Static transform:] Failed to call GetTransform service. The robot2camera transform will be assumed as the identity.");
             robot2camera_.setIdentity();
         }
     }
 
 
-    int Map::addVertex(tf::Transform pose)
+    int Mapmaker::addVertex(tf::Transform pose)
     {
         // Lock graph.
         std::scoped_lock lock(mutex_graph_);
@@ -714,8 +714,8 @@ namespace slamon
     }
 
 
-    std::vector<std::vector<int>> Map::createCombinations(const uint n,
-                                                          const uint r)
+    std::vector<std::vector<int>> Mapmaker::createCombinations(const uint n,
+                                                               const uint r)
     {
         std::string bitmask(r, 1);
         bitmask.resize(n, 0);
@@ -738,8 +738,8 @@ namespace slamon
     }
 
 
-    void Map::fromStereoDataToFrame(const slamon::StereoDataConstPtr& msg,
-                                    Frame& frame)
+    void Mapmaker::fromStereoAttributesToFrame(const slamon::StereoImageAttributesConstPtr& msg,
+                                               Frame& frame)
     {
         cv::KeyPoint kpt;
         cv::Point3f cam_pt;
@@ -769,7 +769,7 @@ namespace slamon
     }
 
 
-    tf::Transform Map::fromPoint3DToTf(const cv::Point3f& pt)
+    tf::Transform Mapmaker::fromPoint3DToTf(const cv::Point3f& pt)
     {
         tf::Transform out;
         out.setIdentity();
@@ -779,7 +779,7 @@ namespace slamon
     }
 
 
-    Eigen::Isometry3d Map::fromTfToIsometry(const tf::Transform& tf)
+    Eigen::Isometry3d Mapmaker::fromTfToIsometry(const tf::Transform& tf)
     {
         tf::Vector3 t_in = tf.getOrigin();
         tf::Quaternion q_in = tf.getRotation();
@@ -796,7 +796,7 @@ namespace slamon
     }
 
 
-    tf::Transform Map::fromIsometryToTf(const Eigen::Isometry3d& iso)
+    tf::Transform Mapmaker::fromIsometryToTf(const Eigen::Isometry3d& iso)
     {
         Eigen::Vector3d t_in = iso.translation();
         Eigen::Quaterniond q_in = (Eigen::Quaterniond)iso.rotation();
@@ -807,7 +807,7 @@ namespace slamon
     }
 
 
-    tf::Transform Map::fromVertexToTf(const g2o::VertexSE3* vertex)
+    tf::Transform Mapmaker::fromVertexToTf(const g2o::VertexSE3* vertex)
     {
         Eigen::Isometry3d iso = vertex->estimate();
         tf::Transform tf = fromIsometryToTf(iso);

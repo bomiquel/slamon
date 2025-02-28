@@ -290,7 +290,7 @@ void Publisher::publishPerformance(const ros::Time& stamp,
     msg.run_time_0 = run_times.run_time_0; // Time needed for VO: Feature extraction, MAP: From Frame msg to Frame object or LC: Process current cluster.
     msg.run_time_1 = run_times.run_time_1; // Time needed for VO: Stereo matching, MAP: Need new keyframe? or LC: Search for candidates to close loops by proximity.
     msg.run_time_2 = run_times.run_time_2; // Time needed for VO: Triangulation, MAP: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
-    msg.run_time_3 = run_times.run_time_3; // Time needed for VO: Successive matching, MAP: Add edges to graph or LC: Read cluster candidates.
+    msg.run_time_3 = run_times.run_time_3; // Time needed for VO: temporal matching, MAP: Add edges to graph or LC: Read cluster candidates.
     msg.run_time_4 = run_times.run_time_4; // Time needed for VO: Bucketing, MAP: Write graph to disk and publish updated robot pose or LC: Loop detection.
     msg.run_time_5 = run_times.run_time_5; // Time needed for VO: Motion estimation, MAP: Nothing or LC: Close loop.
     msg.total_run_time = run_times.total_run_time; // Time needed for each thread to perform one iteration.
@@ -299,16 +299,16 @@ void Publisher::publishPerformance(const ros::Time& stamp,
 }
 
 
-void Publisher::publishStereoData(const cv::Mat& l_descs,
-                                  const cv::Mat& r_descs,
-                                  const ros::Time& stamp,
-                                  const ros::Publisher& publisher,
-                                  const std::vector<cv::KeyPoint>& l_kpts,
-                                  const std::vector<cv::KeyPoint>& r_kpts,
-                                  const std::vector<cv::Point3f>& l_cam_pts)
+void Publisher::publishStereoImageAttributes(const cv::Mat& l_descs,
+                                             const cv::Mat& r_descs,
+                                             const ros::Time& stamp,
+                                             const ros::Publisher& publisher,
+                                             const std::vector<cv::KeyPoint>& l_kpts,
+                                             const std::vector<cv::KeyPoint>& r_kpts,
+                                             const std::vector<cv::Point3f>& l_cam_pts)
 {
-    // Create and fill StereoData msg.
-    slamon::StereoData msg;
+    // Create and fill StereoImageAttributes msg.
+    slamon::StereoImageAttributes msg;
     geometry_msgs::Point cam_pt_msg;
     slamon::Keypoint l_kpt_msg, r_kpt_msg;
     msg.header.stamp = stamp;
@@ -325,7 +325,7 @@ void Publisher::publishStereoData(const cv::Mat& l_descs,
         l_kpt_msg.desc = l_descs.row(i);
         r_kpt_msg.desc = r_descs.row(i);
 
-        // Fill StereoData msg.
+        // Fill StereoImageAttributes msg.
         msg.l_kpts.push_back(l_kpt_msg);
         msg.r_kpts.push_back(r_kpt_msg);
         msg.l_cam_pts.push_back(cam_pt_msg);

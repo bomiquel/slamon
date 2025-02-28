@@ -68,16 +68,16 @@ namespace slamon
 
         // Publishers.
         run_times_pub_ = nhp.advertise<slamon::Performance>("vo_performance", 1);
-        stereo_data_pub_ = nhp.advertise<slamon::StereoData>("stereo_data", 1);
         robot_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_odom", 1);
         camera_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_odom", 1);
         inliers_num_pub_ = nhp.advertise<std_msgs::Int32>("inliers_num", 1);
         inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("inliers_img", 1);
         stereo_kpts_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
+        stereo_attributes_pub_ = nhp.advertise<slamon::StereoImageAttributes>("stereo_attributes", 1);
         stereo_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("stereo_matches_num", 1);
         stereo_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_matches_img", 1);
-        successive_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("successive_matches_num", 1);
-        successive_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("successive_matches_img", 1);
+        temporal_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("temporal_matches_num", 1);
+        temporal_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("temporal_matches_img", 1);
 
         // Subscribers.
         image_transport::SubscriberFilter l_img_sub, r_img_sub;
@@ -170,8 +170,8 @@ namespace slamon
                                 cv::imwrite(frame_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
                                 cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                             }
-                            publishStereoData(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
-                                              stereo_data_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getLeftCameraPoints());
+                            publishStereoImageAttributes(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
+                                                         stereo_attributes_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getLeftCameraPoints());
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_odom_camera_pose_, tf::Transform(),
                                                    camera_odom_pub_, camera_frame_id_);
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_odom_robot_pose_, tf::Transform(),
@@ -201,8 +201,8 @@ namespace slamon
                             cv::imwrite(frame_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
                             cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
                         }
-                        publishStereoData(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
-                                          stereo_data_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getLeftCameraPoints());
+                        publishStereoImageAttributes(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
+                                                     stereo_attributes_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getLeftCameraPoints());
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_camera_pose_, c_camera_motion,
                                                camera_odom_pub_, camera_frame_id_);
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_robot_pose, c_robot_motion,
@@ -432,23 +432,23 @@ namespace slamon
         start_module_time = ros::Time::now().toSec();
         std::vector<cv::Point3f> m_c_l_cam_pts, m_p_l_cam_pts;
         std::vector<cv::KeyPoint> m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts;
-        matchNonStereoKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), 
-                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), 
-                                c_frame.getLeftCameraPoints(), p_frame_.getLeftCameraPoints(),
-                                m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_l_cam_pts, m_p_l_cam_pts);
-        run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Successive matching run time.
+        matchTemporalKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), 
+                               c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), 
+                               c_frame.getLeftCameraPoints(), p_frame_.getLeftCameraPoints(),
+                               m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_l_cam_pts, m_p_l_cam_pts);
+        run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Temporal matching run time.
 
         // Non stereo matching keypoints debugging.
-        if (successive_matches_num_pub_.getNumSubscribers() > 0)
-            publishCounter(m_c_l_kpts.size(), successive_matches_num_pub_);
-        if (successive_matches_img_pub_.getNumSubscribers() > 0)
+        if (temporal_matches_num_pub_.getNumSubscribers() > 0)
+            publishCounter(m_c_l_kpts.size(), temporal_matches_num_pub_);
+        if (temporal_matches_img_pub_.getNumSubscribers() > 0)
         {
             if (matching_type_ == RATIO_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
                 publishImgMatches(true, c_frame.getLeftImg(), p_frame_.getLeftImg(), c_frame.getTimestamp(),
-                                  successive_matches_img_pub_, m_c_l_kpts, m_p_l_kpts);
+                                  temporal_matches_img_pub_, m_c_l_kpts, m_p_l_kpts);
             else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
                 publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
-                                          c_frame.getTimestamp(), successive_matches_img_pub_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
+                                          c_frame.getTimestamp(), temporal_matches_img_pub_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
             else
                 ROS_ERROR_STREAM("[VO->Non-stereo matcher debugger:] Unforeseen type of matching!");
         }

@@ -25,8 +25,8 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include "slamon/Keypoint.h"
-#include "slamon/StereoData.h"
 #include "slamon/Performance.h"
+#include "slamon/StereoImageAttributes.h"
 
 
 class Publisher
@@ -43,12 +43,12 @@ class Publisher
          */
         struct RunTimes
         {
-            double run_time_0 = 0.0;     //!> Time needed for VO: Feature extraction, MAP: From Frame msg to Frame object or LC: Process current cluster.
-            double run_time_1 = 0.0;     //!> Time needed for VO: Stereo matching, MAP: Need new keyframe? or LC: Search for candidates to close loops by proximity.
-            double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MAP: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
-            double run_time_3 = 0.0;     //!> Time needed for VO: Successive matching, MAP: Add edges to graph or LC: Read cluster candidates.
-            double run_time_4 = 0.0;     //!> Time needed for VO: Bucketing, MAP: Write graph to disk and publish updated robot pose or LC: Loop detection.
-            double run_time_5 = 0.0;     //!> Time needed for VO: Motion estimation, MAP: Nothing or LC: Close loop.
+            double run_time_0 = 0.0;     //!> Time needed for VO: Feature extraction, MM: From Frame msg to Frame object or LC: Process current cluster.
+            double run_time_1 = 0.0;     //!> Time needed for VO: Stereo matching, MM: Need new keyframe? or LC: Search for candidates to close loops by proximity.
+            double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
+            double run_time_3 = 0.0;     //!> Time needed for VO: Temporal matching, MM: Add edges to graph or LC: Read cluster candidates.
+            double run_time_4 = 0.0;     //!> Time needed for VO: Bucketing, MM: Write graph to disk and publish updated robot pose or LC: Loop detection.
+            double run_time_5 = 0.0;     //!> Time needed for VO: Motion estimation, MM: Nothing or LC: Close loop.
             double total_run_time = 0.0; //!> Time needed for each thread to perform one iteration.
         };
 
@@ -98,14 +98,14 @@ class Publisher
                                      const std::vector<cv::KeyPoint>& r_kpts);
 
 
-        /** \brief Draws and publishes vertical (successive) or horizontal (stereo)
+        /** \brief Draws and publishes vertical (temporal) or horizontal (stereo)
          *  matches between two images.
          *  \param[in] vertical If true, draws and publishes vertical matches 
-         *  (case for the successive images). If false, draws and publishes horizontal
+         *  (case for the temporal images). If false, draws and publishes horizontal
          *  matches (case for stereo pair).
-         *  \param[in] img_0 In the case of successive images, it is the current image.
+         *  \param[in] img_0 In the case of temporal images, it is the current image.
          *  In the stereo case, it is the left image.
-         *  \param[in] img_1 In the case of successive images, it is the previous image.
+         *  \param[in] img_1 In the case of temporal images, it is the previous image.
          *  In the stereo case, it is the right image.
          *  \param[in] stamp The ROS timestamp.
          *  \param[in] publisher The ROS publisher.
@@ -121,14 +121,14 @@ class Publisher
                                const std::vector<cv::KeyPoint>& m_kpts_1);
 
 
-        /** \brief Draws and writes on disk vertical (successive) or horizontal (stereo)
+        /** \brief Draws and writes on disk vertical (temporal) or horizontal (stereo)
          *  matches between two images.
          *  \param[in] vertical If true, draws and publishes vertical matches 
-         *  (case for the successive images). If false, draws and publishes horizontal
+         *  (case for the temporal images). If false, draws and publishes horizontal
          *  matches (case for stereo pair).
-         *  \param[in] img_0 In the case of successive images, it is the current image.
+         *  \param[in] img_0 In the case of temporal images, it is the current image.
          *  In the stereo case, it is the left image.
-         *  \param[in] img_1 In the case of successive images, it is the previous image.
+         *  \param[in] img_1 In the case of temporal images, it is the previous image.
          *  In the stereo case, it is the right image.
          *  \param[in] o_path Image output path. The name of the final
          *  file must be included.
@@ -325,7 +325,7 @@ class Publisher
 
         /** \brief Publishes SLAMON performance.
          *  \param[in] stamp Message timestamp. VO: current frame timestamp,
-         *   MAP: current time or LC: current time.
+         *   MM: current time or LC: current time.
          *  \param[in] successes_num Successes in the last iteration of the
          *  thread in question..
          *  \param[in] run_times Structure with all the execution times of
@@ -348,13 +348,13 @@ class Publisher
          *  and relative to left camera.
          *  \param[in] publisher The ROS publisher.
         */
-        void publishStereoData(const cv::Mat& l_descs,
-                               const cv::Mat& r_descs,
-                               const ros::Time& stamp,
-                               const ros::Publisher& publisher,
-                               const std::vector<cv::KeyPoint>& l_kpts,
-                               const std::vector<cv::KeyPoint>& r_kpts,
-                               const std::vector<cv::Point3f>& l_cam_pts);
+        void publishStereoImageAttributes(const cv::Mat& l_descs,
+                                          const cv::Mat& r_descs,
+                                          const ros::Time& stamp,
+                                          const ros::Publisher& publisher,
+                                          const std::vector<cv::KeyPoint>& l_kpts,
+                                          const std::vector<cv::KeyPoint>& r_kpts,
+                                          const std::vector<cv::Point3f>& l_cam_pts);
 
 
         /** \brief Publishes counters to ROS.
@@ -445,11 +445,11 @@ class Publisher
 
         /** \brief Draws vertical or horizontal matches between two images.
          *  \param[in] vertical If true, the function concatenates the two images
-         *  and paints the matchings vertically (case for the successive images). 
+         *  and paints the matchings vertically (case for the temporal images). 
          *  In false, it does it horizontally (case for stereo pair).
-         *  \param[in] img_0 In the case of successive images, it is the current image.
+         *  \param[in] img_0 In the case of temporal images, it is the current image.
          *  In the stereo case, it is the left image.
-         *  \param[in] img_1 In the case of successive images, it is the previous image.
+         *  \param[in] img_1 In the case of temporal images, it is the previous image.
          *  In the stereo case, it is the right image.
          *  \param[in] color Color of the keypoints and matches.
          *  \param[in] m_kpts_0 Matched and sorted current/left keypoints.
