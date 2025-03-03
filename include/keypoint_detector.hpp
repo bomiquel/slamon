@@ -1,7 +1,7 @@
 /**
  *  @brief The KeypointDetector class provides needed to detect keypoints and compute descriptors.
  *  @author Bo Miquel Nordfeldt-Fiol
- *  @date 2024
+ *  @date 2024-2025
  */
 
 #ifndef KEYPOINT_DETECTOR_HPP

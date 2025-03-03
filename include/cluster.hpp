@@ -3,7 +3,7 @@
  *  @brief The Cluster class represents one keypoints clustering of the camera keyframe.
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
- *  @modified Bo Miquel Nordfeldt-Fiol 2024
+ *  @modified Bo Miquel Nordfeldt-Fiol 2024-2025
  */
 
 #ifndef CLUSTER_HPP

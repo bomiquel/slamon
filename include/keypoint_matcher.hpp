@@ -1,7 +1,7 @@
 /**
  *  @brief The KeypointMatcher class provides tools to match keypoints and filter out outliers.
  *  @author Bo Miquel Nordfeldt-Fiol
- *  @date 2024
+ *  @date 2024-2025
  */
 
 #ifndef KEYPOINT_MATCHER_HPP

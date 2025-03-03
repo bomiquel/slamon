@@ -2,7 +2,7 @@
  *  @file
  *  @brief The MotionEstimtor class provides tools to compute the motion between stereo images.
  *  @author Bo Miquel Nordfeldt-Fiol
- *  @date 2024
+ *  @date 2024-2025
  */
 
 #ifndef MOTION_ESTIMATOR_HPP

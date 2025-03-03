@@ -2,7 +2,7 @@
  *  @file
  *  @brief The Visual Odometer class is responsive to track consecutive image frames and compute their motion.
  *  @author Bo Miquel Nordfeldt-Fiol
- *  @date 2024
+ *  @date 2024-2025
  */
 
 #ifndef VISUAL_ODOMETER_HPP
