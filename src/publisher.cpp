@@ -287,12 +287,12 @@ void Publisher::publishPerformance(const ros::Time& stamp,
 
     // Sets payload.
     msg.successes_num = successes_num;
-    msg.run_time_0 = run_times.run_time_0; // Time needed for VO: Feature extraction, MAP: From Frame msg to Frame object or LC: Process current cluster.
-    msg.run_time_1 = run_times.run_time_1; // Time needed for VO: Stereo matching, MAP: Need new keyframe? or LC: Search for candidates to close loops by proximity.
-    msg.run_time_2 = run_times.run_time_2; // Time needed for VO: Triangulation, MAP: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
-    msg.run_time_3 = run_times.run_time_3; // Time needed for VO: temporal matching, MAP: Add edges to graph or LC: Read cluster candidates.
-    msg.run_time_4 = run_times.run_time_4; // Time needed for VO: Bucketing, MAP: Write graph to disk and publish updated robot pose or LC: Loop detection.
-    msg.run_time_5 = run_times.run_time_5; // Time needed for VO: Motion estimation, MAP: Nothing or LC: Close loop.
+    msg.run_time_0 = run_times.run_time_0; // Time needed for VO: Feature extraction, MM: From Frame msg to Frame object or LC: Process current cluster.
+    msg.run_time_1 = run_times.run_time_1; // Time needed for VO: Stereo matching, MM: Need new keyframe? or LC: Search for candidates to close loops by proximity.
+    msg.run_time_2 = run_times.run_time_2; // Time needed for VO: Triangulation, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
+    msg.run_time_3 = run_times.run_time_3; // Time needed for VO: temporal matching, MM: Add edges to graph or LC: Read cluster candidates.
+    msg.run_time_4 = run_times.run_time_4; // Time needed for VO: Bucketing, MM: Write graph to disk and publish updated robot pose or LC: Loop detection.
+    msg.run_time_5 = run_times.run_time_5; // Time needed for VO: Motion estimation, MM: Nothing or LC: Close loop.
     msg.total_run_time = run_times.total_run_time; // Time needed for each thread to perform one iteration.
 
     publisher.publish(msg);

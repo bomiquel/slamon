@@ -218,11 +218,11 @@ namespace slamon
 
             haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
 
-            RunTimes run_times_; // !> Internal loop closing execution times.
+            RunTimes run_times_; //!> Internal loop closing execution times.
 
-            std::vector<std::pair<Cluster, std::string>> p_cand_clusters_;
+            std::vector<std::pair<Cluster, std::string>> p_cand_clusters_; //!> Previous candidate clusters.
 
-            std::vector<std::vector<Cluster>> p_neighbours_cand_clusters_;
+            std::vector<std::vector<Cluster>> p_neighbours_cand_clusters_; //!> Previous neighbours of the candidates.
     };
 
 
