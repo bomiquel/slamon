@@ -96,12 +96,43 @@ namespace slamon
                 if (enable_debugging_)
                     ROS_INFO_STREAM("[LC->run]: Cluster: " << c_cluster.getId() << " from keyframe: " << c_cluster.getKeyframeId());
 
-                searchByProximity(c_cluster);
-
-                searchByHash(c_cluster);
-
                 if (cluster_num_pub_.getNumSubscribers() > 0)
                     publishCounter(c_cluster.getId() + 1, cluster_num_pub_);
+                
+                // Candidates.
+                std::vector<std::pair<Cluster, std::string>> cand_clusters;
+                std::vector<std::vector<Cluster>> neighbours_cand_clusters;
+
+                // Searches by proximity candidates to close loops.
+                start_module_time = ros::Time::now().toSec();
+                std::vector<int> cand_cluster_ids_by_proximity;
+                mapmaker_->findClosestVertices(c_cluster.getId(), lc_discard_window_, c_cluster.getId(), lc_candidates_, cand_cluster_ids_by_proximity);
+                run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by proximity.
+                start_module_time = ros::Time::now().toSec();
+                readNewCandidateClusters("proximity", cand_cluster_ids_by_proximity, cand_clusters, neighbours_cand_clusters);
+                run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time); // Read cluster candidate run time.
+
+                // Searches by hash candidates to close loops.
+                start_module_time = ros::Time::now().toSec();
+                std::vector<int> cand_cluster_ids_by_hash;
+                getHashCandidates(c_cluster.getId(), lc_candidates_, cand_cluster_ids_by_proximity, cand_cluster_ids_by_hash);
+                run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by hash.
+                start_module_time = ros::Time::now().toSec();
+                readNewCandidateClusters("hash", cand_cluster_ids_by_hash, cand_clusters, neighbours_cand_clusters);
+                run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time); // Read cluster candidate run time.
+
+                // Loop over candidates.
+                bool valid;
+                for (uint i = 0; i < cand_clusters.size(); i++)
+                {
+                    // Tries to close loop between query cluster and a candidate cluster.
+                    valid = closeLoopBetween(c_cluster, cand_clusters[i].first, neighbours_cand_clusters[i], cand_clusters[i].second);
+                    if (valid && cand_clusters[i].second == "hash")
+                        break;
+                }
+                p_cand_clusters_ = cand_clusters;
+                p_neighbours_cand_clusters_ = neighbours_cand_clusters;
+
                 if (loop_closure_num_pub_.getNumSubscribers() > 0)
                     publishCounter(loop_closure_num_, loop_closure_num_pub_);
 
@@ -186,78 +217,9 @@ namespace slamon
     }
 
 
-    // TODO: no_candidates?
-    void LoopCloser::searchByProximity(const Cluster& c_cluster)
-    {
-        // Auxilary variable to set the start time of a module.
-        double start_module_time;
-
-        // Get the candidates to close loop
-        start_module_time = ros::Time::now().toSec();
-        std::vector<int> candidates;
-        mapmaker_->findClosestVertices(c_cluster.getId(), lc_discard_window_, c_cluster.getId(), lc_candidates_, candidates);
-        run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by proximity.
-        if (candidates.size() == 0)
-            return;
-
-        // Loop over candidates.
-        Cluster cand_cluster;
-        for (uint i = 0; i < candidates.size(); i++)
-        {
-            // Reads cluster candidate from disk.
-            start_module_time = ros::Time::now().toSec();
-            cand_cluster = readCluster(candidates[i]);
-            if (cand_cluster.getLeftDescs().rows == 0)
-            {
-                ROS_WARN_STREAM("[LC->searchByProximity->readCluster:] It is not possible to read the cluster " << candidates[i] << " from the disk!");
-                continue;
-            }
-            run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time); // Read cluster candidate run time.
-
-            // Tries to close loop between current/query cluster and a candidate cluster.
-            closeLoopBetween(c_cluster, cand_cluster, "proximity");
-        }
-    }
-
-
-    void LoopCloser::searchByHash(const Cluster& c_cluster)
-    {
-        // Auxilary variable to set the start time of a module.
-        double start_module_time;
-
-        // Get the candidates to close loop
-        start_module_time = ros::Time::now().toSec();
-        std::vector<int> candidates;
-        getHashCandidates(c_cluster.getId(), lc_candidates_, candidates);
-        run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by hash.
-        if (candidates.size() == 0)
-            return;
-
-        // Loop over candidates.
-        bool valid;
-        Cluster cand_cluster;
-        for (uint i = 0; i < candidates.size(); i++)
-        {
-            // Reads cluster candidate from disk.
-            start_module_time = ros::Time::now().toSec();
-            cand_cluster = readCluster(candidates[i]);
-            if (cand_cluster.getLeftDescs().rows == 0)
-            {
-                ROS_WARN_STREAM("[LC->searchByHash->readCluster:] It is not possible to read the cluster " << candidates[i] << " from the disk!");
-                continue;
-            }
-            run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time); // Read cluster candidate run time.
-
-            // Tries to close loop between current/query cluster and a candidate cluster.
-            valid = closeLoopBetween(c_cluster, cand_cluster, "hash");
-            if (valid)
-                break;
-        }
-    }
-
-
     void LoopCloser::getHashCandidates(int c_cluster_id,
                                        uint closest_candidates_num,
+                                       std::vector<int>& no_candidates,
                                        std::vector<int>& closest_candidates)
     {
         // Init.
@@ -267,8 +229,7 @@ namespace slamon
         if ((int)hash_table_.size() <= lc_discard_window_)
             return;
 
-        // Create a list with the non-possible candidates (because they are already loop closures).
-        std::vector<int> no_candidates;
+        // Fills the non-candidates list with those clusters that have already closed the loop.
         for (uint i = 0; i < cluster_lc_found_.size(); i++)
         {
             if (cluster_lc_found_[i].first == c_cluster_id)
@@ -359,8 +320,99 @@ namespace slamon
     }
 
 
+    void LoopCloser::readNewCandidateClusters(const std::string search_type,
+                                              const std::vector<int>& cand_cluster_ids,
+                                              std::vector<std::pair<Cluster, std::string>>& cand_clusters,
+                                              std::vector<std::vector<Cluster>>& neighbours_cand_clusters)
+    {
+        bool found;
+        for (uint i = 0; i < cand_cluster_ids.size(); i++)
+        {
+            found = false;
+
+            // Checks if the candidate exists with all its neighbors.
+            for (uint j = 0; j < p_cand_clusters_.size(); j++)
+            {
+                if ((cand_cluster_ids[i] == p_cand_clusters_[j].first.getId()))
+                {
+                    cand_clusters.push_back(std::make_pair(p_cand_clusters_[j].first, search_type));
+                    neighbours_cand_clusters.push_back(p_neighbours_cand_clusters_[j]);
+                    found = true;
+                    break;
+                }
+            }
+
+            // Checks if the candidate exists among the neighbors.
+            for (uint j = 0; j < p_neighbours_cand_clusters_.size(); j++)
+            {
+                for (uint k = 0; k < p_neighbours_cand_clusters_[j].size(); k++)
+                {
+                    if (cand_cluster_ids[i] == p_neighbours_cand_clusters_[j][k].getId())
+                    {
+                        cand_clusters.push_back(std::make_pair(p_neighbours_cand_clusters_[j][k], search_type));
+                        neighbours_cand_clusters.push_back(std::vector<Cluster>());
+                        found = true;
+                        break;
+                    }
+                }
+                if (found)
+                    break;
+            }
+
+            // Reads if there is no alternative.
+            if (!found)
+            {
+                cand_clusters.push_back(std::make_pair(readCluster(cand_cluster_ids[i]), search_type));
+                neighbours_cand_clusters.push_back(std::vector<Cluster>());
+                if (cand_clusters[i].first.getLeftDescs().rows == 0)
+                {
+                    ROS_WARN_STREAM("[LC->readNewCandidateClusters:] It is not possible to read the cluster " << cand_cluster_ids[i] << " from the disk!");
+                    cand_clusters.pop_back();
+                    neighbours_cand_clusters.pop_back();
+                }
+            }
+        }
+    }
+
+
+    Cluster LoopCloser::readNewNeighborsClusters(const int neighbor_id,
+                                                 std::vector<Cluster>& neighbours_cand_cluster)
+    {
+        // Searches among current neighbors
+        for (uint i = 0; i < neighbours_cand_cluster.size(); i++)
+        {
+            if (neighbor_id == neighbours_cand_cluster[i].getId())
+                return neighbours_cand_cluster[i];
+        }
+
+        // Expands the search
+        for (uint i = 0; i < p_cand_clusters_.size(); i++)
+        {
+            if (neighbor_id == p_cand_clusters_[i].first.getId())
+            {
+                neighbours_cand_cluster.push_back(p_cand_clusters_[i].first);
+                return p_cand_clusters_[i].first;
+            }
+            for (uint j = 0; j < p_neighbours_cand_clusters_[i].size(); j++)
+            {
+                if (neighbor_id == p_neighbours_cand_clusters_[i][j].getId())
+                {
+                    neighbours_cand_cluster.push_back(p_neighbours_cand_clusters_[i][j]);
+                    return p_neighbours_cand_clusters_[i][j];
+                }
+            }
+        }
+
+        // Reads from disk as a last resort.
+        Cluster tmp_cluster = readCluster(neighbor_id);
+        neighbours_cand_cluster.push_back(tmp_cluster);
+        return tmp_cluster;
+    }
+
+
     bool LoopCloser::closeLoopBetween(Cluster q_cluster,
                                       Cluster cand_cluster,
+                                      std::vector<Cluster>& neighbours_cand_cluster,
                                       const std::string& search_method)
     {
         // Auxilary variable to set the start time of a module.
@@ -421,13 +473,16 @@ namespace slamon
             mapmaker_->findClosestVertices(cand_cluster.getId(), lc_discard_window_, q_cluster.getId(), lc_neighbors_, cand_cluster_neighbours);
             for (uint i = 0; i < cand_cluster_neighbours.size(); i++)
             {
-                // Reads from the disk the candidate cluster's ith neighbour.
-                tmp_cluster = readCluster(cand_cluster_neighbours[i]);
+                // Checks if the cluster has been read in the last iteration and if not, reads from disk.
+                tmp_cluster = readNewNeighborsClusters(cand_cluster_neighbours[i], neighbours_cand_cluster);
 
                 // Sanity check.
                 tmp_l_descs = tmp_cluster.getLeftDescs();
                 if (tmp_l_descs.rows == 0)
+                {
+                    ROS_WARN_STREAM("[LC->closeLoopBetween:] It is not possible to read the cluster " << cand_cluster_neighbours[i] << " from the disk!");
                     continue;
+                }
 
                 // Gets data from the candidate cluster's ith neighbour.
                 tmp_l_kpts = tmp_cluster.getLeftKpts();

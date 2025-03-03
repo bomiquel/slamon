@@ -100,27 +100,16 @@ namespace slamon
             void processNewCluster(Cluster& c_cluster);
 
 
-            /** \brief Searches a loop closing between current
-             *  cluster and its closest neighbors
-             *  \param[in] c_cluster The current clusters.
-             */
-            void searchByProximity(const Cluster& c_cluster);
-
-
-            /** \brief Searches a loop closing between current
-             *  cluster and all other clusters using the hash
-             *  \param[in] c_cluster The current clusters.
-             */
-            void searchByHash(const Cluster& c_cluster);
-
-
             /** \brief Get the best candidates to close a loop by hash.
              *  \param[in] c_cluster_id The current cluster id.
              *  \param[in] closest_candidates_num The number of best candidates to be retrieved.
+             *  \param[in] no_candidates Clusters list, outside the discard window, that cannot be
+             *  candidates for closing loop.
              *  \param[out] candidates The list of best candidates.
              */
             void getHashCandidates(int c_cluster_id, 
                                    uint closest_candidates_num,
+                                   std::vector<int>& no_candidates,
                                    std::vector<int>& closest_candidates);
 
 
@@ -143,16 +132,44 @@ namespace slamon
             Cluster readCluster(int id);
 
 
+            /** \brief Checks if the current cluster was already read from disk in
+             *  the last iteration, if it was already read it retrieves it, otherwise 
+             *  it reads it from disk.
+             *  \param[in] search_type Type of search used (proximity or hash).
+             *  \param[in] cand_cluster_ids Identifiers of the candidate clusters.
+             *  \param[out] cand_clusters The candidate clusters.
+             *  \param[out] neighbours_cand_clusters The neighbors of the candidate clusters.
+             */
+            void readNewCandidateClusters(const std::string search_type,
+                                          const std::vector<int>& cand_cluster_ids,
+                                          std::vector<std::pair<Cluster, std::string>>& cand_clusters,
+                                          std::vector<std::vector<Cluster>>& neighbours_cand_clusters);
+
+
+            /** \brief Checks if the neighboring cluster was already read from disk in
+             *  the last iteration, if it was already read it retrieves it, otherwise
+             *  it reads it from disk.
+             *  \param[in] neighbor_id Neighbor identifier.
+             *  \param[in] neighbours_cand_cluster Neighbors of the candidate group.
+             *  @return The neighbor cluster.
+             */
+            Cluster readNewNeighborsClusters(const int neighbor_id,
+                                             std::vector<Cluster>& neighbours_cand_cluster);
+                                
+
             /** \brief Tries to close a loop between query and candidate cluster.
              *  If a loop is closed, the graph is updated.
              *  \param[in] q_cluster Query cluster.
              *  \param[in] cand_cluster Candidate cluster.
+             *  \param[in] neighbours_cand_cluster Neighbors of the candidate cluster.
              *  \param[in] seach_method Type of search used (proximity or hash).
              *  @return True if loop closing.
              */
             bool closeLoopBetween(Cluster q_cluster,
                                   Cluster cand_cluster,
+                                  std::vector<Cluster>& neighbours_cand_cluster,
                                   const std::string& search_method);
+
 
             // Atributes.
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
@@ -202,6 +219,10 @@ namespace slamon
             haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
 
             RunTimes run_times_; // !> Internal loop closing execution times.
+
+            std::vector<std::pair<Cluster, std::string>> p_cand_clusters_;
+
+            std::vector<std::vector<Cluster>> p_neighbours_cand_clusters_;
     };
 
 

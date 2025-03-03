@@ -292,7 +292,7 @@ namespace slamon
         tf::Transform neighbor_vertex_pose;
         std::vector<std::pair<int, double>> neighbors;
         int search_end = critical_vertex_id - security_window;
-        for (int i = 0; i < search_end; i++)
+        for (int i = 0; i <= search_end; i++)
         {
             // Avoids itself.
             if (i == vertex_id)
@@ -308,7 +308,7 @@ namespace slamon
         if (neighbors.size() == 0)
             return;
 
-        // Sorts the neighbours from sleast to furthest distance to the query neighbour.
+        // Sorts the neighbours from least to furthest distance to the query neighbour.
         std::sort(neighbors.begin(), neighbors.end(), sortByDistance);
 
         // Gets closest vertices (minnor distance)
