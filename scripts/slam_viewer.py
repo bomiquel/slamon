@@ -89,7 +89,7 @@ def drawEdges():
   removeEdges()
 
   # Load SLAM edges (file saved with SLAM node)
-  if (os.path.isfile(loop_closing_edges_data_path) and isFull(loop_closing_edges_data_path)):
+  if (loop_closing_edges_data_path is not None and os.path.isfile(loop_closing_edges_data_path) and isFull(loop_closing_edges_data_path)):
 
     # Check if file is blocked
     while (os.path.exists(edges_lock_file)):
@@ -305,24 +305,23 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
 
 if __name__ == "__main__":
   
-  parser = argparse.ArgumentParser(
-          description = "SLAM online viewer.",
-          formatter_class = argparse.ArgumentDefaultsHelpFormatter)
+  parser = argparse.ArgumentParser(description = "SLAMON online viewer.",
+                                   formatter_class = argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("-gt", "--gt", type = str, 
-          help = "Path to the file containing the ground truth data (optional).",
-          default = "/home/user/gt.txt")
+                      default = None,
+                      help = "Path to the file containing the ground truth data (optional).")
   parser.add_argument("-o", "--o", type = str, 
-          help = "Path to the file containing the odometry data (required).",
-          default = "/home/user/odom.txt")
+                      default = "~/odom.txt",
+                      help = "Path to the file containing the odometry data (required).")
   parser.add_argument("-v", "--v", type = str, 
-          help = "Path to the file containing the SLAM vertices data (required).",
-          default = "/home/user/vertices.txt")
-  parser.add_argument("-e", "--e", type = str, 
-          help = "Path to the file containing the SLAM loop closing edges data (optional).",
-          default = "/home/user/edges.txt")
+                      default = "~/vertices.txt",
+                      help = "Path to the file containing the SLAM vertices data (required).")
+  parser.add_argument("-e", "--e", type = str,
+                      default = None,
+                      help = "Path to the file containing the SLAM loop closing edges data (optional).")
   parser.add_argument("-dim", "--dim", type = int,
-          help = "Defines the plot dimensions: 2 for xy and 3 for xyz.",
-          default = 3)
+                      default = 3,
+                      help = "Defines the plot dimensions: 2 for xy and 3 for xyz.")
   args = parser.parse_args()
 
   # Some hardcode parameters
