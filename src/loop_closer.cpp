@@ -90,6 +90,7 @@ namespace slamon
                     getProjectionMatrices();
                 
                 start_module_time = ros::Time::now().toSec();
+                c_cluster = getNewClusterFromQueue();
                 processNewCluster(c_cluster);
                 run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Process current cluster run time.
 
@@ -160,6 +161,15 @@ namespace slamon
     }
 
 
+    Cluster LoopCloser::getNewClusterFromQueue()
+    {
+        std::scoped_lock lock(mutex_cluster_queue_);
+        Cluster c_cluster = cluster_queue_.front();
+        cluster_queue_.pop_front();
+        return c_cluster;
+    }
+
+
     void LoopCloser::getProjectionMatrices()
     {
         slamon::GetProjectionMatrices srv;
@@ -191,13 +201,6 @@ namespace slamon
 
     void LoopCloser::processNewCluster(Cluster& c_cluster)
     {
-        // Get the cluster
-        {
-            std::scoped_lock lock(mutex_cluster_queue_);
-            c_cluster = cluster_queue_.front();
-            cluster_queue_.pop_front();
-        }
-
         // Initialise hash
         if (!haloc_.isInitialized())
             haloc_.init(c_cluster.getLeftDescs());

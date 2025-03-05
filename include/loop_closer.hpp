@@ -73,7 +73,7 @@ namespace slamon
             void run();
 
 
-            /** \brief Add a cluster to the queue of clusters.
+            /** \brief Adds a cluster to the queue of clusters.
              *  \param[in] Cluster The cluster to be inserted.
              */
             void addClusterToQueue(Cluster cluster);
@@ -82,10 +82,16 @@ namespace slamon
         private:
 
 
-            /** \brief Check if there are clusters in the queue.
+            /** \brief Checks if there are clusters in the queue.
              *  @return True if clusters queue is not empty.
              */
             bool checkNewClusterInQueue();
+
+
+            /** \brief Gets a cluster from the queue of clusters.
+             *  @return Current cluster.
+             */
+            Cluster getNewClusterFromQueue();
 
 
             /** \brief Obtains, from the VO and through a service, 
