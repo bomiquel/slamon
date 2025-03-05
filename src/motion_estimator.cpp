@@ -4,36 +4,38 @@
 MotionEstimator::MotionEstimator(std::string& motion_estimation_type)
 {
     motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
-    std::cout << "Motion estimation type: " << motion_estimation_type_ << std::endl;
 }
 
 
-MotionEstimator::MotionEstimator(const cv::Mat& l_proj_mat,
-                                 const cv::Mat& r_proj_mat,
-                                 std::string& motion_estimation_type)
+cv::Mat MotionEstimator::buildProjectionMatrix(const double b,
+                                               const double f_x, 
+                                               const double f_y, 
+                                               const double c_x, 
+                                               const double c_y)
 {
-    l_proj_mat_ = l_proj_mat;
-    r_proj_mat_ = r_proj_mat;
-    motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
-    std::cout << "Motion estimation type: " << motion_estimation_type_ << std::endl;
+    // Intrinsic camera matrix
+    cv::Mat intrinsic_mat = (cv::Mat_<double>(3, 3) << f_x, 0, c_x, 0, f_y, c_y, 0, 0, 1);
+
+    // Rotation matrix (identity for simplicity, replace with actual rotation)
+    cv::Mat rotation_mat = cv::Mat::eye(3, 3, CV_64F);
+
+    // Translation vector (replace with actual translation)
+    cv::Mat trans_vec = (cv::Mat_<double>(3, 1) << b, 0.0, 0.0);
+
+    // Combine rotation and translation into a 3x4 extrinsic matrix [R | t]
+    cv::Mat extrinsic_mat;
+    cv::hconcat(rotation_mat, trans_vec, extrinsic_mat);
+
+    // Create the 3x4 projection matrix P = K * [R | t]
+    cv::Mat proj_mat = intrinsic_mat * extrinsic_mat;    
+
+    return proj_mat;
 }
 
 
-MotionEstimator::MotionEstimator(const double b,
-                                 const double f_x,
-                                 const double f_y,
-                                 const double c_x,
-                                 const double c_y,
-                                 std::string& motion_estimation_type)
-{
-    r_proj_mat_ = computeProjectionMatrix(b, f_x, f_x, c_x, c_y);
-    l_proj_mat_ = computeProjectionMatrix(0.0, f_x, f_x, c_x, c_y);
-    motion_estimation_type_ = selectMotionEstimationType(motion_estimation_type);
-    std::cout << "Motion estimation type: " << motion_estimation_type_ << std::endl;
-}
-
-
-void MotionEstimator::compute3DPoints(const cv::Mat& l_descs,
+void MotionEstimator::compute3DPoints(const cv::Mat& l_proj_mat,
+                                      const cv::Mat& r_proj_mat,
+                                      const cv::Mat& l_descs,
                                       const cv::Mat& r_descs,
                                       const std::vector<cv::KeyPoint>& l_kpts,
                                       const std::vector<cv::KeyPoint>& r_kpts,
@@ -48,13 +50,13 @@ void MotionEstimator::compute3DPoints(const cv::Mat& l_descs,
     std::vector<cv::Point2f> l_pts, r_pts;
     cv::KeyPoint::convert(l_kpts, l_pts);
     cv::KeyPoint::convert(r_kpts, r_pts);
-    cv::triangulatePoints(l_proj_mat_, r_proj_mat_, l_pts, r_pts, pts_4d);
+    cv::triangulatePoints(l_proj_mat, r_proj_mat, l_pts, r_pts, pts_4d);
     cv::convertPointsFromHomogeneous(pts_4d.t(), l_cam_pts);
     l_cam_pts = l_cam_pts.reshape(1, l_cam_pts.rows).clone();
 
     // Computes baseline.
-    double f_u = l_proj_mat_.at<double>(0, 0);
-    double t_x = r_proj_mat_.at<double>(0, 3);
+    double f_u = l_proj_mat.at<double>(0, 0);
+    double t_x = r_proj_mat.at<double>(0, 3);
     double b = (t_x / -f_u);
 
     // Filters "far" keypoints.
@@ -235,7 +237,9 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKe
 }
 
 
-void MotionEstimator::estimateMotion(const std::vector<cv::KeyPoint>& l_kpts_0,
+void MotionEstimator::estimateMotion(const cv::Mat& l_proj_mat,
+                                     const cv::Mat& r_proj_mat,
+                                     const std::vector<cv::KeyPoint>& l_kpts_0,
                                      const std::vector<cv::KeyPoint>& r_kpts_0,
                                      const std::vector<cv::KeyPoint>& l_kpts_1,
                                      const std::vector<cv::KeyPoint>& r_kpts_1,
@@ -252,7 +256,8 @@ void MotionEstimator::estimateMotion(const std::vector<cv::KeyPoint>& l_kpts_0,
 {
     // Dummy variables.
     std::vector<int> cluster_ids_0, cluster_ids_1, f_cluster_ids_0, f_cluster_ids_1;
-    estimateMotion(cluster_ids_0, cluster_ids_1, 
+    estimateMotion(l_proj_mat, r_proj_mat,
+                   cluster_ids_0, cluster_ids_1, 
                    l_kpts_0, r_kpts_0, 
                    l_kpts_1, r_kpts_1, 
                    scene_pts_0, scene_pts_1,
@@ -264,7 +269,9 @@ void MotionEstimator::estimateMotion(const std::vector<cv::KeyPoint>& l_kpts_0,
 }
 
 
-void MotionEstimator::estimateMotion(const std::vector<int>& cluster_ids_0,
+void MotionEstimator::estimateMotion(const cv::Mat& l_proj_mat,
+                                     const cv::Mat& r_proj_mat,
+                                     const std::vector<int>& cluster_ids_0,
                                      const std::vector<int>& cluster_ids_1,
                                      const std::vector<cv::KeyPoint>& l_kpts_0,
                                      const std::vector<cv::KeyPoint>& r_kpts_0,
@@ -308,11 +315,11 @@ void MotionEstimator::estimateMotion(const std::vector<int>& cluster_ids_0,
     cv::KeyPoint::convert(r_kpts_0, r_pts_0);
     if (motion_estimation_type_ == DUAL)
     {
-        solveDualPnPRansac(2000, l_pts_0, r_pts_0, scene_pts_1, r_vec, t_vec, inliers);
+        solveDualPnPRansac(2000, l_proj_mat, r_proj_mat, l_pts_0, r_pts_0, scene_pts_1, r_vec, t_vec, inliers);
     }
     else
     {
-        cv::Mat K = l_proj_mat_.colRange(cv::Range(0, 3)).clone();
+        cv::Mat K = l_proj_mat.colRange(cv::Range(0, 3)).clone();
         cv::solvePnPRansac(scene_pts_1, l_pts_0, K, cv::Mat(), r_vec, t_vec, 
                            false, 2000, 2.0, 0.99, inliers, motion_estimation_type_);
     }
@@ -353,8 +360,6 @@ MotionEstimator::Type MotionEstimator::selectMotionEstimationType(std::string& m
         return AP3P;
     else if (motion_estimation_type == "solvepnp_epnp" || motion_estimation_type == "epnp")
         return EPNP;
-    else if (motion_estimation_type == "solvepnp_ippe" || motion_estimation_type == "ippe")
-        return IPPE;
     else if (motion_estimation_type == "solvepnp_dual" || motion_estimation_type == "dual")
         return DUAL;
     else
@@ -365,33 +370,9 @@ MotionEstimator::Type MotionEstimator::selectMotionEstimationType(std::string& m
 }
 
 
-cv::Mat MotionEstimator::computeProjectionMatrix(const double b,
-                                                 const double f_x, 
-                                                 const double f_y, 
-                                                 const double c_x, 
-                                                 const double c_y)
-{
-    // Intrinsic camera matrix
-    cv::Mat K = (cv::Mat_<double>(3, 3) << f_x, 0, c_x, 0, f_y, c_y, 0, 0, 1);
-
-    // Rotation matrix (identity for simplicity, replace with actual rotation)
-    cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
-
-    // Translation vector (replace with actual translation)
-    cv::Mat t = (cv::Mat_<double>(3, 1) << b, 0.0, 0.0);
-
-    // Combine rotation and translation into a 3x4 extrinsic matrix [R | t]
-    cv::Mat extrinsicMat;
-    cv::hconcat(R, t, extrinsicMat);
-
-    // Create the 3x4 projection matrix P = K * [R | t]
-    cv::Mat P = K * extrinsicMat;    
-
-    return P;
-}
-
-
 void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
+                                         const cv::Mat& l_proj_mat,
+                                         const cv::Mat& r_proj_mat,
                                          const std::vector<cv::Point2f>& l_pts_0,
                                          const std::vector<cv::Point2f>& r_pts_0,
                                          const std::vector<cv::Point3f>& scene_pts_1,
@@ -437,7 +418,8 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
         result = UPDATED;
         while (result == UPDATED)
         {
-            result = updateDualParams(1e-6, 1, c_idxs, l_pts_0, r_pts_0, scene_pts_1, 
+            result = updateDualParams(1e-6, 1, l_proj_mat, r_proj_mat, 
+                                      c_idxs, l_pts_0, r_pts_0, scene_pts_1, 
                                       J, c_tr_vec, obs_pts, pre_pts, res_pts);
             if (iter++ > 20 || result == CONVERGED)
                 break;
@@ -446,7 +428,8 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
         // Overwrite best parameters if there are more inliers.
         if (result != FAILED)
         {
-            c_inliers = getInliers(2.0, l_pts_0, r_pts_0, scene_pts_1, 
+            c_inliers = getInliers(2.0, l_proj_mat, r_proj_mat, 
+                                   l_pts_0, r_pts_0, scene_pts_1, 
                                    J, c_tr_vec, obs_pts, pre_pts, res_pts);
             if (c_inliers.size() > inliers.size())
             {
@@ -463,8 +446,8 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
     {
         while (result == UPDATED)
         {
-            result = updateDualParams(1e-7, 1, inliers, 
-                                      l_pts_0, r_pts_0, scene_pts_1, 
+            result = updateDualParams(1e-7, 1, l_proj_mat, r_proj_mat, 
+                                      inliers, l_pts_0, r_pts_0, scene_pts_1, 
                                       J, tr_vec, obs_pts, pre_pts, res_pts);
             if (iter++ > 100 || result == CONVERGED)
                 break;
@@ -514,6 +497,8 @@ std::vector<int> MotionEstimator::getRandomIndices(uint size, uint n_rand_idxs)
 
 MotionEstimator::DualResult MotionEstimator::updateDualParams(const double eps,
                                                               const double step_size,
+                                                              const cv::Mat& l_proj_mat,
+                                                              const cv::Mat& r_proj_mat,
                                                               const std::vector<int>& c_idxs,
                                                               const std::vector<cv::Point2f>& l_pts_0,
                                                               const std::vector<cv::Point2f>& r_pts_0,
@@ -529,7 +514,9 @@ MotionEstimator::DualResult MotionEstimator::updateDualParams(const double eps,
         return FAILED;
 
     // Computes observations, predictions, residuals and Jacobians.
-    computeVectorsAndJacobians(c_idxs,
+    computeVectorsAndJacobians(l_proj_mat,
+                               r_proj_mat,
+                               c_idxs,
                                l_pts_0,
                                r_pts_0,
                                scene_pts_1,
@@ -558,7 +545,7 @@ MotionEstimator::DualResult MotionEstimator::updateDualParams(const double eps,
         b = 0;
         for (int i = 0; i < 4 * (int)c_idxs.size(); i++)
             b += J[i * 6 + m] * (res_pts[i]);
-        B.at<double>(m, 0) = b;
+        B.at<double>(0, m) = b;
     }
 
     // Performs elimination.
@@ -568,8 +555,8 @@ MotionEstimator::DualResult MotionEstimator::updateDualParams(const double eps,
     {
         for (int m = 0; m < 6; m++)
         {
-            tr[m] += step_size * coeff.at<double>(m, 0);
-            if(fabs(coeff.at<double>(m, 0) > eps))
+            tr[m] += step_size * coeff.at<double>(0, m);
+            if(fabs(coeff.at<double>(0, m) > eps))
                 converged = false; 
         }
         if (converged)
@@ -584,7 +571,9 @@ MotionEstimator::DualResult MotionEstimator::updateDualParams(const double eps,
 }
 
 
-void MotionEstimator::computeVectorsAndJacobians(const std::vector<int>& c_idxs,
+void MotionEstimator::computeVectorsAndJacobians(const cv::Mat& l_proj_mat,
+                                                 const cv::Mat& r_proj_mat,
+                                                 const std::vector<int>& c_idxs,
                                                  const std::vector<cv::Point2f>& l_pts_0,
                                                  const std::vector<cv::Point2f>& r_pts_0,
                                                  const std::vector<cv::Point3f>& scene_pts_1,
@@ -621,8 +610,8 @@ void MotionEstimator::computeVectorsAndJacobians(const std::vector<int>& c_idxs,
     cv::Point3f l_scene_pt_1_tr_0_d; // Derived previous/candidate 3D point relative current/query left camera.
 
     // Computes baseline.
-    double f_u = l_proj_mat_.at<double>(0, 0);
-    double t_x = r_proj_mat_.at<double>(0, 3);
+    double f_u = l_proj_mat.at<double>(0, 0);
+    double t_x = r_proj_mat.at<double>(0, 3);
     double b = (t_x / -f_u);
 
     // For all observations do
@@ -670,17 +659,17 @@ void MotionEstimator::computeVectorsAndJacobians(const std::vector<int>& c_idxs,
             }
 
             // Sets jacobian entries (project via K)
-            J[(4*i+0)*6+j] = l_proj_mat_.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.x * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.x * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // left u'
-            J[(4*i+1)*6+j] = l_proj_mat_.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.y * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.y * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // left v'
-            J[(4*i+2)*6+j] = l_proj_mat_.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.x * l_scene_pt_1_tr_0.z - r_scene_pt_1_tr_0.x * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // right u'
-            J[(4*i+3)*6+j] = l_proj_mat_.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.y * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.y * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // right v'
+            J[(4*i+0)*6+j] = l_proj_mat.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.x * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.x * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // left u'
+            J[(4*i+1)*6+j] = l_proj_mat.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.y * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.y * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // left v'
+            J[(4*i+2)*6+j] = l_proj_mat.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.x * l_scene_pt_1_tr_0.z - r_scene_pt_1_tr_0.x * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // right u'
+            J[(4*i+3)*6+j] = l_proj_mat.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.y * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.y * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // right v'
         }
 
         // Sets prediction (project via K)
-        pre_pts[4*i+0] = l_proj_mat_.at<double>(0, 0) * l_scene_pt_1_tr_0.x / l_scene_pt_1_tr_0.z + l_proj_mat_.at<double>(0, 2); // left u
-        pre_pts[4*i+1] = l_proj_mat_.at<double>(0, 0) * l_scene_pt_1_tr_0.y / l_scene_pt_1_tr_0.z + l_proj_mat_.at<double>(1, 2); // left v
-        pre_pts[4*i+2] = l_proj_mat_.at<double>(0, 0) * r_scene_pt_1_tr_0.x / l_scene_pt_1_tr_0.z + l_proj_mat_.at<double>(0, 2); // right u
-        pre_pts[4*i+3] = l_proj_mat_.at<double>(0, 0) * l_scene_pt_1_tr_0.y / l_scene_pt_1_tr_0.z + l_proj_mat_.at<double>(1, 2); // right v
+        pre_pts[4*i+0] = l_proj_mat.at<double>(0, 0) * l_scene_pt_1_tr_0.x / l_scene_pt_1_tr_0.z + l_proj_mat.at<double>(0, 2); // left u
+        pre_pts[4*i+1] = l_proj_mat.at<double>(0, 0) * l_scene_pt_1_tr_0.y / l_scene_pt_1_tr_0.z + l_proj_mat.at<double>(1, 2); // left v
+        pre_pts[4*i+2] = l_proj_mat.at<double>(0, 0) * r_scene_pt_1_tr_0.x / l_scene_pt_1_tr_0.z + l_proj_mat.at<double>(0, 2); // right u
+        pre_pts[4*i+3] = l_proj_mat.at<double>(0, 0) * l_scene_pt_1_tr_0.y / l_scene_pt_1_tr_0.z + l_proj_mat.at<double>(1, 2); // right v
 
         // Sets residuals
         res_pts[4*i+0] = (obs_pts[4 * i + 0] - pre_pts[4 * i + 0]);
@@ -692,6 +681,8 @@ void MotionEstimator::computeVectorsAndJacobians(const std::vector<int>& c_idxs,
 
 
 std::vector<int> MotionEstimator::getInliers(double reproj_error,
+                                             const cv::Mat& l_proj_mat,
+                                             const cv::Mat& r_proj_mat,
                                              const std::vector<cv::Point2f>& l_pts_0,
                                              const std::vector<cv::Point2f>& r_pts_0,
                                              const std::vector<cv::Point3f>& scene_pts_1,
@@ -707,7 +698,9 @@ std::vector<int> MotionEstimator::getInliers(double reproj_error,
         c_idxs.push_back(i);
 
     // Computes observations, predictions, residuals and Jacobians.
-    computeVectorsAndJacobians(c_idxs,
+    computeVectorsAndJacobians(l_proj_mat,
+                               r_proj_mat,
+                               c_idxs,
                                l_pts_0,
                                r_pts_0,
                                scene_pts_1,

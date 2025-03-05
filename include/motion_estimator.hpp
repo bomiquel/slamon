@@ -38,51 +38,26 @@ class MotionEstimator
         MotionEstimator() {};
 
 
-        /** \brief Class constructor. Projection matrices are not set. This
-         *  constructor will be used only if is inheriting MotionEstimator class.
+        /** \brief Class constructor.
          *  \param[in] motion_estimation_type Desired motion type name.
          */
         MotionEstimator(std::string& motion_estimation_type);
 
 
-        /** \brief Class constructor. Sets projection matrices.
-         *  Assumes that left camera is the master.
-         *  \param[in] l_proj_mat Left camera projection matrix.
-         *  \param[in] r_proj_mat Right camera projection matrix.
-         *  \param[in] motion_estimation_type Desired motion type name.
-         */
-        MotionEstimator(const cv::Mat& l_proj_mat,
-                        const cv::Mat& r_proj_mat,
-                        std::string& motion_estimation_type);
-
-        
-        /** \brief Class constructor. Builds projection matrices.
-         *  Assumes that left camera is the master.
+        /** \brief Builds a projection matrix from a stereo camera from its
+         *  calibration parameters.
          *  \param[in] b Stereo rig baseline in meters.
-         *  \param[in] f_x Focal length x.
-         *  \param[in] f_y Focal length y.
-         *  \param[in] c_x Principal point x.
-         *  \param[in] c_y Principal point y.
-         *  \param[in] motion_estimation_type Desired motion type name.
+         *  \param[in] f_x Focal length x in pixels.
+         *  \param[in] f_y Focal length y in pixels.
+         *  \param[in] c_x Principal point x in pixels.
+         *  \param[in] c_y Principal point y in pixels.
+         *  @return a projection matrix.
          */
-        MotionEstimator(const double b,
-                        const double f_x,
-                        const double f_y,
-                        const double c_x,
-                        const double c_y,
-                        std::string& motion_estimation_type);
-
-
-        /** \brief Get left projection matrix.
-         *  @return cv::Mat with left projection matrix.
-         */
-        inline cv::Mat getLeftProjectionMatrix() const {return l_proj_mat_;}
-
-
-        /** \brief Get right projection matrix.
-         *  @return cv::Mat with right projection matrix.
-         */
-        inline cv::Mat getRightProjectionMatrix() const {return r_proj_mat_;}
+        cv::Mat buildProjectionMatrix(const double b,
+                                      const double f_x, 
+                                      const double f_y, 
+                                      const double c_x, 
+                                      const double c_y);
 
         
         /** \brief Computes 3D points using OpenCV functions. It then removes points
@@ -90,6 +65,8 @@ class MotionEstimator
          *  more than 40 times the stereo baseline. "Far" 3D points are removed because
          *  they do not provide accurate scale and translation information (Paz et al.
          *  2008 and Mur-Artal et al. 2017).
+         *  \param[in] l_proj_mat Left projection matrix.
+         *  \param[in] r_proj_mat Right projection matrix.
          *  \param[in] l_descs Left image descriptors.
          *  \param[in] r_descs Right image descriptors.
          *  \param[in] l_kpts Left image keypoints.
@@ -101,7 +78,9 @@ class MotionEstimator
          *  \param[out] f_l_cam_pts Filtered 3D points of the scene obtained from
          *  the stereo data and relative to left camera.
          */
-        void compute3DPoints(const cv::Mat& l_descs,
+        void compute3DPoints(const cv::Mat& l_proj_mat,
+                             const cv::Mat& r_proj_mat,
+                             const cv::Mat& l_descs,
                              const cv::Mat& r_descs,
                              const std::vector<cv::KeyPoint>& l_kpts,
                              const std::vector<cv::KeyPoint>& r_kpts,
@@ -165,6 +144,8 @@ class MotionEstimator
          *      - ippe.
          *      - dual.
          *  To be robust against outliers, the motion estimation is wrapped in a RANSAC scheme.
+         *  \param[in] l_proj_mat Left projection matrix.
+         *  \param[in] r_proj_mat Right projection matrix.
          *  \param[in] l_kpts_0 Left keypoints of the first stereo image. In consecutive images:
          *  current left keypoints. In loop closing images: query left keypoints.
          *  \param[in] r_kpts_0 Right keypoints of the first stereo image. In consecutive images:
@@ -200,7 +181,9 @@ class MotionEstimator
          *  previous 3D points relative to left camera filtered out. In loop closing images: candidate
          *  3D points relative to world filtered out.
          */
-        void estimateMotion(const std::vector<cv::KeyPoint>& l_kpts_0,
+        void estimateMotion(const cv::Mat& l_proj_mat,
+                            const cv::Mat& r_proj_mat,
+                            const std::vector<cv::KeyPoint>& l_kpts_0,
                             const std::vector<cv::KeyPoint>& r_kpts_0,
                             const std::vector<cv::KeyPoint>& l_kpts_1,
                             const std::vector<cv::KeyPoint>& r_kpts_1,
@@ -229,6 +212,8 @@ class MotionEstimator
          *      - ippe.
          *      - dual.
          *  To be robust against outliers, the motion estimation is wrapped in a RANSAC scheme.
+         *  \param[in] l_proj_mat Left projection matrix.
+         *  \param[in] r_proj_mat Right projection matrix.
          *  \param[in] cluster_ids_0 Subset identifiers of the first set. In consecutive images:
          *   current identifiers. In loop closing images: query identifiers.
          *  \param[in] cluster_ids_1 Subset identifiers of the second set. In consecutive images: 
@@ -274,7 +259,9 @@ class MotionEstimator
          *  3D points relative to left camera filtered out. In loop closing images: candidate 3D points 
          *  relative to world filtered out.
          */
-        void estimateMotion(const std::vector<int>& cluster_ids_0,
+        void estimateMotion(const cv::Mat& l_proj_mat,
+                            const cv::Mat& r_proj_mat,
+                            const std::vector<int>& cluster_ids_0,
                             const std::vector<int>& cluster_ids_1,
                             const std::vector<cv::KeyPoint>& l_kpts_0,
                             const std::vector<cv::KeyPoint>& r_kpts_0,
@@ -292,13 +279,6 @@ class MotionEstimator
                             std::vector<cv::KeyPoint>& f_r_kpts_1,
                             std::vector<cv::Point3f>& f_scene_pts_0,
                             std::vector<cv::Point3f>& f_scene_pts_1);
-
-
-    protected:
-
-        cv::Mat l_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Left camera projection matrix.
-        
-        cv::Mat r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Right camera projection matrix.
 
     
     private:
@@ -327,25 +307,12 @@ class MotionEstimator
         MotionEstimator::Type selectMotionEstimationType(std::string& motion_estimation_type);
 
 
-        /** \brief Computes the projection matrix of a stereo image.
-         *  \param[in] b Stereo rig baseline in meters.
-         *  \param[in] f_x Focal length x in pixels.
-         *  \param[in] f_y Focal length y in pixels.
-         *  \param[in] c_x Principal point x in pixels.
-         *  \param[in] c_y Principal point y in pixels.
-         *  @return a projection matrix.
-         */
-        cv::Mat computeProjectionMatrix(const double b,
-                                        const double f_x, 
-                                        const double f_y, 
-                                        const double c_x, 
-                                        const double c_y);
-
-
         /** \brief By minimising the sum of the reprojection errors, obtain the transform
          *  (R | t) between the 3D points of the scene and the keypoints. 
          *  This code comes from/is a modification of LIBVISO2.
          *  \param[in] ransac_iter RANSAC iterations.
+         *  \param[in] l_proj_mat Left projection matrix.
+         *  \param[in] r_proj_mat Right projection matrix.
          *  \param[in] l_pts_0 Left keypoints of the first set. In consecutive images:
          *  current left keypoints. In loop closing images: query left keypoints.
          *  \param[in] r_pts_0 Right keypoints of the first set. In consecutive images:
@@ -358,6 +325,8 @@ class MotionEstimator
          *  \param[out] inliers Vector that contains indices of inliers in l_pts_0, r_pts_0 and scene_pts_1.
          */
         void solveDualPnPRansac(const uint ransac_iter,
+                                const cv::Mat& l_proj_mat,
+                                const cv::Mat& r_proj_mat,
                                 const std::vector<cv::Point2f>& l_pts_0,
                                 const std::vector<cv::Point2f>& r_pts_0,
                                 const std::vector<cv::Point3f>& scene_pts_1,
@@ -381,6 +350,8 @@ class MotionEstimator
          *  errors.
          *  \param[in] step_size 
          *  \param[in] c_idxs Current indices, active indices.
+         *  \param[in] l_proj_mat Left projection matrix.
+         *  \param[in] r_proj_mat Right projection matrix.
          *  \param[in] l_pts_0 Left keypoints of the first set. In consecutive images:
          *  current left keypoints. In loop closing images: query left keypoints.
          *  \param[in] r_pts_0 Right keypoints of the first set. In consecutive images:
@@ -398,6 +369,8 @@ class MotionEstimator
          */
         MotionEstimator::DualResult updateDualParams(const double eps,
                                                      const double step_size,
+                                                     const cv::Mat& l_proj_mat,
+                                                     const cv::Mat& r_proj_mat,
                                                      const std::vector<int>& c_idxs,
                                                      const std::vector<cv::Point2f>& l_pts_0,
                                                      const std::vector<cv::Point2f>& r_pts_0,
@@ -411,6 +384,8 @@ class MotionEstimator
 
         /** \brief Computes observed, predicted and residuals points, and Jacobians.
          *  This code comes from/is a modification of LIBVISO2.
+         *  \param[in] l_proj_mat Left projection matrix.
+         *  \param[in] r_proj_mat Right projection matrix.
          *  \param[in] c_idxs Current indices, active indices.
          *  \param[in] l_pts_0 Left keypoints of the first set. In consecutive images:
          *  current left keypoints. In loop closing images: query left keypoints.
@@ -426,7 +401,9 @@ class MotionEstimator
          *  \param[out] pre_pts Predicted 2D points.
          *  \param[out] res_pts Residuals (res_pts = obs_pts - pre_pts).
          */
-        void computeVectorsAndJacobians(const std::vector<int>& c_idxs,
+        void computeVectorsAndJacobians(const cv::Mat& l_proj_mat,
+                                        const cv::Mat& r_proj_mat,
+                                        const std::vector<int>& c_idxs,
                                         const std::vector<cv::Point2f>& l_pts_0,
                                         const std::vector<cv::Point2f>& r_pts_0,
                                         const std::vector<cv::Point3f>& scene_pts_1,
@@ -443,6 +420,8 @@ class MotionEstimator
          *  \param[in] reproj_error Inlier threshold value. The parameter value is the
          *  maximum allowed distance between the observed and predicted point 
          *  projections to consider it an inlier. 
+         *  \param[in] l_proj_mat Left projection matrix.
+         *  \param[in] r_proj_mat Right projection matrix.
          *  \param[in] l_pts_0 Left keypoints of the first set. In consecutive images:
          *  current left keypoints. In loop closing images: query left keypoints.
          *  \param[in] r_pts_0 Right keypoints of the first set. In consecutive images:
@@ -458,6 +437,8 @@ class MotionEstimator
          *  \param[out] res_pts Residuals (res_pts = obs_pts - pre_pts).
          */ 
         std::vector<int> getInliers(double reproj_error,
+                                    const cv::Mat& l_proj_mat,
+                                    const cv::Mat& r_proj_mat,
                                     const std::vector<cv::Point2f>& l_pts_0,
                                     const std::vector<cv::Point2f>& r_pts_0,
                                     const std::vector<cv::Point3f>& scene_pts_1,

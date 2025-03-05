@@ -94,10 +94,13 @@ namespace slamon
             Cluster getNewClusterFromQueue();
 
 
-            /** \brief Obtains, from the VO and through a service, 
+            /** \brief Obtains, from the VO through a service, 
              *  the stereo camera projection matrices. 
+             *  \param[in] l_proj_mat Left projection matrix.
+             *  \param[in] r_proj_mat Right projection matrix.
              */
-            void getProjectionMatrices();
+            void getProjectionMatrices(cv::Mat& l_proj_mat,
+                                       cv::Mat& r_proj_mat);
 
 
             /** \brief Processes the new cluster.
@@ -191,6 +194,10 @@ namespace slamon
             int lc_discard_window_; //!> Window size of discarded graph vertices (clusters).
             
             int loop_closure_num_; //!> Stores the number of loop closures.
+
+            cv::Mat l_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Left projection matrix.
+
+            cv::Mat r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Right projection matrix.
 
             std::list<Cluster> cluster_queue_; //!> Clusters queue to be inserted into the graph
 

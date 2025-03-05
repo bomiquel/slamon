@@ -395,7 +395,9 @@ namespace slamon
         cv::Mat f_l_descs, f_r_descs;
         std::vector<cv::Point3f> f_l_cam_pts;
         std::vector<cv::KeyPoint> f_l_kpts, f_r_kpts;
-        compute3DPoints(m_l_descs, m_r_descs, m_l_kpts, m_r_kpts, f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_l_cam_pts);
+        compute3DPoints(l_proj_mat_, r_proj_mat_, 
+                        m_l_descs, m_r_descs, m_l_kpts, m_r_kpts, 
+                        f_l_descs, f_r_descs, f_l_kpts, f_r_kpts, f_l_cam_pts);
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
@@ -494,7 +496,8 @@ namespace slamon
         cv::Mat camera_rotation, camera_translation;
         std::vector<cv::Point3f> i_c_l_cam_pts, i_p_l_cam_pts;
         std::vector<cv::KeyPoint> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
-        estimateMotion(f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts,
+        estimateMotion(l_proj_mat_, r_proj_mat_,
+                       f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts,
                        camera_rotation, camera_translation, 
                        i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_l_cam_pts, i_p_l_cam_pts);
         run_times_.run_time_5 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.

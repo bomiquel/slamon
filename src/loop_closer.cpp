@@ -87,7 +87,7 @@ namespace slamon
                 run_times_.run_time_5 = 0.0; // Close loop run time.
 
                 if (!init_loop_closer_)
-                    getProjectionMatrices();
+                    getProjectionMatrices(l_proj_mat_, r_proj_mat_);
                 
                 start_module_time = ros::Time::now().toSec();
                 c_cluster = getNewClusterFromQueue();
@@ -170,30 +170,31 @@ namespace slamon
     }
 
 
-    void LoopCloser::getProjectionMatrices()
+    void LoopCloser::getProjectionMatrices(cv::Mat& l_proj_mat,
+                                           cv::Mat& r_proj_mat)
     {
         slamon::GetProjectionMatrices srv;
         if (proj_mat_client_.call(srv))
         {
             // Gets projection matrix
-            l_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(srv.response.l_proj_mat.data())).clone();
-            r_proj_mat_ = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(srv.response.r_proj_mat.data())).clone();
+            l_proj_mat = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(srv.response.l_proj_mat.data())).clone();
+            r_proj_mat = cv::Mat(3, 4, CV_64FC1, const_cast<double*>(srv.response.r_proj_mat.data())).clone();
 
             ROS_WARN_STREAM("[LC->Projection matrices:] GetProjectionMatrices service call successful." << std::endl <<
                             "The left projection is as follow:" << std::endl <<
-                            l_proj_mat_.at<double>(0, 0) << " " << l_proj_mat_.at<double>(0, 1) << " " << l_proj_mat_.at<double>(0, 2) << " " << l_proj_mat_.at<double>(0, 3) << std::endl <<
-                            l_proj_mat_.at<double>(1, 0) << " " << l_proj_mat_.at<double>(1, 1) << " " << l_proj_mat_.at<double>(1, 2) << " " << l_proj_mat_.at<double>(1, 3) << std::endl <<
-                            l_proj_mat_.at<double>(2, 0) << " " << l_proj_mat_.at<double>(2, 1) << " " << l_proj_mat_.at<double>(2, 2) << " " << l_proj_mat_.at<double>(2, 3) << std::endl <<
+                            l_proj_mat.at<double>(0, 0) << " " << l_proj_mat.at<double>(0, 1) << " " << l_proj_mat.at<double>(0, 2) << " " << l_proj_mat.at<double>(0, 3) << std::endl <<
+                            l_proj_mat.at<double>(1, 0) << " " << l_proj_mat.at<double>(1, 1) << " " << l_proj_mat.at<double>(1, 2) << " " << l_proj_mat.at<double>(1, 3) << std::endl <<
+                            l_proj_mat.at<double>(2, 0) << " " << l_proj_mat.at<double>(2, 1) << " " << l_proj_mat.at<double>(2, 2) << " " << l_proj_mat.at<double>(2, 3) << std::endl <<
                             "The right projection is as follow:" << std::endl <<
-                            r_proj_mat_.at<double>(0, 0) << " " << r_proj_mat_.at<double>(0, 1) << " " << r_proj_mat_.at<double>(0, 2) << " " << r_proj_mat_.at<double>(0, 3) << std::endl <<
-                            r_proj_mat_.at<double>(1, 0) << " " << r_proj_mat_.at<double>(1, 1) << " " << r_proj_mat_.at<double>(1, 2) << " " << r_proj_mat_.at<double>(1, 3) << std::endl <<
-                            r_proj_mat_.at<double>(2, 0) << " " << r_proj_mat_.at<double>(2, 1) << " " << r_proj_mat_.at<double>(2, 2) << " " << r_proj_mat_.at<double>(2, 3));
+                            r_proj_mat.at<double>(0, 0) << " " << r_proj_mat.at<double>(0, 1) << " " << r_proj_mat.at<double>(0, 2) << " " << r_proj_mat.at<double>(0, 3) << std::endl <<
+                            r_proj_mat.at<double>(1, 0) << " " << r_proj_mat.at<double>(1, 1) << " " << r_proj_mat.at<double>(1, 2) << " " << r_proj_mat.at<double>(1, 3) << std::endl <<
+                            r_proj_mat.at<double>(2, 0) << " " << r_proj_mat.at<double>(2, 1) << " " << r_proj_mat.at<double>(2, 2) << " " << r_proj_mat.at<double>(2, 3));
         }
         else
         {
             ROS_WARN_STREAM("[LC->Projection matrices:] Failed to call GetProjectionMatrices service. It is assumed that the projection matrices are the identity!");
-            l_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1);
-            r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1);
+            l_proj_mat = cv::Mat::eye(3, 4, CV_64FC1);
+            r_proj_mat = cv::Mat::eye(3, 4, CV_64FC1);
         }
         init_loop_closer_ = true;
     }
@@ -590,7 +591,8 @@ namespace slamon
                 std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
                 std::vector<cv::Point3f> i_q_l_cam_pts, i_cand_world_pts;
                 std::vector<cv::KeyPoint> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
-                estimateMotion(f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_l_cam_pts, f_cand_world_pts,
+                estimateMotion(l_proj_mat_, r_proj_mat_,
+                               f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_l_cam_pts, f_cand_world_pts,
                                estimated_rotation, estimated_translation,
                                i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_l_cam_pts, i_cand_world_pts);
 

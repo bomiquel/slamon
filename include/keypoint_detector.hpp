@@ -32,7 +32,7 @@ class KeypointDetector
 
         /** \brief Detects keypoints of an image.
          *  \param[in] img The image.
-         *  \param[in] max_kpts Maximum number of keypoints to be retained.
+         *  \param[in] max_kpts Maximum number of keypoints to be detected.
          *  \param[in] enable_enhacement If true, the image is enhanced using CLAHE.
          *  \param[in] detector_name String containing the name of the desired detector for
          *  detecting image keypoints.
@@ -50,7 +50,7 @@ class KeypointDetector
         /** \brief Parallelizes stereo image keypoint detection.
          *  \param[in] l_img The left image.
          *  \param[in] r_img The right image.
-         *  \param[in] max_kpts Maximum number of keypoints to be retained.
+         *  \param[in] max_kpts Maximum number of keypoints to be detected.
          *  \param[in] enable_enhacement If true, the image is enhanced using CLAHE.
          *  \param[in] detector_name String containing the name of the desired detector for 
          *  detecting image keypoints.

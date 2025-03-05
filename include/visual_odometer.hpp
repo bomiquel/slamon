@@ -210,6 +210,10 @@ namespace slamon
             int max_kpts_bucket_; //!> Maximum number of keypoints per bucket.
 
             int max_kpts_retained_; //!> Maximum number of keypoints retained at the detection stage.
+
+            cv::Mat l_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Left projection matrix.
+
+            cv::Mat r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Right projection matrix.
             
             Frame p_frame_; //!> Previous frame.
             
