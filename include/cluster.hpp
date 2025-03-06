@@ -104,6 +104,8 @@ class Cluster
 
     private:
 
+        // Attributes:
+
         int id_; //!> Cluster id.
 
         int keyframe_id_; //!> Corresponding keyframe id.

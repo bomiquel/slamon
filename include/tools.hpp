@@ -6,9 +6,9 @@
  *  @modified Bo Miquel Nordfeldt-Fiol 2024-2025
  */
 
-
 #ifndef TOOLS_HPP
 #define TOOLS_HPP
+
 
 #include <ros/ros.h>
 #include <tf/tf.h>
@@ -16,41 +16,74 @@
 #include <opencv2/core.hpp>
 
 
-/** \brief Converts cv::Mat into tf::Transform.
- *  \param[in] r_vec cv::Mat containing the Euler angles.
- *  \param[in] t_vec cv::Mat containing the translation vector.
- *  \param[out] tf The resulting transform.
- *  @return whether the conversion could be done.
- */
-static inline bool fromMatToTf(const cv::Mat& r_vec,
-                               const cv::Mat& t_vec,
-                               tf::Transform& tf)
+namespace slamon
 {
-    // Sanity check
-    if (r_vec.empty() || t_vec.empty())
+
+
+    /** \brief Converts cv::Mat into tf::Transform.
+     *  \param[in] r_vec cv::Mat containing the Euler angles.
+     *  \param[in] t_vec cv::Mat containing the translation vector.
+     *  \param[out] tf The resulting transform.
+     *  @return whether the conversion could be done.
+     */
+    static inline bool fromMatToTf(const cv::Mat& r_vec,
+                                   const cv::Mat& t_vec,
+                                   tf::Transform& tf)
     {
-        ROS_ERROR_STREAM("[Caster:] Something is wrong, one or both of the movement matrices is empty.");
-        return false;
+        // Sanity check
+        if (r_vec.empty() || t_vec.empty())
+        {
+            ROS_ERROR_STREAM("[Caster:] Something is wrong, one or both of the movement matrices is empty.");
+            return false;
+        }
+
+        // Build the quaternion of rotation
+        tf::Vector3 axis(r_vec.at<double>(0, 0),
+        r_vec.at<double>(1, 0),
+        r_vec.at<double>(2, 0));
+        double angle = norm(r_vec);
+        tf::Quaternion q(axis, angle);
+
+        // Build the vector of translation
+        tf::Vector3 t(t_vec.at<double>(0, 0),
+        t_vec.at<double>(1, 0),
+        t_vec.at<double>(2, 0));
+
+        // Build the coordinates transform
+        tf.setRotation(q);
+        tf.setOrigin(t);
+
+        return true;
     }
 
-    // Build the quaternion of rotation
-    tf::Vector3 axis(r_vec.at<double>(0, 0),
-                     r_vec.at<double>(1, 0),
-                     r_vec.at<double>(2, 0));
-    double angle = norm(r_vec);
-    tf::Quaternion q(axis, angle);
 
-    // Build the vector of translation
-    tf::Vector3 t(t_vec.at<double>(0, 0),
-                  t_vec.at<double>(1, 0),
-                  t_vec.at<double>(2, 0));
-    
-    // Build the coordinates transform
-    tf.setRotation(q);
-    tf.setOrigin(t);
+    /** \brief Computes the absolute diference between 2 poses (omitting z).
+     *  \param[in] pose_0 transformation matrix of pose 0
+     *  \param[in] pose_1 transformation matrix of pose 1
+     *  @return the norm between two poses
+     */
+    static inline double poseDiff2D(const tf::Transform& pose_0, 
+                                    const tf::Transform& pose_1)
+    {
+        tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
+        return sqrt(d.x()*d.x() + d.y()*d.y());
+    }
 
-    return true;
-}
+
+    /** \brief Computes the absolute diference between 2 poses.
+     *  \param[in] pose_0 transformation matrix of pose 0
+     *  \param[in] pose_1 transformation matrix of pose 1
+     *  @return the norm between two poses
+     */
+    static inline double poseDiff3D(const tf::Transform& pose_0,
+                                    const tf::Transform& pose_1)
+    {
+        tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
+        return sqrt(d.x()*d.x() + d.y()*d.y() + d.z()*d.z());
+    }
+
+
+}   // End namespace
 
 
 #endif // TOOLS_HPP

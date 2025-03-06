@@ -224,6 +224,7 @@ class KeypointMatcher
 
     protected:
 
+        // Attributes:
 
         KeypointMatcher::Type matching_type_ = RATIO_MATCHING; //!> Matching type.
 
@@ -383,6 +384,8 @@ class KeypointMatcher
                                        std::vector<int>& f_cluster_ids_0,
                                        std::vector<int>& f_cluster_ids_1);
 
+
+        // Attributes:
 
         double ratio_ = 0.8; //!> Lowe's ratio.
        

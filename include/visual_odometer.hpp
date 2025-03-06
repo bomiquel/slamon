@@ -196,7 +196,8 @@ namespace slamon
                                  cv::Mat& img);
 
 
-            // Atributes
+            // Atributes:
+            
             int c_frame_id_; //!> Current frame id.
 
             int img_height_; //!> Number of image rows.

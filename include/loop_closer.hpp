@@ -1,6 +1,6 @@
 /**
  *  @file
- *  @brief Loop closer class
+ *  @brief Loop closer class.
  *  @author Pep Lluís Negre-Carrasco
  *  @date 2014-2016
  *  @modified Bo Miquel Nordfeldt-Fiol 2024-2025
@@ -16,10 +16,11 @@
 
 #include <ros/ros.h>
 
+#include "map.hpp"
 #include "hash.hpp"
+#include "queue.hpp"
 #include "tools.hpp"
 #include "cluster.hpp"
-#include "mapmaker.hpp"
 #include "publisher.hpp"
 #include "motion_estimator.hpp"
 #include "keypoint_matcher.hpp"
@@ -29,9 +30,6 @@
 
 namespace slamon
 {
-    
-
-    class Mapmaker;
 
 
     class LoopCloser: protected KeypointMatcher, protected MotionEstimator, protected Publisher
@@ -40,6 +38,7 @@ namespace slamon
 
 
             /** \brief Class constructor
+             *  \param[in] map Map object pointer.
              *  \param[in] ratio The ratio for Lowe's ratio test.
              *  \param[in] lc_neighbors Number of neighbours to recover in order to 
              *  increase the possibility of closing a loop.
@@ -49,9 +48,11 @@ namespace slamon
              *  \param[in] enable_debugging Enabling or disabling debugging.
              *  \param[in] w_path Working path for debugging purpose.
              *  \param[in] matching_type Desired matching type name.
+             *  \param[in] cluster_queue Cluster queue pointer.
              *  \param[in] motion_estimation_type Desired motion type name.
              */
-            LoopCloser(double ratio,
+            LoopCloser(Map* map,
+                       double ratio,
                        int lc_neighbors,
                        int lc_candidates,
                        int min_lc_inliers,
@@ -59,13 +60,8 @@ namespace slamon
                        bool enable_debugging,
                        const std::string& w_path,
                        std::string& matching_type,
+                       Queue<Cluster>* cluster_queue,
                        std::string& motion_estimation_type);
-
-
-            /** \brief Set the graph object.
-             *  \param[in] mapmaker The object pointer.
-             */
-            inline void setMapmaker(Mapmaker *mapmaker) {mapmaker_ = mapmaker;}
 
 
             /** \brief Starts loop closer.
@@ -73,25 +69,7 @@ namespace slamon
             void run();
 
 
-            /** \brief Adds a cluster to the queue of clusters.
-             *  \param[in] Cluster The cluster to be inserted.
-             */
-            void addClusterToQueue(Cluster cluster);
-
-
         private:
-
-
-            /** \brief Checks if there are clusters in the queue.
-             *  @return True if clusters queue is not empty.
-             */
-            bool checkNewClusterInQueue();
-
-
-            /** \brief Gets a cluster from the queue of clusters.
-             *  @return Current cluster.
-             */
-            Cluster getNewClusterFromQueue();
 
 
             /** \brief Obtains, from the VO through a service, 
@@ -104,9 +82,9 @@ namespace slamon
 
 
             /** \brief Processes the new cluster.
-             *  \param[out] c_cluster The current cluster.
+             *  \param[in] c_cluster The current cluster.
              */
-            void processNewCluster(Cluster& c_cluster);
+            void processNewCluster(const Cluster& c_cluster);
 
 
             /** \brief Get the best candidates to close a loop by hash.
@@ -149,7 +127,7 @@ namespace slamon
              *  \param[out] cand_clusters The candidate clusters.
              *  \param[out] neighbours_cand_clusters The neighbors of the candidate clusters.
              */
-            void readNewCandidateClusters(const std::string search_type,
+            void readNewCandidateClusters(const std::string& search_type,
                                           const std::vector<int>& cand_cluster_ids,
                                           std::vector<std::pair<Cluster, std::string>>& cand_clusters,
                                           std::vector<std::vector<Cluster>>& neighbours_cand_clusters);
@@ -180,7 +158,8 @@ namespace slamon
                                   const std::string& search_method);
 
 
-            // Atributes.
+            // Attributes:
+            
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
             bool init_loop_closer_; //!> Loop closer state.
@@ -199,15 +178,11 @@ namespace slamon
 
             cv::Mat r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Right projection matrix.
 
-            std::list<Cluster> cluster_queue_; //!> Clusters queue to be inserted into the graph
-
             std::string lc_path_; //!> Path to store loop closures images with debugging purpose.
 
             std::string keyframe_path_; //!> Path to keyframes directories with debugging purpose.
 
             std::string execution_path_; //!> Path to store cluster data with execution purpose.
-
-            std::mutex mutex_cluster_queue_; //!> Mutex for the insertion of new clusters.
 
             std::vector<std::pair<int, int>> cluster_lc_found_; //!> Stores all the loop closures (between clusters) found in order to do not repeat them.
 
@@ -227,7 +202,9 @@ namespace slamon
 
             ros::Publisher loop_closure_inliers_num_pub_; //!> Multi-cluster inliers number publisher.
 
-            Mapmaker* mapmaker_; //!> Mapmaker object pointer.
+            Map* map_; //!> Map object pointer.
+
+            Queue<Cluster>* cluster_queue_; // Cluster queue pointer.
 
             haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
 

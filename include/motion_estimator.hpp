@@ -448,6 +448,8 @@ class MotionEstimator
                                     std::vector<double>& pre_pts,
                                     std::vector<double>& res_pts);
 
+                                    
+        // Attributes:
 
         Type motion_estimation_type_ = AP3P; //!> Motion estimation type.
 

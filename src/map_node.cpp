@@ -5,6 +5,9 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 
+#include "map.hpp"
+#include "queue.hpp"
+#include "cluster.hpp"
 #include "mapmaker.hpp"
 #include "loop_closer.hpp"
 
@@ -137,8 +140,20 @@ int main(int argc, char **argv)
                robot_frame_id,
                motion_estimation_type);
 
+    // Declare shared resources.
+    slamon::Map map;
+    slamon::Queue<Cluster> cluster_queue;
+
     // Declare threads.
-    slamon::LoopCloser loop_closer(lowe_ratio,
+    slamon::Mapmaker mapmaker(&map,
+                              min_lc_inliers, 
+                              enable_debugging, 
+                              min_dist_keyframe, 
+                              working_path, 
+                              &cluster_queue,
+                              robot_frame_id);
+    slamon::LoopCloser loop_closer(&map,
+                                   lowe_ratio,
                                    lc_neighbors, 
                                    lc_candidates,
                                    min_lc_inliers,
@@ -146,14 +161,8 @@ int main(int argc, char **argv)
                                    enable_debugging,
                                    working_path,
                                    matching_type,
+                                   &cluster_queue,
                                    motion_estimation_type);
-    slamon::Mapmaker mapmaker(min_lc_inliers, 
-                              enable_debugging, 
-                              &loop_closer, 
-                              min_dist_keyframe, 
-                              working_path, 
-                              robot_frame_id);
-    loop_closer.setMapmaker(&mapmaker);
 
     // Launch threads.
     std::thread map_thread(&slamon::Mapmaker::run, &mapmaker);

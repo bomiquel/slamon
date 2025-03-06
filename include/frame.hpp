@@ -180,6 +180,8 @@ class Frame
 
     private:
 
+        // Attributes:
+
         ros::Time stamp_; //!> Store the frame timestamp.
 
         cv::Mat l_img_; //!> Left image.

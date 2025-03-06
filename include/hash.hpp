@@ -1,5 +1,14 @@
+/**
+ *  @file
+ *  @brief HAsh-based LOop Closure detection.
+ *  @author Pep Lluís Negre-Carrasco
+ *  @date 2014-2016
+ *  @modified Bo Miquel Nordfeldt-Fiol 2024-2025
+ */
+
 #ifndef HASH_HPP
 #define HASH_HPP
+
 
 #include <opencv2/core.hpp>
 #include <opencv2/features2d.hpp>

@@ -4,15 +4,17 @@
 namespace slamon
 {
 
-    Mapmaker::Mapmaker(int min_lc_inliers,
+    Mapmaker::Mapmaker(Map* map,
+                       int min_lc_inliers,
                        bool enable_debugging,
-                       LoopCloser* loop_closer,
                        double min_dist_keyframe,
                        const std::string& w_path,
+                       Queue<Cluster>* cluster_queue,
                        const std::string& robot_frame_id)
     {
         // Inilitialises parameters.
-        loop_closer_ = loop_closer;
+        map_ = map;
+        cluster_queue_ = cluster_queue;
         min_lc_inliers_ = min_lc_inliers;
         robot_frame_id_ = robot_frame_id;
         enable_debugging_ = enable_debugging;
@@ -23,12 +25,6 @@ namespace slamon
 
         // Initialised keyframe counter.
         c_keyframe_id_ = -1;
-
-        // Inilitialises the g2o graph optimizer.
-        std::unique_ptr<g2o::BlockSolverX::LinearSolverType> linear_solver_ptr (new g2o::LinearSolverCholmod<g2o::BlockSolverX::PoseMatrixType>());
-        std::unique_ptr<g2o::BlockSolverX> solver_ptr (new g2o::BlockSolverX(std::move(linear_solver_ptr)));
-        g2o::OptimizationAlgorithmLevenberg * solver = new g2o::OptimizationAlgorithmLevenberg(std::move(solver_ptr));
-        graph_.setAlgorithm(solver);
 
         // Create debugging directories.
         if (enable_debugging_)
@@ -95,242 +91,6 @@ namespace slamon
     }
 
 
-    int Mapmaker::getVertexKeyframeId(int vertex_id)
-    {
-        int frame_id = -1;
-        for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
-        {
-            if (cluster_keyframe_relation_[i].first == vertex_id)
-            {
-                frame_id = cluster_keyframe_relation_[i].second;
-                break;
-            }
-        }
-        return frame_id;
-    }
-    
-
-    tf::Transform Mapmaker::getVertexPose(int vertex_id, bool lock = true)
-    {
-        if (lock)
-        {
-            std::scoped_lock lock(mutex_graph_);
-
-            tf::Transform vertex_pose;
-            if (vertex_id >= 0)
-            {
-                g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_.vertices()[vertex_id]);
-                vertex_pose = fromVertexToTf(vertex);
-            }
-            else
-            {
-                vertex_pose.setIdentity();
-            }
-            return vertex_pose;
-        }
-        else
-        {
-            tf::Transform vertex_pose;
-            if (vertex_id >= 0)
-            {
-                g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(graph_.vertices()[vertex_id]);
-                vertex_pose = fromVertexToTf(vertex);
-            }
-            else
-            {
-                vertex_pose.setIdentity();
-            }
-            return vertex_pose;
-        }
-    }
-
-
-    tf::Transform Mapmaker::getVertexPoseRelativeToCamera(int vertex_id)
-    {
-        return local_cluster_poses_[vertex_id];
-    }
-
-
-    tf::Transform Mapmaker::getVertexCameraPose(int vertex_id, bool lock = true)
-    {
-        tf::Transform vertex_pose = getVertexPose(vertex_id, lock);
-        return vertex_pose * local_cluster_poses_[vertex_id].inverse();
-    }
-
-
-    void Mapmaker::getKeyframeVertices(int keyframe_id, std::vector<int>& vertices)
-    {
-        vertices.clear();
-        for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
-        {
-            if (cluster_keyframe_relation_[i].second == keyframe_id)
-                vertices.push_back(cluster_keyframe_relation_[i].first);
-        }
-    }
-
-
-    tf::Transform Mapmaker::getKeyframePose(int keyframe_id)
-    {
-        std::vector<int> keyframe_vertices;
-        getKeyframeVertices(keyframe_id, keyframe_vertices);
-        return getVertexCameraPose(keyframe_vertices[0]);
-    }
-
-
-    void Mapmaker::getKeyframePoses(std::vector<double>& stamps,
-                                    std::vector<int>& keyframe_ids,
-                                    std::vector<tf::Transform>& keyframe_poses)
-    {
-        // Locks graph
-        std::scoped_lock lock(mutex_graph_);
-
-        // Sanity check
-        stamps.clear();
-        keyframe_ids.clear();
-        keyframe_poses.clear();
-
-        // Get keyframe poses
-        bool found;
-        int keyframe_id;
-        for (uint vertex_id = 0; vertex_id < graph_.vertices().size(); vertex_id++)
-        {
-            // Is this keyframe processed?
-            found = false;
-            keyframe_id = getVertexKeyframeId(vertex_id);
-            // for (uint processed_keyframe_id = processed_keyframes.size() - 1; processed_keyframe_id >= 0; processed_keyframe_id--)
-            for (uint processed_keyframe_id = 0; processed_keyframe_id < keyframe_ids.size(); processed_keyframe_id++)
-            {
-                if (keyframe_ids[processed_keyframe_id] == keyframe_id)
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (found)
-                continue;
-
-            // Save data.
-            keyframe_ids.push_back(keyframe_id);
-            stamps.push_back(keyframe_stamps_[keyframe_id]);
-            keyframe_poses.push_back(getVertexCameraPose(vertex_id, false) * robot2camera_.inverse());
-        }
-    }
-
-
-    void Mapmaker::getLoopClosureEdges(std::vector<std::pair<int, int>>& keyframe_ids,
-                                       std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses)
-    {
-        // Locks graph
-        std::scoped_lock lock(mutex_graph_);
-
-        // Sanity check
-        keyframe_ids.clear();
-        keyframe_poses.clear();
-
-        // Gets loop closure edges.
-        g2o::EdgeSE3* e;
-        int keyframe_0, keyframe_1;
-        tf::Transform pose_0, pose_1;
-        for (g2o::OptimizableGraph::EdgeSet::iterator it = graph_.edges().begin(); it != graph_.edges().end(); it++)
-        {
-            e = dynamic_cast<g2o::EdgeSE3*> (*it);
-            if (e)
-            {
-                // Get the keyframes corresponding to this edge.
-                keyframe_0 = getVertexKeyframeId(e->vertices()[0]->id());
-                keyframe_1 = getVertexKeyframeId(e->vertices()[1]->id());
-
-                if (abs(keyframe_0 - keyframe_1) > 1)
-                {
-                    // Get the keyframes robot pose.
-                    pose_0 = getVertexCameraPose(e->vertices()[0]->id(), false) * robot2camera_.inverse();
-                    pose_1 = getVertexCameraPose(e->vertices()[1]->id(), false) * robot2camera_.inverse();
-
-                    // Save data.
-                    keyframe_ids.push_back(std::make_pair(keyframe_0, keyframe_1));
-                    keyframe_poses.push_back(std::make_pair(pose_0, pose_1));
-                }
-            }
-
-        }
-    }
-
-
-    void Mapmaker::addEdge(int vertex_0_id,
-                           int vertex_1_id,
-                           tf::Transform tf_edge)
-    {
-        std::scoped_lock lock(mutex_graph_);
-
-        // Get the graph vertices.
-        g2o::VertexSE3* vertex_0 = dynamic_cast<g2o::VertexSE3*>(graph_.vertices()[vertex_0_id]);
-        g2o::VertexSE3* vertex_1 = dynamic_cast<g2o::VertexSE3*>(graph_.vertices()[vertex_1_id]);
-
-        // Add graph edge to graph.
-        g2o::EdgeSE3* graph_edge = new g2o::EdgeSE3();
-        Eigen::Isometry3d iso_edge = fromTfToIsometry(tf_edge);
-        graph_edge->setVertex(0, vertex_0);
-        graph_edge->setVertex(1, vertex_1);
-        graph_edge->setMeasurement(iso_edge);
-
-        graph_.addEdge(graph_edge);
-    }
-
-
-    void Mapmaker::findClosestVertices(int vertex_id,
-                                       int security_window,
-                                       int critical_vertex_id,
-                                       uint closest_neighbors_num,
-                                       std::vector<int>& closest_neighbors)
-    {
-        // Init.
-        closest_neighbors.clear();
-        tf::Transform q_vertex_pose = getVertexPose(vertex_id);
-
-        // Loop thought all the other nodes.
-        double dist;
-        tf::Transform neighbor_vertex_pose;
-        std::vector<std::pair<int, double>> neighbors;
-        int search_end = critical_vertex_id - security_window;
-        for (int i = 0; i <= search_end; i++)
-        {
-            // Avoids itself.
-            if (i == vertex_id)
-                continue;
-
-            // Gets the distance between the queried vertex and the ith vertex.
-            neighbor_vertex_pose = getVertexPose(i);
-            dist = poseDiff2D(neighbor_vertex_pose, q_vertex_pose);
-            neighbors.push_back(std::make_pair(i, dist));
-        }
-
-        // Exits if no neighbors.
-        if (neighbors.size() == 0)
-            return;
-
-        // Sorts the neighbours from least to furthest distance to the query neighbour.
-        std::sort(neighbors.begin(), neighbors.end(), sortByDistance);
-
-        // Gets closest vertices (minnor distance)
-        if (closest_neighbors_num > neighbors.size())
-            closest_neighbors_num = neighbors.size();
-        for (uint i = 0; i < closest_neighbors_num; i++)
-            closest_neighbors.push_back(neighbors[i].first);
-    }
-
-
-    void Mapmaker::update()
-    {
-        std::scoped_lock lock(mutex_graph_);
-
-        // Optimize!
-        graph_.initializeOptimization();
-        graph_.optimize(20);
-
-        ROS_INFO_STREAM("[Map->updater:] Optimization done in graph with: " << graph_.vertices().size() << " vertices.");
-    }
-
-
     void Mapmaker::callback(const nav_msgs::OdometryConstPtr& odom_msg,
                             const slamon::StereoImageAttributesConstPtr& stereo_attributes_msg)
     {
@@ -378,7 +138,7 @@ namespace slamon
                 tf::Transform c_camera_motion = p_odom_camera_pose.inverse() * c_odom_camera_pose;
 
                 // Gets {wm}^T_{p_cam}.
-                tf::Transform p_map_camera_pose = getKeyframePose(c_keyframe_id_);
+                tf::Transform p_map_camera_pose = map_->getKeyframePose(c_keyframe_id_);
 
                 // {wm}^T_{c_cam} = {wm}^T_{p_cam} * {p_cam}^T_{c_cam}.
                 c_map_camera_pose = p_map_camera_pose * c_camera_motion;
@@ -414,11 +174,11 @@ namespace slamon
                 if (clustering_img_pub_.getNumSubscribers() > 0)
                     publishImgKeypointsClustering(c_frame.getLeftImg(), stamp, clustering_img_pub_, l_kpts, clusters);
                 writeImgKeypointsClustering(c_frame.getLeftImg(), clusters_path_ + c_keyframe_name, l_kpts, clusters);
-                ROS_INFO_STREAM("[MAPMAKER->Includer]: Adding keyframe: " << c_keyframe_id_);
+                ROS_INFO_STREAM("[MM->Includer]: Adding keyframe: " << c_keyframe_id_);
             }
 
             // Save the frame timestamp
-            keyframe_stamps_.push_back(stamp.toSec());
+            map_->addTimestamp(stamp.toSec());
             
             // Loop of frame clusters.
             start_module_time = ros::Time::now().toSec();
@@ -441,12 +201,12 @@ namespace slamon
                 initial_cluster_pose_history_.push_back(c_cluster_pose);
 
                 // Add cluster to the graph.
-                cluster_id = addVertex(c_cluster_pose);
+                cluster_id = map_->addVertex(c_cluster_pose);
 
                 // Store information.
                 c_vertex_ids.push_back(cluster_id);
-                local_cluster_poses_.push_back(local_cluster_pose);
-                cluster_keyframe_relation_.push_back(std::make_pair(cluster_id, c_keyframe_id_)); // Cluster and Frame id.
+                map_->addLocalClusterPose(local_cluster_pose);
+                map_->addClusterKeyframeRelation(std::make_pair(cluster_id, c_keyframe_id_));
 
                 // Build cluster
                 for (uint j = 0; j < clusters[i].size(); j++)
@@ -471,7 +231,7 @@ namespace slamon
 
             // Send the new clusters to the loop closing thread.
             for (uint i = 0; i < clusters_to_close_loop.size(); i++)
-                loop_closer_->addClusterToQueue(clusters_to_close_loop[i]);
+                cluster_queue_->pushBack(clusters_to_close_loop[i]);
             run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Add vertex (cluster) to graph run time.
 
             // Add edges between clusters of the same frame.
@@ -488,11 +248,11 @@ namespace slamon
                     vertex_0_id = c_vertex_ids[combinations[i][0]];
                     vertex_1_id = c_vertex_ids[combinations[i][1]];
 
-                    vertex_0_pose = getVertexPose(vertex_0_id);
-                    vertex_1_pose = getVertexPose(vertex_1_id);
+                    vertex_0_pose = map_->getVertexPose(vertex_0_id, true);
+                    vertex_1_pose = map_->getVertexPose(vertex_1_id, true);
 
                     edge = vertex_0_pose.inverse() * vertex_1_pose;
-                    addEdge(vertex_0_id, vertex_1_id, edge);
+                    map_->addEdge(vertex_0_id, vertex_1_id, edge);
                 }
             }
                 
@@ -501,7 +261,7 @@ namespace slamon
             {
                 // Retrieves the vertices of the previous keyframe.
                 std::vector<int> p_vertex_ids;
-                getKeyframeVertices(c_keyframe_id_ - 1, p_vertex_ids);
+                map_->getKeyframeVertices(c_keyframe_id_ - 1, true, p_vertex_ids);
 
                 // Connect only the closest vertices between the two keyframes.
                 std::vector<int> closest_vertices;
@@ -511,12 +271,12 @@ namespace slamon
                 for (uint i = 0; i < c_vertex_ids.size(); i++)
                 {
                     // Current ith vertex pose. 
-                    c_vertex_pose = getVertexPose(c_vertex_ids[i]);
+                    c_vertex_pose = map_->getVertexPose(c_vertex_ids[i], true);
 
                     for (uint j = 0; j < p_vertex_ids.size(); j++)
                     {
                         // Previous ith vertex pose. 
-                        p_vertex_pose = getVertexPose(p_vertex_ids[j]);
+                        p_vertex_pose = map_->getVertexPose(p_vertex_ids[j], true);
 
                         dist = poseDiff3D(c_vertex_pose, p_vertex_pose);
                         if (dist < min_dist)
@@ -537,11 +297,11 @@ namespace slamon
                 if (closest_vertices.size() > 0)
                 {
                     tf::Transform edge = closest_poses[0].inverse() * closest_poses[1];
-                    addEdge(closest_vertices[0], closest_vertices[1], edge);
+                    map_->addEdge(closest_vertices[0], closest_vertices[1], edge);
                 }
                 else
                 {
-                    ROS_ERROR("[MAPMAKER->Includer]: Impossible to connect current and previous keyframe. Graph will have non-connected parts!");
+                    ROS_ERROR("[MM->Includer]: Impossible to connect current and previous keyframe. Graph will have non-connected parts!");
                 }
             }
             run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Add edges to graph run time.
@@ -553,22 +313,24 @@ namespace slamon
                 std::vector<double> stamps;
                 std::vector<int> keyframe_ids;
                 std::vector<tf::Transform> keyframe_poses;
-                getKeyframePoses(stamps, keyframe_ids, keyframe_poses);
+                map_->getKeyframePoses(stamps, keyframe_ids, keyframe_poses);
+                for (uint i = 0; i < keyframe_poses.size(); i++)
+                    keyframe_poses[i] = keyframe_poses[i] * robot2camera_.inverse();
                 writePoses(poses_file_, keyframe_ids, stamps, keyframe_poses);
 
                 std::vector<std::pair<int, int>> edges_keyframe_ids;
                 std::vector<std::pair<tf::Transform, tf::Transform>> edges_keyframe_poses;
-                getLoopClosureEdges(edges_keyframe_ids, edges_keyframe_poses);
+                map_->getLoopClosureEdges(edges_keyframe_ids, edges_keyframe_poses);
+                for (uint i = 0; i < edges_keyframe_poses.size(); i++)
+                {
+                    edges_keyframe_poses[i].first = edges_keyframe_poses[i].first * robot2camera_.inverse();
+                    edges_keyframe_poses[i].second = edges_keyframe_poses[i].second * robot2camera_.inverse();
+                }
                 writeLoopClosureEdges(edges_file_, edges_keyframe_ids, edges_keyframe_poses);
             }
 
             // Publish updated robot pose.
-            int c_vertex_id = -1;
-            {
-                std::scoped_lock lock(mutex_graph_);
-                c_vertex_id = graph_.vertices().size() - 1;
-            }
-            tf::Transform updated_map_camera_pose = getVertexCameraPose(c_vertex_id, true);
+            tf::Transform updated_map_camera_pose = map_->getVertexCameraPose(map_->getCurrentVertexId(), true);
             publishPose(stamp, updated_map_camera_pose, camera_map_pub_, camera_frame_id_);
             tf::Transform updated_map_robot_pose = updated_map_camera_pose * robot2camera_.inverse();
             publishPose(stamp, updated_map_robot_pose, robot_map_pub_, robot_frame_id_);
@@ -639,13 +401,13 @@ namespace slamon
             }
             else
             {
-                ROS_WARN_STREAM("[MAPMAKER->Includer]: Image produces 0 clusters.");
+                ROS_WARN_STREAM("[MM->Includer]: Image produces 0 clusters.");
                 return false;
             }
         }
         else
         {
-            ROS_WARN_STREAM("[MAPMAKER->Includer]: Not enough keypoints in this frame (" << c_frame.getLeftKpts().size() << ")");
+            ROS_WARN_STREAM("[MM->Includer]: Not enough keypoints in this frame (" << c_frame.getLeftKpts().size() << ")");
             return false;
         }
     }
@@ -665,7 +427,7 @@ namespace slamon
             double qz = srv.response.tf.pose.orientation.z;
             double qw = srv.response.tf.pose.orientation.w;
 
-            ROS_WARN_STREAM("[MAPMAKER->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
+            ROS_WARN_STREAM("[MM->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
                             "tx: " << tx << std::endl << 
                             "ty: " << ty << std::endl << 
                             "tz: " << tz << std::endl << 
@@ -681,36 +443,9 @@ namespace slamon
         }
         else
         {
-            ROS_WARN_STREAM("[MAPMAKER->Static transform:] Failed to call GetTransform service. The robot2camera transform will be assumed as the identity.");
+            ROS_WARN_STREAM("[MM->Static transform:] Failed to call GetTransform service. The robot2camera transform will be assumed as the identity.");
             robot2camera_.setIdentity();
         }
-    }
-
-
-    int Mapmaker::addVertex(tf::Transform pose)
-    {
-        // Lock graph.
-        std::scoped_lock lock(mutex_graph_);
-
-        // Convert pose for graph
-        Eigen::Isometry3d vertex_pose = fromTfToIsometry(pose);
-
-        // Set node id equal to graph size
-        int id = graph_.vertices().size();
-
-        // Build the vertex
-        g2o::VertexSE3* c_vertex = new g2o::VertexSE3();
-        c_vertex->setId(id);
-        c_vertex->setEstimate(vertex_pose);
-        
-        // First time, no edges.
-        if (id == 0)
-            c_vertex->setFixed(true);
-
-        // Add vertex.
-        graph_.addVertex(c_vertex);
-
-        return id;
     }
 
 
@@ -776,42 +511,6 @@ namespace slamon
         tf::Vector3 translation(pt.x, pt.y, pt.z);
         out.setOrigin(translation);
         return out;
-    }
-
-
-    Eigen::Isometry3d Mapmaker::fromTfToIsometry(const tf::Transform& tf)
-    {
-        tf::Vector3 t_in = tf.getOrigin();
-        tf::Quaternion q_in = tf.getRotation();
-        Eigen::Vector3d t_out(t_in.getX(), t_in.getY(), t_in.getZ());
-        Eigen::Quaterniond q_out;
-        q_out.setIdentity();
-        q_out.x() = q_in.getX();
-        q_out.y() = q_in.getY();
-        q_out.z() = q_in.getZ();
-        q_out.w() = q_in.getW();
-        Eigen::Isometry3d out = (Eigen::Isometry3d)q_out;
-        out.translation() = t_out;
-        return out;
-    }
-
-
-    tf::Transform Mapmaker::fromIsometryToTf(const Eigen::Isometry3d& iso)
-    {
-        Eigen::Vector3d t_in = iso.translation();
-        Eigen::Quaterniond q_in = (Eigen::Quaterniond)iso.rotation();
-        tf::Vector3 t_out(t_in.x(), t_in.y(), t_in.z());
-        tf::Quaternion q_out(q_in.x(), q_in.y(), q_in.z(), q_in.w());
-        tf::Transform out(q_out, t_out);
-        return out;
-    }
-
-
-    tf::Transform Mapmaker::fromVertexToTf(const g2o::VertexSE3* vertex)
-    {
-        Eigen::Isometry3d iso = vertex->estimate();
-        tf::Transform tf = fromIsometryToTf(iso);
-        return tf;
     }
 
     

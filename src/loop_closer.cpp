@@ -5,7 +5,8 @@ namespace slamon
 {
 
 
-    LoopCloser::LoopCloser(double ratio,
+    LoopCloser::LoopCloser(Map* map,
+                           double ratio,
                            int lc_neighbors,
                            int lc_candidates,
                            int min_lc_inliers,
@@ -13,13 +14,16 @@ namespace slamon
                            bool enable_debugging,
                            const std::string& w_path,
                            std::string& matching_type,
+                           Queue<Cluster>* cluster_queue,
                            std::string& motion_estimation_type):
                            KeypointMatcher(ratio, matching_type), 
                            MotionEstimator(motion_estimation_type)
     {
         // Initialises parameters.
+        map_ = map;
         lc_neighbors_ = lc_neighbors;
         lc_candidates_ = lc_candidates;
+        cluster_queue_ = cluster_queue;
         min_lc_inliers_ = min_lc_inliers;
         enable_debugging_ = enable_debugging;
         lc_discard_window_ = lc_discard_window;
@@ -75,7 +79,7 @@ namespace slamon
         while (ros::ok())
         {
             // Search for a loop closure in the new cluster.
-            if (checkNewClusterInQueue())
+            if (!cluster_queue_->isEmpty())
             {
                 // Time at which the program starts the iteration.
                 start_iteration_time = ros::Time::now().toSec();
@@ -90,7 +94,7 @@ namespace slamon
                     getProjectionMatrices(l_proj_mat_, r_proj_mat_);
                 
                 start_module_time = ros::Time::now().toSec();
-                c_cluster = getNewClusterFromQueue();
+                c_cluster = cluster_queue_->getFront();
                 processNewCluster(c_cluster);
                 run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Process current cluster run time.
 
@@ -107,7 +111,7 @@ namespace slamon
                 // Searches by proximity candidates to close loops.
                 start_module_time = ros::Time::now().toSec();
                 std::vector<int> cand_cluster_ids_by_proximity;
-                mapmaker_->findClosestVertices(c_cluster.getId(), lc_discard_window_, c_cluster.getId(), lc_candidates_, cand_cluster_ids_by_proximity);
+                map_->findClosestVertices(c_cluster.getId(), lc_discard_window_, c_cluster.getId(), lc_candidates_, cand_cluster_ids_by_proximity);
                 run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by proximity.
                 start_module_time = ros::Time::now().toSec();
                 readNewCandidateClusters("proximity", cand_cluster_ids_by_proximity, cand_clusters, neighbours_cand_clusters);
@@ -147,29 +151,6 @@ namespace slamon
     }
 
 
-    void LoopCloser::addClusterToQueue(Cluster cluster)
-    {
-        std::scoped_lock lock(mutex_cluster_queue_);
-        cluster_queue_.push_back(cluster);
-    }
-
-
-    bool LoopCloser::checkNewClusterInQueue()
-    {
-        std::scoped_lock lock(mutex_cluster_queue_);
-        return (!cluster_queue_.empty());
-    }
-
-
-    Cluster LoopCloser::getNewClusterFromQueue()
-    {
-        std::scoped_lock lock(mutex_cluster_queue_);
-        Cluster c_cluster = cluster_queue_.front();
-        cluster_queue_.pop_front();
-        return c_cluster;
-    }
-
-
     void LoopCloser::getProjectionMatrices(cv::Mat& l_proj_mat,
                                            cv::Mat& r_proj_mat)
     {
@@ -200,7 +181,7 @@ namespace slamon
     }
 
 
-    void LoopCloser::processNewCluster(Cluster& c_cluster)
+    void LoopCloser::processNewCluster(const Cluster& c_cluster)
     {
         // Initialise hash
         if (!haloc_.isInitialized())
@@ -318,13 +299,13 @@ namespace slamon
         fs.release();
 
         // Sets the properties of the cluster.
-        tf::Transform map_camera_pose = mapmaker_->getVertexCameraPose(id, true);
+        tf::Transform map_camera_pose = map_->getVertexCameraPose(id, true);
         Cluster cluster(id, keyframe_id, l_descs, r_descs, map_camera_pose, l_kpts, r_kpts, l_cam_pts);
         return cluster;
     }
 
 
-    void LoopCloser::readNewCandidateClusters(const std::string search_type,
+    void LoopCloser::readNewCandidateClusters(const std::string& search_type,
                                               const std::vector<int>& cand_cluster_ids,
                                               std::vector<std::pair<Cluster, std::string>>& cand_clusters,
                                               std::vector<std::vector<Cluster>>& neighbours_cand_clusters)
@@ -474,7 +455,7 @@ namespace slamon
 
             // Increases the probability to close loop by extracting the candidate neighbors.
             std::vector<int> cand_cluster_neighbours;
-            mapmaker_->findClosestVertices(cand_cluster.getId(), lc_discard_window_, q_cluster.getId(), lc_neighbors_, cand_cluster_neighbours);
+            map_->findClosestVertices(cand_cluster.getId(), lc_discard_window_, q_cluster.getId(), lc_neighbors_, cand_cluster_neighbours);
             for (uint i = 0; i < cand_cluster_neighbours.size(); i++)
             {
                 // Checks if the cluster has been read in the last iteration and if not, reads from disk.
@@ -519,7 +500,7 @@ namespace slamon
 
             // Extracts all the clusters corresponding to the current cluster frame
             std::vector<int> q_cluster_neighbours;
-            mapmaker_->getKeyframeVertices(q_cluster.getKeyframeId(), q_cluster_neighbours);
+            map_->getKeyframeVertices(q_cluster.getKeyframeId(), true, q_cluster_neighbours);
             for (uint i = 0; i < q_cluster_neighbours.size(); i++)
             {
                 // Avoids itself.
@@ -624,7 +605,7 @@ namespace slamon
                     {
                         q_cluster_id = i_q_cluster_ids[i];
                         cand_cluster_id = i_cand_cluster_ids[i];
-                        cand_keyframe_id = mapmaker_->getVertexKeyframeId(cand_cluster_id);
+                        cand_keyframe_id = map_->getVertexKeyframeId(cand_cluster_id, true);
 
                         // Builds the unique candidate keyframe vector.
                         cand_keyframe_found = false;
@@ -689,13 +670,13 @@ namespace slamon
                                 continue;
                             
                             // Computes correct transform between edges.
-                            cand_cluster_pose = mapmaker_->getVertexPose(cluster_pairs[i].second, true); // {O}^T_{cand_cluster}
-                            q_cluster_pose_relative_to_camera = mapmaker_->getVertexPoseRelativeToCamera(cluster_pairs[i].first); // {q_cam}^T_{q_cluster}
+                            cand_cluster_pose = map_->getVertexPose(cluster_pairs[i].second, true); // {O}^T_{cand_cluster}
+                            q_cluster_pose_relative_to_camera = map_->getVertexPoseRelativeToCamera(cluster_pairs[i].first); // {q_cam}^T_{q_cluster}
                             edge = cand_cluster_pose.inverse() * estimated_motion * q_cluster_pose_relative_to_camera; // {cand_cluster}^T_{q_cluster} = {cand_cluster}^T_{O} * {O}^T_{q_cam} * {q_cam}^T_{q_cluster}
 
                             // Adds this edge to the graph.
                             some_edge_added = true;
-                            mapmaker_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, edge);                           
+                            map_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, edge);                           
                             definitive_inliers_per_pair.push_back(inliers_per_pair[i]);
                             definitive_cluster_pairs.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second)); // q_cluster_id - cand_cluster_id
 
@@ -706,7 +687,7 @@ namespace slamon
 
                     if (some_edge_added)
                     {
-                        mapmaker_->update();
+                        map_->update();
                         run_times_.run_time_5 += (ros::Time::now().toSec() - start_module_time); // Close loop run time.
 
                         ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");

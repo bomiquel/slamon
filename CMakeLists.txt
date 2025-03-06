@@ -124,6 +124,7 @@ add_executable(slamon_vo
                src/keypoint_matcher.cpp
                src/keypoint_detector.cpp)
 add_executable(slamon_map
+               src/map.cpp
                src/hash.cpp
                src/frame.cpp
                src/cluster.cpp

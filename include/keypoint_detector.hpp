@@ -1,5 +1,5 @@
 /**
- *  @brief The KeypointDetector class provides needed to detect keypoints and compute descriptors.
+ *  @brief The KeypointDetector class provides the necessary tools to detect keypoints and calculate descriptors.
  *  @author Bo Miquel Nordfeldt-Fiol
  *  @date 2024-2025
  */
