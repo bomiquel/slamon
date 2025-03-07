@@ -27,8 +27,8 @@ class Cluster
         Cluster();
 
 
-        /** \brief Class constructor
-         *  \param[in] id Cluster id.
+        /** \brief Class constructor.
+         *  \param[in] global_id Global cluster id.
          *  \param[in] keyframe_id Keyframe id.
          *  \param[in] l_descs Cluster left descriptors.
          *  \param[in] r_descs Cluster right descriptors.
@@ -37,7 +37,7 @@ class Cluster
          *  \param[in] r_kpts Cluster right keypoints.
          *  \param[in] l_cam_pts Cluster 3D points relative to left camera.
          */
-        Cluster(int id,
+        Cluster(int global_id,
                 int keyframe_id,
                 cv::Mat l_descs,
                 cv::Mat r_descs,
@@ -47,10 +47,38 @@ class Cluster
                 std::vector<cv::Point3f> l_cam_pts);
 
 
-        /** \brief Get the cluster id.
-         *  @return The cluster id.
+        /** \brief Class constructor.
+         *  \param[in] global_id Global cluster id.
+         *  \param[in] local_id Local cluster id.
+         *  \param[in] keyframe_id Keyframe id.
+         *  \param[in] l_descs Cluster left descriptors.
+         *  \param[in] r_descs Cluster right descriptors.
+         *  \param[in] map_camera_pose World-map camera pose when the cluster was obtained.
+         *  \param[in] l_kpts Cluster left keypoints.
+         *  \param[in] r_kpts Cluster right keypoints.
+         *  \param[in] l_cam_pts Cluster 3D points relative to left camera.
          */
-        inline int getId() const {return id_;}
+        Cluster(int global_id,
+                int local_id,
+                int keyframe_id,
+                cv::Mat l_descs,
+                cv::Mat r_descs,
+                tf::Transform map_camera_pose,
+                std::vector<cv::KeyPoint> l_kpts,
+                std::vector<cv::KeyPoint> r_kpts,
+                std::vector<cv::Point3f> l_cam_pts);
+
+
+        /** \brief Get the global cluster id.
+         *  @return The global cluster id.
+         */
+        inline int getGlobalId() const {return global_id_;}
+
+
+        /** \brief Get the local cluster id.
+         *  @return The local cluster id.
+         */
+        inline int getLocalId() const {return local_id_;}
 
 
         /** \brief Get the corresponding keyframe id.
@@ -106,7 +134,9 @@ class Cluster
 
         // Attributes:
 
-        int id_; //!> Cluster id.
+        int global_id_; //!> Global cluster id.
+
+        int local_id_; //!> Local cluster id.
 
         int keyframe_id_; //!> Corresponding keyframe id.
 

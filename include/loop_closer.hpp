@@ -127,10 +127,10 @@ namespace slamon
              *  \param[out] cand_clusters The candidate clusters.
              *  \param[out] neighbours_cand_clusters The neighbors of the candidate clusters.
              */
-            void readNewCandidateClusters(const std::string& search_type,
-                                          const std::vector<int>& cand_cluster_ids,
-                                          std::vector<std::pair<Cluster, std::string>>& cand_clusters,
-                                          std::vector<std::vector<Cluster>>& neighbours_cand_clusters);
+            void readCandidateClusters(const std::string& search_type,
+                                       const std::vector<int>& cand_cluster_ids,
+                                       std::vector<std::pair<Cluster, std::string>>& cand_clusters,
+                                       std::vector<std::vector<Cluster>>& neighbours_cand_clusters);
 
 
             /** \brief Checks if the neighboring cluster was already read from disk in
@@ -138,10 +138,10 @@ namespace slamon
              *  it reads it from disk.
              *  \param[in] neighbor_id Neighbor identifier.
              *  \param[in] neighbours_cand_cluster Neighbors of the candidate group.
-             *  @return The neighbor cluster.
+             *  @return The candidate neighbor cluster.
              */
-            Cluster readNewNeighborsClusters(const int neighbor_id,
-                                             std::vector<Cluster>& neighbours_cand_cluster);
+            Cluster readCandidateNeighborsClusters(const int neighbor_id,
+                                                   std::vector<Cluster>& neighbours_cand_cluster);
                                 
 
             /** \brief Tries to close a loop between query and candidate cluster.
@@ -187,6 +187,12 @@ namespace slamon
             std::vector<std::pair<int, int>> cluster_lc_found_; //!> Stores all the loop closures (between clusters) found in order to do not repeat them.
 
             std::vector<std::pair<int, std::vector<float>>> hash_table_; //!> Hash table: stores a hash for every cluster. This is the unique variable that grows with the robot trajectory.
+            
+            std::vector<Cluster> p_q_cluster_neighbours_; //!> Previous neighbours of the query cluster.
+
+            std::vector<std::pair<Cluster, std::string>> p_cand_clusters_; //!> Previous candidate clusters.
+
+            std::vector<std::vector<Cluster>> p_cands_cluster_neighbours_; //!> Previous neighbours of the candidates.
 
             ros::ServiceClient proj_mat_client_; //!> Service for requesting projection matrices.
             
@@ -209,10 +215,6 @@ namespace slamon
             haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
 
             RunTimes run_times_; //!> Internal loop closing execution times.
-
-            std::vector<std::pair<Cluster, std::string>> p_cand_clusters_; //!> Previous candidate clusters.
-
-            std::vector<std::vector<Cluster>> p_neighbours_cand_clusters_; //!> Previous neighbours of the candidates.
     };
 
 

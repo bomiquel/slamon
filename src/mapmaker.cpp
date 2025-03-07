@@ -218,7 +218,9 @@ namespace slamon
                     cluster_l_descs.push_back(l_descs.row(idx));
                     cluster_r_descs.push_back(r_descs.row(idx));
                 }
-                Cluster cluster(cluster_id, c_keyframe_id_, cluster_l_descs, cluster_r_descs, c_map_camera_pose, cluster_l_kpts, cluster_r_kpts, cluster_l_cam_pts);
+                Cluster cluster(cluster_id, i, c_keyframe_id_, 
+                                cluster_l_descs, cluster_r_descs, c_map_camera_pose, 
+                                cluster_l_kpts, cluster_r_kpts, cluster_l_cam_pts);
                 clusters_to_close_loop.push_back(cluster);
 
                 // Clear variables
