@@ -8,7 +8,6 @@ double tx_, ty_, tz_, qx_, qy_, qz_, qw_;
 bool getPoseCallback(slamon::GetTransform::Request  &req,
                      slamon::GetTransform::Response &res)
 {
-    ROS_WARN_STREAM("Hello there");
     res.tf.pose.position.x = tx_;
     res.tf.pose.position.y = ty_;
     res.tf.pose.position.z = tz_;

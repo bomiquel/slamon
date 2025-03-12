@@ -81,22 +81,22 @@ class Frame
         inline void setTimestamp(const ros::Time stamp){stamp_ = stamp;}
 
 
-        /** \brief Get keyframe timestamp
-         *  @return The time stamp when taking the image.
-         */
-        inline ros::Time getTimestamp() const {return stamp_;}
-
-
-        /** \brief Get left image
+        /** \brief Get left image.
          *  @return The left image of the stereo pair
          */
         inline cv::Mat getLeftImg() const {return l_img_;}
 
 
-        /** \brief Get right image
+        /** \brief Get right image.
          *  @return The right image of the stereo pair
          */
         inline cv::Mat getRightImg() const {return r_img_;}
+
+
+        /** \brief Get keyframe timestamp
+         *  @return The time stamp when taking the image.
+         */
+        inline ros::Time getTimestamp() const {return stamp_;}
 
 
         /** \brief Get left descriptors.

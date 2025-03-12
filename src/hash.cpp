@@ -18,6 +18,9 @@ haloc::Hash::Hash()
 
 bool haloc::Hash::isInitialized()
 {
+  // Locks haloc.
+  std::scoped_lock lock(mutex_haloc_);
+
   return initialized_;
 }
 
@@ -30,6 +33,9 @@ void haloc::Hash::setParams(const Params& params)
 
 void haloc::Hash::init(cv::Mat desc)
 {
+  // Locks haloc.
+  std::scoped_lock lock(mutex_haloc_);
+
   // Create the random projections vectors
   initProjections(desc.rows);
 
@@ -43,6 +49,9 @@ void haloc::Hash::init(cv::Mat desc)
 
 std::vector<float> haloc::Hash::getHash(cv::Mat desc)
 {
+  // Locks haloc.
+  std::scoped_lock lock(mutex_haloc_);
+
   // Initialize the histogram with 0's
   std::vector<float> hash(h_size_, 0.0);
 

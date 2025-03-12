@@ -43,18 +43,17 @@ namespace slamon
 
             /** \brief Get the frame id of some specific vertex.
              *  \param[in] vertex_id The vertex id.
-             *  \param[in] lock Set to true if map locking is required.
              *  @return The frame id.
              */
-            int getVertexKeyframeId(int vertex_id, bool lock);
+            int getVertexKeyframeId(int vertex_id);
 
 
             /** \brief Get the world-map vertex pose from the graph.
              *  \param[in] vertex_id The id of the vertex for which the pose is desired.
-             *  \param[in] lock Set to true if map locking is required
+             *  \param[in] use_lock Set to true if map locking is required
              *  @return Tf with world-map vertex pose.
              */
-            tf::Transform getVertexPose(int vertex_id, bool lock);
+            tf::Transform getVertexPose(int vertex_id, bool use_lock);
 
 
             /** \brief Get the graph vertex pose relative to camera.
@@ -69,16 +68,14 @@ namespace slamon
              *  \param[in] lock Set to true if map locking is required.
              *  @return Tf with the world-map camera pose.
              */
-            tf::Transform getVertexCameraPose(int vertex_id, bool lock);
+            tf::Transform getVertexCameraPose(int vertex_id, bool use_lock);
 
 
             /** \brief Retrieve the list of the vertices/clusters of a corresponding keyframe.
              *  \param[in] keyframe_id The corresponding keyframe id.
-             *  \param[in] lock Set to true if map locking is required.
              *  \param[out] vertices Will contain the list of vertices for this keyframe.
              */
             void getKeyframeVertices(int keyframe_id, 
-                                     bool lock,
                                      std::vector<int>& vertices);
 
 
@@ -199,13 +196,19 @@ namespace slamon
 
             // Attributes:
             
-            std::mutex mutex_map_; //!> Mutex for map manipulation.
+            std::mutex mutex_graph_; //!> Mutex for graph manipulation.
+
+            std::mutex mutex_keyframe_stamps_; //!> Mutex for the timestamps container.
+
+            std::mutex mutex_local_cluster_poses_; //!> Mutex for the cluster poses, relative to camera frame, container.
+
+            std::mutex mutex_cluster_keyframe_relation_; //!> Mutex for the cluster-keyframe relations container.
 
             g2o::SparseOptimizer graph_; //!> G2O graph.
 
-            std::vector<double> keyframe_stamps_; //> Stores the keyframe timestamps
+            std::vector<double> keyframe_stamps_; //> Stores the keyframe timestamps.
 
-            std::vector<tf::Transform> local_cluster_poses_; //!> Stores the cluster poses relative to camera frame
+            std::vector<tf::Transform> local_cluster_poses_; //!> Stores the cluster poses relative to camera frame.
 
             std::vector<std::pair<int, int>> cluster_keyframe_relation_; //!> Stores the cluster-keyframe relation (cluster_id, frame_id).
 

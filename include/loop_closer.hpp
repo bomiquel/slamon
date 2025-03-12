@@ -144,18 +144,90 @@ namespace slamon
                                                    std::vector<Cluster>& neighbours_cand_cluster);
                                 
 
-            /** \brief Tries to close a loop between query and candidate cluster.
-             *  If a loop is closed, the graph is updated.
+            /** \brief It tries to detect a loop closure between the query cluster
+             *  and the candidate.
              *  \param[in] q_cluster Query cluster.
              *  \param[in] cand_cluster Candidate cluster.
              *  \param[in] neighbours_cand_cluster Neighbors of the candidate cluster.
-             *  \param[in] seach_method Type of search used (proximity or hash).
-             *  @return True if loop closing.
+             *  \param[out] estimated_motion Little transform between query and candidate
+             *  cluster, if there is loop closure.
+             *  \param[out] i_q_cluster_ids Cluster ids inliers from query cluster and its 
+             *  neighbors.
+             *  \param[out] i_cand_cluster_ids Cluster ids inliers from candidate cluster and its
+             *  neighbors.
+             *  \param[out] i_q_l_kpts Left keypoints inliers from query cluster and its neighbors.
+             *  \param[out] i_q_r_kpts Right keypoints inliers from query cluster and its neighbors.
+             *  \param[out] i_cand_l_kpts Left keypoints inliers from candidate cluster and its neighbors.
+             *  \param[out] i_cand_r_kpts Right keypoints inliers from candidate cluster and its neighbors.
+             *  @return True if there is a loop closure.
              */
-            bool closeLoopBetween(Cluster q_cluster,
-                                  Cluster cand_cluster,
-                                  std::vector<Cluster>& neighbours_cand_cluster,
-                                  const std::string& search_method);
+            bool detectLoop(Cluster& q_cluster,
+                            Cluster& cand_cluster,
+                            std::vector<Cluster>& neighbours_cand_cluster,
+                            tf::Transform& estimated_motion,
+                            std::vector<int>& i_q_cluster_ids,
+                            std::vector<int>& i_cand_cluster_ids,
+                            std::vector<cv::KeyPoint>& i_q_l_kpts,
+                            std::vector<cv::KeyPoint>& i_q_r_kpts,
+                            std::vector<cv::KeyPoint>& i_cand_l_kpts,
+                            std::vector<cv::KeyPoint>& i_cand_r_kpts);
+
+
+            /** \brief Add constrains to the map (edge(s) to the graph) and
+             *  performs a pose-graph optimisation.
+             *  \param[in] q_cluster_kf_id Identifier of the keyframe to which
+             *  the query cluster belongs.
+             *  \param[in] cand_cluster_kf_id Identifier of the keyframe to which
+             *  the candidate cluster belongs.
+             *  \param[in] search_method Type of search used: proximity or hash.
+             *  \param[in] estimated_motion Little transform between query and 
+             *  candidate cluster.
+             *  \param[in] i_q_cluster_ids Cluster ids inliers from query cluster
+             *  and its neighbors.
+             *  \param[in] i_cand_cluster_ids Cluster ids inliers from candidate 
+             *  cluster and its neighbors.
+             *  \param[in] i_q_l_kpts Left keypoints inliers from query cluster 
+             *  and its neighbors.
+             *  \param[in] i_q_r_kpts Right keypoints inliers from query cluster
+             *  and its neighbors.
+             *  \param[in] i_cand_l_kpts Left keypoints inliers from candidate 
+             *  cluster and its neighbors.
+             *  \param[in] i_cand_r_kpts Right keypoints inliers from candidate
+             *  cluster and its neighbors.
+             *  @return If some edge has been added.
+             */
+            bool loopCorrection(const int q_cluster_kf_id,
+                                const int cand_cluster_kf_id,
+                                const std::string& search_method,
+                                const tf::Transform& estimated_motion,
+                                const std::vector<int>& i_q_cluster_ids,
+                                const std::vector<int>& i_cand_cluster_ids,
+                                const std::vector<cv::KeyPoint>& i_q_l_kpts,
+                                const std::vector<cv::KeyPoint>& i_q_r_kpts,
+                                const std::vector<cv::KeyPoint>& i_cand_l_kpts,
+                                const std::vector<cv::KeyPoint>& i_cand_r_kpts);
+
+
+            /** \brief Gets the inliers per cluster pair.
+             *  \param[in] i_q_cluster_ids Cluster ids inliers from query cluster and its 
+             *  neighbors.
+             *  \param[in] i_cand_cluster_ids Cluster ids inliers from candidate cluster and its
+             *  neighbors.
+             *  \param[in] i_q_l_kpts Left keypoints inliers from query cluster and its neighbors.
+             *  \param[out] inliers_per_pair Number of inliers per cluster pair.
+             *  \param[out] cand_keyframe_ids Identifiers of keyframes containing candidate 
+             *  clusters that have closed loops.
+             *  \param[out] cluster_pairs Cluster pairs vector (q_cluster_id - cand_cluster_id).
+             *  \param[out] cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
+             *  relation (cand_cluster_id, cand_keyframe_id).
+             */
+            void getInliersPerClusterPair(const std::vector<int>& i_q_cluster_ids,
+                                          const std::vector<int>& i_cand_cluster_ids,
+                                          const std::vector<cv::KeyPoint>& i_q_l_kpts,
+                                          std::vector<int>& inliers_per_pair,
+                                          std::vector<int>& cand_keyframe_ids,
+                                          std::vector<std::pair<int, int>>& cluster_pairs,
+                                          std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
 
 
             // Attributes:

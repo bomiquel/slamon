@@ -45,6 +45,7 @@
         <arg name = "q_z" default = "0.574120736555976"/>
         <arg name = "q_w" default = "0.813480331628928"/>
 
+        <!-- Sends initial pose -->
         <node pkg = "slamon" type = "initial_pose_server_params" name = "initial_pose_server_params" output = "screen">
             <param name = "tx"         value = "$(arg t_x)"/>
             <param name = "ty"         value = "$(arg t_y)"/>
@@ -56,6 +57,7 @@
             <remap from = "get_pose"   to    = "slamon_vo/get_first_odom"/>
         </node>
 
+        <!-- Processes stereo images -->        
         <include file = "$(find slamon)/launch/stereo_processing/stereo_pipeline.launch">
             <arg name = "stereo"             value = "/$(arg camera_name)" />
             <arg name = "resolution"         value = "$(arg resolution)" />

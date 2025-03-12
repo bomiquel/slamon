@@ -14,7 +14,7 @@
     <!-- Bagfiles parameters -->
     <param name = "/use_sim_time"    value = "true"/>
 
-    <!-- Portals Vells T0 -->
+    <!-- UIB -->
     <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uib/2023_11_09/13_37_00/stereo_camera_images_2023-11-09-13-37-01_0.bag
                                      /home/bomiquel/datasets/bagfiles/uib/2023_11_09/13_37_00/stereo_camera_images_2023-11-09-13-42-34_1.bag"/>
 
@@ -27,7 +27,7 @@
     <group ns = "$(arg robot_name)">
 
         <!-- Initial pose and orientation parameters -->  
-        <!-- Portals Vells T0: -->
+        <!-- UIB -->
         <arg name = "t_x" default = "0"/> 
         <arg name = "t_y" default = "0"/> 
         <arg name = "t_z" default = "1.5"/> 
@@ -36,6 +36,7 @@
         <arg name = "q_z" default = "0"/>
         <arg name = "q_w" default = "1"/>
 
+        <!-- Sends initial pose -->
         <node pkg = "slamon" type = "initial_pose_server_params" name = "initial_pose_server_params" output = "screen">
             <param name = "tx"         value = "$(arg t_x)"/>
             <param name = "ty"         value = "$(arg t_y)"/>
@@ -47,6 +48,7 @@
             <remap from = "get_pose"   to    = "slamon_vo/get_first_odom"/>
         </node>
 
+        <!-- Processes stereo images -->
         <include file = "$(find slamon)/launch/stereo_processing/stereo_pipeline.launch">
             <arg name = "stereo"             value = "/$(arg camera_name)" />
             <arg name = "resolution"         value = "$(arg resolution)" />
