@@ -271,6 +271,11 @@ namespace slamon
             camera_frame_id_ = l_info_msg->header.frame_id;
             tf_listener_.lookupTransform(robot_frame_id_, camera_frame_id_, ros::Time(0), robot2camera_);
         }
+        catch (const tf::LookupException& e)
+        {
+            ROS_WARN_STREAM("[VO->Initialiser:] TF listener exception: " << e.what());
+            ROS_WARN_STREAM("[VO->Initialiser:] The transform between the robot and the camera has not been found, and therefore robot2camera_ is equal to the identity.");
+        }
         catch (const tf::TransformException& e)
         {
             ROS_WARN_STREAM("[VO->Initialiser:] TF listener exception: " << e.what());
