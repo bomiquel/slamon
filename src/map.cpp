@@ -16,50 +16,34 @@ namespace slamon
 
     int Map::getCurrentVertexId()
     {
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_graph_);
         return graph_.vertices().size() - 1;
     }
 
 
-    int Map::getVertexKeyframeId(int vertex_id, bool lock)
+    int Map::getVertexKeyframeId(int vertex_id)
     {
-        if (lock)
-        {
-            std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_cluster_keyframe_relation_);
 
-            int frame_id = -1;
-            for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
-            {
-                if (cluster_keyframe_relation_[i].first == vertex_id)
-                {
-                    frame_id = cluster_keyframe_relation_[i].second;
-                    break;
-                }
-            }
-            return frame_id;
-        }
-        else
+        int frame_id = -1;
+        for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
         {
-            int frame_id = -1;
-            for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
+            if (cluster_keyframe_relation_[i].first == vertex_id)
             {
-                if (cluster_keyframe_relation_[i].first == vertex_id)
-                {
-                    frame_id = cluster_keyframe_relation_[i].second;
-                    break;
-                }
+                frame_id = cluster_keyframe_relation_[i].second;
+                break;
             }
-            return frame_id;
         }
+        return frame_id;
     }
 
 
-    tf::Transform Map::getVertexPose(int vertex_id, bool lock)
+    tf::Transform Map::getVertexPose(int vertex_id, bool use_lock)
     {
-        if (lock)
+        if (use_lock)
         {
             // Locks map.
-            std::scoped_lock lock(mutex_map_);
+            std::scoped_lock lock(mutex_graph_);
 
             tf::Transform vertex_pose;
             if (vertex_id >= 0)
@@ -92,61 +76,39 @@ namespace slamon
 
     tf::Transform Map::getVertexPoseRelativeToCamera(int vertex_id)
     {
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_local_cluster_poses_);
         return local_cluster_poses_[vertex_id];
     }
 
 
-    tf::Transform Map::getVertexCameraPose(int vertex_id, bool lock)
+    tf::Transform Map::getVertexCameraPose(int vertex_id, bool use_lock)
     {
-        if (lock)
-        {
-            std::scoped_lock lock(mutex_map_);
-            tf::Transform vertex_pose = getVertexPose(vertex_id, false);
-            return vertex_pose * local_cluster_poses_[vertex_id].inverse();
-        }
-        else
-        {
-            tf::Transform vertex_pose = getVertexPose(vertex_id, false);
-            return vertex_pose * local_cluster_poses_[vertex_id].inverse();
-        }
+        tf::Transform vertex_pose = getVertexPose(vertex_id, use_lock);
+
+        std::scoped_lock lock(mutex_local_cluster_poses_);
+        return vertex_pose * local_cluster_poses_[vertex_id].inverse();
     }
 
 
-    void Map::getKeyframeVertices(int keyframe_id, 
-                                  bool lock,
+    void Map::getKeyframeVertices(int keyframe_id,
                                   std::vector<int>& vertices)
     {
-        if (lock)
+        std::scoped_lock lock(mutex_cluster_keyframe_relation_);
+
+        vertices.clear();
+        for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
         {
-            std::scoped_lock lock(mutex_map_);
-            vertices.clear();
-            for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
-            {
-                if (cluster_keyframe_relation_[i].second == keyframe_id)
-                    vertices.push_back(cluster_keyframe_relation_[i].first);
-            }
-        }
-        else
-        {
-            vertices.clear();
-            for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
-            {
-                if (cluster_keyframe_relation_[i].second == keyframe_id)
-                    vertices.push_back(cluster_keyframe_relation_[i].first);
-            }
+            if (cluster_keyframe_relation_[i].second == keyframe_id)
+                vertices.push_back(cluster_keyframe_relation_[i].first);
         }
     }
 
 
     tf::Transform Map::getKeyframePose(int keyframe_id)
     {
-        // Locks map.
-        std::scoped_lock lock(mutex_map_);
-
         std::vector<int> keyframe_vertices;
-        getKeyframeVertices(keyframe_id, false, keyframe_vertices);
-        return getVertexCameraPose(keyframe_vertices[0], false);
+        getKeyframeVertices(keyframe_id, keyframe_vertices);
+        return getVertexCameraPose(keyframe_vertices[0], true);
     }
 
 
@@ -155,7 +117,7 @@ namespace slamon
                                std::vector<tf::Transform>& keyframe_poses)
     {
         // Locks graph
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_graph_);
 
         // Sanity check
         stamps.clear();
@@ -169,7 +131,7 @@ namespace slamon
         {
             // Is this keyframe processed?
             found = false;
-            keyframe_id = getVertexKeyframeId(vertex_id, false);
+            keyframe_id = getVertexKeyframeId(vertex_id);
             // for (uint processed_keyframe_id = processed_keyframes.size() - 1; processed_keyframe_id >= 0; processed_keyframe_id--)
             for (uint processed_keyframe_id = 0; processed_keyframe_id < keyframe_ids.size(); processed_keyframe_id++)
             {
@@ -184,7 +146,10 @@ namespace slamon
 
             // Save data.
             keyframe_ids.push_back(keyframe_id);
-            stamps.push_back(keyframe_stamps_[keyframe_id]);
+            {
+                std::scoped_lock lock(mutex_keyframe_stamps_);
+                stamps.push_back(keyframe_stamps_[keyframe_id]);
+            }
             keyframe_poses.push_back(getVertexCameraPose(vertex_id, false));
         }
     }
@@ -194,7 +159,7 @@ namespace slamon
                                   std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses)
     {
         // Locks map.
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_graph_);
 
         // Sanity check
         keyframe_ids.clear();
@@ -210,8 +175,8 @@ namespace slamon
             if (e)
             {
                 // Get the keyframes corresponding to this edge.
-                keyframe_0 = getVertexKeyframeId(e->vertices()[0]->id(), false);
-                keyframe_1 = getVertexKeyframeId(e->vertices()[1]->id(), false);
+                keyframe_0 = getVertexKeyframeId(e->vertices()[0]->id());
+                keyframe_1 = getVertexKeyframeId(e->vertices()[1]->id());
 
                 if (abs(keyframe_0 - keyframe_1) > 1)
                 {
@@ -236,7 +201,7 @@ namespace slamon
                                   std::vector<int>& closest_neighbors)
     {
         // Locks map.
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_graph_);
 
         // Init.
         closest_neighbors.clear();
@@ -276,21 +241,21 @@ namespace slamon
 
     void Map::addTimestamp(double stamp)
     {
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_keyframe_stamps_);
         keyframe_stamps_.push_back(stamp);
     }
 
 
     void Map::addLocalClusterPose(const tf::Transform& local_cluster_pose)
     {
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_local_cluster_poses_);
         local_cluster_poses_.push_back(local_cluster_pose);
     }
 
 
     void Map::addClusterKeyframeRelation(const std::pair<int, int>& relation)
     {
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_cluster_keyframe_relation_);
         cluster_keyframe_relation_.push_back(relation);
     }
 
@@ -298,7 +263,7 @@ namespace slamon
     int Map::addVertex(const tf::Transform& pose)
     {
         // Locks map.
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_graph_);
 
         // Convert pose for graph.
         Eigen::Isometry3d vertex_pose = fromTfToIsometry(pose);
@@ -327,7 +292,7 @@ namespace slamon
                       tf::Transform tf_edge)
     {
         // Locks map.
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_graph_);
 
         // Gets the graph vertices.
         g2o::VertexSE3* vertex_0 = dynamic_cast<g2o::VertexSE3*>(graph_.vertices()[vertex_0_id]);
@@ -347,7 +312,7 @@ namespace slamon
     void Map::update()
     {
         // Locks map.
-        std::scoped_lock lock(mutex_map_);
+        std::scoped_lock lock(mutex_graph_);
 
         // Optimize!
         graph_.initializeOptimization();

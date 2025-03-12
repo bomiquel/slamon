@@ -263,7 +263,7 @@ namespace slamon
             {
                 // Retrieves the vertices of the previous keyframe.
                 std::vector<int> p_vertex_ids;
-                map_->getKeyframeVertices(c_keyframe_id_ - 1, true, p_vertex_ids);
+                map_->getKeyframeVertices(c_keyframe_id_ - 1, p_vertex_ids);
 
                 // Connect only the closest vertices between the two keyframes.
                 std::vector<int> closest_vertices;

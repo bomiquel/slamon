@@ -762,7 +762,7 @@ namespace slamon
         {
             q_cluster_id = i_q_cluster_ids[i];
             cand_cluster_id = i_cand_cluster_ids[i];
-            cand_keyframe_id = map_->getVertexKeyframeId(cand_cluster_id, true);
+            cand_keyframe_id = map_->getVertexKeyframeId(cand_cluster_id);
 
             // Builds the unique candidate keyframe vector.
             cand_keyframe_found = false;
