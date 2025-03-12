@@ -127,13 +127,56 @@ namespace slamon
                 run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time); // Read cluster candidate run time.
 
                 // Loop over candidates.
-                bool valid;
+                tf::Transform estimated_motion;
+                bool loop_detected = false, loop_closed = false;
+                std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
+                std::vector<cv::KeyPoint> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
                 for (uint i = 0; i < cand_clusters.size(); i++)
                 {
-                    // Tries to close loop between query cluster and a candidate cluster.
-                    valid = closeLoopBetween(c_cluster, cand_clusters[i].first, neighbours_cand_clusters[i], cand_clusters[i].second);
-                    if (valid && cand_clusters[i].second == "hash")
+                    // Tries to detect a loop between query cluster and a candidate cluster.
+                    start_module_time = ros::Time::now().toSec();
+                    loop_detected = detectLoop(c_cluster,
+                                               cand_clusters[i].first,
+                                               neighbours_cand_clusters[i],
+                                               estimated_motion,
+                                               i_q_cluster_ids,
+                                               i_cand_cluster_ids,
+                                               i_q_l_kpts,
+                                               i_q_r_kpts,
+                                               i_cand_l_kpts,
+                                               i_cand_r_kpts);
+                    run_times_.run_time_4 += (ros::Time::now().toSec() - start_module_time); // Loop detection run time.
+
+                    // Tries to add edges and correct execute a pose-graph optimization.
+                    start_module_time = ros::Time::now().toSec();
+                    if (loop_detected)
+                    {
+                        loop_closed = loopCorrection(c_cluster.getKeyframeId(),
+                                                     cand_clusters[i].first.getGlobalId(),
+                                                     cand_clusters[i].second,
+                                                     estimated_motion,
+                                                     i_q_cluster_ids,
+                                                     i_cand_cluster_ids,
+                                                     i_q_l_kpts,
+                                                     i_q_r_kpts,
+                                                     i_cand_l_kpts,
+                                                     i_cand_r_kpts);
+                    }
+                    run_times_.run_time_5 += (ros::Time::now().toSec() - start_module_time); // Loop correction run time.
+
+                    if (loop_closed && cand_clusters[i].second == "hash")
                         break;
+
+                    // Clear
+                    i_q_l_kpts.clear();
+                    i_q_r_kpts.clear();
+                    loop_closed = false;
+                    loop_detected = false;
+                    i_cand_l_kpts.clear();
+                    i_cand_r_kpts.clear();
+                    i_q_cluster_ids.clear();
+                    i_cand_cluster_ids.clear();
+                    estimated_motion.setIdentity();
                 }
                 p_cand_clusters_ = cand_clusters;
                 p_q_cluster_neighbours_.push_back(c_cluster);
@@ -399,15 +442,18 @@ namespace slamon
     }
 
 
-    bool LoopCloser::closeLoopBetween(Cluster q_cluster,
-                                      Cluster cand_cluster,
-                                      std::vector<Cluster>& neighbours_cand_cluster,
-                                      const std::string& search_method)
+    bool LoopCloser::detectLoop(Cluster& q_cluster,
+                                Cluster& cand_cluster,
+                                std::vector<Cluster>& neighbours_cand_cluster,
+                                tf::Transform& estimated_motion,
+                                std::vector<int>& i_q_cluster_ids,
+                                std::vector<int>& i_cand_cluster_ids,
+                                std::vector<cv::KeyPoint>& i_q_l_kpts,
+                                std::vector<cv::KeyPoint>& i_q_r_kpts,
+                                std::vector<cv::KeyPoint>& i_cand_l_kpts,
+                                std::vector<cv::KeyPoint>& i_cand_r_kpts)
     {
-        // Auxilary variable to set the start time of a module.
-        double start_module_time = ros::Time::now().toSec();
-
-        // Cluster ids list.
+        // Cluster ids lists.
         std::vector<int> q_cluster_ids, cand_cluster_ids, f_q_cluster_ids, f_cand_cluster_ids;
 
         // First descriptor matching.
@@ -568,9 +614,7 @@ namespace slamon
             {
                 // Estimates motion.
                 cv::Mat estimated_rotation, estimated_translation;
-                std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
                 std::vector<cv::Point3f> i_q_l_cam_pts, i_cand_world_pts;
-                std::vector<cv::KeyPoint> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
                 estimateMotion(l_proj_mat_, r_proj_mat_,
                                f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_l_cam_pts, f_cand_world_pts,
                                estimated_rotation, estimated_translation,
@@ -583,163 +627,181 @@ namespace slamon
                 // Loop found!
                 if (i_q_l_kpts.size() >= (uint)(min_lc_inliers_))
                 {
-                    // Finished loop detection, starting loop closure.
-                    run_times_.run_time_4 += (ros::Time::now().toSec() - start_module_time); // Loop detection run time.
-                    start_module_time = ros::Time::now().toSec();
-
                     // From cv::Mat to tf::Transform.
-                    tf::Transform estimated_motion;
                     fromMatToTf(estimated_rotation, estimated_translation, estimated_motion);
-                    
+
                     // From {q_cam}^T_{O} to {O}^T_{q_cam}.
                     estimated_motion = estimated_motion.inverse();
 
-                    // Gets the inliers per cluster pair.
-                    std::pair<int, int> relation;
-                    bool cluster_pair_found, cand_keyframe_found;
-                    std::vector<int> inliers_per_pair, cand_keyframe_ids;
-                    std::vector<std::pair<int, int>> cluster_pairs, cand_cluster_keyframe_relation;
-                    int q_cluster_id, cand_cluster_id, cand_keyframe_id, last_keyframe_id = -1, last_cluster_id = -1;
-                    for (uint i = 0; i < i_q_l_kpts.size(); i++)
-                    {
-                        q_cluster_id = i_q_cluster_ids[i];
-                        cand_cluster_id = i_cand_cluster_ids[i];
-                        cand_keyframe_id = map_->getVertexKeyframeId(cand_cluster_id, true);
-
-                        // Builds the unique candidate keyframe vector.
-                        cand_keyframe_found = false;
-                        for (uint j = 0; j < cand_keyframe_ids.size(); j++)
-                        {
-                            if (cand_keyframe_ids[j] == cand_keyframe_id)
-                            {
-                                cand_keyframe_found = true;
-                                break;
-                            }
-                        }
-                        if (!cand_keyframe_found)
-                            cand_keyframe_ids.push_back(cand_keyframe_id);
-
-                        // Builds candidate keyframe-cluster relation.
-                        if ((last_keyframe_id != cand_keyframe_id) || (last_cluster_id != cand_cluster_id))
-                        {
-                            last_cluster_id = cand_cluster_id;
-                            last_keyframe_id = cand_keyframe_id;
-                            cand_cluster_keyframe_relation.push_back(std::make_pair(cand_cluster_id, cand_keyframe_id));
-                        }
-
-                        // Searches if this pair already exists.
-                        cluster_pair_found = false;
-                        for (uint j = 0; j < cluster_pairs.size(); j++)
-                        {
-                            if ((cluster_pairs[j].first == q_cluster_id) && (cluster_pairs[j].second == cand_cluster_id))
-                            {
-                                inliers_per_pair[j]++;
-                                cluster_pair_found = true;
-                                break;
-                            }
-                        }
-                        if (!cluster_pair_found)
-                        {
-                            cluster_pairs.push_back(std::make_pair(q_cluster_id, cand_cluster_id));
-                            inliers_per_pair.push_back(1);
-                        }
-                    }
-
-                    // Adds the corresponding edges.
-                    bool lc_already_exists, some_edge_added = false;
-                    std::vector<int> definitive_inliers_per_pair;
-                    std::vector<std::pair<int, int>> definitive_cluster_pairs; // q_cluster_id - cand_cluster_id
-                    tf::Transform edge, cand_cluster_pose, q_cluster_pose_relative_to_camera;
-                    for (uint i = 0; i < inliers_per_pair.size(); i++)
-                    {
-                        if (inliers_per_pair[i] >= 5)
-                        {
-                            // Checks if this loop closure exists.
-                            lc_already_exists = false;
-                            for (uint j = 0; j < cluster_lc_found_.size(); j++)
-                            {
-                                if ((cluster_lc_found_[j].first == cluster_pairs[i].first && cluster_lc_found_[j].second == cluster_pairs[i].second) ||
-                                    (cluster_lc_found_[j].first == cluster_pairs[i].second && cluster_lc_found_[j].second == cluster_pairs[i].first))
-                                {
-                                    lc_already_exists = true;
-                                    break;
-                                }
-                            }
-                            if (lc_already_exists)
-                                continue;
-                            
-                            // Computes correct transform between edges.
-                            cand_cluster_pose = map_->getVertexPose(cluster_pairs[i].second, true); // {O}^T_{cand_cluster}
-                            q_cluster_pose_relative_to_camera = map_->getVertexPoseRelativeToCamera(cluster_pairs[i].first); // {q_cam}^T_{q_cluster}
-                            edge = cand_cluster_pose.inverse() * estimated_motion * q_cluster_pose_relative_to_camera; // {cand_cluster}^T_{q_cluster} = {cand_cluster}^T_{O} * {O}^T_{q_cam} * {q_cam}^T_{q_cluster}
-
-                            // Adds this edge to the graph.
-                            some_edge_added = true;
-                            map_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, edge);                           
-                            definitive_inliers_per_pair.push_back(inliers_per_pair[i]);
-                            definitive_cluster_pairs.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second)); // q_cluster_id - cand_cluster_id
-
-                            // Add this edge to the list of clusters that close loops.
-                            cluster_lc_found_.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second));
-                        }
-                    }
-
-                    if (some_edge_added)
-                    {
-                        map_->update();
-                        run_times_.run_time_5 += (ros::Time::now().toSec() - start_module_time); // Close loop run time.
-
-                        ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
-                        ROS_INFO_STREAM("                      LOOP CLOSURE: " << loop_closure_num_);
-                        ROS_INFO_STREAM("Between keyframe " << q_cluster.getKeyframeId() << " and " << cand_cluster.getKeyframeId());
-                        ROS_INFO_STREAM("Method: " << search_method);
-                        ROS_INFO_STREAM("Inliers: " << i_q_l_kpts.size());
-                        ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
-
-                        if (enable_debugging_)
-                        {
-                            if (loop_closure_img_pub_.getNumSubscribers() > 0)
-                                publishImgLoopClosure(ros::Time::now(), 
-                                                      loop_closure_img_pub_,
-                                                      q_cluster.getKeyframeId(),
-                                                      keyframe_path_,
-                                                      i_q_cluster_ids,
-                                                      i_cand_cluster_ids,
-                                                      cand_keyframe_ids,
-                                                      i_q_l_kpts,
-                                                      i_q_r_kpts,
-                                                      i_cand_l_kpts,
-                                                      i_cand_r_kpts,
-                                                      definitive_inliers_per_pair,
-                                                      definitive_cluster_pairs,
-                                                      cand_cluster_keyframe_relation);
-
-                            writeImgLoopClosure(lc_path_ + convertTo5Digits(loop_closure_num_),
-                                                q_cluster.getKeyframeId(),
-                                                keyframe_path_,
-                                                i_q_cluster_ids,
-                                                i_cand_cluster_ids,
-                                                cand_keyframe_ids,
-                                                i_q_l_kpts,
-                                                i_q_r_kpts,
-                                                i_cand_l_kpts,
-                                                i_cand_r_kpts,
-                                                definitive_inliers_per_pair,
-                                                definitive_cluster_pairs,
-                                                cand_cluster_keyframe_relation);
-                        }
-                        loop_closure_num_++;
-                        return true;
-                    }
-                    else
-                    {
-                        run_times_.run_time_5 += (ros::Time::now().toSec() - start_module_time); // Close loop run time.
-                    }
+                    return true;
                 }
             }
         }
-        run_times_.run_time_4 += (ros::Time::now().toSec() - start_module_time); // Loop detection run time.
         return false;  
+    }
+
+
+    bool LoopCloser::loopCorrection(const int q_cluster_kf_id,
+                                    const int cand_cluster_kf_id,
+                                    const std::string& search_method,
+                                    const tf::Transform& estimated_motion,
+                                    const std::vector<int>& i_q_cluster_ids,
+                                    const std::vector<int>& i_cand_cluster_ids,
+                                    const std::vector<cv::KeyPoint>& i_q_l_kpts,
+                                    const std::vector<cv::KeyPoint>& i_q_r_kpts,
+                                    const std::vector<cv::KeyPoint>& i_cand_l_kpts,
+                                    const std::vector<cv::KeyPoint>& i_cand_r_kpts)
+    {
+        // Gets the inliers per cluster pair.
+        std::vector<int> inliers_per_pair,cand_keyframe_ids;
+        std::vector<std::pair<int, int>> cluster_pairs, cand_cluster_keyframe_relation;
+        getInliersPerClusterPair(i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, inliers_per_pair,
+                                cand_keyframe_ids, cluster_pairs, cand_cluster_keyframe_relation);
+
+        // Adds the corresponding edges.
+        bool lc_already_exists, some_edge_added = false;
+        std::vector<int> definitive_inliers_per_pair;
+        std::vector<std::pair<int, int>> definitive_cluster_pairs; // q_cluster_id - cand_cluster_id
+        tf::Transform edge, cand_cluster_pose, q_cluster_pose_relative_to_camera;
+        for (uint i = 0; i < inliers_per_pair.size(); i++)
+        {
+            if (inliers_per_pair[i] >= 5)
+            {
+                // Checks if this loop closure exists.
+                lc_already_exists = false;
+                for (uint j = 0; j < cluster_lc_found_.size(); j++)
+                {
+                    if ((cluster_lc_found_[j].first == cluster_pairs[i].first && cluster_lc_found_[j].second == cluster_pairs[i].second) ||
+                        (cluster_lc_found_[j].first == cluster_pairs[i].second && cluster_lc_found_[j].second == cluster_pairs[i].first))
+                    {
+                        lc_already_exists = true;
+                        break;
+                    }
+                }
+                if (lc_already_exists)
+                    continue;
+                
+                // Computes correct transform between edges.
+                cand_cluster_pose = map_->getVertexPose(cluster_pairs[i].second, true); // {O}^T_{cand_cluster}
+                q_cluster_pose_relative_to_camera = map_->getVertexPoseRelativeToCamera(cluster_pairs[i].first); // {q_cam}^T_{q_cluster}
+                edge = cand_cluster_pose.inverse() * estimated_motion * q_cluster_pose_relative_to_camera; // {cand_cluster}^T_{q_cluster} = {cand_cluster}^T_{O} * {O}^T_{q_cam} * {q_cam}^T_{q_cluster}
+
+                // Adds this edge to the graph.
+                some_edge_added = true;
+                map_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, edge);                           
+                definitive_inliers_per_pair.push_back(inliers_per_pair[i]);
+                definitive_cluster_pairs.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second)); // q_cluster_id - cand_cluster_id
+
+                // Add this edge to the list of clusters that close loops.
+                cluster_lc_found_.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second));
+            }
+        }
+
+        if (some_edge_added)
+        {
+            map_->update();
+            loop_closure_num_++;
+
+            ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
+            ROS_INFO_STREAM("                      LOOP CLOSURE: " << loop_closure_num_);
+            ROS_INFO_STREAM("Between keyframe " << q_cluster_kf_id << " and " << cand_cluster_kf_id);
+            ROS_INFO_STREAM("Method: " << search_method);
+            ROS_INFO_STREAM("Inliers: " << i_q_l_kpts.size());
+            ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
+
+            if (enable_debugging_)
+            {
+                if (loop_closure_img_pub_.getNumSubscribers() > 0)
+                    publishImgLoopClosure(ros::Time::now(), 
+                                        loop_closure_img_pub_,
+                                        q_cluster_kf_id,
+                                        keyframe_path_,
+                                        i_q_cluster_ids,
+                                        i_cand_cluster_ids,
+                                        cand_keyframe_ids,
+                                        i_q_l_kpts,
+                                        i_q_r_kpts,
+                                        i_cand_l_kpts,
+                                        i_cand_r_kpts,
+                                        definitive_inliers_per_pair,
+                                        definitive_cluster_pairs,
+                                        cand_cluster_keyframe_relation);
+
+                writeImgLoopClosure(lc_path_ + convertTo5Digits(loop_closure_num_),
+                                    q_cluster_kf_id,
+                                    keyframe_path_,
+                                    i_q_cluster_ids,
+                                    i_cand_cluster_ids,
+                                    cand_keyframe_ids,
+                                    i_q_l_kpts,
+                                    i_q_r_kpts,
+                                    i_cand_l_kpts,
+                                    i_cand_r_kpts,
+                                    definitive_inliers_per_pair,
+                                    definitive_cluster_pairs,
+                                    cand_cluster_keyframe_relation);
+            }
+            return true;
+        }
+        return false;
+    }
+
+
+    void LoopCloser::getInliersPerClusterPair(const std::vector<int>& i_q_cluster_ids,
+                                              const std::vector<int>& i_cand_cluster_ids,
+                                              const std::vector<cv::KeyPoint>& i_q_l_kpts,
+                                              std::vector<int>& inliers_per_pair,
+                                              std::vector<int>& cand_keyframe_ids,
+                                              std::vector<std::pair<int, int>>& cluster_pairs,
+                                              std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation)
+    {
+        std::pair<int, int> relation;
+        bool cluster_pair_found, cand_keyframe_found;
+        int q_cluster_id, cand_cluster_id, cand_keyframe_id, last_keyframe_id = -1, last_cluster_id = -1;
+        for (uint i = 0; i < i_q_l_kpts.size(); i++)
+        {
+            q_cluster_id = i_q_cluster_ids[i];
+            cand_cluster_id = i_cand_cluster_ids[i];
+            cand_keyframe_id = map_->getVertexKeyframeId(cand_cluster_id, true);
+
+            // Builds the unique candidate keyframe vector.
+            cand_keyframe_found = false;
+            for (uint j = 0; j < cand_keyframe_ids.size(); j++)
+            {
+                if (cand_keyframe_ids[j] == cand_keyframe_id)
+                {
+                    cand_keyframe_found = true;
+                    break;
+                }
+            }
+            if (!cand_keyframe_found)
+                cand_keyframe_ids.push_back(cand_keyframe_id);
+
+            // Builds candidate keyframe-cluster relation.
+            if ((last_keyframe_id != cand_keyframe_id) || (last_cluster_id != cand_cluster_id))
+            {
+                last_cluster_id = cand_cluster_id;
+                last_keyframe_id = cand_keyframe_id;
+                cand_cluster_keyframe_relation.push_back(std::make_pair(cand_cluster_id, cand_keyframe_id));
+            }
+
+            // Searches if this pair already exists.
+            cluster_pair_found = false;
+            for (uint j = 0; j < cluster_pairs.size(); j++)
+            {
+                if ((cluster_pairs[j].first == q_cluster_id) && (cluster_pairs[j].second == cand_cluster_id))
+                {
+                    inliers_per_pair[j]++;
+                    cluster_pair_found = true;
+                    break;
+                }
+            }
+            if (!cluster_pair_found)
+            {
+                cluster_pairs.push_back(std::make_pair(q_cluster_id, cand_cluster_id));
+                inliers_per_pair.push_back(1);
+            }
+        }
     }
 
 
