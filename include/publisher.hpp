@@ -22,6 +22,7 @@
 #include <std_msgs/Int32.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <cv_bridge/cv_bridge.h>
 
 #include "slamon/Keypoint.h"
@@ -335,7 +336,15 @@ class Publisher
         void publishPerformance(const ros::Time& stamp,
                                 const int successes_num,
                                 const RunTimes& run_times,
-                                const ros::Publisher& publisher);              
+                                const ros::Publisher& publisher);      
+
+
+        /** \brief Publishes pointcloud.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] cloud_msg ROS message containing the pointcloud.
+         */
+        void publishCloud(const ros::Publisher& publisher,
+                          const sensor_msgs::PointCloud2ConstPtr& cloud_msg);          
 
 
         /** \brief Publishes relevant information from a stereo pair of images.

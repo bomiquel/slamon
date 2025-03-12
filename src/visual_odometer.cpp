@@ -274,7 +274,10 @@ namespace slamon
         catch (const tf::TransformException& e)
         {
             ROS_WARN_STREAM("[VO->Initialiser:] TF listener exception: " << e.what());
-            return false;
+            ROS_WARN_STREAM("Will assume robot to camera transform as identity!");
+            // if (e == tf2::LookupException)
+            //     ROS_WARN_STREAM("It's a tf::LookupException");
+            // return false;
         }
 
         // Gets projection matrix.

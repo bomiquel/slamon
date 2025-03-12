@@ -69,6 +69,7 @@ namespace slamon
         robot2camera_client_ = nh.serviceClient<slamon::GetTransform>("get_robot_to_camera_tf");
 
         // Publishers.
+        cloud_pub_ = nhp.advertise<sensor_msgs::PointCloud2>("keycloud", 1);
         robot_map_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_map", 1);
         camera_map_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_map", 1);
         run_times_pub_ = nhp.advertise<slamon::Performance>("mapmaker_performance", 1);
@@ -77,14 +78,16 @@ namespace slamon
 
         // Subscribers.
         message_filters::Subscriber<nav_msgs::Odometry> odom_sub;
+        message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub;
         message_filters::Subscriber<slamon::StereoImageAttributes> stereo_attributes_sub;
 
         // Message sync.
         boost::shared_ptr<Sync_> sync;
         odom_sub.subscribe(nh, "odom", 1);
+        cloud_sub.subscribe(nh, "points2", 1);
         stereo_attributes_sub.subscribe(nh, "stereo_attributes", 1);
-        sync.reset(new Sync_(SyncPolicy_(10), odom_sub, stereo_attributes_sub));
-        sync->registerCallback(boost::bind(&Mapmaker::callback, this, _1, _2));
+        sync.reset(new Sync_(SyncPolicy_(10), odom_sub, cloud_sub, stereo_attributes_sub));
+        sync->registerCallback(boost::bind(&Mapmaker::callback, this, _1, _2, _3));
 
         // Calls callback when synchronised messages arrive
         ros::spin();
@@ -92,6 +95,7 @@ namespace slamon
 
 
     void Mapmaker::callback(const nav_msgs::OdometryConstPtr& odom_msg,
+                            const sensor_msgs::PointCloud2ConstPtr& cloud_msg,
                             const slamon::StereoImageAttributesConstPtr& stereo_attributes_msg)
     {
         // Time at which the program enters into the callback.
@@ -337,6 +341,9 @@ namespace slamon
             tf::Transform updated_map_robot_pose = updated_map_camera_pose * robot2camera_.inverse();
             publishPose(stamp, updated_map_robot_pose, robot_map_pub_, robot_frame_id_);
             run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Write graph to disk and publish updated robot pose run time.
+
+            // Publish keyframe pointcloud
+            publishCloud(cloud_pub_, cloud_msg);
 
             // Publish number of keyframes.
             if (keyframes_num_pub_.getNumSubscribers() > 0)

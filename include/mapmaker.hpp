@@ -67,10 +67,12 @@ namespace slamon
             /** \brief Messages callback. This function is called when synchronized stereo
              *  data and odom messages are received.
              *  \param[in] odom_msg ROS message containing current robot odometry.
+             *  \param[in] cloud_msg ROS message containing the pointcloud of the scene.
              *  \param[in] stereo_attributes_msg Custom ROS message containing current 
              *  stereo pair image relevant information.
              */  
             void callback(const nav_msgs::OdometryConstPtr& odom_msg,
+                          const sensor_msgs::PointCloud2ConstPtr& cloud_msg,
                           const slamon::StereoImageAttributesConstPtr& stereo_attributes_msg);
 
 
@@ -152,6 +154,8 @@ namespace slamon
 
             tf::Transform p_odom_robot_pose_; //!> The robot's odometry the last time a keyframe was inserted.
 
+            ros::Publisher cloud_pub_; //!> Pointcloud publisher.
+
             ros::Publisher robot_map_pub_; //!> Updated robot pose publisher.
             
             ros::Publisher camera_map_pub_; //!> Updated camera pose publisher.
@@ -175,6 +179,7 @@ namespace slamon
 
             // Topic sync
             typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,
+                                                                    sensor_msgs::PointCloud2,
                                                                     slamon::StereoImageAttributes> SyncPolicy_;
 
             typedef message_filters::Synchronizer<SyncPolicy_> Sync_;

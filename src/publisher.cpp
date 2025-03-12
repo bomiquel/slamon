@@ -299,6 +299,13 @@ void Publisher::publishPerformance(const ros::Time& stamp,
 }
 
 
+void Publisher::publishCloud(const ros::Publisher& publisher,
+                             const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
+{
+    publisher.publish(cloud_msg);
+}
+
+
 void Publisher::publishStereoImageAttributes(const cv::Mat& l_descs,
                                              const cv::Mat& r_descs,
                                              const ros::Time& stamp,
