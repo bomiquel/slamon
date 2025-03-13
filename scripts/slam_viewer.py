@@ -20,8 +20,9 @@ import matplotlib.pyplot as plt
 
 # Global variables
 ax_gt = None
+ax_vo = None
+ax_ekf = None
 plot_dim = 3
-ax_odom = None
 ax_edges = []
 ax_vertices = None
 edges_shown = True
@@ -37,9 +38,8 @@ def isFull(path_to_file):
   @param path_to_file: path to the file to be analysed.
   @return if file length is > 0.
   """
-  f = open(path_to_file)
-  lines = f.readlines()
-  f.close()
+  with open(path_to_file, "r") as file:
+    lines = file.readlines()
   return len(lines) > 0
 
 
@@ -185,39 +185,52 @@ def onClick(event):
     plt.draw()
 
 
-def plotOnline(gt_data_path, odom_data_path, slam_data_path):
+def plotOnline(gt_data_path, vo_data_path, slam_data_path):
   """ 
   Function to plot the data saved into the files online. 
   @param gt_data_path: Path to the file with the ground truth data.
-  @param odom_data_path: Path to the file with the odometry data.
+  @param vo_data_path: Path to the file with the odometry data.
   @param slam_data_path: Path to the file with the slam data.
   """
-  global vertices_lock_file, legend_edited, ax_gt, ax_odom, ax_vertices, edges_shown, plot_dim
+  global vertices_lock_file, legend_edited, ax_gt, ax_vo, ax_vertices, edges_shown, plot_dim
 
   # Remove the main axes
   removeAxes(ax_gt)
-  removeAxes(ax_odom)
+  removeAxes(ax_vo)
   removeAxes(ax_vertices)
 
   # Ground truth.
   if (gt_data_path is not None and os.path.isfile(gt_data_path) and isFull(gt_data_path)):
 
     # Check gt file type.
-    f = open(gt_data_path)
-    lines = f.readlines()
-    f.close()
+    with open(gt_data_path, "r") as file:
+      lines = file.readlines()
     size = lines[1].split(",")
     if (len(size) > 12):
       try:
         data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 5, 6, 7, 8, 9, 10, 11))
       except Exception as e:
         print(f"The following exception was detected while trying to load the GT (size > 12): {e} ")
+        with open(gt_data_path, "r") as file:
+          lines = file.readlines()
+        if "shutdown" in lines[-1]:
+          lines.pop()
+          with open(gt_data_path, "w") as file:
+            file.writelines(lines)
+          data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 5, 6, 7, 8, 9, 10, 11))
         return
     else:
       try:
         data = np.loadtxt(gt_data_path, delimiter=',', skiprows = 1, usecols = (0, 1, 2, 3, 4, 5, 6, 7))
       except Exception as e:
         print(f"The following exception was detected while trying to load the GT (size <= 12): {e} ")
+        with open(gt_data_path, "r") as file:
+          lines = file.readlines()
+        if "shutdown" in lines[-1]:
+          lines.pop()
+          with open(gt_data_path, "w") as file:
+            file.writelines(lines)
+          data = np.loadtxt(gt_data_path, delimiter=',', skiprows = 1, usecols = (0, 1, 2, 3, 4, 5, 6, 7))
         return
 
     # Pre-process plot if necessary.
@@ -231,14 +244,20 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
       ax_gt = ax.plot(data[:, 1], data[:, 2], "orange", label = "Ground Truth")
 
   # Load visual odometry data (saved with rostopic echo -p /namespace/topic > file.txt).
-  if (os.path.isfile(odom_data_path) and isFull(odom_data_path)):
+  if (os.path.isfile(vo_data_path) and isFull(vo_data_path)):
 
     # Read the data
     try:
-      data = np.loadtxt(odom_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
-      # data = pylab.loadtxt(odom_file, delimiter=',', skiprows=1, usecols=(4, 5, 6, 7, 8, 9, 10))
+      data = np.loadtxt(vo_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
     except Exception as e:
-      print(f"The following exception was detected while trying to load the odometry: {e} ")
+      print(f"The following exception was detected while trying to load the vo: {e} ")
+      with open(vo_data_path, "r") as file:
+        lines = file.readlines()
+      if "shutdown" in lines[-1]:
+        lines.pop()
+        with open(vo_data_path, "w") as file:
+          file.writelines(lines)
+        data = np.loadtxt(vo_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
       return
 
     # Pre-process plot if necessary.
@@ -247,9 +266,9 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
 
     # Plot.
     if (plot_dim == 3):
-      ax_odom = ax.plot(data[:, 0], data[:, 1], data[:, 2], "blue", label = "Odometry")
+      ax_vo = ax.plot(data[:, 0], data[:, 1], data[:, 2], "blue", label = "VO")
     else:
-      ax_odom = ax.plot(data[:, 0], data[:, 1], "blue", label = "Odometry")
+      ax_vo = ax.plot(data[:, 0], data[:, 1], "blue", label = "VO")
 
   # Load SLAM vertices (file saved with SLAM node)
   if (os.path.isfile(slam_data_path) and isFull(slam_data_path)):
@@ -259,21 +278,34 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
       time.sleep(0.5)
 
     # Read the data
-    f = open(slam_data_path)
-    lines = f.readlines()
-    f.close()
+    with open(slam_data_path, "r") as file:
+      lines = file.readlines()
     size = lines[1].split(",")
     if len(size) == 9:
       try:
         data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
       except Exception as e:
         print(f"The following exception was detected while trying to load the SLAM algorithm vertices (size 9): {e} ")
+        with open(slam_data_path, "r") as file:
+          lines = file.readlines()
+        if "shutdown" in lines[-1]:
+          lines.pop()
+          with open(slam_data_path, "w") as file:
+            file.writelines(lines)
+          data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
         return
     elif len(size) == 8:
       try:
         data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (1, 2, 3, 4, 5, 6, 7))
       except Exception as e:
         print(f"The following exception was detected while trying to load the SLAM algorithm vertices (size 8): {e} ")
+        with open(slam_data_path, "r") as file:
+          lines = file.readlines()
+        if "shutdown" in lines[-1]:
+          lines.pop()
+          with open(slam_data_path, "w") as file:
+            file.writelines(lines)
+          data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (1, 2, 3, 4, 5, 6, 7))
         return
     else:
       print(f"Wrong number of columns")
@@ -285,9 +317,9 @@ def plotOnline(gt_data_path, odom_data_path, slam_data_path):
 
     # Plot.
     if (plot_dim == 3):
-      ax_vertices = ax.plot(data[:, 0], data[:, 1], data[:, 2], "green", label = "SLAM", marker = "o", zorder = 1)
+      ax_vertices = ax.plot(data[:, 0], data[:, 1], data[:, 2], "green", label = "V-SLAM", marker = "o", zorder = 1)
     else:
-      ax_vertices = ax.plot(data[:, 0], data[:, 1], "green", label = "SLAM", marker = "o", zorder = 1)
+      ax_vertices = ax.plot(data[:, 0], data[:, 1], "green", label = "V-SLAM", marker = "o", zorder = 1)
 
   # Show the edges
   if (edges_shown == True):
@@ -310,9 +342,9 @@ if __name__ == "__main__":
   parser.add_argument("-gt", "--gt", type = str, 
                       default = None,
                       help = "Path to the file containing the ground truth data (optional).")
-  parser.add_argument("-o", "--o", type = str, 
-                      default = "~/odom.txt",
-                      help = "Path to the file containing the odometry data (required).")
+  parser.add_argument("-vo", "--vo", type = str, 
+                      default = "~/vo.txt",
+                      help = "Path to the file containing the visual odometry data (required).")
   parser.add_argument("-v", "--v", type = str, 
                       default = "~/vertices.txt",
                       help = "Path to the file containing the SLAM vertices data (required).")
@@ -320,7 +352,7 @@ if __name__ == "__main__":
                       default = None,
                       help = "Path to the file containing the SLAM loop closing edges data (optional).")
   parser.add_argument("-dim", "--dim", type = int,
-                      default = 3,
+                      default = 2,
                       help = "Defines the plot dimensions: 2 for xy and 3 for xyz.")
   args = parser.parse_args()
 
@@ -331,7 +363,7 @@ if __name__ == "__main__":
   # pylab.rc('font', **font)
 
   # Sanity check
-  if (not os.path.isfile(args.v) or not os.path.isfile(args.o)):
+  if (not os.path.isfile(args.v) or not os.path.isfile(args.vo)):
     sys.exit()
 
   print("GRAPH VIEWER MOUSE INPUTS:")
@@ -339,7 +371,8 @@ if __name__ == "__main__":
 
   # Save global variables
   plot_dim = args.dim
-  edges_lock_file = args.e + ".lock"
+  if args.e is not None:
+    edges_lock_file = args.e + ".lock"
   vertices_lock_file = args.v + ".lock"
   loop_closing_edges_data_path = args.e
 
@@ -361,7 +394,7 @@ if __name__ == "__main__":
 
   # Start timer for real time plot
   timer = fig.canvas.new_timer(2500)
-  plotOnline(args.gt, args.o, args.v)
-  timer.add_callback(plotOnline, args.gt, args.o, args.v)
+  plotOnline(args.gt, args.vo, args.v)
+  timer.add_callback(plotOnline, args.gt, args.vo, args.v)
   timer.start()
   plt.show()
