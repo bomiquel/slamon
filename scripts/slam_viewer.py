@@ -15,6 +15,7 @@ import time
 import weakref
 import argparse
 import numpy as np
+from plyfile import PlyData
 import matplotlib.pyplot as plt
 
 
@@ -26,6 +27,8 @@ plot_dim = 3
 ax_edges = []
 ax_vertices = None
 edges_shown = True
+ax_pipes_map = None
+ax_pipes_odom = None
 legend_edited = True
 edges_lock_file = ""
 vertices_lock_file = ""
@@ -77,6 +80,18 @@ def removeEdges():
     del l
   ax_edges = []
   edges_shown = False
+
+
+def readPLYVertices(path_to_file):
+  """
+  Reads .ply files and returns their vertices.
+  @param path_to_file: path to the .ply file to be read.
+  @return .ply vertices.
+  """
+  with open(path_to_file, "rb") as file:
+    ply_data = PlyData.read(file)
+  vertices = ply_data['vertex'].data
+  return vertices['x'], vertices['y']
 
 
 def drawEdges():
@@ -185,19 +200,22 @@ def onClick(event):
     plt.draw()
 
 
-def plotOnline(gt_data_path, vo_data_path, slam_data_path):
+def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
   """ 
   Function to plot the data saved into the files online. 
   @param gt_data_path: Path to the file with the ground truth data.
-  @param vo_data_path: Path to the file with the odometry data.
+  @param vo_data_path: Path to the file with the visual odometry data.
   @param slam_data_path: Path to the file with the slam data.
+  @param pipes_folder_path: Path to the folder where the pipeline locations are stored.
   """
-  global vertices_lock_file, legend_edited, ax_gt, ax_vo, ax_vertices, edges_shown, plot_dim
+  global vertices_lock_file, legend_edited, ax_gt, ax_vo, ax_vertices, ax_pipes_map, ax_pipes_odom, edges_shown, plot_dim
 
   # Remove the main axes
   removeAxes(ax_gt)
   removeAxes(ax_vo)
   removeAxes(ax_vertices)
+  removeAxes(ax_pipes_map)
+  removeAxes(ax_pipes_odom)
 
   # Ground truth.
   if (gt_data_path is not None and os.path.isfile(gt_data_path) and isFull(gt_data_path)):
@@ -327,6 +345,25 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path):
   else:
     removeEdges()
 
+  # Load pipes positions.
+  if pipes_folder_path is not None and os.path.isdir(pipes_folder_path):
+    map_x = []
+    map_y = []
+    odom_x = []
+    odom_y = []
+    for file_name in os.listdir(pipes_folder_path):
+      if file_name.endswith("world.ply"):
+        x, y = readPLYVertices(os.path.join(pipes_folder_path, file_name))
+        odom_x.extend(x)
+        odom_y.extend(y)
+      if file_name.endswith("world_2.ply"):
+        x, y = readPLYVertices(os.path.join(pipes_folder_path, file_name))
+        map_x.extend(x)
+        map_y.extend(y)
+    # Plot.
+    ax_pipes_odom = ax.plot(odom_x, odom_y, "gray", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 1)
+    ax_pipes_map = ax.plot(map_x, map_y, "black", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 1)
+
   # Update the plot
   plt.draw()
 
@@ -351,6 +388,9 @@ if __name__ == "__main__":
   parser.add_argument("-e", "--e", type = str,
                       default = None,
                       help = "Path to the file containing the SLAM loop closing edges data (optional).")
+  parser.add_argument("-p", "--p", type = str,
+                      default = None,
+                      help = "Path to the folder where the pipeline locations are stored (optional).")
   parser.add_argument("-dim", "--dim", type = int,
                       default = 2,
                       help = "Defines the plot dimensions: 2 for xy and 3 for xyz.")
@@ -394,7 +434,7 @@ if __name__ == "__main__":
 
   # Start timer for real time plot
   timer = fig.canvas.new_timer(2500)
-  plotOnline(args.gt, args.vo, args.v)
-  timer.add_callback(plotOnline, args.gt, args.vo, args.v)
+  plotOnline(args.gt, args.vo, args.v, args.p)
+  timer.add_callback(plotOnline, args.gt, args.vo, args.v, args.p)
   timer.start()
   plt.show()
