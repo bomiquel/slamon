@@ -206,6 +206,8 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path):
     with open(gt_data_path, "r") as file:
       lines = file.readlines()
     size = lines[1].split(",")
+
+    # Read the data.
     if (len(size) > 12):
       try:
         data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 5, 6, 7, 8, 9, 10, 11))
@@ -246,7 +248,7 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path):
   # Load visual odometry data (saved with rostopic echo -p /namespace/topic > file.txt).
   if (os.path.isfile(vo_data_path) and isFull(vo_data_path)):
 
-    # Read the data
+    # Read the data.
     try:
       data = np.loadtxt(vo_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
     except Exception as e:
@@ -343,10 +345,10 @@ if __name__ == "__main__":
                       default = None,
                       help = "Path to the file containing the ground truth data (optional).")
   parser.add_argument("-vo", "--vo", type = str, 
-                      default = "~/vo.txt",
+                      default = None,
                       help = "Path to the file containing the visual odometry data (required).")
   parser.add_argument("-v", "--v", type = str, 
-                      default = "~/vertices.txt",
+                      default = None,
                       help = "Path to the file containing the SLAM vertices data (required).")
   parser.add_argument("-e", "--e", type = str,
                       default = None,
@@ -363,7 +365,19 @@ if __name__ == "__main__":
   # pylab.rc('font', **font)
 
   # Sanity check
-  if (not os.path.isfile(args.v) or not os.path.isfile(args.vo)):
+  if (args.v):
+    if (not os.path.isfile(args.v)):
+      print("Vertices is not a file.")
+      sys.exit()
+  else:
+    print("Vertices is None.")
+    sys.exit()
+  if (args.vo):
+    if (not os.path.isfile(args.vo)):
+      print("VO is not a file.")
+      sys.exit()
+  else:
+    print("VO is None.")
     sys.exit()
 
   print("GRAPH VIEWER MOUSE INPUTS:")
