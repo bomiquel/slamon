@@ -354,11 +354,11 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
     odom_x = []
     odom_y = []
     for file_name in os.listdir(pipes_folder_path):
-      if file_name.endswith("world.ply"):
+      if file_name.endswith("odom.ply"):
         x, y = readPLYVertices(os.path.join(pipes_folder_path, file_name))
         odom_x.extend(x)
         odom_y.extend(y)
-      if file_name.endswith("world_2.ply"):
+      if file_name.endswith("map.ply"):
         x, y = readPLYVertices(os.path.join(pipes_folder_path, file_name))
         map_x.extend(x)
         map_y.extend(y)
