@@ -364,7 +364,7 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
         map_y.extend(y)
     # Plot.
     ax_pipes_odom = ax.plot(odom_x, odom_y, "gray", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 1)
-    ax_pipes_map = ax.plot(map_x, map_y, "black", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 1)
+    ax_pipes_map = ax.plot(map_x, map_y, "black", label = "Pipes corrected", marker = "o", linestyle = 'None', markersize = 1)
 
   # Update the plot
   plt.draw()
