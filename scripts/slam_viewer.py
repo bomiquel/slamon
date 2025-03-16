@@ -349,8 +349,7 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
 
   # Load pipes positions.
   if pipes_folder_path is not None and os.path.isdir(pipes_folder_path):
-    map_x = []
-    map_y = []
+    maps = []
     odom_x = []
     odom_y = []
     for file_name in os.listdir(pipes_folder_path):
@@ -358,10 +357,11 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
         x, y = readPLYVertices(os.path.join(pipes_folder_path, file_name))
         odom_x.extend(x)
         odom_y.extend(y)
-      if file_name.endswith("map.ply"):
-        x, y = readPLYVertices(os.path.join(pipes_folder_path, file_name))
-        map_x.extend(x)
-        map_y.extend(y)
+      if file_name.endswith("map.ply") and not "info" in file_name:
+        maps.append(file_name)
+    maps.sort(reverse = True)
+    map_x, map_y = readPLYVertices(os.path.join(pipes_folder_path, maps[0]))
+
     # Plot.
     ax_pipes_odom = ax.plot(odom_x, odom_y, "gray", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 1)
     ax_pipes_map = ax.plot(map_x, map_y, "black", label = "Pipes corrected", marker = "o", linestyle = 'None', markersize = 1)
