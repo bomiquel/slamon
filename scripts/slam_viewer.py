@@ -347,24 +347,28 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
   else:
     removeEdges()
 
-  # Load pipes positions.
+  # Draw pipes.
   if pipes_folder_path is not None and os.path.isdir(pipes_folder_path):
-    maps = []
-    odom_x = []
-    odom_y = []
+    
+    # Load pipes.
+    pipes_map_x = []
+    pipes_map_y = []
+    pipes_odom_x = []
+    pipes_odom_y = []
+    pipes_map_names = []
     for file_name in os.listdir(pipes_folder_path):
       if file_name.endswith("odom.ply"):
         x, y = readPLYVertices(os.path.join(pipes_folder_path, file_name))
-        odom_x.extend(x)
-        odom_y.extend(y)
+        pipes_odom_x.extend(x)
+        pipes_odom_y.extend(y)
       if file_name.endswith("map.ply") and not "info" in file_name:
-        maps.append(file_name)
-    maps.sort(reverse = True)
-    map_x, map_y = readPLYVertices(os.path.join(pipes_folder_path, maps[0]))
+        pipes_map_names.append(file_name)
+    if (len(pipes_map_names) > 0):
+      pipes_map_x, pipes_map_y = readPLYVertices(os.path.join(pipes_folder_path, pipes_map_names[0]))
 
-    # Plot.
-    ax_pipes_odom = ax.plot(odom_x, odom_y, "gray", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 1)
-    ax_pipes_map = ax.plot(map_x, map_y, "black", label = "Pipes corrected", marker = "o", linestyle = 'None', markersize = 1)
+    # Plot pipes.
+    ax_pipes_odom = ax.plot(pipes_odom_x, pipes_odom_y, "gray", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 1)
+    ax_pipes_map = ax.plot(pipes_map_x, pipes_map_y, "black", label = "Pipes corrected", marker = "o", linestyle = 'None', markersize = 1)
 
   # Update the plot
   plt.draw()
