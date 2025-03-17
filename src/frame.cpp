@@ -170,11 +170,11 @@ void Frame::regionClustering()
     // If 1 cluster, add all keypoints
     if (clusters_.size() <= 1)
     {
-        std::vector<int> cluster_tmp;
+        std::vector<int> tmp_cluster;
         for (uint i = 0; i < l_kpts_.size(); i++)
-            cluster_tmp.push_back(int(i));
+            tmp_cluster.push_back(int(i));
         clusters_.clear();
-        clusters_.push_back(cluster_tmp);
+        clusters_.push_back(tmp_cluster);
     }
 
     // Compute the clusters centroids

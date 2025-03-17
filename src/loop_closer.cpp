@@ -317,12 +317,12 @@ namespace slamon
 
     Cluster LoopCloser::readCluster(int id)
     {
-        Cluster cluster_tmp;
+        Cluster tmp_cluster;
         std::string cluster_path = execution_path_ + convertTo5Digits(id) + ".yml";
 
         // Sanity check
         if (!std::filesystem::exists(cluster_path))
-            return cluster_tmp;
+            return tmp_cluster;
 
         // Opens cluster file.
         cv::FileStorage fs;
@@ -330,7 +330,7 @@ namespace slamon
 
         // Sanity check x2
         if (!fs.isOpened())
-            return cluster_tmp;
+            return tmp_cluster;
 
         // Reads cluster data.
         int keyframe_id;
@@ -394,14 +394,18 @@ namespace slamon
             // Reads if there is no alternative.
             if (!found)
             {
-                cand_clusters.push_back(std::make_pair(readCluster(cand_cluster_ids[i]), search_type));
-                neighbours_cand_clusters.push_back(std::vector<Cluster>());
-                if (cand_clusters[i].first.getLeftDescs().rows == 0)
+                Cluster tmp_cluster = readCluster(cand_cluster_ids[i]);
+
+                // Sanity check.
+                cv::Mat tmp_l_descs = tmp_cluster.getLeftDescs();
+                if (tmp_l_descs.rows == 0)
                 {
                     ROS_WARN_STREAM("[LC->readCandidateClusters:] It is not possible to read the cluster " << cand_cluster_ids[i] << " from the disk!");
-                    cand_clusters.pop_back();
-                    neighbours_cand_clusters.pop_back();
+                    continue;
                 }
+
+                cand_clusters.push_back(std::make_pair(tmp_cluster, search_type));
+                neighbours_cand_clusters.push_back(std::vector<Cluster>());
             }
         }
     }
