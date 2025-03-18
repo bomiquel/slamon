@@ -128,6 +128,12 @@ class Cluster
          *  @return The cluster 3D points relative to world-map.
          */
         std::vector<cv::Point3f> getWorldPoints();
+
+
+        /** \brief Set a new world-map camera pose.
+         *  \param[in] map_camera_pose New world-map camera pose.
+         */
+        inline void updateCameraPose(const tf::Transform map_camera_pose) {map_camera_pose_ = map_camera_pose;}
     
 
     private:
