@@ -227,18 +227,21 @@ namespace slamon
 
     void LoopCloser::processNewCluster(const Cluster& c_cluster)
     {
-        // Initialise hash
+        // Initialise hash.
         if (!haloc_.isInitialized())
             haloc_.init(c_cluster.getLeftDescs());
 
-        // Save hash to table
-        hash_table_.push_back(std::make_pair(c_cluster.getGlobalId(), haloc_.getHash(c_cluster.getLeftDescs())));
-
+        // Clears the vector of previous clusters if the current cluster belongs to a new frame.
         if (c_cluster.getLocalId() == 0)
             p_q_cluster_neighbours_.clear();
 
-        // Store
-        cv::FileStorage fs(execution_path_ + convertTo5Digits(c_cluster.getGlobalId()) + ".yml", cv::FileStorage::WRITE);
+        // Create a locking element.
+        std::string cluster_path = execution_path_ + convertTo5Digits(c_cluster.getGlobalId()) + ".yml";
+        std::string lock_path = cluster_path + ".lock";
+        std::fstream lock_file(lock_path.c_str(), std::ios::out | std::ios::trunc);
+
+        // Store.
+        cv::FileStorage fs(cluster_path, cv::FileStorage::WRITE);
         cv::write(fs, "l_kpts", c_cluster.getLeftKpts());
         cv::write(fs, "r_kpts", c_cluster.getRightKpts());
         cv::write(fs, "l_descs", c_cluster.getLeftDescs());
@@ -246,6 +249,14 @@ namespace slamon
         cv::write(fs, "keyframe_id", c_cluster.getKeyframeId());
         cv::write(fs, "l_cam_pts", c_cluster.getLeftCameraPoints());
         fs.release();
+
+        // Unlock.
+        bool ok = std::filesystem::remove(lock_path.c_str());
+        if (!ok)
+            ROS_ERROR("[LC->processNewCluster]: Error deleting the locking file!");
+
+        // Save hash to table.
+        hash_table_.push_back(std::make_pair(c_cluster.getGlobalId(), haloc_.getHash(c_cluster.getLeftDescs())));
     }
 
 
@@ -323,6 +334,10 @@ namespace slamon
         // Sanity check
         if (!std::filesystem::exists(cluster_path))
             return tmp_cluster;
+
+        // Wait until lock file has been released.
+        std::string lock_path = cluster_path + ".lock";
+        while (std::filesystem::exists(lock_path));
 
         // Opens cluster file.
         cv::FileStorage fs;
