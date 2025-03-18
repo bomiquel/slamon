@@ -353,7 +353,7 @@ void Publisher::writePoses(const std::string& o_path,
     std::string l_path = o_path + ".lock";
 
     // Wait until lock file has been released.
-    while(std::filesystem::exists(l_path));
+    while (std::filesystem::exists(l_path));
 
     // Create a locking element.
     std::fstream lock_file(l_path.c_str(), std::ios::out | std::ios::trunc);
