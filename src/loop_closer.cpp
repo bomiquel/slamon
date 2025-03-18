@@ -382,7 +382,10 @@ namespace slamon
             {
                 if ((cand_cluster_ids[i] == p_cand_clusters_[j].first.getGlobalId()))
                 {
+                    updateClusterPose(p_cand_clusters_[j].first);
                     cand_clusters.push_back(std::make_pair(p_cand_clusters_[j].first, search_type));
+                    for (uint k = 0; k < p_cands_cluster_neighbours_[j].size(); k++)
+                        updateClusterPose(p_cands_cluster_neighbours_[j][k]);
                     neighbours_cand_clusters.push_back(p_cands_cluster_neighbours_[j]);
                     found = true;
                     break;
@@ -396,6 +399,7 @@ namespace slamon
                 {
                     if (cand_cluster_ids[i] == p_cands_cluster_neighbours_[j][k].getGlobalId())
                     {
+                        updateClusterPose(p_cands_cluster_neighbours_[j][k]);
                         cand_clusters.push_back(std::make_pair(p_cands_cluster_neighbours_[j][k], search_type));
                         neighbours_cand_clusters.push_back(std::vector<Cluster>());
                         found = true;
@@ -433,7 +437,10 @@ namespace slamon
         for (uint i = 0; i < neighbours_cand_cluster.size(); i++)
         {
             if (neighbor_id == neighbours_cand_cluster[i].getGlobalId())
+            {
+                updateClusterPose(neighbours_cand_cluster[i]);
                 return neighbours_cand_cluster[i];
+            }
         }
 
         // Expands the search
@@ -441,6 +448,7 @@ namespace slamon
         {
             if (neighbor_id == p_cand_clusters_[i].first.getGlobalId())
             {
+                updateClusterPose(p_cand_clusters_[i].first);
                 neighbours_cand_cluster.push_back(p_cand_clusters_[i].first);
                 return p_cand_clusters_[i].first;
             }
@@ -448,6 +456,7 @@ namespace slamon
             {
                 if (neighbor_id == p_cands_cluster_neighbours_[i][j].getGlobalId())
                 {
+                    updateClusterPose(p_cands_cluster_neighbours_[i][j]);
                     neighbours_cand_cluster.push_back(p_cands_cluster_neighbours_[i][j]);
                     return p_cands_cluster_neighbours_[i][j];
                 }
@@ -458,6 +467,13 @@ namespace slamon
         Cluster tmp_cluster = readCluster(neighbor_id);
         neighbours_cand_cluster.push_back(tmp_cluster);
         return tmp_cluster;
+    }
+
+
+    void LoopCloser::updateClusterPose(Cluster& cluster)
+    {
+        tf::Transform map_camera_pose = map_->getVertexCameraPose(cluster.getGlobalId(), true);
+        cluster.updateCameraPose(map_camera_pose);
     }
 
 
@@ -573,6 +589,9 @@ namespace slamon
                 // Just in case, avoid itself.
                 if (q_cluster.getGlobalId() == p_q_cluster_neighbours_[i].getGlobalId())
                     continue;
+
+                // Update cluster pose.
+                updateClusterPose(p_q_cluster_neighbours_[i]);
 
                 // Sanity check.
                 tmp_l_descs = p_q_cluster_neighbours_[i].getLeftDescs();

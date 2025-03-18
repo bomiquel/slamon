@@ -142,6 +142,12 @@ namespace slamon
              */
             Cluster readCandidateNeighborsClusters(const int neighbor_id,
                                                    std::vector<Cluster>& neighbours_cand_cluster);
+
+
+            /** \brief Updates the pose of a cluster.
+             *  \param[in out] cluster to be upgraded.
+             */
+            void updateClusterPose(Cluster& cluster);
                                 
 
             /** \brief It tries to detect a loop closure between the query cluster
