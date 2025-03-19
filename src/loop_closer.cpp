@@ -590,9 +590,6 @@ namespace slamon
                 if (q_cluster.getGlobalId() == p_q_cluster_neighbours_[i].getGlobalId())
                     continue;
 
-                // Update cluster pose.
-                updateClusterPose(p_q_cluster_neighbours_[i]);
-
                 // Sanity check.
                 tmp_l_descs = p_q_cluster_neighbours_[i].getLeftDescs();
                 if (tmp_l_descs.rows == 0)
