@@ -89,15 +89,15 @@ namespace slamon
 
             /** \brief Get the best candidates to close a loop by hash.
              *  \param[in] c_cluster_id The current cluster id.
-             *  \param[in] closest_candidates_num The number of best candidates to be retrieved.
-             *  \param[in] no_candidates Clusters list, outside the discard window, that cannot be
+             *  \param[in] cand_num The number of best candidates to be retrieved.
+             *  \param[in] no_cand Clusters list, outside the discard window, that cannot be
              *  candidates for closing loop.
-             *  \param[out] candidates The list of best candidates.
+             *  \param[out] closest_cand The list of best candidates.
              */
             void getHashCandidates(int c_cluster_id, 
-                                   uint closest_candidates_num,
-                                   std::vector<int>& no_candidates,
-                                   std::vector<int>& closest_candidates);
+                                   unsigned int cand_num,
+                                   std::vector<int>& no_cand,
+                                   std::vector<int>& closest_cand);
 
 
             /** \brief Returns whether the second element of the first

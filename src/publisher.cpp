@@ -312,7 +312,7 @@ void Publisher::publishStereoImageAttributes(const cv::Mat& l_descs,
     geometry_msgs::Point cam_pt_msg;
     slamon::Keypoint l_kpt_msg, r_kpt_msg;
     msg.header.stamp = stamp;
-    for (uint i = 0; i < l_kpts.size(); i++)
+    for (unsigned int i = 0; i < l_kpts.size(); i++)
     {
         // Fill base msgs
         cam_pt_msg.x = l_cam_pts[i].x;
@@ -365,7 +365,7 @@ void Publisher::writePoses(const std::string& o_path,
     poses_file << std::fixed << std::setprecision(9) << "timestamp,id,x,y,z,qx,qy,qz,qw" << std::endl;
 
     // Write poses and timestamps
-    for (uint i = 0; i < poses.size(); i++)
+    for (unsigned int i = 0; i < poses.size(); i++)
     {
         poses_file << 
         stamps[i] << "," <<
@@ -406,7 +406,7 @@ void Publisher::writeLoopClosureEdges(const std::string& o_path,
     edges_file << std::fixed << std::setprecision(9) << "frame a,frame b,ax,ay,az,aqx,aqy,aqz,aqw,bx,by,bz,bqx,bqy,bqz,bqw" << std::endl;
 
     // Write 
-    for (uint i = 0; i < edges_ids.size(); i++)
+    for (unsigned int i = 0; i < edges_ids.size(); i++)
     {
         edges_file <<
         edges_ids[i].first << "," <<
@@ -437,7 +437,7 @@ void Publisher::writeLoopClosureEdges(const std::string& o_path,
 
 std::string Publisher::convertTo5Digits(int in)
 {
-    uint val = (uint)in;
+    unsigned int val = (unsigned int)in;
     std::string output;
     int digits = 5;
     while (digits-- > 0) 
@@ -458,7 +458,7 @@ cv::Mat Publisher::drawImgKeypoints(const cv::Mat& img,
     img.copyTo(o_img);
 
     // Draw points
-    for (uint i = 0; i < kpts.size(); i++)
+    for (unsigned int i = 0; i < kpts.size(); i++)
         cv::circle(o_img, kpts[i].pt, 2, color, -1);
 
     return o_img;
@@ -539,7 +539,7 @@ cv::Mat Publisher::drawImgMatches(const bool vertical,
 
     // Draw keypoints and matches
     cv::Point2f m_q_kpt_offset;
-    for (uint i = 0; i < m_kpts_0.size(); i++)
+    for (unsigned int i = 0; i < m_kpts_0.size(); i++)
     {
         m_q_kpt_offset = m_kpts_1[i].pt;
         if (vertical)
@@ -578,7 +578,7 @@ cv::Mat Publisher::drawImgCircularMatches(const cv::Mat& c_l_img,
     int x_offset = c_l_img.cols;
     int y_offset = c_l_img.rows;
     cv::Point2f m_c_r_pt_offset, m_p_l_pt_offset, m_p_r_pt_offset;
-    for (uint i = 0; i < m_c_l_kpts.size(); i++)
+    for (unsigned int i = 0; i < m_c_l_kpts.size(); i++)
     {
         // Add offset to filtered current right keypoints
         m_c_r_pt_offset = m_c_r_kpts[i].pt;
@@ -615,10 +615,10 @@ cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
         return drawn_img;
 
     cv::RNG rng(12345);
-    for (uint i = 0; i < clusters.size(); i++)
+    for (unsigned int i = 0; i < clusters.size(); i++)
     {
         cv::Scalar color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
-        for (uint j = 0; j < clusters[i].size(); j++)
+        for (unsigned int j = 0; j < clusters[i].size(); j++)
             cv::circle(drawn_img, kpts[clusters[i][j]].pt, 2, color, -1);
     }
 
@@ -650,7 +650,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
  
     // Builds candidate keyframe vector.
     cv::Mat cand_keyframe_vector_img;
-    for (uint i = 0; i < cand_keyframe_ids.size(); i++)
+    for (unsigned int i = 0; i < cand_keyframe_ids.size(); i++)
     {
         // Reads candidate keyframes.
         img = cv::imread(i_path + convertTo5Digits(cand_keyframe_ids[i]) + "_left.png", cv::IMREAD_COLOR);
@@ -672,7 +672,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
     // Count definitive inliers.
     int definitive_inliers_counter = 0;
-    for (uint i = 0; i < definitive_inliers_per_pair.size(); i++)
+    for (unsigned int i = 0; i < definitive_inliers_per_pair.size(); i++)
         definitive_inliers_counter += definitive_inliers_per_pair[i];
 
     // Adds title to query keyframe.
@@ -692,14 +692,14 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
     // Builds the vector of colors.
     cv::RNG rng(12345);
     std::vector<cv::Scalar> colors;
-    for (uint i = 0; i < definitive_inliers_per_pair.size(); i++)
+    for (unsigned int i = 0; i < definitive_inliers_per_pair.size(); i++)
         colors.push_back(cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)));
 
     // Draws the matchings.
     cv::Point2f q_l_kpt, cand_l_kpt;
     int color_idx, keyframe_position;
     int cand_cluster_id, cand_keyframe_id;
-    for (uint i = 0; i < f_q_l_kpts.size(); i++)
+    for (unsigned int i = 0; i < f_q_l_kpts.size(); i++)
     {
         // Gets the ith keypoints.
         q_l_kpt = f_q_l_kpts[i].pt;
@@ -710,7 +710,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
         // Gets the candidate keyframe id due to the relation between clusters and keyframes.
         cand_keyframe_id = -1;
-        for (uint j = 0; j < cand_cluster_keyframe_relation.size(); j++)
+        for (unsigned int j = 0; j < cand_cluster_keyframe_relation.size(); j++)
         {
             if (cand_cluster_keyframe_relation[j].first == cand_cluster_id)
                 cand_keyframe_id = cand_cluster_keyframe_relation[j].second;
@@ -718,7 +718,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
         // Gets the index of the candidate keyframe within the variable cand_keyframe_vector_img.
         keyframe_position = -1;
-        for (uint j = 0; j < cand_keyframe_ids.size(); j++)
+        for (unsigned int j = 0; j < cand_keyframe_ids.size(); j++)
         {
             if (cand_keyframe_id == cand_keyframe_ids[j])
             {
@@ -733,7 +733,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
             // Decides the color. Weak edges (less than 5 inliers) are not inserted into the graph
             // and are therefore not drawn nor assigned a colour.
             color_idx = -1;
-            for (uint j = 0; j < definitive_inliers_per_pair.size(); j++)
+            for (unsigned int j = 0; j < definitive_inliers_per_pair.size(); j++)
             {
                 if (definitive_cluster_pairs[j].second == cand_cluster_id)
                 {

@@ -57,7 +57,7 @@ std::vector<cv::Point3f> Cluster::getWorldPoints()
     tf::Vector3 tf_world_pt;
     cv::Point3f cv_world_pt;
     std::vector<cv::Point3f> tf_world_pts;
-    for (uint i = 0; i < l_cam_pts_.size(); i++)
+    for (unsigned int i = 0; i < l_cam_pts_.size(); i++)
     { 
         tf_l_cam_pt.setX(l_cam_pts_[i].x);
         tf_l_cam_pt.setY(l_cam_pts_[i].y);

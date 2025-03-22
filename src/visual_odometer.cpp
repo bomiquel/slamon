@@ -370,7 +370,7 @@ namespace slamon
             publishImgStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kpts_img_pub_, l_kpts, r_kpts);
 
         // Sanity check.
-        if (l_kpts.size() < (uint)(min_lc_inliers_/2))
+        if (l_kpts.size() < (unsigned int)(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo keypoints detector:] There are not enough keypoints to match and filter!");
@@ -387,7 +387,7 @@ namespace slamon
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Stereo matching run time.
 
         // Sanity check.
-        if (m_l_kpts.size() < (uint)(min_lc_inliers_/2))
+        if (m_l_kpts.size() < (unsigned int)(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
@@ -406,7 +406,7 @@ namespace slamon
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
-        if (f_l_kpts.size() < (uint)(min_lc_inliers_/2))
+        if (f_l_kpts.size() < (unsigned int)(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Triangulator:] There are not enough 3D points after triangulation!");
@@ -461,7 +461,7 @@ namespace slamon
         }
 
         // Sanity check.
-        if (m_c_l_kpts.size() < (uint)(min_inliers_))
+        if (m_c_l_kpts.size() < (unsigned int)(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
@@ -481,7 +481,7 @@ namespace slamon
         std::vector<cv::KeyPoint> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
         if (enable_bucketing_)
         {
-            bucketKeypoints(max_kpts_bucket_, img_width_, img_height_,
+            bucketKeypoints(img_width_, img_height_, max_kpts_bucket_,
                             m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_l_cam_pts, m_p_l_cam_pts,
                             f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts);
         }
@@ -523,7 +523,7 @@ namespace slamon
         }
 
         // Sanity check.
-        if (i_c_l_kpts.size() < (uint)(min_inliers_))
+        if (i_c_l_kpts.size() < (unsigned int)(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Motion estimator:] There are not enough inliers after motion estimation!");

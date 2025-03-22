@@ -83,9 +83,9 @@ void MotionEstimator::compute3DPoints(const cv::Mat& l_proj_mat,
 }
 
 
-std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKeypoints(const uint max_kpts,
-                                                                                        const float img_width,
+std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKeypoints(const float img_width,
                                                                                         const float img_height,
+                                                                                        const unsigned int max_kpts,
                                                                                         const std::vector<cv::KeyPoint>& c_l_kpts,
                                                                                         const std::vector<cv::KeyPoint>& c_r_kpts,
                                                                                         const std::vector<cv::KeyPoint>& p_l_kpts,
@@ -121,7 +121,7 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKe
     // Fill buckets with keypoints and its indices.
     int bucket_idx, bucket_row, bucket_col;
     std::vector<std::vector<std::pair<int, cv::KeyPoint>>> buckets(100);
-    for (uint i = 0; i < c_l_kpts.size(); i++)
+    for (unsigned int i = 0; i < c_l_kpts.size(); i++)
     {
         bucket_col = (int) floor(c_l_kpts[i].pt.x / bucket_width);
         bucket_row = (int) floor(c_l_kpts[i].pt.y / bucket_height);
@@ -134,13 +134,13 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKe
     float slope, delta_x;
     cv::KeyPoint l_kpt_0, l_kpt_1;
     std::vector<std::pair<float, std::pair<int, cv::KeyPoint>>> bucket_slopes;
-    for (uint i = 0; i < buckets.size(); i++)
+    for (unsigned int i = 0; i < buckets.size(); i++)
     {
         if (buckets[i].size() > max_kpts)
         {
             // Calculate the coincidence slopes.
             bucket_slopes.clear();
-            for (uint j = 0; j < buckets[i].size(); j++)
+            for (unsigned int j = 0; j < buckets[i].size(); j++)
             {
                 idx = buckets[i][j].first;
                 l_kpt_0 = c_l_kpts[idx];
@@ -167,7 +167,7 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKe
             std::vector<std::pair<int, cv::KeyPoint>> inliers;
             int half_longitude = std::ceil(bucket_slopes.size() / 2);
             int idx_backwards = half_longitude - 1;
-            uint idx_forwards = half_longitude + 1;
+            unsigned int idx_forwards = half_longitude + 1;
             while (inliers.size() < max_kpts)
             {
                 if (!init)
@@ -217,7 +217,7 @@ std::vector<std::vector<std::pair<int, cv::KeyPoint>>> MotionEstimator::bucketKe
             buckets[i] = inliers;
         }
 
-        for (uint j = 0; j < buckets[i].size(); j++)
+        for (unsigned int j = 0; j < buckets[i].size(); j++)
         {
             idx = buckets[i][j].first;
             f_c_l_kpts.push_back(c_l_kpts[idx]);
@@ -325,7 +325,7 @@ void MotionEstimator::estimateMotion(const cv::Mat& l_proj_mat,
     }
 
     // Filter keypoints, 3D points and clusters.
-    for (uint i = 0; i < inliers.size(); i++)
+    for (unsigned int i = 0; i < inliers.size(); i++)
     {
         f_l_kpts_0.push_back(l_kpts_0[inliers[i]]);
         f_l_kpts_1.push_back(l_kpts_1[inliers[i]]);
@@ -348,7 +348,7 @@ void MotionEstimator::estimateMotion(const cv::Mat& l_proj_mat,
 MotionEstimator::Type MotionEstimator::selectMotionEstimationType(std::string& motion_estimation_type)
 {
     // Sanity check
-    for (uint i = 0; i < motion_estimation_type.size(); i++)
+    for (unsigned int i = 0; i < motion_estimation_type.size(); i++)
     {
         if (isupper(motion_estimation_type[i]))
             motion_estimation_type[i] = std::tolower(motion_estimation_type[i]);
@@ -370,7 +370,7 @@ MotionEstimator::Type MotionEstimator::selectMotionEstimationType(std::string& m
 }
 
 
-void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
+void MotionEstimator::solveDualPnPRansac(const int ransac_iter,
                                          const cv::Mat& l_proj_mat,
                                          const cv::Mat& r_proj_mat,
                                          const std::vector<cv::Point2f>& l_pts_0,
@@ -404,13 +404,13 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
     DualResult result;
     std::vector<int> c_idxs;
     std::vector<int> c_inliers;
-    for (uint i = 0; i < ransac_iter; i++)
+    for (int i = 0; i < ransac_iter; i++)
     {
         // Gets random active indices.
         c_idxs = getRandomIndices(n, 3);
 
         // Clears current parameters.
-        for (uint j = 0; j < c_tr_vec.size(); j++)
+        for (unsigned int j = 0; j < c_tr_vec.size(); j++)
             c_tr_vec[j] = 0;
 
         // Minimizes reprojection errors.
@@ -470,20 +470,20 @@ void MotionEstimator::solveDualPnPRansac(const uint ransac_iter,
 }
 
 
-std::vector<int> MotionEstimator::getRandomIndices(uint size, uint n_rand_idxs)
+std::vector<int> MotionEstimator::getRandomIndices(unsigned int size, unsigned int n_rand_idxs)
 {
     // Inits random and total vector indices.
     std::vector<int> rand_idxs;
     std::vector<int> total_idxs;
 
     // Creates vector containing all indices.
-    for (uint i = 0; i < size; i++)
+    for (unsigned int i = 0; i < size; i++)
         total_idxs.push_back(i);
 
     // Add indices to random indices vector.
-    uint idx;
+    unsigned int idx;
     rand_idxs.clear();
-    for (uint i = 0; i < n_rand_idxs; i++)
+    for (unsigned int i = 0; i < n_rand_idxs; i++)
     {
         idx = rand() % total_idxs.size();
         rand_idxs.push_back(total_idxs[idx]);
@@ -615,7 +615,7 @@ void MotionEstimator::computeVectorsAndJacobians(const cv::Mat& l_proj_mat,
     double b = (t_x / -f_u);
 
     // For all observations do
-    for (uint i = 0; i < c_idxs.size(); i++)
+    for (unsigned int i = 0; i < c_idxs.size(); i++)
     {
         // Sets ith observation
         obs_pts[4 * i + 0] = l_pts_0[c_idxs[i]].x;
@@ -694,7 +694,7 @@ std::vector<int> MotionEstimator::getInliers(double reproj_error,
 {
     // Marks all observations active
     std::vector<int> c_idxs;
-    for (uint i = 0; i < l_pts_0.size(); i++)
+    for (unsigned int i = 0; i < l_pts_0.size(); i++)
         c_idxs.push_back(i);
 
     // Computes observations, predictions, residuals and Jacobians.
@@ -712,7 +712,7 @@ std::vector<int> MotionEstimator::getInliers(double reproj_error,
 
     // Computes inliers.
     std::vector<int> inliers;
-    for (uint i = 0; i < l_pts_0.size(); i++)
+    for (unsigned int i = 0; i < l_pts_0.size(); i++)
     {
         if ((pow(obs_pts[4 * i + 0] - pre_pts[4 * i + 0], 2) + pow(obs_pts[4 * i + 1] - pre_pts[4 * i + 1], 2) +
              pow(obs_pts[4 * i + 2] - pre_pts[4 * i + 2], 2) + pow(obs_pts[4 * i + 3] - pre_pts[4 * i + 3], 2)) < (reproj_error * reproj_error))

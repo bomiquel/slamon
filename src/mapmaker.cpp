@@ -189,7 +189,7 @@ namespace slamon
             std::vector<cv::KeyPoint> cluster_l_kpts, cluster_r_kpts;
             std::vector<Cluster> clusters_to_close_loop;
             tf::Transform local_cluster_pose, c_cluster_pose;
-            for (uint i = 0; i < clusters.size(); i++)
+            for (unsigned int i = 0; i < clusters.size(); i++)
             {
                 // Gets {c_cam}^T_{c_cluster}.
                 local_cluster_pose = fromPoint3DToTf(cluster_centroids[i]);
@@ -209,7 +209,7 @@ namespace slamon
                 map_->addClusterKeyframeRelation(std::make_pair(cluster_id, c_keyframe_id_));
 
                 // Build cluster
-                for (uint j = 0; j < clusters[i].size(); j++)
+                for (unsigned int j = 0; j < clusters[i].size(); j++)
                 {
                     idx = clusters[i][j];
                     cluster_l_kpts.push_back(l_kpts[idx]);
@@ -232,7 +232,7 @@ namespace slamon
             }
 
             // Send the new clusters to the loop closing thread.
-            for (uint i = 0; i < clusters_to_close_loop.size(); i++)
+            for (unsigned int i = 0; i < clusters_to_close_loop.size(); i++)
                 cluster_queue_->pushBack(clusters_to_close_loop[i]);
             run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Add vertex (cluster) to graph run time.
 
@@ -245,7 +245,7 @@ namespace slamon
 
                 int vertex_0_id, vertex_1_id;
                 tf::Transform edge, vertex_0_pose, vertex_1_pose;
-                for (uint i = 0; i < combinations.size(); i++)
+                for (unsigned int i = 0; i < combinations.size(); i++)
                 {
                     vertex_0_id = c_vertex_ids[combinations[i][0]];
                     vertex_1_id = c_vertex_ids[combinations[i][1]];
@@ -270,12 +270,12 @@ namespace slamon
                 std::vector<tf::Transform> closest_poses;
                 tf::Transform c_vertex_pose, p_vertex_pose;
                 double dist, min_dist = std::numeric_limits<double>::max();
-                for (uint i = 0; i < c_vertex_ids.size(); i++)
+                for (unsigned int i = 0; i < c_vertex_ids.size(); i++)
                 {
                     // Current ith vertex pose. 
                     c_vertex_pose = map_->getVertexPose(c_vertex_ids[i], true);
 
-                    for (uint j = 0; j < p_vertex_ids.size(); j++)
+                    for (unsigned int j = 0; j < p_vertex_ids.size(); j++)
                     {
                         // Previous ith vertex pose. 
                         p_vertex_pose = map_->getVertexPose(p_vertex_ids[j], true);
@@ -316,14 +316,14 @@ namespace slamon
                 std::vector<int> keyframe_ids;
                 std::vector<tf::Transform> keyframe_poses;
                 map_->getKeyframePoses(stamps, keyframe_ids, keyframe_poses);
-                for (uint i = 0; i < keyframe_poses.size(); i++)
+                for (unsigned int i = 0; i < keyframe_poses.size(); i++)
                     keyframe_poses[i] = keyframe_poses[i] * robot2camera_.inverse();
                 writePoses(poses_file_, keyframe_ids, stamps, keyframe_poses);
 
                 std::vector<std::pair<int, int>> edges_keyframe_ids;
                 std::vector<std::pair<tf::Transform, tf::Transform>> edges_keyframe_poses;
                 map_->getLoopClosureEdges(edges_keyframe_ids, edges_keyframe_poses);
-                for (uint i = 0; i < edges_keyframe_poses.size(); i++)
+                for (unsigned int i = 0; i < edges_keyframe_poses.size(); i++)
                 {
                     edges_keyframe_poses[i].first = edges_keyframe_poses[i].first * robot2camera_.inverse();
                     edges_keyframe_poses[i].second = edges_keyframe_poses[i].second * robot2camera_.inverse();
@@ -391,7 +391,7 @@ namespace slamon
 
     bool Mapmaker::addFrameToMap(Frame& c_frame)
     {
-        if (c_frame.getLeftKpts().size() > (uint)(min_lc_inliers_/2))
+        if (c_frame.getLeftKpts().size() > (unsigned int)(min_lc_inliers_/2))
         {
             c_frame.regionClustering();
 
@@ -451,8 +451,8 @@ namespace slamon
     }
 
 
-    std::vector<std::vector<int>> Mapmaker::createCombinations(const uint n,
-                                                               const uint r)
+    std::vector<std::vector<int>> Mapmaker::createCombinations(const unsigned int n,
+                                                               const unsigned int r)
     {
         std::string bitmask(r, 1);
         bitmask.resize(n, 0);
@@ -461,7 +461,7 @@ namespace slamon
         std::vector<std::vector<int>> combinations;
         do
         {
-            for (uint i = 0; i < n; i++)
+            for (unsigned int i = 0; i < n; i++)
             {
                 if (bitmask[i])
                     combination.push_back(i);
@@ -484,7 +484,7 @@ namespace slamon
         cv::Mat l_descs, r_descs;
         std::vector<cv::Point3f> l_cam_pts;
         std::vector<cv::KeyPoint> l_kpts, r_kpts;
-        for (uint i = 0; i < msg->l_kpts.size(); i++)
+        for (unsigned int i = 0; i < msg->l_kpts.size(); i++)
         {
             kpt.pt.x = msg->l_kpts[i].pt.x;
             kpt.pt.y = msg->l_kpts[i].pt.y;

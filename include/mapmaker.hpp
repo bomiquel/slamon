@@ -102,8 +102,8 @@ namespace slamon
              *  \param[in] r Number of elements in each combination.
              *  @return the list of combinations.
              */
-            std::vector<std::vector<int>> createCombinations(const uint n,
-                                                             const uint r);
+            std::vector<std::vector<int>> createCombinations(const unsigned int n,
+                                                             const unsigned int r);
             
 
             /** \brief Convert custom ROS stereo image attributes msg to frame 

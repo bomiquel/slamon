@@ -131,7 +131,7 @@ namespace slamon
                 bool loop_detected = false, loop_closed = false;
                 std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
                 std::vector<cv::KeyPoint> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
-                for (uint i = 0; i < cand_clusters.size(); i++)
+                for (unsigned int i = 0; i < cand_clusters.size(); i++)
                 {
                     // Tries to detect a loop between query cluster and a candidate cluster.
                     start_module_time = ros::Time::now().toSec();
@@ -261,24 +261,24 @@ namespace slamon
 
 
     void LoopCloser::getHashCandidates(int c_cluster_id,
-                                       uint closest_candidates_num,
-                                       std::vector<int>& no_candidates,
-                                       std::vector<int>& closest_candidates)
+                                       unsigned int cand_num,
+                                       std::vector<int>& no_cand,
+                                       std::vector<int>& closest_cand)
     {
         // Init.
-        closest_candidates.clear();
+        closest_cand.clear();
 
         // Check if enough neighbors.
         if ((int)hash_table_.size() <= lc_discard_window_)
             return;
 
         // Fills the non-candidates list with those clusters that have already closed the loop.
-        for (uint i = 0; i < cluster_lc_found_.size(); i++)
+        for (unsigned int i = 0; i < cluster_lc_found_.size(); i++)
         {
             if (cluster_lc_found_[i].first == c_cluster_id)
-                no_candidates.push_back(cluster_lc_found_[i].second);
+                no_cand.push_back(cluster_lc_found_[i].second);
             if (cluster_lc_found_[i].second == c_cluster_id)
-                no_candidates.push_back(cluster_lc_found_[i].first);
+                no_cand.push_back(cluster_lc_found_[i].first);
         }
 
         // Query hash.
@@ -289,7 +289,7 @@ namespace slamon
         float match_dist;
         std::vector<float> cand_hash;
         std::vector<std::pair<int, float>> candidates;
-        for (uint i = 0; i < hash_table_.size(); i++)
+        for (unsigned int i = 0; i < hash_table_.size(); i++)
         {
             cand_id = hash_table_[i].first;
 
@@ -301,8 +301,8 @@ namespace slamon
             if ((cand_id > c_cluster_id - lc_discard_window_) && (cand_id < c_cluster_id + lc_discard_window_))
                 continue;
 
-            // Continue if candidate is in the no_candidates list.
-            if (std::find(no_candidates.begin(), no_candidates.end(), hash_table_[i].first) != no_candidates.end())
+            // Continue if candidate is in the no_cand list.
+            if (std::find(no_cand.begin(), no_cand.end(), hash_table_[i].first) != no_cand.end())
                 continue;
 
             // Hash matching.
@@ -319,10 +319,10 @@ namespace slamon
         std::sort(candidates.begin(), candidates.end(), sortByMatching);
 
         // Gets closest matches (minnor mmatching distance)
-        if (closest_candidates_num > candidates.size())
-            closest_candidates_num = candidates.size();
-        for (uint i = 0; i < closest_candidates_num; i++)
-            closest_candidates.push_back(candidates[i].first);
+        if (cand_num > candidates.size())
+            cand_num = candidates.size();
+        for (unsigned int i = 0; i < cand_num; i++)
+            closest_cand.push_back(candidates[i].first);
     }
 
 
@@ -373,18 +373,18 @@ namespace slamon
                                            std::vector<std::vector<Cluster>>& neighbours_cand_clusters)
     {
         bool found;
-        for (uint i = 0; i < cand_cluster_ids.size(); i++)
+        for (unsigned int i = 0; i < cand_cluster_ids.size(); i++)
         {
             found = false;
 
             // Checks if the candidate exists with all its neighbors.
-            for (uint j = 0; j < p_cand_clusters_.size(); j++)
+            for (unsigned int j = 0; j < p_cand_clusters_.size(); j++)
             {
                 if ((cand_cluster_ids[i] == p_cand_clusters_[j].first.getGlobalId()))
                 {
                     updateClusterPose(p_cand_clusters_[j].first);
                     cand_clusters.push_back(std::make_pair(p_cand_clusters_[j].first, search_type));
-                    for (uint k = 0; k < p_cands_cluster_neighbours_[j].size(); k++)
+                    for (unsigned int k = 0; k < p_cands_cluster_neighbours_[j].size(); k++)
                         updateClusterPose(p_cands_cluster_neighbours_[j][k]);
                     neighbours_cand_clusters.push_back(p_cands_cluster_neighbours_[j]);
                     found = true;
@@ -393,9 +393,9 @@ namespace slamon
             }
 
             // Checks if the candidate exists among the neighbors.
-            for (uint j = 0; j < p_cands_cluster_neighbours_.size(); j++)
+            for (unsigned int j = 0; j < p_cands_cluster_neighbours_.size(); j++)
             {
-                for (uint k = 0; k < p_cands_cluster_neighbours_[j].size(); k++)
+                for (unsigned int k = 0; k < p_cands_cluster_neighbours_[j].size(); k++)
                 {
                     if (cand_cluster_ids[i] == p_cands_cluster_neighbours_[j][k].getGlobalId())
                     {
@@ -434,7 +434,7 @@ namespace slamon
                                                        std::vector<Cluster>& neighbours_cand_cluster)
     {
         // Searches among current neighbors
-        for (uint i = 0; i < neighbours_cand_cluster.size(); i++)
+        for (unsigned int i = 0; i < neighbours_cand_cluster.size(); i++)
         {
             if (neighbor_id == neighbours_cand_cluster[i].getGlobalId())
             {
@@ -444,7 +444,7 @@ namespace slamon
         }
 
         // Expands the search
-        for (uint i = 0; i < p_cand_clusters_.size(); i++)
+        for (unsigned int i = 0; i < p_cand_clusters_.size(); i++)
         {
             if (neighbor_id == p_cand_clusters_[i].first.getGlobalId())
             {
@@ -452,7 +452,7 @@ namespace slamon
                 neighbours_cand_cluster.push_back(p_cand_clusters_[i].first);
                 return p_cand_clusters_[i].first;
             }
-            for (uint j = 0; j < p_cands_cluster_neighbours_[i].size(); j++)
+            for (unsigned int j = 0; j < p_cands_cluster_neighbours_[i].size(); j++)
             {
                 if (neighbor_id == p_cands_cluster_neighbours_[i][j].getGlobalId())
                 {
@@ -506,7 +506,7 @@ namespace slamon
                               f_q_l_cam_pts, f_cand_l_cam_pts);
 
         // Gets the neighbor clusters if enough matching percentage.
-        if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_ / 2))
+        if (f_q_l_kpts.size() >= (unsigned int)(min_lc_inliers_ / 2))
         {
             // Inits accumulated data. Sanity check.
             q_cluster_ids.clear();
@@ -535,13 +535,13 @@ namespace slamon
             std::vector<cv::KeyPoint> tmp_l_kpts, tmp_r_kpts;
 
             // Inits the cluster candidate list.
-            for (uint i = 0; i < all_cand_l_kpts.size(); i++)
+            for (unsigned int i = 0; i < all_cand_l_kpts.size(); i++)
                 cand_cluster_ids.push_back(cand_cluster.getGlobalId());
 
             // Increases the probability to close loop by extracting the candidate neighbors.
             std::vector<int> cand_cluster_neighbours;
             map_->findClosestVertices(cand_cluster.getGlobalId(), lc_discard_window_, q_cluster.getGlobalId(), lc_neighbors_, cand_cluster_neighbours);
-            for (uint i = 0; i < cand_cluster_neighbours.size(); i++)
+            for (unsigned int i = 0; i < cand_cluster_neighbours.size(); i++)
             {
                 // Checks if the cluster has been read in the last iteration and if not, reads from disk.
                 tmp_cluster = readCandidateNeighborsClusters(cand_cluster_neighbours[i], neighbours_cand_cluster);
@@ -568,7 +568,7 @@ namespace slamon
                 all_cand_world_pts.insert(all_cand_world_pts.end(), tmp_3d_pts.begin(), tmp_3d_pts.end());
 
                 // Save the candidate cluster's ith neighbour id for these points.
-                for (uint j = 0; j < tmp_l_kpts.size(); j++)
+                for (unsigned int j = 0; j < tmp_l_kpts.size(); j++)
                     cand_cluster_ids.push_back(tmp_cluster.getGlobalId());
 
                 // Sanity check.
@@ -580,11 +580,11 @@ namespace slamon
             }
 
             // Inits the query cluster frame list.
-            for (uint i = 0; i < all_q_l_kpts.size(); i++)
+            for (unsigned int i = 0; i < all_q_l_kpts.size(); i++)
                 q_cluster_ids.push_back(q_cluster.getGlobalId());
 
             // Retrieve all processed clusters corresponding to the current cluster frame.
-            for (uint i = 0; i < p_q_cluster_neighbours_.size(); i++)
+            for (unsigned int i = 0; i < p_q_cluster_neighbours_.size(); i++)
             {
                 // Just in case, avoid itself.
                 if (q_cluster.getGlobalId() == p_q_cluster_neighbours_[i].getGlobalId())
@@ -609,7 +609,7 @@ namespace slamon
                 all_q_l_cam_pts.insert(all_q_l_cam_pts.end(), tmp_3d_pts.begin(), tmp_3d_pts.end());
 
                 // Save the query cluster's ith neighbour id for these points.
-                for (uint j = 0; j < tmp_l_kpts.size(); j++)
+                for (unsigned int j = 0; j < tmp_l_kpts.size(); j++)
                     q_cluster_ids.push_back(p_q_cluster_neighbours_[i].getGlobalId());
 
                 // Sanity check.
@@ -645,7 +645,7 @@ namespace slamon
             if (loop_closure_matches_num_pub_.getNumSubscribers() > 0)
                 publishCounter(f_q_l_kpts.size(), loop_closure_matches_num_pub_);
 
-            if (f_q_l_kpts.size() >= (uint)(min_lc_inliers_))
+            if (f_q_l_kpts.size() >= (unsigned int)(min_lc_inliers_))
             {
                 // Estimates motion.
                 cv::Mat estimated_rotation, estimated_translation;
@@ -660,7 +660,7 @@ namespace slamon
                     publishCounter(i_q_l_kpts.size(), loop_closure_inliers_num_pub_);
 
                 // Loop found!
-                if (i_q_l_kpts.size() >= (uint)(min_lc_inliers_))
+                if (i_q_l_kpts.size() >= (unsigned int)(min_lc_inliers_))
                 {
                     // From cv::Mat to tf::Transform.
                     fromMatToTf(estimated_rotation, estimated_translation, estimated_motion);
@@ -698,13 +698,13 @@ namespace slamon
         std::vector<int> definitive_inliers_per_pair;
         std::vector<std::pair<int, int>> definitive_cluster_pairs; // q_cluster_id - cand_cluster_id
         tf::Transform edge, cand_cluster_pose, q_cluster_pose_relative_to_camera;
-        for (uint i = 0; i < inliers_per_pair.size(); i++)
+        for (unsigned int i = 0; i < inliers_per_pair.size(); i++)
         {
             if (inliers_per_pair[i] >= 5)
             {
                 // Checks if this loop closure exists.
                 lc_already_exists = false;
-                for (uint j = 0; j < cluster_lc_found_.size(); j++)
+                for (unsigned int j = 0; j < cluster_lc_found_.size(); j++)
                 {
                     if ((cluster_lc_found_[j].first == cluster_pairs[i].first && cluster_lc_found_[j].second == cluster_pairs[i].second) ||
                         (cluster_lc_found_[j].first == cluster_pairs[i].second && cluster_lc_found_[j].second == cluster_pairs[i].first))
@@ -793,7 +793,7 @@ namespace slamon
         std::pair<int, int> relation;
         bool cluster_pair_found, cand_keyframe_found;
         int q_cluster_id, cand_cluster_id, cand_keyframe_id, last_keyframe_id = -1, last_cluster_id = -1;
-        for (uint i = 0; i < i_q_l_kpts.size(); i++)
+        for (unsigned int i = 0; i < i_q_l_kpts.size(); i++)
         {
             q_cluster_id = i_q_cluster_ids[i];
             cand_cluster_id = i_cand_cluster_ids[i];
@@ -801,7 +801,7 @@ namespace slamon
 
             // Builds the unique candidate keyframe vector.
             cand_keyframe_found = false;
-            for (uint j = 0; j < cand_keyframe_ids.size(); j++)
+            for (unsigned int j = 0; j < cand_keyframe_ids.size(); j++)
             {
                 if (cand_keyframe_ids[j] == cand_keyframe_id)
                 {
@@ -822,7 +822,7 @@ namespace slamon
 
             // Searches if this pair already exists.
             cluster_pair_found = false;
-            for (uint j = 0; j < cluster_pairs.size(); j++)
+            for (unsigned int j = 0; j < cluster_pairs.size(); j++)
             {
                 if ((cluster_pairs[j].first == q_cluster_id) && (cluster_pairs[j].second == cand_cluster_id))
                 {

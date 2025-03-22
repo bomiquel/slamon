@@ -96,7 +96,7 @@ namespace haloc
      *  \param[in] desired size.
      *  @return random vector.
      */
-    std::vector<float> compute_random_vector(uint seed, int size);
+    std::vector<float> compute_random_vector(unsigned int seed, int size);
 
 
     /** \brief Make a vector unit.

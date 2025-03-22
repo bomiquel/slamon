@@ -8,7 +8,7 @@ KeypointMatcher::KeypointMatcher(const double ratio,
     ratio_ = ratio;
 
     // Sanity check
-    for (uint i = 0; i < matching_type.size(); i++)
+    for (unsigned int i = 0; i < matching_type.size(); i++)
     {
         if (isupper(matching_type[i]))
             matching_type[i] = std::tolower(matching_type[i]);
@@ -58,7 +58,7 @@ void KeypointMatcher::matchStereoKeypoints(const cv::Mat& l_descs,
                   f_points_3d_0, f_points_3d_1);
 
     // Epipolar filtering
-    for (uint i = 0; i < h_f_l_kpts.size(); i++)
+    for (unsigned int i = 0; i < h_f_l_kpts.size(); i++)
     {
         if (abs(h_f_l_kpts[i].pt.y - h_f_r_kpts[i].pt.y) <= 1.0)
         {
@@ -254,7 +254,7 @@ void KeypointMatcher::ratioMatching(const cv::Mat& descs_0,
 
     // Lowe's ratio
     int idx_0, idx_1;
-    for (uint i = 0; i < knn_matches.size(); i++)
+    for (unsigned int i = 0; i < knn_matches.size(); i++)
     {
         if (knn_matches[i].size() < 2)
             continue;
@@ -324,7 +324,7 @@ void KeypointMatcher::geometricalMatching(const cv::Mat& descs_0,
     std::vector<cv::KeyPoint> m_kpts_0, m_kpts_1;
     std::vector<int> m_cluster_ids_0, m_cluster_ids_1;
     std::vector<cv::Point3f> m_scene_pts_0, m_scene_pts_1;
-    for (uint i = 0; i < matches.size(); i++)
+    for (unsigned int i = 0; i < matches.size(); i++)
     {
         idx_0 = matches[i][0].queryIdx;
         idx_1 = matches[i][0].trainIdx;
@@ -407,10 +407,10 @@ void KeypointMatcher::assembleCircularMatchings(const std::vector<cv::KeyPoint>&
         fill_clusters = false;
 
     // Assembles
-    uint j;
-    uint k;
-    uint l;
-    for (uint i = 0; i < temporal_kpts_1_lowest.size(); i++)
+    unsigned int j;
+    unsigned int k;
+    unsigned int l;
+    for (unsigned int i = 0; i < temporal_kpts_1_lowest.size(); i++)
     {
         for (j = 0; j < stereo_kpts_1_lowest.size(); j++)
         {

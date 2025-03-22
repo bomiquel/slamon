@@ -114,7 +114,7 @@ namespace slamon
             void findClosestVertices(int vertex_id,
                                      int security_window,
                                      int critical_vertex_id,
-                                     uint closest_neighbors_num,
+                                     int closest_neighbors_num,
                                      std::vector<int>& closest_neighbors);
 
 
