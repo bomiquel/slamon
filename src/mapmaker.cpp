@@ -410,27 +410,16 @@ namespace slamon
         if (robot2camera_client_.call(srv))
         {
             camera_frame_id_ = srv.response.tf.header.frame_id;
-            double tx = srv.response.tf.pose.position.x;
-            double ty = srv.response.tf.pose.position.y;
-            double tz = srv.response.tf.pose.position.z;
-            double qx = srv.response.tf.pose.orientation.x;
-            double qy = srv.response.tf.pose.orientation.y;
-            double qz = srv.response.tf.pose.orientation.z;
-            double qw = srv.response.tf.pose.orientation.w;
+            tf::poseMsgToTF(srv.response.tf.pose, robot2camera_);
 
             ROS_WARN_STREAM("[MM->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
-                            "tx: " << tx << std::endl << 
-                            "ty: " << ty << std::endl << 
-                            "tz: " << tz << std::endl << 
-                            "qx: " << qx << std::endl << 
-                            "qy: " << qy << std::endl << 
-                            "qz: " << qz << std::endl << 
-                            "qw: " << qw);
-
-            tf::Vector3 translation(tx, ty, tz);
-            tf::Quaternion rotation(qx, qy, qz, qw);
-            robot2camera_.setOrigin(translation);
-            robot2camera_.setRotation(rotation);
+                            "tx: " << robot2camera_.getOrigin().getX() << std::endl << 
+                            "ty: " << robot2camera_.getOrigin().getY() << std::endl << 
+                            "tz: " << robot2camera_.getOrigin().getZ() << std::endl << 
+                            "qx: " << robot2camera_.getRotation().getX() << std::endl << 
+                            "qy: " << robot2camera_.getRotation().getY() << std::endl << 
+                            "qz: " << robot2camera_.getRotation().getZ() << std::endl << 
+                            "qw: " << robot2camera_.getRotation().getW());
         }
         else
         {

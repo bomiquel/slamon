@@ -219,13 +219,7 @@ namespace slamon
                                           slamon::GetTransform::Response& res)
     {
         res.tf.header.frame_id = camera_frame_id_;
-        res.tf.pose.position.x = robot2camera_.getOrigin().getX();
-        res.tf.pose.position.y = robot2camera_.getOrigin().getY();
-        res.tf.pose.position.z = robot2camera_.getOrigin().getZ();
-        res.tf.pose.orientation.x = robot2camera_.getRotation().getX();
-        res.tf.pose.orientation.y = robot2camera_.getRotation().getY();
-        res.tf.pose.orientation.z = robot2camera_.getRotation().getZ();
-        res.tf.pose.orientation.w = robot2camera_.getRotation().getW();
+        tf::poseTFToMsg(robot2camera_, res.tf.pose);
         return true;
     }
 
@@ -532,27 +526,15 @@ namespace slamon
         slamon::GetTransform srv;
         if (initial_odom_client_.call(srv))
         {
-            double tx = srv.response.tf.pose.position.x;
-            double ty = srv.response.tf.pose.position.y;
-            double tz = srv.response.tf.pose.position.z;
-            double qx = srv.response.tf.pose.orientation.x;
-            double qy = srv.response.tf.pose.orientation.y;
-            double qz = srv.response.tf.pose.orientation.z;
-            double qw = srv.response.tf.pose.orientation.w;
-
+            tf::poseMsgToTF(srv.response.tf.pose, c_odom_robot_pose_);
             ROS_WARN_STREAM("[VO->Initial odom:] GetTransform service call successful. The initial odometry is as follows:" << std::endl <<
-                            "tx: " << tx << std::endl << 
-                            "ty: " << ty << std::endl << 
-                            "tz: " << tz << std::endl << 
-                            "qx: " << qx << std::endl << 
-                            "qy: " << qy << std::endl << 
-                            "qz: " << qz << std::endl << 
-                            "qw: " << qw);
-
-            tf::Vector3 translation(tx, ty, tz);
-            tf::Quaternion rotation(qx, qy, qz, qw);
-            c_odom_robot_pose_.setOrigin(translation);
-            c_odom_robot_pose_.setRotation(rotation);
+                            "tx: " << c_odom_robot_pose_.getOrigin().getX() << std::endl << 
+                            "ty: " << c_odom_robot_pose_.getOrigin().getY() << std::endl << 
+                            "tz: " << c_odom_robot_pose_.getOrigin().getZ() << std::endl << 
+                            "qx: " << c_odom_robot_pose_.getRotation().getX() << std::endl << 
+                            "qy: " << c_odom_robot_pose_.getRotation().getY() << std::endl << 
+                            "qz: " << c_odom_robot_pose_.getRotation().getZ() << std::endl << 
+                            "qw: " << c_odom_robot_pose_.getRotation().getW());
         }
         else
         {
