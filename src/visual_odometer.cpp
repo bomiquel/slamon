@@ -19,28 +19,12 @@ namespace slamon
                                    std::string& robot_frame_id,
                                    std::string& motion_estimation_type):
                                    KeypointMatcher(ratio, matching_type), 
-                                   MotionEstimator(motion_estimation_type)
+                                   MotionEstimator(motion_estimation_type),
+                                   c_frame_id_{0}, min_inliers_{min_inliers}, min_lc_inliers_{min_lc_inliers}, 
+                                   max_kpts_bucket_{max_kpts_bucket}, max_kpts_retained_{max_kpts_retained}, status_{UNINITIALISED}, 
+                                   enable_debugging_{enable_debugging}, enable_bucketing_{enable_bucketing}, enable_enhacement_{enable_enhacement},
+                                   initialised_odom_{false}, feature_detector_name_{feature_detector_name}, robot_frame_id_{robot_frame_id}
     {
-        // Inilitialises parameters.
-        min_inliers_ = min_inliers;
-        min_lc_inliers_ = min_lc_inliers;
-        robot_frame_id_ = robot_frame_id;
-        max_kpts_bucket_ = max_kpts_bucket;
-        enable_debugging_ = enable_debugging;
-        enable_bucketing_ = enable_bucketing;
-        enable_enhacement_ = enable_enhacement;
-        max_kpts_retained_ = max_kpts_retained;
-        feature_detector_name_ = feature_detector_name;
-
-        // Set "uninitialised" status to visual odometer.
-        status_ = UNINITIALISED;
-
-        // Set frame id counter.
-        c_frame_id_ = 0;
-
-        // Set false to initialised odometry flag.
-        initialised_odom_ = false;
-
         // Create debugging directories.
         if (enable_debugging_)
         {

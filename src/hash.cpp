@@ -8,12 +8,7 @@ haloc::Hash::Params::Params() :
 {}
 
 
-haloc::Hash::Hash()
-{
-  // Initializations
-  h_size_ = -1;
-  initialized_ = false;
-}
+haloc::Hash::Hash(): h_size_{-1}, initialized_{false} {}
 
 
 bool haloc::Hash::isInitialized()

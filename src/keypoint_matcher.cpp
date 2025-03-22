@@ -2,11 +2,9 @@
 
 
 KeypointMatcher::KeypointMatcher(const double ratio,
-                                 std::string& matching_type)
+                                 std::string& matching_type): 
+                                 ratio_{ratio}
 {
-    // Gets Lowe's ratio.
-    ratio_ = ratio;
-
     // Sanity check
     for (unsigned int i = 0; i < matching_type.size(); i++)
     {

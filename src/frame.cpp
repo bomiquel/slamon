@@ -6,15 +6,9 @@ Frame::Frame(cv::Mat l_descs,
              ros::Time stamp,
              std::vector<cv::KeyPoint> l_kpts,
              std::vector<cv::KeyPoint> r_kpts,
-             std::vector<cv::Point3f> l_cam_pts)
-{
-    stamp_ = stamp;
-    l_kpts_ = l_kpts;
-    r_kpts_ = r_kpts;
-    l_descs_ = l_descs;
-    r_descs_ = r_descs;
-    l_cam_pts_ = l_cam_pts;
-}
+             std::vector<cv::Point3f> l_cam_pts):
+             stamp_{stamp}, l_descs_{l_descs}, r_descs_{r_descs}, 
+             l_kpts_{l_kpts}, r_kpts_{r_kpts}, l_cam_pts_{l_cam_pts} {}
 
 
 Frame::Frame(cv::Mat l_img,
@@ -24,17 +18,9 @@ Frame::Frame(cv::Mat l_img,
              ros::Time stamp,
              std::vector<cv::KeyPoint> l_kpts,
              std::vector<cv::KeyPoint> r_kpts,
-             std::vector<cv::Point3f> l_cam_pts)
-{
-    l_img_ = l_img;
-    r_img_ = r_img;
-    stamp_ = stamp;
-    l_kpts_ = l_kpts;
-    r_kpts_ = r_kpts;
-    l_descs_ = l_descs;
-    r_descs_ = r_descs;
-    l_cam_pts_ = l_cam_pts;
-}
+             std::vector<cv::Point3f> l_cam_pts):
+             stamp_{stamp}, l_img_{l_img}, r_img_{r_img}, l_descs_{l_descs}, r_descs_{r_descs}, 
+             l_kpts_{l_kpts}, r_kpts_{r_kpts}, l_cam_pts_{l_cam_pts} {}
 
 
 // FROM: http://codereview.stackexchange.com/questions/23966/density-based-clustering-of-image-keypoints

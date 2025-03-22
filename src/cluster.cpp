@@ -1,10 +1,7 @@
 #include "cluster.hpp"
 
 
-Cluster::Cluster()
-{
-    global_id_ = -1;
-}
+Cluster::Cluster(): global_id_{-1}, local_id_{-1} {}
 
 
 Cluster::Cluster(int global_id,
@@ -14,19 +11,9 @@ Cluster::Cluster(int global_id,
                  tf::Transform map_camera_pose,
                  std::vector<cv::KeyPoint> l_kpts,
                  std::vector<cv::KeyPoint> r_kpts,
-                 std::vector<cv::Point3f> l_cam_pts)
-{
-    l_kpts_ = l_kpts;
-    r_kpts_ = r_kpts;
-    l_descs_ = l_descs;
-    r_descs_ = r_descs;
-    l_cam_pts_ = l_cam_pts;
-    global_id_ = global_id;
-    keyframe_id_ = keyframe_id;
-    map_camera_pose_ = map_camera_pose;
-
-    local_id_ = -1;
-}
+                 std::vector<cv::Point3f> l_cam_pts): 
+                 global_id_{global_id}, local_id_{-1}, keyframe_id_{keyframe_id}, l_descs_{l_descs}, r_descs_{r_descs},
+                 map_camera_pose_{map_camera_pose}, l_kpts_{l_kpts}, r_kpts_{r_kpts}, l_cam_pts_{l_cam_pts} {}
 
 
 Cluster::Cluster(int global_id,
@@ -37,18 +24,9 @@ Cluster::Cluster(int global_id,
                  tf::Transform map_camera_pose,
                  std::vector<cv::KeyPoint> l_kpts,
                  std::vector<cv::KeyPoint> r_kpts,
-                 std::vector<cv::Point3f> l_cam_pts)
-{
-    l_kpts_ = l_kpts;
-    r_kpts_ = r_kpts;
-    l_descs_ = l_descs;
-    r_descs_ = r_descs;
-    l_cam_pts_ = l_cam_pts;
-    local_id_ = local_id;
-    global_id_ = global_id;
-    keyframe_id_ = keyframe_id;
-    map_camera_pose_ = map_camera_pose;
-}
+                 std::vector<cv::Point3f> l_cam_pts): 
+                 global_id_{global_id}, local_id_{local_id}, keyframe_id_{keyframe_id}, l_descs_{l_descs}, r_descs_{r_descs},
+                 map_camera_pose_{map_camera_pose}, l_kpts_{l_kpts}, r_kpts_{r_kpts}, l_cam_pts_{l_cam_pts} {}
 
 
 std::vector<cv::Point3f> Cluster::getWorldPoints()

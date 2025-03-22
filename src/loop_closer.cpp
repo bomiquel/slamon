@@ -17,23 +17,11 @@ namespace slamon
                            Queue<Cluster>* cluster_queue,
                            std::string& motion_estimation_type):
                            KeypointMatcher(ratio, matching_type), 
-                           MotionEstimator(motion_estimation_type)
+                           MotionEstimator(motion_estimation_type),
+                           enable_debugging_{enable_debugging}, init_loop_closer_{false}, lc_neighbors_{lc_neighbors},
+                           lc_candidates_{lc_candidates}, min_lc_inliers_{min_lc_inliers}, lc_discard_window_{lc_discard_window},
+                           loop_closure_num_{0}, map_{map}, cluster_queue_{cluster_queue}
     {
-        // Initialises parameters.
-        map_ = map;
-        lc_neighbors_ = lc_neighbors;
-        lc_candidates_ = lc_candidates;
-        cluster_queue_ = cluster_queue;
-        min_lc_inliers_ = min_lc_inliers;
-        enable_debugging_ = enable_debugging;
-        lc_discard_window_ = lc_discard_window;
-
-        // Set "uninitialised" to the loop closer.
-        init_loop_closer_ = false;
-
-        // Initialises number of closed loops.
-        loop_closure_num_ = 0; 
-
         // Creates execution directory
         execution_path_ = w_path + "haloc/";
         if (std::filesystem::exists(execution_path_))

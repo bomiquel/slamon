@@ -66,19 +66,19 @@ class Frame
         /** \brief Set left image.
          *  \param[in] l_img Left image.
          */
-        inline void setLeftImg(const cv::Mat l_img){l_img_ = l_img;}
+        inline void setLeftImg(const cv::Mat l_img) {l_img_ = l_img;}
 
 
         /** \brief Set right image.
          *  \param[in] r_img Right image.
          */
-        inline void setRightImg(const cv::Mat r_img){r_img_ = r_img;}
+        inline void setRightImg(const cv::Mat r_img) {r_img_ = r_img;}
 
 
         /** \brief Set keyframe timestamp.
          *  \param[in] stamp Keyframe timestamp.
          */
-        inline void setTimestamp(const ros::Time stamp){stamp_ = stamp;}
+        inline void setTimestamp(const ros::Time stamp) {stamp_ = stamp;}
 
 
         /** \brief Get left image.

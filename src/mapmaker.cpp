@@ -10,22 +10,11 @@ namespace slamon
                        double min_dist_keyframe,
                        const std::string& w_path,
                        Queue<Cluster>* cluster_queue,
-                       const std::string& robot_frame_id)
+                       const std::string& robot_frame_id):
+                       init_map_{false}, enable_debugging_{enable_debugging}, c_keyframe_id_{-1},
+                       min_lc_inliers_{min_lc_inliers}, min_dist_keyframe_{min_dist_keyframe},
+                       robot_frame_id_{robot_frame_id}, map_{map}, cluster_queue_{cluster_queue}
     {
-        // Inilitialises parameters.
-        map_ = map;
-        cluster_queue_ = cluster_queue;
-        min_lc_inliers_ = min_lc_inliers;
-        robot_frame_id_ = robot_frame_id;
-        enable_debugging_ = enable_debugging;
-        min_dist_keyframe_ = min_dist_keyframe;
-
-        // Set "uninitialised" to the map.
-        init_map_ = false;
-
-        // Initialised keyframe counter.
-        c_keyframe_id_ = -1;
-
         // Create debugging directories.
         if (enable_debugging_)
         {
