@@ -26,7 +26,7 @@ namespace slamon
         std::scoped_lock lock(mutex_cluster_keyframe_relation_);
 
         int frame_id = -1;
-        for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
+        for (unsigned int i = 0; i < cluster_keyframe_relation_.size(); i++)
         {
             if (cluster_keyframe_relation_[i].first == vertex_id)
             {
@@ -96,7 +96,7 @@ namespace slamon
         std::scoped_lock lock(mutex_cluster_keyframe_relation_);
 
         vertices.clear();
-        for (uint i = 0; i < cluster_keyframe_relation_.size(); i++)
+        for (unsigned int i = 0; i < cluster_keyframe_relation_.size(); i++)
         {
             if (cluster_keyframe_relation_[i].second == keyframe_id)
                 vertices.push_back(cluster_keyframe_relation_[i].first);
@@ -113,7 +113,6 @@ namespace slamon
 
 
     void Map::getKeyframePoses(std::vector<double>& stamps,
-                               std::vector<int>& keyframe_ids,
                                std::vector<tf::Transform>& keyframe_poses)
     {
         // Locks graph
@@ -121,19 +120,19 @@ namespace slamon
 
         // Sanity check
         stamps.clear();
-        keyframe_ids.clear();
         keyframe_poses.clear();
 
         // Get keyframe poses
         bool found;
         int keyframe_id;
-        for (uint vertex_id = 0; vertex_id < graph_.vertices().size(); vertex_id++)
+        std::vector<int> keyframe_ids;
+        for (unsigned int vertex_id = 0; vertex_id < graph_.vertices().size(); vertex_id++)
         {
             // Is this keyframe processed?
             found = false;
             keyframe_id = getVertexKeyframeId(vertex_id);
-            // for (uint processed_keyframe_id = processed_keyframes.size() - 1; processed_keyframe_id >= 0; processed_keyframe_id--)
-            for (uint processed_keyframe_id = 0; processed_keyframe_id < keyframe_ids.size(); processed_keyframe_id++)
+            // for (unsigned int processed_keyframe_id = processed_keyframes.size() - 1; processed_keyframe_id >= 0; processed_keyframe_id--)
+            for (unsigned int processed_keyframe_id = 0; processed_keyframe_id < keyframe_ids.size(); processed_keyframe_id++)
             {
                 if (keyframe_ids[processed_keyframe_id] == keyframe_id)
                 {
@@ -145,7 +144,6 @@ namespace slamon
                 continue;
 
             // Save data.
-            keyframe_ids.push_back(keyframe_id);
             {
                 std::scoped_lock lock(mutex_keyframe_stamps_);
                 stamps.push_back(keyframe_stamps_[keyframe_id]);
@@ -197,7 +195,7 @@ namespace slamon
     void Map::findClosestVertices(int vertex_id,
                                   int security_window,
                                   int critical_vertex_id,
-                                  uint closest_neighbors_num,
+                                  int closest_neighbors_num,
                                   std::vector<int>& closest_neighbors)
     {
         // Locks map.
@@ -232,9 +230,9 @@ namespace slamon
         std::sort(neighbors.begin(), neighbors.end(), sortByDistance);
 
         // Gets closest vertices (minnor distance)
-        if (closest_neighbors_num > neighbors.size())
+        if ((unsigned int)closest_neighbors_num > neighbors.size())
             closest_neighbors_num = neighbors.size();
-        for (uint i = 0; i < closest_neighbors_num; i++)
+        for (int i = 0; i < closest_neighbors_num; i++)
             closest_neighbors.push_back(neighbors[i].first);
     }
 

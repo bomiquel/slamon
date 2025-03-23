@@ -89,15 +89,15 @@ namespace slamon
 
             /** \brief Get the best candidates to close a loop by hash.
              *  \param[in] c_cluster_id The current cluster id.
-             *  \param[in] closest_candidates_num The number of best candidates to be retrieved.
-             *  \param[in] no_candidates Clusters list, outside the discard window, that cannot be
+             *  \param[in] cand_num The number of best candidates to be retrieved.
+             *  \param[in] no_cand Clusters list, outside the discard window, that cannot be
              *  candidates for closing loop.
-             *  \param[out] candidates The list of best candidates.
+             *  \param[out] closest_cand The list of best candidates.
              */
             void getHashCandidates(int c_cluster_id, 
-                                   uint closest_candidates_num,
-                                   std::vector<int>& no_candidates,
-                                   std::vector<int>& closest_candidates);
+                                   unsigned int cand_num,
+                                   std::vector<int>& no_cand,
+                                   std::vector<int>& closest_cand);
 
 
             /** \brief Returns whether the second element of the first
@@ -181,9 +181,9 @@ namespace slamon
 
             /** \brief Add constrains to the map (edge(s) to the graph) and
              *  performs a pose-graph optimisation.
-             *  \param[in] q_cluster_kf_id Identifier of the keyframe to which
+             *  \param[in] q_keyframe_id Identifier of the keyframe to which
              *  the query cluster belongs.
-             *  \param[in] cand_cluster_kf_id Identifier of the keyframe to which
+             *  \param[in] cand_keyframe_id Identifier of the keyframe to which
              *  the candidate cluster belongs.
              *  \param[in] search_method Type of search used: proximity or hash.
              *  \param[in] estimated_motion Little transform between query and 
@@ -202,8 +202,8 @@ namespace slamon
              *  cluster and its neighbors.
              *  @return If some edge has been added.
              */
-            bool loopCorrection(const int q_cluster_kf_id,
-                                const int cand_cluster_kf_id,
+            bool loopCorrection(const int q_keyframe_id,
+                                const int cand_keyframe_id,
                                 const std::string& search_method,
                                 const tf::Transform& estimated_motion,
                                 const std::vector<int>& i_q_cluster_ids,

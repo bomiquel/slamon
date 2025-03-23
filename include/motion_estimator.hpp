@@ -102,9 +102,9 @@ class MotionEstimator
          *      3. The median of the set of slopes is computed.
          *      4. Finally, the keypoints that generate the lines with slopes most similar to the
          *         median are retained.
-         *  \param[in] max_kpts Maximum number of keypoints per bucket.
          *  \param[in] img_width Number of columns in the image.
          *  \param[in] img_height Number of rows in the image.
+         *  \param[in] max_kpts Maximum number of keypoints per bucket.
          *  \param[in] c_l_kpts Current left keypoints.
          *  \param[in] c_r_kpts Current right keypoints.
          *  \param[in] p_l_kpts Previous left keypoints.
@@ -118,9 +118,9 @@ class MotionEstimator
          *  \param[out] f_c_l_cam_pts Bucketed current 3D points relative to left camera.
          *  \param[out] f_p_l_cam_pts Bucketed previous 3D points relative to left camera.
          */
-        std::vector<std::vector<std::pair<int, cv::KeyPoint>>> bucketKeypoints(const uint max_kpts,
-                                                                               const float img_width,
+        std::vector<std::vector<std::pair<int, cv::KeyPoint>>> bucketKeypoints(const float img_width,
                                                                                const float img_height,
+                                                                               const unsigned int max_kpts,
                                                                                const std::vector<cv::KeyPoint>& c_l_kpts,
                                                                                const std::vector<cv::KeyPoint>& c_r_kpts,
                                                                                const std::vector<cv::KeyPoint>& p_l_kpts,
@@ -324,7 +324,7 @@ class MotionEstimator
          *  \param[out] t_vec Estimated translation matrix.
          *  \param[out] inliers Vector that contains indices of inliers in l_pts_0, r_pts_0 and scene_pts_1.
          */
-        void solveDualPnPRansac(const uint ransac_iter,
+        void solveDualPnPRansac(const int ransac_iter,
                                 const cv::Mat& l_proj_mat,
                                 const cv::Mat& r_proj_mat,
                                 const std::vector<cv::Point2f>& l_pts_0,
@@ -341,7 +341,8 @@ class MotionEstimator
          *  \param[in] n_rand_idxs Number of random indices to be obtained (m).
          *  @return A vector of m positions with random and uniques indices.
          */
-        std::vector<int> getRandomIndices(uint size, uint n_rand_idxs);
+        std::vector<int> getRandomIndices(unsigned int size, 
+                                          unsigned int n_rand_idxs);
 
 
         /** \brief Updates the transform values.

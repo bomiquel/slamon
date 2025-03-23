@@ -19,28 +19,12 @@ namespace slamon
                                    std::string& robot_frame_id,
                                    std::string& motion_estimation_type):
                                    KeypointMatcher(ratio, matching_type), 
-                                   MotionEstimator(motion_estimation_type)
+                                   MotionEstimator(motion_estimation_type),
+                                   c_frame_id_{0}, min_inliers_{min_inliers}, min_lc_inliers_{min_lc_inliers}, 
+                                   max_kpts_bucket_{max_kpts_bucket}, max_kpts_retained_{max_kpts_retained}, status_{UNINITIALISED}, 
+                                   enable_debugging_{enable_debugging}, enable_bucketing_{enable_bucketing}, enable_enhacement_{enable_enhacement},
+                                   initialised_odom_{false}, feature_detector_name_{feature_detector_name}, robot_frame_id_{robot_frame_id}
     {
-        // Inilitialises parameters.
-        min_inliers_ = min_inliers;
-        min_lc_inliers_ = min_lc_inliers;
-        robot_frame_id_ = robot_frame_id;
-        max_kpts_bucket_ = max_kpts_bucket;
-        enable_debugging_ = enable_debugging;
-        enable_bucketing_ = enable_bucketing;
-        enable_enhacement_ = enable_enhacement;
-        max_kpts_retained_ = max_kpts_retained;
-        feature_detector_name_ = feature_detector_name;
-
-        // Set "uninitialised" status to visual odometer.
-        status_ = UNINITIALISED;
-
-        // Set frame id counter.
-        c_frame_id_ = 0;
-
-        // Set false to initialised odometry flag.
-        initialised_odom_ = false;
-
         // Create debugging directories.
         if (enable_debugging_)
         {
@@ -235,13 +219,7 @@ namespace slamon
                                           slamon::GetTransform::Response& res)
     {
         res.tf.header.frame_id = camera_frame_id_;
-        res.tf.pose.position.x = robot2camera_.getOrigin().getX();
-        res.tf.pose.position.y = robot2camera_.getOrigin().getY();
-        res.tf.pose.position.z = robot2camera_.getOrigin().getZ();
-        res.tf.pose.orientation.x = robot2camera_.getRotation().getX();
-        res.tf.pose.orientation.y = robot2camera_.getRotation().getY();
-        res.tf.pose.orientation.z = robot2camera_.getRotation().getZ();
-        res.tf.pose.orientation.w = robot2camera_.getRotation().getW();
+        tf::poseTFToMsg(robot2camera_, res.tf.pose);
         return true;
     }
 
@@ -370,7 +348,7 @@ namespace slamon
             publishImgStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kpts_img_pub_, l_kpts, r_kpts);
 
         // Sanity check.
-        if (l_kpts.size() < (uint)(min_lc_inliers_/2))
+        if (l_kpts.size() < (unsigned int)(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo keypoints detector:] There are not enough keypoints to match and filter!");
@@ -387,7 +365,7 @@ namespace slamon
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Stereo matching run time.
 
         // Sanity check.
-        if (m_l_kpts.size() < (uint)(min_lc_inliers_/2))
+        if (m_l_kpts.size() < (unsigned int)(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
@@ -406,7 +384,7 @@ namespace slamon
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
-        if (f_l_kpts.size() < (uint)(min_lc_inliers_/2))
+        if (f_l_kpts.size() < (unsigned int)(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Triangulator:] There are not enough 3D points after triangulation!");
@@ -461,7 +439,7 @@ namespace slamon
         }
 
         // Sanity check.
-        if (m_c_l_kpts.size() < (uint)(min_inliers_))
+        if (m_c_l_kpts.size() < (unsigned int)(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
@@ -481,7 +459,7 @@ namespace slamon
         std::vector<cv::KeyPoint> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
         if (enable_bucketing_)
         {
-            bucketKeypoints(max_kpts_bucket_, img_width_, img_height_,
+            bucketKeypoints(img_width_, img_height_, max_kpts_bucket_,
                             m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_l_cam_pts, m_p_l_cam_pts,
                             f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts);
         }
@@ -523,7 +501,7 @@ namespace slamon
         }
 
         // Sanity check.
-        if (i_c_l_kpts.size() < (uint)(min_inliers_))
+        if (i_c_l_kpts.size() < (unsigned int)(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Motion estimator:] There are not enough inliers after motion estimation!");
@@ -548,27 +526,15 @@ namespace slamon
         slamon::GetTransform srv;
         if (initial_odom_client_.call(srv))
         {
-            double tx = srv.response.tf.pose.position.x;
-            double ty = srv.response.tf.pose.position.y;
-            double tz = srv.response.tf.pose.position.z;
-            double qx = srv.response.tf.pose.orientation.x;
-            double qy = srv.response.tf.pose.orientation.y;
-            double qz = srv.response.tf.pose.orientation.z;
-            double qw = srv.response.tf.pose.orientation.w;
-
+            tf::poseMsgToTF(srv.response.tf.pose, c_odom_robot_pose_);
             ROS_WARN_STREAM("[VO->Initial odom:] GetTransform service call successful. The initial odometry is as follows:" << std::endl <<
-                            "tx: " << tx << std::endl << 
-                            "ty: " << ty << std::endl << 
-                            "tz: " << tz << std::endl << 
-                            "qx: " << qx << std::endl << 
-                            "qy: " << qy << std::endl << 
-                            "qz: " << qz << std::endl << 
-                            "qw: " << qw);
-
-            tf::Vector3 translation(tx, ty, tz);
-            tf::Quaternion rotation(qx, qy, qz, qw);
-            c_odom_robot_pose_.setOrigin(translation);
-            c_odom_robot_pose_.setRotation(rotation);
+                            "tx: " << c_odom_robot_pose_.getOrigin().getX() << std::endl << 
+                            "ty: " << c_odom_robot_pose_.getOrigin().getY() << std::endl << 
+                            "tz: " << c_odom_robot_pose_.getOrigin().getZ() << std::endl << 
+                            "qx: " << c_odom_robot_pose_.getRotation().getX() << std::endl << 
+                            "qy: " << c_odom_robot_pose_.getRotation().getY() << std::endl << 
+                            "qz: " << c_odom_robot_pose_.getRotation().getZ() << std::endl << 
+                            "qw: " << c_odom_robot_pose_.getRotation().getW());
         }
         else
         {
