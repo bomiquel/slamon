@@ -232,7 +232,7 @@ namespace slamon
         std::sort(neighbors.begin(), neighbors.end(), sortByDistance);
 
         // Gets closest vertices (minnor distance)
-        if (closest_neighbors_num > neighbors.size())
+        if ((unsigned int)closest_neighbors_num > neighbors.size())
             closest_neighbors_num = neighbors.size();
         for (int i = 0; i < closest_neighbors_num; i++)
             closest_neighbors.push_back(neighbors[i].first);
