@@ -346,7 +346,6 @@ void Publisher::publishCounter(const int counter,
 
 
 void Publisher::writePoses(const std::string& o_path,
-                           const std::vector<int>& ids,
                            const std::vector<double>& stamps,
                            const std::vector<tf::Transform>& poses)
 {
@@ -369,7 +368,7 @@ void Publisher::writePoses(const std::string& o_path,
     {
         poses_file << 
         stamps[i] << "," <<
-        ids[i] << "," <<
+        i << "," <<
         poses[i].getOrigin().getX() << "," <<
         poses[i].getOrigin().getY() << "," <<
         poses[i].getOrigin().getZ() << "," <<
@@ -431,7 +430,7 @@ void Publisher::writeLoopClosureEdges(const std::string& o_path,
     // Unlock
     bool ok = std::filesystem::remove(l_path.c_str());
     if (!ok)
-        ROS_ERROR("[Publisher->writePoses]: Error deleting the locking file!");
+        ROS_ERROR("[Publisher->writeLoopClosureEdges]: Error deleting the locking file!");
 }
 
 

@@ -88,11 +88,9 @@ namespace slamon
 
             /** \brief Gets the poses of each keyframe in the graph.
              *  \param[out] stamps The timestamp of each pose.
-             *  \param[out] keyframe_ids A list containing the id of each keyframe.
              *  \param[out] keyframe_poses A list containing the poses of each keyframe.
              */
             void getKeyframePoses(std::vector<double>& stamps,
-                                  std::vector<int>& keyframe_ids,
                                   std::vector<tf::Transform>& keyframe_poses);
 
 

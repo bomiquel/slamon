@@ -113,7 +113,6 @@ namespace slamon
 
 
     void Map::getKeyframePoses(std::vector<double>& stamps,
-                               std::vector<int>& keyframe_ids,
                                std::vector<tf::Transform>& keyframe_poses)
     {
         // Locks graph
@@ -121,12 +120,12 @@ namespace slamon
 
         // Sanity check
         stamps.clear();
-        keyframe_ids.clear();
         keyframe_poses.clear();
 
         // Get keyframe poses
         bool found;
         int keyframe_id;
+        std::vector<int> keyframe_ids;
         for (unsigned int vertex_id = 0; vertex_id < graph_.vertices().size(); vertex_id++)
         {
             // Is this keyframe processed?
@@ -145,7 +144,6 @@ namespace slamon
                 continue;
 
             // Save data.
-            keyframe_ids.push_back(keyframe_id);
             {
                 std::scoped_lock lock(mutex_keyframe_stamps_);
                 stamps.push_back(keyframe_stamps_[keyframe_id]);

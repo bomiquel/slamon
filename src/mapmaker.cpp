@@ -302,12 +302,11 @@ namespace slamon
             if (enable_debugging_)
             {
                 std::vector<double> stamps;
-                std::vector<int> keyframe_ids;
                 std::vector<tf::Transform> keyframe_poses;
-                map_->getKeyframePoses(stamps, keyframe_ids, keyframe_poses);
+                map_->getKeyframePoses(stamps, keyframe_poses);
                 for (unsigned int i = 0; i < keyframe_poses.size(); i++)
                     keyframe_poses[i] = keyframe_poses[i] * robot2camera_.inverse();
-                writePoses(poses_file_, keyframe_ids, stamps, keyframe_poses);
+                writePoses(poses_file_, stamps, keyframe_poses);
 
                 std::vector<std::pair<int, int>> edges_keyframe_ids;
                 std::vector<std::pair<tf::Transform, tf::Transform>> edges_keyframe_poses;
