@@ -181,9 +181,9 @@ namespace slamon
 
             /** \brief Add constrains to the map (edge(s) to the graph) and
              *  performs a pose-graph optimisation.
-             *  \param[in] q_cluster_kf_id Identifier of the keyframe to which
+             *  \param[in] q_keyframe_id Identifier of the keyframe to which
              *  the query cluster belongs.
-             *  \param[in] cand_cluster_kf_id Identifier of the keyframe to which
+             *  \param[in] cand_keyframe_id Identifier of the keyframe to which
              *  the candidate cluster belongs.
              *  \param[in] search_method Type of search used: proximity or hash.
              *  \param[in] estimated_motion Little transform between query and 
@@ -202,8 +202,8 @@ namespace slamon
              *  cluster and its neighbors.
              *  @return If some edge has been added.
              */
-            bool loopCorrection(const int q_cluster_kf_id,
-                                const int cand_cluster_kf_id,
+            bool loopCorrection(const int q_keyframe_id,
+                                const int cand_keyframe_id,
                                 const std::string& search_method,
                                 const tf::Transform& estimated_motion,
                                 const std::vector<int>& i_q_cluster_ids,

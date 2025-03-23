@@ -664,8 +664,8 @@ namespace slamon
     }
 
 
-    bool LoopCloser::loopCorrection(const int q_cluster_kf_id,
-                                    const int cand_cluster_kf_id,
+    bool LoopCloser::loopCorrection(const int q_keyframe_id,
+                                    const int cand_keyframe_id,
                                     const std::string& search_method,
                                     const tf::Transform& estimated_motion,
                                     const std::vector<int>& i_q_cluster_ids,
@@ -727,7 +727,7 @@ namespace slamon
 
             ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
             ROS_INFO_STREAM("                      LOOP CLOSURE: " << loop_closure_num_);
-            ROS_INFO_STREAM("Between keyframe " << q_cluster_kf_id << " and " << cand_cluster_kf_id);
+            ROS_INFO_STREAM("Between keyframe " << q_keyframe_id << " and " << cand_keyframe_id);
             ROS_INFO_STREAM("Method: " << search_method);
             ROS_INFO_STREAM("Inliers: " << i_q_l_kpts.size());
             ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
@@ -737,7 +737,7 @@ namespace slamon
                 if (loop_closure_img_pub_.getNumSubscribers() > 0)
                     publishImgLoopClosure(ros::Time::now(), 
                                         loop_closure_img_pub_,
-                                        q_cluster_kf_id,
+                                        q_keyframe_id,
                                         keyframe_path_,
                                         i_q_cluster_ids,
                                         i_cand_cluster_ids,
@@ -751,7 +751,7 @@ namespace slamon
                                         cand_cluster_keyframe_relation);
 
                 writeImgLoopClosure(lc_path_ + convertTo5Digits(loop_closure_num_),
-                                    q_cluster_kf_id,
+                                    q_keyframe_id,
                                     keyframe_path_,
                                     i_q_cluster_ids,
                                     i_cand_cluster_ids,
