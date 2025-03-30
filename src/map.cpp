@@ -23,14 +23,14 @@ namespace slamon
 
     int Map::getVertexKeyframeId(int vertex_id)
     {
-        std::scoped_lock lock(mutex_cluster_keyframe_relation_);
+        std::scoped_lock lock(mutex_cluster_keyframe_relations_);
 
         int frame_id = -1;
-        for (unsigned int i = 0; i < cluster_keyframe_relation_.size(); i++)
+        for (unsigned int i = 0; i < cluster_keyframe_relations_.size(); i++)
         {
-            if (cluster_keyframe_relation_[i].first == vertex_id)
+            if (cluster_keyframe_relations_[i].first == vertex_id)
             {
-                frame_id = cluster_keyframe_relation_[i].second;
+                frame_id = cluster_keyframe_relations_[i].second;
                 break;
             }
         }
@@ -93,13 +93,13 @@ namespace slamon
     void Map::getKeyframeVertices(int keyframe_id,
                                   std::vector<int>& vertices)
     {
-        std::scoped_lock lock(mutex_cluster_keyframe_relation_);
+        std::scoped_lock lock(mutex_cluster_keyframe_relations_);
 
         vertices.clear();
-        for (unsigned int i = 0; i < cluster_keyframe_relation_.size(); i++)
+        for (unsigned int i = 0; i < cluster_keyframe_relations_.size(); i++)
         {
-            if (cluster_keyframe_relation_[i].second == keyframe_id)
-                vertices.push_back(cluster_keyframe_relation_[i].first);
+            if (cluster_keyframe_relations_[i].second == keyframe_id)
+                vertices.push_back(cluster_keyframe_relations_[i].first);
         }
     }
 
@@ -253,8 +253,8 @@ namespace slamon
 
     void Map::addClusterKeyframeRelation(const std::pair<int, int>& relation)
     {
-        std::scoped_lock lock(mutex_cluster_keyframe_relation_);
-        cluster_keyframe_relation_.push_back(relation);
+        std::scoped_lock lock(mutex_cluster_keyframe_relations_);
+        cluster_keyframe_relations_.push_back(relation);
     }
 
 

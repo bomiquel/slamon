@@ -677,9 +677,9 @@ namespace slamon
     {
         // Gets the inliers per cluster pair.
         std::vector<int> inliers_per_pair,cand_keyframe_ids;
-        std::vector<std::pair<int, int>> cluster_pairs, cand_cluster_keyframe_relation;
+        std::vector<std::pair<int, int>> cluster_pairs, cand_cluster_keyframe_relations;
         getInliersPerClusterPair(i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, inliers_per_pair,
-                                cand_keyframe_ids, cluster_pairs, cand_cluster_keyframe_relation);
+                                cand_keyframe_ids, cluster_pairs, cand_cluster_keyframe_relations);
 
         // Adds the corresponding edges.
         bool lc_already_exists, some_edge_added = false;
@@ -748,7 +748,7 @@ namespace slamon
                                         i_cand_r_kpts,
                                         definitive_inliers_per_pair,
                                         definitive_cluster_pairs,
-                                        cand_cluster_keyframe_relation);
+                                        cand_cluster_keyframe_relations);
 
                 writeImgLoopClosure(lc_path_ + convertTo5Digits(loop_closure_num_),
                                     q_keyframe_id,
@@ -762,7 +762,7 @@ namespace slamon
                                     i_cand_r_kpts,
                                     definitive_inliers_per_pair,
                                     definitive_cluster_pairs,
-                                    cand_cluster_keyframe_relation);
+                                    cand_cluster_keyframe_relations);
             }
             return true;
         }
@@ -776,7 +776,7 @@ namespace slamon
                                               std::vector<int>& inliers_per_pair,
                                               std::vector<int>& cand_keyframe_ids,
                                               std::vector<std::pair<int, int>>& cluster_pairs,
-                                              std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation)
+                                              std::vector<std::pair<int, int>>& cand_cluster_keyframe_relations)
     {
         std::pair<int, int> relation;
         bool cluster_pair_found, cand_keyframe_found;
@@ -805,7 +805,7 @@ namespace slamon
             {
                 last_cluster_id = cand_cluster_id;
                 last_keyframe_id = cand_keyframe_id;
-                cand_cluster_keyframe_relation.push_back(std::make_pair(cand_cluster_id, cand_keyframe_id));
+                cand_cluster_keyframe_relations.push_back(std::make_pair(cand_cluster_id, cand_keyframe_id));
             }
 
             // Searches if this pair already exists.

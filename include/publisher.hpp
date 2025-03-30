@@ -236,8 +236,8 @@ class Publisher
          *  \param[in] definitive_inliers_per_pair The number of inliers for every loop
          *  closure cluster pair.
          *  \param[in] definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id).
-         *  \param[in] cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
-         *  relation (cand_cluster_id, cand_keyframe_id).
+         *  \param[in] cand_cluster_keyframe_relations Stores the candidate cluster-keyframe
+         *  relations (cand_cluster_id, cand_keyframe_id).
          */
         void publishImgLoopClosure(const ros::Time& stamp,
                                    const ros::Publisher& publisher,
@@ -252,7 +252,7 @@ class Publisher
                                    const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                    const std::vector<int>& definitive_inliers_per_pair,
                                    const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
-                                   const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
+                                   const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relations);
 
 
         /** \brief Draws and writes on disk a loop closure image with all the correspondences
@@ -274,8 +274,8 @@ class Publisher
          *  \param[in] definitive_inliers_per_pair The number of inliers for every loop
          *  closure cluster pair.
          *  \param[in] definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id).
-         *  \param[in] cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
-         *  relation (cand_cluster_id, cand_keyframe_id).
+         *  \param[in] cand_cluster_keyframe_relations Stores the candidate cluster-keyframe
+         *  relations (cand_cluster_id, cand_keyframe_id).
          */
         void writeImgLoopClosure(const std::string& o_path,
                                  const int q_keyframe_id,
@@ -289,7 +289,7 @@ class Publisher
                                  const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                  const std::vector<int>& definitive_inliers_per_pair,
                                  const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
-                                 const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
+                                 const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relations);
 
 
         /** \brief Publishes current robot pose.
@@ -513,8 +513,8 @@ class Publisher
          *  \param[in] definitive_inliers_per_pair The number of inliers for every loop
          *  closure cluster pair.
          *  \param[in] definitive_cluster_pairs The cluster pairs vector (q_cluster_id - cand_cluster_id).
-         *  \param[in] cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
-         *  relation (cand_cluster_id, cand_keyframe_id).
+         *  \param[in] cand_cluster_keyframe_relations Stores the candidate cluster-keyframe
+         *  relations (cand_cluster_id, cand_keyframe_id).
          */
         cv::Mat drawImgLoopClosure(const int q_keyframe_id,
                                    const std::string& i_path,
@@ -527,7 +527,7 @@ class Publisher
                                    const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                    const std::vector<int>& definitive_inliers_per_pair,
                                    const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
-                                   const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
+                                   const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relations);
 
 
         /** \brief Builds nav_msgs::Odometry msg with current pose.
