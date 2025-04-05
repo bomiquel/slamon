@@ -9,6 +9,8 @@
 #define MAP_HPP
 
 
+#include <unordered_set>
+
 #include <ros/ros.h>
 #include <tf/tf.h>
 
