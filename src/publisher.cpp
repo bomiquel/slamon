@@ -169,7 +169,7 @@ void Publisher::publishImgLoopClosure(const ros::Time& stamp,
                                       const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                       const std::vector<int>& definitive_inliers_per_pair,
                                       const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
-                                      const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation)
+                                      const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relations)
 {
     // Draws loop closures.
     cv::Mat o_img = drawImgLoopClosure(q_keyframe_id,
@@ -183,7 +183,7 @@ void Publisher::publishImgLoopClosure(const ros::Time& stamp,
                                        f_cand_r_kpts,
                                        definitive_inliers_per_pair,
                                        definitive_cluster_pairs,
-                                       cand_cluster_keyframe_relation);
+                                       cand_cluster_keyframe_relations);
 
     // Publish image.
     publishImg(o_img, stamp, publisher);
@@ -202,7 +202,7 @@ void Publisher::writeImgLoopClosure(const std::string& o_path,
                                     const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                     const std::vector<int>& definitive_inliers_per_pair,
                                     const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
-                                    const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation)
+                                    const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relations)
 {
     // Draws loop closures.
     cv::Mat o_img = drawImgLoopClosure(q_keyframe_id,
@@ -216,7 +216,7 @@ void Publisher::writeImgLoopClosure(const std::string& o_path,
                                        f_cand_r_kpts,
                                        definitive_inliers_per_pair,
                                        definitive_cluster_pairs,
-                                       cand_cluster_keyframe_relation);
+                                       cand_cluster_keyframe_relations);
 
      // Writes image.
     cv::imwrite(o_path + ".png", o_img);
@@ -648,7 +648,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
                                       const std::vector<cv::KeyPoint>& f_cand_r_kpts,
                                       const std::vector<int>& definitive_inliers_per_pair,
                                       const std::vector<std::pair<int, int>>& definitive_cluster_pairs,
-                                      const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation)
+                                      const std::vector<std::pair<int, int>>& cand_cluster_keyframe_relations)
 {
     // Local variables.
     std::stringstream text;
@@ -716,10 +716,10 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
         // Gets the candidate keyframe id due to the relation between clusters and keyframes.
         cand_keyframe_id = -1;
-        for (unsigned int j = 0; j < cand_cluster_keyframe_relation.size(); j++)
+        for (unsigned int j = 0; j < cand_cluster_keyframe_relations.size(); j++)
         {
-            if (cand_cluster_keyframe_relation[j].first == cand_cluster_id)
-                cand_keyframe_id = cand_cluster_keyframe_relation[j].second;
+            if (cand_cluster_keyframe_relations[j].first == cand_cluster_id)
+                cand_keyframe_id = cand_cluster_keyframe_relations[j].second;
         }
 
         // Gets the index of the candidate keyframe within the variable cand_keyframe_vector_img.

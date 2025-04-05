@@ -9,6 +9,8 @@
 #define MAP_HPP
 
 
+#include <unordered_set>
+
 #include <ros/ros.h>
 #include <tf/tf.h>
 
@@ -200,7 +202,7 @@ namespace slamon
 
             std::mutex mutex_local_cluster_poses_; //!> Mutex for the cluster poses, relative to camera frame, container.
 
-            std::mutex mutex_cluster_keyframe_relation_; //!> Mutex for the cluster-keyframe relations container.
+            std::mutex mutex_cluster_keyframe_relations_; //!> Mutex for the cluster-keyframe relations container.
 
             g2o::SparseOptimizer graph_; //!> G2O graph.
 
@@ -208,7 +210,7 @@ namespace slamon
 
             std::vector<tf::Transform> local_cluster_poses_; //!> Stores the cluster poses relative to camera frame.
 
-            std::vector<std::pair<int, int>> cluster_keyframe_relation_; //!> Stores the cluster-keyframe relation (cluster_id, frame_id).
+            std::vector<std::pair<int, int>> cluster_keyframe_relations_; //!> Stores the cluster-keyframe relations (cluster_id, frame_id).
 
 
     };

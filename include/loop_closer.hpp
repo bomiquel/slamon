@@ -224,8 +224,8 @@ namespace slamon
              *  \param[out] cand_keyframe_ids Identifiers of keyframes containing candidate 
              *  clusters that have closed loops.
              *  \param[out] cluster_pairs Cluster pairs vector (q_cluster_id - cand_cluster_id).
-             *  \param[out] cand_cluster_keyframe_relation Stores the candidate cluster-keyframe
-             *  relation (cand_cluster_id, cand_keyframe_id).
+             *  \param[out] cand_cluster_keyframe_relations Stores the candidate cluster-keyframe
+             *  relations (cand_cluster_id, cand_keyframe_id).
              */
             void getInliersPerClusterPair(const std::vector<int>& i_q_cluster_ids,
                                           const std::vector<int>& i_cand_cluster_ids,
@@ -233,7 +233,7 @@ namespace slamon
                                           std::vector<int>& inliers_per_pair,
                                           std::vector<int>& cand_keyframe_ids,
                                           std::vector<std::pair<int, int>>& cluster_pairs,
-                                          std::vector<std::pair<int, int>>& cand_cluster_keyframe_relation);
+                                          std::vector<std::pair<int, int>>& cand_cluster_keyframe_relations);
 
 
             // Attributes:
