@@ -28,10 +28,10 @@ Modification date
 import os
 import sys
 import time
-import weakref
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 # Global variables
@@ -50,7 +50,7 @@ loop_closing_edges_data_path = ""
 
 def isFull(path_to_file):
   r"""
-  Check if the file length is > 0 
+  Check if the file length is > 0.
 
   Parameters
   ----------
@@ -67,24 +67,24 @@ def isFull(path_to_file):
   return len(lines) > 0
 
 
-def removeAxes(ax_id):
+def removeAxes(ax):
   r"""
-  Removes the axes lines from the given matplotlib axes object.
+  Fully removes and deletes Line2D objects from a Matplotlib plot.
 
   Parameters
   ----------
-  ax_id : matplotlib.axes.Axes
-    The axes from which to remove the axis lines.
+  ax : list[matplotlib.lines.Line2D]
+    Axis lines to be removed.
 
   Returns
   -------
   None
   """
-  if (ax_id is not None and ax_id):
-    l = ax_id.pop(0)
-    wl = weakref.ref(l)
-    l.remove()
-    del l
+  if ax is not None and ax:
+    for i, line in enumerate(ax):
+      line.remove() 
+      ax[i] = None
+    ax.clear()
 
 
 def updateLegend():
@@ -109,13 +109,9 @@ def removeEdges():
   None
   """
   global ax_edges, edges_shown
-
-  for i in range(len(ax_edges)):
-    l = ax_edges[i].pop(0)
-    wl = weakref.ref(l)
-    l.remove()
-    del l
-  ax_edges = []
+  for ax_edge in ax_edges:
+    removeAxes(ax_edge)
+  ax_edges.clear()
   edges_shown = False
 
 
@@ -219,7 +215,7 @@ def onClick(event):
 
   Parameters
   ----------
-  event : matplotlib.backend_bases.MouseEvent
+  event : matplotlib.backend_bases.Event
     The mouse click event object.
 
   Returns
