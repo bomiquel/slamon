@@ -1,22 +1,38 @@
 #!/usr/bin/env python3
 
+
 """
-@file
-@brief SLAM online viewer.
-@author Pep Lluís Negre-Carrasco
-@date 2014-2016
-@modified Bo Miquel Nordfeldt-Fiol 2024-2025
+slam_viewer.py
+==================
+
+Online SLAM trajectory viewer.
+
+Author
+----------
+Pep Lluís Negre-Carrasco
+
+Modifier
+----------
+Bo Miquel Nordfeldt-Fiol
+
+Date
+----------
+2014-2016
+
+Modification date
+----------
+2024-2025
 """
 
 
 import os
 import sys
 import time
-import weakref
 import argparse
 import numpy as np
 from plyfile import PlyData
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 # Global variables
@@ -36,31 +52,51 @@ loop_closing_edges_data_path = ""
 
 
 def isFull(path_to_file):
-  """ 
-  Check if the file length is > 0 
-  @param path_to_file: path to the file to be analysed.
-  @return if file length is > 0.
+  r"""
+  Check if the file length is > 0.
+
+  Parameters
+  ----------
+  path_to_file : str
+    Path to the file to be analyzed.
+
+  Returns
+  -------
+  out : bool
+    True if the file length is greater than 0, False otherwise.
   """
   with open(path_to_file, "r") as file:
     lines = file.readlines()
   return len(lines) > 0
 
 
-def removeAxes(ax_id):
-  """ 
-  Removes the axes lines.
-  @param ax_id: the axes.  
+def removeAxes(ax):
+  r"""
+  Fully removes and deletes Line2D objects from a Matplotlib plot.
+
+  Parameters
+  ----------
+  ax : list[matplotlib.lines.Line2D]
+    Axis lines to be removed.
+
+  Returns
+  -------
+  None
   """
-  if (ax_id is not None and ax_id):
-    l = ax_id.pop(0)
-    wl = weakref.ref(l)
-    l.remove()
-    del l
+  if ax is not None and ax:
+    for i, line in enumerate(ax):
+      line.remove() 
+      ax[i] = None
+    ax.clear()
 
 
 def updateLegend():
-  """
+  r""" 
   Updates legend.
+
+  Returns
+  -------
+  None
   """
   global legend_edited
   ax.legend()
@@ -68,25 +104,35 @@ def updateLegend():
 
 
 def removeEdges():
-  """ 
+  r""" 
   Removes the loop's closing edges.
+
+  Returns
+  -------
+  None
   """
   global ax_edges, edges_shown
-
-  for i in range(len(ax_edges)):
-    l = ax_edges[i].pop(0)
-    wl = weakref.ref(l)
-    l.remove()
-    del l
-  ax_edges = []
+  for ax_edge in ax_edges:
+    removeAxes(ax_edge)
+  ax_edges.clear()
   edges_shown = False
 
 
 def readPLYVertices(path_to_file):
-  """
+  r"""
   Reads .ply files and returns their vertices.
-  @param path_to_file: path to the .ply file to be read.
-  @return .ply vertices.
+
+  Parameters
+  ----------
+  path_to_file : str
+    Path to the .ply file to be read.
+
+  Returns
+  ----------
+  x : numpy.ndarray[numpy.float32]
+    x-coordinates of the vertices.
+  y : numpy.ndarray[numpy.float32]
+    y-coordinates of the vertices.
   """
   with open(path_to_file, "rb") as file:
     ply_data = PlyData.read(file)
@@ -95,8 +141,12 @@ def readPLYVertices(path_to_file):
 
 
 def drawEdges():
-  """ 
+  r""" 
   Draws the loop's closing edges.
+
+  Returns
+  -------
+  None
   """
   global edges_lock_file, loop_closing_edges_data_path, ax_edges, edges_shown, plot_dim
 
@@ -185,9 +235,17 @@ def drawEdges():
 
 
 def onClick(event):
-  """ 
+  r""" 
   Handle the click event
-  @param event: click event.
+
+  Parameters
+  ----------
+  event : matplotlib.backend_bases.Event
+    The mouse click event object.
+
+  Returns
+  ----------
+  None
   """
   global edges_shown
 
@@ -201,12 +259,23 @@ def onClick(event):
 
 
 def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
-  """ 
-  Function to plot the data saved into the files online. 
-  @param gt_data_path: Path to the file with the ground truth data.
-  @param vo_data_path: Path to the file with the visual odometry data.
-  @param slam_data_path: Path to the file with the slam data.
-  @param pipes_folder_path: Path to the folder where the pipeline locations are stored.
+  r"""
+  Plots trajectory data from ground truth, visual odometry, and SLAM sources.
+
+  Parameters
+  ----------
+  gt_data_path : str
+    Path to the file containing ground truth trajectory data.
+  vo_data_path : str
+    Path to the file containing visual odometry trajectory data.
+  slam_data_path : str
+    Path to the file containing SLAM trajectory data.
+  pipes_folder_path : str
+    Path to the folder where the pipeline locations are stored.
+
+  Returns
+  ----------
+  None
   """
   global vertices_lock_file, legend_edited, ax_gt, ax_vo, ax_vertices, ax_pipes_map, ax_pipes_odom, edges_shown, plot_dim
 
@@ -380,7 +449,7 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
 
 if __name__ == "__main__":
   
-  parser = argparse.ArgumentParser(description = "SLAMON online viewer.",
+  parser = argparse.ArgumentParser(description = "Online SLAM trajectory viewer.",
                                    formatter_class = argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("-gt", "--gt", type = str, 
                       default = None,
