@@ -260,7 +260,7 @@ def onClick(event):
 
 def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
   r"""
-  Plots trajectory data from ground truth, visual odometry, and SLAM sources.
+  Plots trajectory data from ground truth, visual odometry and SLAM. Also plots pipes positions.
 
   Parameters
   ----------
