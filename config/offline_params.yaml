@@ -12,7 +12,7 @@ slamon:
   max_kpts_retained: 1500
   min_dist_keyframe: 0.5
   min_inliers: 40
-  min_lc_inliers: 100
+  min_lc_inliers: 80
   motion_estimation_type: ap3p
   robot_frame_id: /turbot/base_link
-  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/portals/full_cut/test/ratio_matching/ap3p/execution_0/
+  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/portals/full_cut/solvepnpransac_and_addedges_more_restrictive/ratio_matching/ap3p/execution_0/

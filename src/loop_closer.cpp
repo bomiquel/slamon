@@ -688,7 +688,7 @@ namespace slamon
         tf::Transform edge, cand_cluster_pose, q_cluster_pose_relative_to_camera;
         for (unsigned int i = 0; i < inliers_per_pair.size(); i++)
         {
-            if (inliers_per_pair[i] >= 5)
+            if (inliers_per_pair[i] >= 30)
             {
                 // Checks if this loop closure exists.
                 lc_already_exists = false;

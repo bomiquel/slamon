@@ -321,7 +321,7 @@ void MotionEstimator::estimateMotion(const cv::Mat& l_proj_mat,
     {
         cv::Mat K = l_proj_mat.colRange(cv::Range(0, 3)).clone();
         cv::solvePnPRansac(scene_pts_1, l_pts_0, K, cv::Mat(), r_vec, t_vec, 
-                           false, 2000, 2.0, 0.99, inliers, motion_estimation_type_);
+                           false, 2000, 1.0, 0.99, inliers, motion_estimation_type_);
     }
 
     // Filter keypoints, 3D points and clusters.
