@@ -7,8 +7,8 @@ project(slamon)
 ## Compiler ##
 ##############
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall  -O3 -march=native")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
 
 # Check C++20 or C++17 support
 include(CheckCXXCompilerFlag)
@@ -143,5 +143,5 @@ add_dependencies(initial_pose_server_params ${catkin_EXPORTED_TARGETS})
 
 # Linking
 target_link_libraries(slamon_vo ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(slamon_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(slamon_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod)
 target_link_libraries(initial_pose_server_params ${catkin_LIBRARIES})
