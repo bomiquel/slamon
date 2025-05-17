@@ -14,9 +14,10 @@
 #include <ros/ros.h>
 #include <tf/tf.h>
 
-#include <g2o/core/sparse_optimizer.h>
 #include <g2o/core/block_solver.h>
+#include <g2o/core/sparse_optimizer.h>
 #include <g2o/types/slam3d/edge_se3.h>
+#include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/solvers/cholmod/linear_solver_cholmod.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>
 
@@ -29,12 +30,19 @@ namespace slamon
 
     class Map
     {
+
+
         public:
 
 
-            /** \brief Class constructor
+            /** \brief Class constructor.
              */
             Map();
+
+
+            /** \brief Class destructor.
+             */
+            ~Map();
 
 
             /** \brief Gets last vertex id.
@@ -47,7 +55,7 @@ namespace slamon
              *  \param[in] vertex_id The vertex id.
              *  @return The frame id.
              */
-            int getVertexKeyframeId(int vertex_id);
+            int getVertexKeyframeId(const int vertex_id);
 
 
             /** \brief Get the world-map vertex pose from the graph.
@@ -55,14 +63,25 @@ namespace slamon
              *  \param[in] use_lock Set to true if map locking is required
              *  @return Tf with world-map vertex pose.
              */
-            tf::Transform getVertexPose(int vertex_id, bool use_lock);
+            tf::Transform getVertexPose(const int vertex_id, 
+                                        const bool use_lock);
+
+
+            /** \brief Gets the poses of each vertex in the graph.
+             *  \param[out] ids A vertex identifier list.
+             *  \param[out] stamps The timestamp of each pose.
+             *  \param[out] vertex_poses A list containing the poses of each vertex.
+             */
+            void getVertexPoses(std::vector<int>& ids,
+                                std::vector<double>& stamps,
+                                std::vector<tf::Transform>& vertex_poses);
 
 
             /** \brief Get the graph vertex pose relative to camera.
              *  \param[in] vertex_id The id of the vertex for which the pose is desired.
              *  @return Tf with vertex pose relative to camera.
              */
-            tf::Transform getVertexPoseRelativeToCamera(int vertex_id);
+            tf::Transform getVertexPoseRelativeToCamera(const int vertex_id);
 
 
             /** \brief Get the world-map camera pose of some specific vertex.
@@ -70,14 +89,15 @@ namespace slamon
              *  \param[in] lock Set to true if map locking is required.
              *  @return Tf with the world-map camera pose.
              */
-            tf::Transform getVertexCameraPose(int vertex_id, bool use_lock);
+            tf::Transform getVertexCameraPose(const int vertex_id, 
+                                              const bool use_lock);
 
 
             /** \brief Retrieve the list of the vertices/clusters of a corresponding keyframe.
              *  \param[in] keyframe_id The corresponding keyframe id.
              *  \param[out] vertices Will contain the list of vertices for this keyframe.
              */
-            void getKeyframeVertices(int keyframe_id, 
+            void getKeyframeVertices(const int keyframe_id, 
                                      std::vector<int>& vertices);
 
 
@@ -85,7 +105,7 @@ namespace slamon
              *  \param[in] keyframe_id The id of the keyframe for which the pose is desired.
              *  @return Tf with the world-map camera pose.
              */
-            tf::Transform getKeyframePose(int keyframe_id);
+            tf::Transform getKeyframePose(const int keyframe_id);
 
 
             /** \brief Gets the poses of each keyframe in the graph.
@@ -105,23 +125,23 @@ namespace slamon
 
 
             /** \brief Gets nearest neighbour vertices by distance.
-             *  \param[in] vertex_id The vertex id to retrieve its neighbors.
+             *  \param[in] q_vertex_id The vertex id to retrieve its neighbors.
              *  \param[in] security_window Discarded number of vertices before the critical vertex.
              *  \param[in] critical_vertex_id Identifier of the vertex that the search cannot reach.
              *  \param[in] closest_neighbors_num The number of neighbors to be retrieved.
              *  \param[out] closest_neighbors Will contain the list of closest neighbors by distance.
              */
-            void findClosestVertices(int vertex_id,
-                                     int security_window,
-                                     int critical_vertex_id,
-                                     int closest_neighbors_num,
+            void findClosestVertices(const int q_vertex_id,
+                                     const int security_window,
+                                     const int critical_vertex_id,
+                                     const int closest_neighbors_num,
                                      std::vector<int>& closest_neighbors);
 
 
             /** \brief Adds keyframe timestamp to the vector.
              *  \param[in] stamp Keyframe timestamp.
              */
-            void addTimestamp(double stamp);
+            void addTimestamp(const double stamp);
 
 
             /** \brief Adds local cluster pose to the vector.
@@ -148,14 +168,14 @@ namespace slamon
              *  \param[in] vertex_1_id Index of graph vertex 1.
              *  \param[in] transformation Transformation between graph vertices.
              */
-            void addEdge(int vertex_0_id, 
-                         int vertex_1_id, 
+            void addEdge(const int vertex_0_id, 
+                         const int vertex_1_id, 
                          tf::Transform tf_edge);
 
 
-            /** \brief Optimitzes the graph. 
+            /** \brief Performs a Pose-Graph Optimisation.
              */
-            void update();
+            void optimiseGraphPoses();
 
 
         private:
@@ -192,6 +212,12 @@ namespace slamon
              *  @return The tf::Transform.
              */ 
             tf::Transform fromVertexToTf(const g2o::VertexSE3* vertex);
+
+
+            /** \brief Sorts graph vertices by index in ascending order.
+             *  @return Sorted graph vertices.
+             */
+            std::vector<std::pair<int, g2o::VertexSE3*>> sortVertices();
 
 
             // Attributes:

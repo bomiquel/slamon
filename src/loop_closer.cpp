@@ -722,7 +722,7 @@ namespace slamon
 
         if (some_edge_added)
         {
-            map_->update();
+            map_->optimiseGraphPoses();
             loop_closure_num_++;
 
             ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
