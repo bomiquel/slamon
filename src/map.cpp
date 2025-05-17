@@ -3,7 +3,7 @@
 
 namespace slamon
 {
-    
+
 
     Map::Map()
     {
@@ -171,7 +171,7 @@ namespace slamon
         // Get keyframe poses.
         int vertex_id, keyframe_id;
         std::unordered_set<int> processed_keyframe_ids;
-        for (std::vector<std::pair<int, g2o::VertexSE3*>>::iterator it = vertices.begin(); it != vertices.end(); it++)
+        for (std::vector<std::pair<int, g2o::VertexSE3*>>::iterator it = vertices.begin(); it != vertices.end(); ++it)
         {
             vertex_id = it->first;
 
@@ -187,7 +187,7 @@ namespace slamon
                 std::scoped_lock lock(mutex_keyframe_stamps_);
                 stamps.emplace_back(keyframe_stamps_[keyframe_id]);
             }
-            keyframe_poses.emplace_back(getVertexCameraPose(vertex_id, false));
+            keyframe_poses.emplace_back(getVertexCameraPose(vertex_id, true));
 
             // Marks this keyframe as processed.
             processed_keyframe_ids.insert(keyframe_id);
@@ -443,7 +443,7 @@ namespace slamon
             vertex = dynamic_cast<g2o::VertexSE3*>(it.second);
             if (!vertex)
             {
-                ROS_WARN_STREAM("[Map->sortVertices:] Problems casting vertex: " << vertex_id);
+                ROS_WARN_STREAM("[Map->sortVertices:] Problems casting vertex: " << vertex_id << "!");
                 continue;
             }
             vertices.emplace_back(vertex_id, vertex);
