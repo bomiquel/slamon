@@ -12,7 +12,7 @@ slamon:
   max_kpts_retained: 1500
   min_dist_keyframe: 0.25
   min_inliers: 40
-  min_lc_inliers: 100
+  min_lc_inliers: 80
   motion_estimation_type: ap3p
   robot_frame_id: /girona500/base_link
   working_path: /home/bomiquel/catkin_ws/src/slamon/output/
