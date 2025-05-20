@@ -459,7 +459,7 @@ namespace slamon
         std::vector<cv::KeyPoint> f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts;
         if (enable_bucketing_)
         {
-            bucketKeypoints(img_width_, img_height_, max_kpts_bucket_,
+            bucketKeypoints(static_cast<size_t>(max_kpts_bucket_), img_width_, img_height_,
                             m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_l_cam_pts, m_p_l_cam_pts,
                             f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts);
         }

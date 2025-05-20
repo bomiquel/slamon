@@ -42,7 +42,7 @@ class KeypointMatcher
          *  \param[in] matching_type Desired matching type name.
          */
         KeypointMatcher(const double ratio,
-                        std::string& matching_type);
+                        const std::string& matching_type);
 
 
         /** \brief Matches keypoints of the same stereo pair and removes outliers. To
