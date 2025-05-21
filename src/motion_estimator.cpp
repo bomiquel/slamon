@@ -361,6 +361,135 @@ void MotionEstimator::estimateMotion(const cv::Mat& l_proj_mat,
 }
 
 
+void MotionEstimator::estimateRefinedMotion(const cv::Mat& l_proj_mat,
+                                            const cv::Mat& r_proj_mat,
+                                            const std::vector<cv::KeyPoint>& l_kpts_0,
+                                            const std::vector<cv::KeyPoint>& r_kpts_0,
+                                            const std::vector<cv::KeyPoint>& l_kpts_1,
+                                            const std::vector<cv::KeyPoint>& r_kpts_1,
+                                            const std::vector<cv::Point3f>& scene_pts_0,
+                                            const std::vector<cv::Point3f>& scene_pts_1,
+                                            cv::Mat& r_vec,
+                                            cv::Mat& t_vec,
+                                            std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                            std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                            std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                            std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                            std::vector<cv::Point3f>& f_scene_pts_0,
+                                            std::vector<cv::Point3f>& f_scene_pts_1)
+{
+    // Dummy variables.
+    std::vector<int> cluster_ids_0, cluster_ids_1, f_cluster_ids_0, f_cluster_ids_1;
+    estimateRefinedMotion(l_proj_mat, r_proj_mat,
+                          cluster_ids_0, cluster_ids_1, 
+                          l_kpts_0, r_kpts_0, 
+                          l_kpts_1, r_kpts_1, 
+                          scene_pts_0, scene_pts_1,
+                          r_vec, t_vec, 
+                          f_cluster_ids_0, f_cluster_ids_1, 
+                          f_l_kpts_0, f_r_kpts_0, 
+                          f_l_kpts_1, f_r_kpts_1, 
+                          f_scene_pts_0, f_scene_pts_1);
+}
+
+
+void MotionEstimator::estimateRefinedMotion(const cv::Mat& l_proj_mat,
+                                            const cv::Mat& r_proj_mat,
+                                            const std::vector<int>& cluster_ids_0,
+                                            const std::vector<int>& cluster_ids_1,
+                                            const std::vector<cv::KeyPoint>& l_kpts_0,
+                                            const std::vector<cv::KeyPoint>& r_kpts_0,
+                                            const std::vector<cv::KeyPoint>& l_kpts_1,
+                                            const std::vector<cv::KeyPoint>& r_kpts_1,
+                                            const std::vector<cv::Point3f>& scene_pts_0,
+                                            const std::vector<cv::Point3f>& scene_pts_1,
+                                            cv::Mat& r_vec,
+                                            cv::Mat& t_vec,
+                                            std::vector<int>& f_cluster_ids_0,
+                                            std::vector<int>& f_cluster_ids_1,        
+                                            std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                            std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                            std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                            std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                            std::vector<cv::Point3f>& f_scene_pts_0,
+                                            std::vector<cv::Point3f>& f_scene_pts_1)
+{
+    // Sanity check.
+    r_vec.release(); t_vec.release();
+    f_l_kpts_0.clear(); f_l_kpts_1.clear();
+    f_r_kpts_0.clear(); f_r_kpts_1.clear();
+    f_scene_pts_0.clear(); f_scene_pts_1.clear();
+    f_cluster_ids_0.clear(); f_cluster_ids_1.clear();
+
+    // If there are no right keypoints, the filtered right verctor must not be filled.
+    const bool has_right = !r_kpts_0.empty();
+
+    // If there are no clusters, the filtered cluster vectors must not be filled.
+    const bool has_clusters = !cluster_ids_0.empty();
+
+    // From keypoints to points.
+    std::vector<cv::Point2f> l_pts_0, r_pts_0;
+    cv::KeyPoint::convert(l_kpts_0, l_pts_0);
+    cv::KeyPoint::convert(r_kpts_0, r_pts_0);
+
+    // Estimate motion.
+    std::vector<int> inliers;
+    const cv::Mat K = l_proj_mat(cv::Rect(0, 0, 3, 3));
+    if (motion_estimation_type_ == DUAL)
+    {
+        solveDualPnPRansac(2000, l_proj_mat, r_proj_mat, l_pts_0, r_pts_0, scene_pts_1, r_vec, t_vec, inliers);
+    }
+    else
+    {
+        cv::solvePnPRansac(scene_pts_1, l_pts_0, K, cv::noArray(), r_vec, t_vec, 
+                           false, 2000, 1.0, 0.99, inliers, motion_estimation_type_);
+    }
+
+    // Pre-allocates memory.
+    const size_t inliers_size = inliers.size();
+    std::vector<cv::Point2f> f_l_pts_0;
+    f_l_pts_0.reserve(inliers_size);
+    f_l_kpts_0.reserve(inliers_size);
+    f_l_kpts_1.reserve(inliers_size);
+    f_scene_pts_0.reserve(inliers_size);
+    f_scene_pts_1.reserve(inliers_size);
+    if (has_right)
+    {
+        f_r_kpts_0.reserve(inliers_size);
+        f_r_kpts_1.reserve(inliers_size);
+    }
+    if (has_clusters)
+    {
+        f_cluster_ids_0.reserve(inliers_size);
+        f_cluster_ids_1.reserve(inliers_size);
+    }
+
+    // Filter points, keypoints, 3D points and clusters.
+    for (size_t i = 0; i < inliers_size; ++i)
+    {
+        f_l_pts_0.emplace_back(l_pts_0[inliers[i]]);
+        f_l_kpts_0.emplace_back(l_kpts_0[inliers[i]]);
+        f_l_kpts_1.emplace_back(l_kpts_1[inliers[i]]);
+        f_scene_pts_0.emplace_back(scene_pts_0[inliers[i]]);
+        f_scene_pts_1.emplace_back(scene_pts_1[inliers[i]]);
+        if (has_right)
+        {
+            f_r_kpts_0.emplace_back(r_kpts_0[inliers[i]]);
+            f_r_kpts_1.emplace_back(r_kpts_1[inliers[i]]);
+        }
+        if (has_clusters)
+        {
+            f_cluster_ids_0.emplace_back(cluster_ids_0[inliers[i]]);
+            f_cluster_ids_1.emplace_back(cluster_ids_1[inliers[i]]);
+        }
+    }
+
+    // Refines pose.
+    if (f_scene_pts_1.size() >= 3 && f_l_pts_0.size() >= 3)
+        cv::solvePnPRefineLM(f_scene_pts_1, f_l_pts_0, K, cv::noArray(), r_vec, t_vec);
+}
+
+
 MotionEstimator::Type MotionEstimator::selectMotionEstimationType(const std::string& motion_estimation_type)
 {
     // Sanity check

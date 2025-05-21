@@ -479,10 +479,10 @@ namespace slamon
         cv::Mat camera_rotation, camera_translation;
         std::vector<cv::Point3f> i_c_l_cam_pts, i_p_l_cam_pts;
         std::vector<cv::KeyPoint> i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts; 
-        estimateMotion(l_proj_mat_, r_proj_mat_,
-                       f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts,
-                       camera_rotation, camera_translation, 
-                       i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_l_cam_pts, i_p_l_cam_pts);
+        estimateRefinedMotion(l_proj_mat_, r_proj_mat_,
+                              f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts,
+                              camera_rotation, camera_translation, 
+                              i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_l_cam_pts, i_p_l_cam_pts);
         run_times_.run_time_5 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
 
         // Inliers debugging.

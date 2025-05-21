@@ -638,10 +638,10 @@ namespace slamon
                 // Estimates motion.
                 cv::Mat estimated_rotation, estimated_translation;
                 std::vector<cv::Point3f> i_q_l_cam_pts, i_cand_world_pts;
-                estimateMotion(l_proj_mat_, r_proj_mat_,
-                               f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_l_cam_pts, f_cand_world_pts,
-                               estimated_rotation, estimated_translation,
-                               i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_l_cam_pts, i_cand_world_pts);
+                estimateRefinedMotion(l_proj_mat_, r_proj_mat_,
+                                      f_q_cluster_ids, f_cand_cluster_ids, f_q_l_kpts, f_q_r_kpts, f_cand_l_kpts, f_cand_r_kpts, f_q_l_cam_pts, f_cand_world_pts,
+                                      estimated_rotation, estimated_translation,
+                                      i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts, i_q_l_cam_pts, i_cand_world_pts);
 
                 // Loop closure inliers debugging.
                 if (loop_closure_inliers_num_pub_.getNumSubscribers() > 0)
