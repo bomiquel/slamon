@@ -37,7 +37,7 @@ namespace slamon
         std::scoped_lock lock(mutex_cluster_keyframe_relations_);
 
         int frame_id = -1;
-        for (unsigned int i = 0; i < cluster_keyframe_relations_.size(); i++)
+        for (size_t i = 0; i < cluster_keyframe_relations_.size(); ++i)
         {
             if (cluster_keyframe_relations_[i].first == vertex_id)
             {
@@ -142,7 +142,7 @@ namespace slamon
         std::scoped_lock lock(mutex_cluster_keyframe_relations_);
 
         vertices.clear();
-        for (unsigned int i = 0; i < cluster_keyframe_relations_.size(); i++)
+        for (size_t i = 0; i < cluster_keyframe_relations_.size(); ++i)
         {
             if (cluster_keyframe_relations_[i].second == keyframe_id)
                 vertices.push_back(cluster_keyframe_relations_[i].first);
@@ -293,7 +293,7 @@ namespace slamon
         // Gets closest vertices (minnor distance)
         const int final_closest_neighbors_num = std::min(closest_neighbors_num, static_cast<int>(neighbors.size()));
         closest_neighbors.reserve(final_closest_neighbors_num);
-        for (int i = 0; i < final_closest_neighbors_num; i++)
+        for (int i = 0; i < final_closest_neighbors_num; ++i)
             closest_neighbors.emplace_back(neighbors[i].first);
     }
 
@@ -308,14 +308,14 @@ namespace slamon
     void Map::addLocalClusterPose(const tf::Transform& local_cluster_pose)
     {
         std::scoped_lock lock(mutex_local_cluster_poses_);
-        local_cluster_poses_.push_back(local_cluster_pose);
+        local_cluster_poses_.emplace_back(local_cluster_pose);
     }
 
 
     void Map::addClusterKeyframeRelation(const std::pair<int, int>& relation)
     {
         std::scoped_lock lock(mutex_cluster_keyframe_relations_);
-        cluster_keyframe_relations_.push_back(relation);
+        cluster_keyframe_relations_.emplace_back(relation);
     }
 
 

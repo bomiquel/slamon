@@ -37,10 +37,10 @@ void Frame::regionClustering()
     std::vector<bool> clustered;
     std::vector<std::vector<int>> clusters;
 
-    unsigned int no_keys = l_kpts_.size();
+    const size_t no_keys = l_kpts_.size();
 
     // Init visited and clustered.
-    for (unsigned int k = 0; k < no_keys; k++)
+    for (size_t k = 0; k < no_keys; k++)
     {
         visited.push_back(false);
         clustered.push_back(false);
@@ -50,7 +50,7 @@ void Frame::regionClustering()
     c = -1;
 
     // For each unvisited point P in dataset keypoints.
-    for (unsigned int i = 0; i < no_keys; i++)
+    for (size_t i = 0; i < no_keys; i++)
     {
         if (!visited[i])
         {
@@ -73,7 +73,7 @@ void Frame::regionClustering()
                 clusters[c].push_back(i);
 
                 // For each point P' in neighbor_pts
-                for (unsigned int j = 0; j < neighbor_pts.size(); j++)
+                for (size_t j = 0; j < neighbor_pts.size(); j++)
                 {
                     // If P' is not visited
                     if (!visited[neighbor_pts[j]])
@@ -97,13 +97,13 @@ void Frame::regionClustering()
     }
 
     // Discard small clusters
-    for (unsigned int i = 0; i < clusters.size(); i++)
+    for (size_t i = 0; i < clusters.size(); i++)
     {
         if (clusters[i].size() >= min_pts)
             clusters_.push_back(clusters[i]);
         else
         {
-            for (unsigned int j = 0; j < clusters[i].size(); j++)
+            for (size_t j = 0; j < clusters[i].size(); j++)
                 noise.push_back(clusters[i][j]);
         }
     }
@@ -111,7 +111,7 @@ void Frame::regionClustering()
     // Refine points treat as noise.
     int idx;
     float dist;
-    unsigned int size_a;
+    size_t size_a;
     cv::KeyPoint p_n, p_c;
     bool iterate = true, found;
     std::vector<int> noise_tmp;
@@ -119,17 +119,17 @@ void Frame::regionClustering()
     {
         noise_tmp.clear();
         size_a = noise.size();
-        for (unsigned int n = 0; n < noise.size(); n++)
+        for (size_t n = 0; n < noise.size(); n++)
         {
             idx = -1;
             found = false;
             p_n = l_kpts_[noise[n]];
-            for (unsigned int i = 0; i < clusters_.size(); i++)
+            for (size_t i = 0; i < clusters_.size(); i++)
             {
-                for (unsigned int j = 0; j < clusters_[i].size(); j++)
+                for (size_t j = 0; j < clusters_[i].size(); j++)
                 {
                     p_c = l_kpts_[clusters_[i][j]];
-                    dist = sqrt(pow((p_c.pt.x - p_n.pt.x), 2) + pow((p_c.pt.y - p_n.pt.y), 2));
+                    dist = std::sqrt(std::pow((p_c.pt.x - p_n.pt.x), 2) + std::pow((p_c.pt.y - p_n.pt.y), 2));
                     if (dist <= eps && dist != 0.0)
                     {
                         idx = i;
@@ -147,7 +147,7 @@ void Frame::regionClustering()
                 noise_tmp.push_back(noise[n]);
         }
 
-        if (noise_tmp.size() == 0 || noise_tmp.size() == size_a)
+        if (noise_tmp.empty() || noise_tmp.size() == size_a)
             iterate = false;
 
         noise = noise_tmp;
@@ -157,7 +157,7 @@ void Frame::regionClustering()
     if (clusters_.size() <= 1)
     {
         std::vector<int> tmp_cluster;
-        for (unsigned int i = 0; i < l_kpts_.size(); i++)
+        for (size_t i = 0; i < l_kpts_.size(); i++)
             tmp_cluster.push_back(int(i));
         clusters_.clear();
         clusters_.push_back(tmp_cluster);
@@ -167,10 +167,10 @@ void Frame::regionClustering()
     idx = -1;
     cv::Point3f centroid, cluster_cam_pt;
     std::vector<cv::Point3f> cluster_l_cam_pts;
-    for (unsigned int i = 0; i < clusters_.size(); i++)
+    for (size_t i = 0; i < clusters_.size(); i++)
     {
         cluster_l_cam_pts.clear();
-        for (unsigned int j = 0; j < clusters_[i].size(); j++)
+        for (size_t j = 0; j < clusters_[i].size(); j++)
         {
             idx = clusters_[i][j];
             cluster_cam_pt = l_cam_pts_[idx];
@@ -188,9 +188,9 @@ std::vector<int> Frame::regionQuery(float eps,
 {
     float dist;
     std::vector<int> ret_keys;
-    for (unsigned int i = 0; i < kpts->size(); i++)
+    for (size_t i = 0; i < kpts->size(); i++)
     {
-        dist = sqrt(pow((kpt->pt.x - kpts->at(i).pt.x),2)+pow((kpt->pt.y - kpts->at(i).pt.y),2));
+        dist = std::sqrt(std::pow((kpt->pt.x - kpts->at(i).pt.x),2)+std::pow((kpt->pt.y - kpts->at(i).pt.y),2));
         if (dist <= eps && dist != 0.0)
             ret_keys.push_back(i);
     }
@@ -201,7 +201,7 @@ std::vector<int> Frame::regionQuery(float eps,
 cv::Point3f Frame::compute3DCentroid(const std::vector<cv::Point3f>& pts)
 {
     cv::Point3f sum = {0.0, 0.0, 0.0};
-    for (unsigned int i = 0; i < pts.size(); i++)
+    for (size_t i = 0; i < pts.size(); i++)
         sum += pts[i];
 
     cv::Point3f centroid = {sum.x / pts.size(), sum.y / pts.size(), sum.z / pts.size()};

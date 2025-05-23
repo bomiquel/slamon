@@ -119,7 +119,7 @@ namespace slamon
                 bool loop_detected = false, loop_closed = false;
                 std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
                 std::vector<cv::KeyPoint> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
-                for (unsigned int i = 0; i < cand_clusters.size(); i++)
+                for (size_t i = 0; i < cand_clusters.size(); ++i)
                 {
                     // Tries to detect a loop between query cluster and a candidate cluster.
                     start_module_time = ros::Time::now().toSec();
@@ -167,7 +167,7 @@ namespace slamon
                     estimated_motion.setIdentity();
                 }
                 p_cand_clusters_ = cand_clusters;
-                p_q_cluster_neighbours_.push_back(c_cluster);
+                p_q_cluster_neighbours_.emplace_back(c_cluster);
                 p_cands_cluster_neighbours_ = neighbours_cand_clusters;
 
                 if (loop_closure_num_pub_.getNumSubscribers() > 0)
@@ -244,12 +244,12 @@ namespace slamon
             ROS_ERROR("[LC->processNewCluster]: Error deleting the locking file!");
 
         // Save hash to table.
-        hash_table_.push_back(std::make_pair(c_cluster.getGlobalId(), haloc_.getHash(c_cluster.getLeftDescs())));
+        hash_table_.emplace_back(c_cluster.getGlobalId(), haloc_.getHash(c_cluster.getLeftDescs()));
     }
 
 
-    void LoopCloser::getHashCandidates(int c_cluster_id,
-                                       unsigned int cand_num,
+    void LoopCloser::getHashCandidates(const int c_cluster_id,
+                                       const size_t cand_num,
                                        std::vector<int>& no_cand,
                                        std::vector<int>& closest_cand)
     {
@@ -257,11 +257,11 @@ namespace slamon
         closest_cand.clear();
 
         // Check if enough neighbors.
-        if ((int)hash_table_.size() <= lc_discard_window_)
+        if (hash_table_.size() <= static_cast<size_t>(lc_discard_window_))
             return;
 
         // Fills the non-candidates list with those clusters that have already closed the loop.
-        for (unsigned int i = 0; i < cluster_lc_found_.size(); i++)
+        for (size_t i = 0; i < cluster_lc_found_.size(); ++i)
         {
             if (cluster_lc_found_[i].first == c_cluster_id)
                 no_cand.push_back(cluster_lc_found_[i].second);
@@ -277,7 +277,9 @@ namespace slamon
         float match_dist;
         std::vector<float> cand_hash;
         std::vector<std::pair<int, float>> candidates;
-        for (unsigned int i = 0; i < hash_table_.size(); i++)
+        const int lower_limit = c_cluster_id - lc_discard_window_;
+        const int upper_limit = c_cluster_id + lc_discard_window_;
+        for (size_t i = 0; i < hash_table_.size(); ++i)
         {
             cand_id = hash_table_[i].first;
 
@@ -286,7 +288,7 @@ namespace slamon
                 continue;
 
             // Discards window.
-            if ((cand_id > c_cluster_id - lc_discard_window_) && (cand_id < c_cluster_id + lc_discard_window_))
+            if ((cand_id > lower_limit) && (cand_id < upper_limit))
                 continue;
 
             // Continue if candidate is in the no_cand list.
@@ -296,21 +298,20 @@ namespace slamon
             // Hash matching.
             cand_hash = hash_table_[i].second;
             match_dist = haloc_.match(q_hash, cand_hash);
-            candidates.push_back(std::make_pair(cand_id, match_dist));
+            candidates.emplace_back(cand_id, match_dist);
         }
         
         // Exit if no candidates.
-        if (candidates.size() == 0)
+        if (candidates.empty())
             return;
 
         // Sorts the candidates from least to furthest matching distance to the query neighbour.
         std::sort(candidates.begin(), candidates.end(), sortByMatching);
 
         // Gets closest matches (minnor mmatching distance)
-        if (cand_num > candidates.size())
-            cand_num = candidates.size();
-        for (unsigned int i = 0; i < cand_num; i++)
-            closest_cand.push_back(candidates[i].first);
+        const size_t final_cand_num = std::min(cand_num, candidates.size());
+        for (size_t i = 0; i < final_cand_num; ++i)
+            closest_cand.emplace_back(candidates[i].first);
     }
 
 
@@ -361,35 +362,35 @@ namespace slamon
                                            std::vector<std::vector<Cluster>>& neighbours_cand_clusters)
     {
         bool found;
-        for (unsigned int i = 0; i < cand_cluster_ids.size(); i++)
+        for (size_t i = 0; i < cand_cluster_ids.size(); ++i)
         {
             found = false;
 
             // Checks if the candidate exists with all its neighbors.
-            for (unsigned int j = 0; j < p_cand_clusters_.size(); j++)
+            for (size_t j = 0; j < p_cand_clusters_.size(); ++j)
             {
                 if ((cand_cluster_ids[i] == p_cand_clusters_[j].first.getGlobalId()))
                 {
                     updateClusterPose(p_cand_clusters_[j].first);
-                    cand_clusters.push_back(std::make_pair(p_cand_clusters_[j].first, search_type));
-                    for (unsigned int k = 0; k < p_cands_cluster_neighbours_[j].size(); k++)
+                    cand_clusters.emplace_back(p_cand_clusters_[j].first, search_type);
+                    for (size_t k = 0; k < p_cands_cluster_neighbours_[j].size(); ++k)
                         updateClusterPose(p_cands_cluster_neighbours_[j][k]);
-                    neighbours_cand_clusters.push_back(p_cands_cluster_neighbours_[j]);
+                    neighbours_cand_clusters.emplace_back(p_cands_cluster_neighbours_[j]);
                     found = true;
                     break;
                 }
             }
 
             // Checks if the candidate exists among the neighbors.
-            for (unsigned int j = 0; j < p_cands_cluster_neighbours_.size(); j++)
+            for (size_t j = 0; j < p_cands_cluster_neighbours_.size(); ++j)
             {
-                for (unsigned int k = 0; k < p_cands_cluster_neighbours_[j].size(); k++)
+                for (size_t k = 0; k < p_cands_cluster_neighbours_[j].size(); ++k)
                 {
                     if (cand_cluster_ids[i] == p_cands_cluster_neighbours_[j][k].getGlobalId())
                     {
                         updateClusterPose(p_cands_cluster_neighbours_[j][k]);
-                        cand_clusters.push_back(std::make_pair(p_cands_cluster_neighbours_[j][k], search_type));
-                        neighbours_cand_clusters.push_back(std::vector<Cluster>());
+                        cand_clusters.emplace_back(p_cands_cluster_neighbours_[j][k], search_type);
+                        neighbours_cand_clusters.emplace_back();
                         found = true;
                         break;
                     }
@@ -404,15 +405,15 @@ namespace slamon
                 Cluster tmp_cluster = readCluster(cand_cluster_ids[i]);
 
                 // Sanity check.
-                cv::Mat tmp_l_descs = tmp_cluster.getLeftDescs();
-                if (tmp_l_descs.rows == 0)
+                std::vector<cv::KeyPoint> tmp_l_kpts = tmp_cluster.getLeftKpts();
+                if (tmp_l_kpts.empty())
                 {
                     ROS_WARN_STREAM("[LC->readCandidateClusters:] It is not possible to read the cluster " << cand_cluster_ids[i] << " from the disk!");
                     continue;
                 }
 
-                cand_clusters.push_back(std::make_pair(tmp_cluster, search_type));
-                neighbours_cand_clusters.push_back(std::vector<Cluster>());
+                cand_clusters.emplace_back(tmp_cluster, search_type);
+                neighbours_cand_clusters.emplace_back();
             }
         }
     }
@@ -422,7 +423,7 @@ namespace slamon
                                                        std::vector<Cluster>& neighbours_cand_cluster)
     {
         // Searches among current neighbors
-        for (unsigned int i = 0; i < neighbours_cand_cluster.size(); i++)
+        for (size_t i = 0; i < neighbours_cand_cluster.size(); ++i)
         {
             if (neighbor_id == neighbours_cand_cluster[i].getGlobalId())
             {
@@ -432,20 +433,20 @@ namespace slamon
         }
 
         // Expands the search
-        for (unsigned int i = 0; i < p_cand_clusters_.size(); i++)
+        for (size_t i = 0; i < p_cand_clusters_.size(); ++i)
         {
             if (neighbor_id == p_cand_clusters_[i].first.getGlobalId())
             {
                 updateClusterPose(p_cand_clusters_[i].first);
-                neighbours_cand_cluster.push_back(p_cand_clusters_[i].first);
+                neighbours_cand_cluster.emplace_back(p_cand_clusters_[i].first);
                 return p_cand_clusters_[i].first;
             }
-            for (unsigned int j = 0; j < p_cands_cluster_neighbours_[i].size(); j++)
+            for (size_t j = 0; j < p_cands_cluster_neighbours_[i].size(); ++j)
             {
                 if (neighbor_id == p_cands_cluster_neighbours_[i][j].getGlobalId())
                 {
                     updateClusterPose(p_cands_cluster_neighbours_[i][j]);
-                    neighbours_cand_cluster.push_back(p_cands_cluster_neighbours_[i][j]);
+                    neighbours_cand_cluster.emplace_back(p_cands_cluster_neighbours_[i][j]);
                     return p_cands_cluster_neighbours_[i][j];
                 }
             }
@@ -453,7 +454,7 @@ namespace slamon
 
         // Reads from disk as a last resort.
         Cluster tmp_cluster = readCluster(neighbor_id);
-        neighbours_cand_cluster.push_back(tmp_cluster);
+        neighbours_cand_cluster.emplace_back(tmp_cluster);
         return tmp_cluster;
     }
 
@@ -494,13 +495,20 @@ namespace slamon
                               f_q_l_cam_pts, f_cand_l_cam_pts);
 
         // Gets the neighbor clusters if enough matching percentage.
-        if (f_q_l_kpts.size() >= (unsigned int)(min_lc_inliers_ / 2))
+        if (f_q_l_kpts.size() >= static_cast<size_t>(min_lc_inliers_ / 2))
         {
             // Inits accumulated data. Sanity check.
             q_cluster_ids.clear();
             f_q_cluster_ids.clear();
             cand_cluster_ids.clear();
             f_cand_cluster_ids.clear();
+
+            // Temporal variables.
+            size_t tmp_size;
+            Cluster tmp_cluster;
+            cv::Mat tmp_l_descs, tmp_r_descs;
+            std::vector<cv::Point3f> tmp_3d_pts;
+            std::vector<cv::KeyPoint> tmp_l_kpts, tmp_r_kpts;
 
             // Inits accumulated data. Candidate data.
             cv::Mat all_cand_l_descs = cand_cluster.getLeftDescs();
@@ -516,37 +524,46 @@ namespace slamon
             std::vector<cv::KeyPoint> all_q_r_kpts = q_cluster.getRightKpts();
             std::vector<cv::Point3f> all_q_l_cam_pts = q_cluster.getLeftCameraPoints();
 
-            // Temporal variables.
-            Cluster tmp_cluster;
-            cv::Mat tmp_l_descs, tmp_r_descs;
-            std::vector<cv::Point3f> tmp_3d_pts;
-            std::vector<cv::KeyPoint> tmp_l_kpts, tmp_r_kpts;
-
             // Inits the cluster candidate list.
-            for (unsigned int i = 0; i < all_cand_l_kpts.size(); i++)
+            tmp_size = all_cand_l_kpts.size();
+            cand_cluster_ids.reserve(tmp_size);
+            for (size_t i = 0; i < tmp_size; ++i)
                 cand_cluster_ids.push_back(cand_cluster.getGlobalId());
+
+            // Inits the query cluster frame list.
+            tmp_size = all_q_l_kpts.size();
+            q_cluster_ids.reserve(tmp_size);
+            for (size_t i = 0; i < tmp_size; ++i)
+                q_cluster_ids.push_back(q_cluster.getGlobalId());
 
             // Increases the probability to close loop by extracting the candidate neighbors.
             std::vector<int> cand_cluster_neighbours;
             map_->findClosestVertices(cand_cluster.getGlobalId(), lc_discard_window_, q_cluster.getGlobalId(), lc_neighbors_, cand_cluster_neighbours);
-            for (unsigned int i = 0; i < cand_cluster_neighbours.size(); i++)
+            for (size_t i = 0; i < cand_cluster_neighbours.size(); ++i)
             {
                 // Checks if the cluster has been read in the last iteration and if not, reads from disk.
                 tmp_cluster = readCandidateNeighborsClusters(cand_cluster_neighbours[i], neighbours_cand_cluster);
 
                 // Sanity check.
-                tmp_l_descs = tmp_cluster.getLeftDescs();
-                if (tmp_l_descs.rows == 0)
+                tmp_l_kpts = tmp_cluster.getLeftKpts();
+                if (tmp_l_kpts.empty())
                 {
                     ROS_WARN_STREAM("[LC->closeLoopBetween:] It is not possible to read the cluster " << cand_cluster_neighbours[i] << " from the disk!");
                     continue;
                 }
 
                 // Gets data from the candidate cluster's ith neighbour.
-                tmp_l_kpts = tmp_cluster.getLeftKpts();
                 tmp_r_kpts = tmp_cluster.getRightKpts();
+                tmp_l_descs = tmp_cluster.getLeftDescs();
                 tmp_r_descs = tmp_cluster.getRightDescs();
                 tmp_3d_pts = tmp_cluster.getWorldPoints();
+
+                // Pre-allocates memory.
+                tmp_size = tmp_l_kpts.size();
+                all_cand_l_kpts.reserve(all_cand_l_kpts.size() + tmp_size);
+                all_cand_r_kpts.reserve(all_cand_r_kpts.size() + tmp_size);
+                all_cand_world_pts.reserve(all_cand_world_pts.size() + tmp_size);
+                cand_cluster_ids.reserve(cand_cluster_ids.size() + tmp_size);
 
                 // Concatenates candidate data.
                 cv::vconcat(all_cand_l_descs, tmp_l_descs, all_cand_l_descs);
@@ -556,7 +573,7 @@ namespace slamon
                 all_cand_world_pts.insert(all_cand_world_pts.end(), tmp_3d_pts.begin(), tmp_3d_pts.end());
 
                 // Save the candidate cluster's ith neighbour id for these points.
-                for (unsigned int j = 0; j < tmp_l_kpts.size(); j++)
+                for (size_t j = 0; j < tmp_size; ++j)
                     cand_cluster_ids.push_back(tmp_cluster.getGlobalId());
 
                 // Sanity check.
@@ -567,27 +584,30 @@ namespace slamon
                 tmp_r_descs.release();
             }
 
-            // Inits the query cluster frame list.
-            for (unsigned int i = 0; i < all_q_l_kpts.size(); i++)
-                q_cluster_ids.push_back(q_cluster.getGlobalId());
-
             // Retrieve all processed clusters corresponding to the current cluster frame.
-            for (unsigned int i = 0; i < p_q_cluster_neighbours_.size(); i++)
+            for (size_t i = 0; i < p_q_cluster_neighbours_.size(); ++i)
             {
                 // Just in case, avoid itself.
                 if (q_cluster.getGlobalId() == p_q_cluster_neighbours_[i].getGlobalId())
                     continue;
 
                 // Sanity check.
-                tmp_l_descs = p_q_cluster_neighbours_[i].getLeftDescs();
-                if (tmp_l_descs.rows == 0)
+                tmp_l_kpts = p_q_cluster_neighbours_[i].getLeftKpts();
+                if (tmp_l_kpts.empty())
                     continue;
 
                 // Gets data from the query cluster's ith neighbour.
-                tmp_l_kpts = p_q_cluster_neighbours_[i].getLeftKpts();
                 tmp_r_kpts = p_q_cluster_neighbours_[i].getRightKpts();
+                tmp_l_descs = p_q_cluster_neighbours_[i].getLeftDescs();
                 tmp_r_descs = p_q_cluster_neighbours_[i].getRightDescs();
                 tmp_3d_pts = p_q_cluster_neighbours_[i].getLeftCameraPoints();
+
+                // Pre-allocates memory.
+                tmp_size = tmp_l_kpts.size();
+                all_q_l_kpts.reserve(all_q_l_kpts.size() + tmp_size);
+                all_q_r_kpts.reserve(all_q_r_kpts.size() + tmp_size);
+                all_q_l_cam_pts.reserve(all_q_l_cam_pts.size() + tmp_size);
+                q_cluster_ids.reserve(q_cluster_ids.size() + tmp_size);
 
                 // Concatenates query data.
                 cv::vconcat(all_q_l_descs, tmp_l_descs, all_q_l_descs);
@@ -597,7 +617,7 @@ namespace slamon
                 all_q_l_cam_pts.insert(all_q_l_cam_pts.end(), tmp_3d_pts.begin(), tmp_3d_pts.end());
 
                 // Save the query cluster's ith neighbour id for these points.
-                for (unsigned int j = 0; j < tmp_l_kpts.size(); j++)
+                for (size_t j = 0; j < tmp_size; ++j)
                     q_cluster_ids.push_back(p_q_cluster_neighbours_[i].getGlobalId());
 
                 // Sanity check.
@@ -614,7 +634,6 @@ namespace slamon
             f_q_l_cam_pts.clear();
             f_cand_l_kpts.clear();
             f_cand_r_kpts.clear();
-            f_cand_l_cam_pts.clear();
 
             // Second descriptor matching.
             std::vector<cv::Point3f> f_cand_world_pts;
@@ -633,7 +652,7 @@ namespace slamon
             if (loop_closure_matches_num_pub_.getNumSubscribers() > 0)
                 publishCounter(f_q_l_kpts.size(), loop_closure_matches_num_pub_);
 
-            if (f_q_l_kpts.size() >= (unsigned int)(min_lc_inliers_))
+            if (f_q_l_kpts.size() >= static_cast<size_t>(min_lc_inliers_))
             {
                 // Estimates motion.
                 cv::Mat estimated_rotation, estimated_translation;
@@ -648,7 +667,7 @@ namespace slamon
                     publishCounter(i_q_l_kpts.size(), loop_closure_inliers_num_pub_);
 
                 // Loop found!
-                if (i_q_l_kpts.size() >= (unsigned int)(min_lc_inliers_))
+                if (i_q_l_kpts.size() >= static_cast<size_t>(min_lc_inliers_))
                 {
                     // From cv::Mat to tf::Transform.
                     fromMatToTf(estimated_rotation, estimated_translation, estimated_motion);
@@ -681,18 +700,23 @@ namespace slamon
         getInliersPerClusterPair(i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, inliers_per_pair,
                                 cand_keyframe_ids, cluster_pairs, cand_cluster_keyframe_relations);
 
-        // Adds the corresponding edges.
-        bool lc_already_exists, some_edge_added = false;
+        // Pre-allocates memory.
+        size_t inliers_per_pair_size = inliers_per_pair.size();
         std::vector<int> definitive_inliers_per_pair;
         std::vector<std::pair<int, int>> definitive_cluster_pairs; // q_cluster_id - cand_cluster_id
+        definitive_inliers_per_pair.reserve(inliers_per_pair_size);
+        definitive_cluster_pairs.reserve(inliers_per_pair_size);
+
+        // Adds the corresponding edges.
+        bool lc_already_exists, some_edge_added = false;
         tf::Transform edge, cand_cluster_pose, q_cluster_pose_relative_to_camera;
-        for (unsigned int i = 0; i < inliers_per_pair.size(); i++)
+        for (size_t i = 0; i < inliers_per_pair_size; ++i)
         {
             if (inliers_per_pair[i] >= 30)
             {
                 // Checks if this loop closure exists.
                 lc_already_exists = false;
-                for (unsigned int j = 0; j < cluster_lc_found_.size(); j++)
+                for (size_t j = 0; j < cluster_lc_found_.size(); ++j)
                 {
                     if ((cluster_lc_found_[j].first == cluster_pairs[i].first && cluster_lc_found_[j].second == cluster_pairs[i].second) ||
                         (cluster_lc_found_[j].first == cluster_pairs[i].second && cluster_lc_found_[j].second == cluster_pairs[i].first))
@@ -713,10 +737,10 @@ namespace slamon
                 some_edge_added = true;
                 map_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, edge);                           
                 definitive_inliers_per_pair.push_back(inliers_per_pair[i]);
-                definitive_cluster_pairs.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second)); // q_cluster_id - cand_cluster_id
+                definitive_cluster_pairs.emplace_back(cluster_pairs[i].first, cluster_pairs[i].second); // q_cluster_id - cand_cluster_id
 
                 // Add this edge to the list of clusters that close loops.
-                cluster_lc_found_.push_back(std::make_pair(cluster_pairs[i].first, cluster_pairs[i].second));
+                cluster_lc_found_.emplace_back(cluster_pairs[i].first, cluster_pairs[i].second);
             }
         }
 
@@ -781,7 +805,7 @@ namespace slamon
         std::pair<int, int> relation;
         bool cluster_pair_found, cand_keyframe_found;
         int q_cluster_id, cand_cluster_id, cand_keyframe_id, last_keyframe_id = -1, last_cluster_id = -1;
-        for (unsigned int i = 0; i < i_q_l_kpts.size(); i++)
+        for (size_t i = 0; i < i_q_l_kpts.size(); ++i)
         {
             q_cluster_id = i_q_cluster_ids[i];
             cand_cluster_id = i_cand_cluster_ids[i];
@@ -789,7 +813,7 @@ namespace slamon
 
             // Builds the unique candidate keyframe vector.
             cand_keyframe_found = false;
-            for (unsigned int j = 0; j < cand_keyframe_ids.size(); j++)
+            for (size_t j = 0; j < cand_keyframe_ids.size(); ++j)
             {
                 if (cand_keyframe_ids[j] == cand_keyframe_id)
                 {
@@ -805,12 +829,12 @@ namespace slamon
             {
                 last_cluster_id = cand_cluster_id;
                 last_keyframe_id = cand_keyframe_id;
-                cand_cluster_keyframe_relations.push_back(std::make_pair(cand_cluster_id, cand_keyframe_id));
+                cand_cluster_keyframe_relations.emplace_back(cand_cluster_id, cand_keyframe_id);
             }
 
             // Searches if this pair already exists.
             cluster_pair_found = false;
-            for (unsigned int j = 0; j < cluster_pairs.size(); j++)
+            for (size_t j = 0; j < cluster_pairs.size(); ++j)
             {
                 if ((cluster_pairs[j].first == q_cluster_id) && (cluster_pairs[j].second == cand_cluster_id))
                 {
@@ -821,7 +845,7 @@ namespace slamon
             }
             if (!cluster_pair_found)
             {
-                cluster_pairs.push_back(std::make_pair(q_cluster_id, cand_cluster_id));
+                cluster_pairs.emplace_back(q_cluster_id, cand_cluster_id);
                 inliers_per_pair.push_back(1);
             }
         }

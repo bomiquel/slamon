@@ -169,16 +169,22 @@ namespace slamon
             // Save the frame timestamp
             map_->addTimestamp(stamp.toSec());
             
-            // Loop of frame clusters.
+            // Pre-allocates memory.
             start_module_time = ros::Time::now().toSec();
-            int cluster_id, idx;
+            size_t clusters_num = clusters.size();
             std::vector<int> c_vertex_ids;
+            std::vector<Cluster> clusters_to_close_loop;
+            c_vertex_ids.reserve(clusters_num);
+            clusters_to_close_loop.reserve(clusters_num);
+            
+            // Loop of frame clusters.
+            size_t cluster_size;
+            int cluster_id, idx;
             cv::Mat cluster_l_descs, cluster_r_descs;
             std::vector<cv::Point3f> cluster_l_cam_pts;
             std::vector<cv::KeyPoint> cluster_l_kpts, cluster_r_kpts;
-            std::vector<Cluster> clusters_to_close_loop;
             tf::Transform local_cluster_pose, c_cluster_pose;
-            for (unsigned int i = 0; i < clusters.size(); i++)
+            for (size_t i = 0; i < clusters_num; ++i)
             {
                 // Gets {c_cam}^T_{c_cluster}.
                 local_cluster_pose = fromPoint3DToTf(cluster_centroids[i]);
@@ -187,7 +193,7 @@ namespace slamon
                 c_cluster_pose = c_map_camera_pose * local_cluster_pose; 
 
                 // Store current cluster pose.
-                initial_cluster_pose_history_.push_back(c_cluster_pose);
+                initial_cluster_pose_history_.emplace_back(c_cluster_pose);
 
                 // Add cluster to the graph.
                 cluster_id = map_->addVertex(c_cluster_pose);
@@ -197,20 +203,26 @@ namespace slamon
                 map_->addLocalClusterPose(local_cluster_pose);
                 map_->addClusterKeyframeRelation(std::make_pair(cluster_id, c_keyframe_id_));
 
+                // Pre-allocates memory.
+                cluster_size = clusters[i].size();
+                cluster_l_kpts.reserve(cluster_size);
+                cluster_r_kpts.reserve(cluster_size);
+                cluster_l_cam_pts.reserve(cluster_size);
+
                 // Build cluster
-                for (unsigned int j = 0; j < clusters[i].size(); j++)
+                for (size_t j = 0; j < clusters[i].size(); ++j)
                 {
                     idx = clusters[i][j];
-                    cluster_l_kpts.push_back(l_kpts[idx]);
-                    cluster_r_kpts.push_back(r_kpts[idx]);
-                    cluster_l_cam_pts.push_back(l_cam_pts[idx]);
+                    cluster_l_kpts.emplace_back(l_kpts[idx]);
+                    cluster_r_kpts.emplace_back(r_kpts[idx]);
+                    cluster_l_cam_pts.emplace_back(l_cam_pts[idx]);
                     cluster_l_descs.push_back(l_descs.row(idx));
                     cluster_r_descs.push_back(r_descs.row(idx));
                 }
                 Cluster cluster(cluster_id, i, c_keyframe_id_, 
                                 cluster_l_descs, cluster_r_descs, c_map_camera_pose, 
                                 cluster_l_kpts, cluster_r_kpts, cluster_l_cam_pts);
-                clusters_to_close_loop.push_back(cluster);
+                clusters_to_close_loop.emplace_back(cluster);
 
                 // Clear variables
                 cluster_l_kpts.clear();
@@ -221,20 +233,20 @@ namespace slamon
             }
 
             // Send the new clusters to the loop closing thread.
-            for (unsigned int i = 0; i < clusters_to_close_loop.size(); i++)
-                cluster_queue_->pushBack(clusters_to_close_loop[i]);
+            for (size_t i = 0; i < clusters_to_close_loop.size(); ++i)
+                cluster_queue_->emplaceBack(clusters_to_close_loop[i]);
             run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Add vertex (cluster) to graph run time.
 
             // Add edges between clusters of the same frame.
             start_module_time = ros::Time::now().toSec();
-            if (clusters.size() > 1)
+            if (clusters_num > 1)
             {
                 // Retrieve all possible combinations.
                 std::vector<std::vector<int>> combinations = createCombinations(c_vertex_ids.size(), 2);
 
                 int vertex_0_id, vertex_1_id;
                 tf::Transform edge, vertex_0_pose, vertex_1_pose;
-                for (unsigned int i = 0; i < combinations.size(); i++)
+                for (size_t i = 0; i < combinations.size(); ++i)
                 {
                     vertex_0_id = c_vertex_ids[combinations[i][0]];
                     vertex_1_id = c_vertex_ids[combinations[i][1]];
@@ -259,12 +271,12 @@ namespace slamon
                 std::vector<tf::Transform> closest_poses;
                 tf::Transform c_vertex_pose, p_vertex_pose;
                 double dist, min_dist = std::numeric_limits<double>::max();
-                for (unsigned int i = 0; i < c_vertex_ids.size(); i++)
+                for (size_t i = 0; i < c_vertex_ids.size(); ++i)
                 {
                     // Current ith vertex pose. 
                     c_vertex_pose = map_->getVertexPose(c_vertex_ids[i], true);
 
-                    for (unsigned int j = 0; j < p_vertex_ids.size(); j++)
+                    for (size_t j = 0; j < p_vertex_ids.size(); ++j)
                     {
                         // Previous ith vertex pose. 
                         p_vertex_pose = map_->getVertexPose(p_vertex_ids[j], true);
@@ -279,8 +291,8 @@ namespace slamon
                             closest_vertices.push_back(p_vertex_ids[j]);
 
                             closest_poses.clear();
-                            closest_poses.push_back(c_vertex_pose);
-                            closest_poses.push_back(p_vertex_pose);
+                            closest_poses.emplace_back(c_vertex_pose);
+                            closest_poses.emplace_back(p_vertex_pose);
                         }
                     }
                 }
@@ -304,14 +316,14 @@ namespace slamon
                 std::vector<double> stamps;
                 std::vector<tf::Transform> keyframe_poses;
                 map_->getKeyframePoses(stamps, keyframe_poses);
-                for (unsigned int i = 0; i < keyframe_poses.size(); i++)
+                for (size_t i = 0; i < keyframe_poses.size(); ++i)
                     keyframe_poses[i] = keyframe_poses[i] * robot2camera_.inverse();
                 writePoses(poses_file_, stamps, keyframe_poses);
 
                 std::vector<std::pair<int, int>> edges_keyframe_ids;
                 std::vector<std::pair<tf::Transform, tf::Transform>> edges_keyframe_poses;
                 map_->getLoopClosureEdges(edges_keyframe_ids, edges_keyframe_poses);
-                for (unsigned int i = 0; i < edges_keyframe_poses.size(); i++)
+                for (size_t i = 0; i < edges_keyframe_poses.size(); ++i)
                 {
                     edges_keyframe_poses[i].first = edges_keyframe_poses[i].first * robot2camera_.inverse();
                     edges_keyframe_poses[i].second = edges_keyframe_poses[i].second * robot2camera_.inverse();
@@ -379,7 +391,7 @@ namespace slamon
 
     bool Mapmaker::addFrameToMap(Frame& c_frame)
     {
-        if (c_frame.getLeftKpts().size() > (unsigned int)(min_lc_inliers_/2))
+        if (c_frame.getLeftKpts().size() > static_cast<size_t>(min_lc_inliers_/2))
         {
             c_frame.regionClustering();
 
@@ -428,8 +440,8 @@ namespace slamon
     }
 
 
-    std::vector<std::vector<int>> Mapmaker::createCombinations(const unsigned int n,
-                                                               const unsigned int r)
+    std::vector<std::vector<int>> Mapmaker::createCombinations(const size_t n,
+                                                               const size_t r)
     {
         std::string bitmask(r, 1);
         bitmask.resize(n, 0);
@@ -438,7 +450,7 @@ namespace slamon
         std::vector<std::vector<int>> combinations;
         do
         {
-            for (unsigned int i = 0; i < n; i++)
+            for (size_t i = 0; i < n; ++i)
             {
                 if (bitmask[i])
                     combination.push_back(i);
@@ -461,14 +473,14 @@ namespace slamon
         cv::Mat l_descs, r_descs;
         std::vector<cv::Point3f> l_cam_pts;
         std::vector<cv::KeyPoint> l_kpts, r_kpts;
-        for (unsigned int i = 0; i < msg->l_kpts.size(); i++)
+        for (size_t i = 0; i < msg->l_kpts.size(); ++i)
         {
             kpt.pt.x = msg->l_kpts[i].pt.x;
             kpt.pt.y = msg->l_kpts[i].pt.y;
-            l_kpts.push_back(kpt);
+            l_kpts.emplace_back(kpt);
             kpt.pt.x = msg->r_kpts[i].pt.x;
             kpt.pt.y = msg->r_kpts[i].pt.y;
-            r_kpts.push_back(kpt);
+            r_kpts.emplace_back(kpt);
             desc = msg->l_kpts[i].desc;
             l_descs.push_back(cv::Mat(1, desc.size(), CV_32F, desc.data()));
             desc = msg->r_kpts[i].desc;
@@ -476,7 +488,7 @@ namespace slamon
             cam_pt.x = msg->l_cam_pts[i].x;
             cam_pt.y = msg->l_cam_pts[i].y;
             cam_pt.z = msg->l_cam_pts[i].z;
-            l_cam_pts.push_back(cam_pt);
+            l_cam_pts.emplace_back(cam_pt);
         }
 
         frame = Frame(l_descs, r_descs, msg->header.stamp, l_kpts, r_kpts, l_cam_pts);

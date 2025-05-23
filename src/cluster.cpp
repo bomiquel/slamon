@@ -30,21 +30,23 @@ Cluster::Cluster(int global_id,
 
 
 std::vector<cv::Point3f> Cluster::getWorldPoints()
-{
-    tf::Vector3 tf_l_cam_pt;
-    tf::Vector3 tf_world_pt;
-    cv::Point3f cv_world_pt;
-    std::vector<cv::Point3f> tf_world_pts;
-    for (unsigned int i = 0; i < l_cam_pts_.size(); i++)
+{    
+    // Pre-allocates memory.
+    const size_t size = l_cam_pts_.size();
+    std::vector<cv::Point3f> world_pts;
+    world_pts.reserve(size);
+
+    // Translates 3D points to world frame.
+    tf::Vector3 l_cam_pt;
+    tf::Vector3 world_pt;
+    for (size_t i = 0; i < size; ++i)
     { 
-        tf_l_cam_pt.setX(l_cam_pts_[i].x);
-        tf_l_cam_pt.setY(l_cam_pts_[i].y);
-        tf_l_cam_pt.setZ(l_cam_pts_[i].z);
-        tf_world_pt = map_camera_pose_ * tf_l_cam_pt;
-        cv_world_pt.x = tf_world_pt.getX();
-        cv_world_pt.y = tf_world_pt.getY();
-        cv_world_pt.z = tf_world_pt.getZ();
-        tf_world_pts.push_back(cv_world_pt);
+        l_cam_pt.setX(l_cam_pts_[i].x);
+        l_cam_pt.setY(l_cam_pts_[i].y);
+        l_cam_pt.setZ(l_cam_pts_[i].z);
+        world_pt = map_camera_pose_ * l_cam_pt;
+        world_pts.emplace_back(world_pt.getX(), world_pt.getY(), world_pt.getZ());
     }
-    return tf_world_pts;
+    
+    return world_pts;
 }

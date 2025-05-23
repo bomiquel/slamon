@@ -94,8 +94,8 @@ namespace slamon
              *  candidates for closing loop.
              *  \param[out] closest_cand The list of best candidates.
              */
-            void getHashCandidates(int c_cluster_id, 
-                                   unsigned int cand_num,
+            void getHashCandidates(const int c_cluster_id, 
+                                   const size_t cand_num,
                                    std::vector<int>& no_cand,
                                    std::vector<int>& closest_cand);
 

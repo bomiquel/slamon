@@ -266,10 +266,10 @@ namespace slamon
 
         // Checks if the projection matrices are filled with 0s.
         double counter = 0.0;
-        for (int i = 0; i < l_proj_mat_.rows; i++)
+        for (int i = 0; i < l_proj_mat_.rows; ++i)
         {
-            for (int j = 0; j < l_proj_mat_.cols; j++) 
-                counter += l_proj_mat_.at<double>(i,j);
+            for (int j = 0; j < l_proj_mat_.cols; ++j) 
+                counter += l_proj_mat_.at<double>(i, j);
         }
         if (counter == 0.0)
         {
@@ -277,9 +277,9 @@ namespace slamon
             return false;
         }
         counter = 0.0; 
-        for (int i = 0; i < r_proj_mat_.rows; i++)
+        for (int i = 0; i < r_proj_mat_.rows; ++i)
         {
-            for (int j = 0; j < r_proj_mat_.cols; j++)
+            for (int j = 0; j < r_proj_mat_.cols; ++j)
                 counter += r_proj_mat_.at<double>(i, j);
         }
         if (counter == 0.0)
@@ -348,7 +348,7 @@ namespace slamon
             publishImgStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kpts_img_pub_, l_kpts, r_kpts);
 
         // Sanity check.
-        if (l_kpts.size() < (unsigned int)(min_lc_inliers_/2))
+        if (l_kpts.size() < static_cast<size_t>(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo keypoints detector:] There are not enough keypoints to match and filter!");
@@ -365,7 +365,7 @@ namespace slamon
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Stereo matching run time.
 
         // Sanity check.
-        if (m_l_kpts.size() < (unsigned int)(min_lc_inliers_/2))
+        if (m_l_kpts.size() < static_cast<size_t>(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
@@ -384,7 +384,7 @@ namespace slamon
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
-        if (f_l_kpts.size() < (unsigned int)(min_lc_inliers_/2))
+        if (f_l_kpts.size() < static_cast<size_t>(min_lc_inliers_/2))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Triangulator:] There are not enough 3D points after triangulation!");
@@ -439,7 +439,7 @@ namespace slamon
         }
 
         // Sanity check.
-        if (m_c_l_kpts.size() < (unsigned int)(min_inliers_))
+        if (m_c_l_kpts.size() < static_cast<size_t>(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
@@ -501,7 +501,7 @@ namespace slamon
         }
 
         // Sanity check.
-        if (i_c_l_kpts.size() < (unsigned int)(min_inliers_))
+        if (i_c_l_kpts.size() < static_cast<size_t>(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Motion estimator:] There are not enough inliers after motion estimation!");

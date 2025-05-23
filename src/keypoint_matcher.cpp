@@ -438,30 +438,30 @@ void KeypointMatcher::assembleCircularMatchings(const std::vector<cv::KeyPoint>&
     size_t j, k, l;
     for (size_t i = 0; i < temporal_kpts_1_lowest.size(); ++i)
     {
-        for (j = 0; j < stereo_kpts_1_lowest.size(); j++)
+        for (j = 0; j < stereo_kpts_1_lowest.size(); ++j)
         {
             if (temporal_kpts_1_lowest[i].pt == stereo_kpts_1_lowest[j].pt)
             {
-                for (k = 0; k < temporal_kpts_1_highest.size(); k++)
+                for (k = 0; k < temporal_kpts_1_highest.size(); ++k)
                 {
                     if (stereo_kpts_1_highest[j].pt == temporal_kpts_1_highest[k].pt)
                     {
-                        for (l = 0; l < stereo_kpts_0_highest.size(); l++)
+                        for (l = 0; l < stereo_kpts_0_highest.size(); ++l)
                         {
                             if (temporal_kpts_0_highest[k].pt == stereo_kpts_0_highest[l].pt)
                             {
                                 if (stereo_kpts_0_lowest[l].pt == temporal_kpts_0_lowest[i].pt)
                                 {
-                                    f_kpts_0_lowest.push_back(temporal_kpts_0_lowest[i]);
-                                    f_kpts_0_highest.push_back(temporal_kpts_0_highest[k]);
-                                    f_kpts_1_lowest.push_back(temporal_kpts_1_lowest[i]);
-                                    f_kpts_1_highest.push_back(temporal_kpts_1_highest[k]);
-                                    f_scene_pts_0.push_back(temporal_scene_pts_0[i]);
-                                    f_scene_pts_1.push_back(temporal_scene_pts_1[i]);
+                                    f_kpts_0_lowest.emplace_back(temporal_kpts_0_lowest[i]);
+                                    f_kpts_0_highest.emplace_back(temporal_kpts_0_highest[k]);
+                                    f_kpts_1_lowest.emplace_back(temporal_kpts_1_lowest[i]);
+                                    f_kpts_1_highest.emplace_back(temporal_kpts_1_highest[k]);
+                                    f_scene_pts_0.emplace_back(temporal_scene_pts_0[i]);
+                                    f_scene_pts_1.emplace_back(temporal_scene_pts_1[i]);
                                     if (fill_clusters)
                                     {
-                                        f_cluster_ids_0.push_back(temporal_cluster_ids_0[i]);
-                                        f_cluster_ids_1.push_back(temporal_cluster_ids_1[i]);
+                                        f_cluster_ids_0.emplace_back(temporal_cluster_ids_0[i]);
+                                        f_cluster_ids_1.emplace_back(temporal_cluster_ids_1[i]);
                                     }
                                     break;
                                 }
