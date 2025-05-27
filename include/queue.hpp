@@ -23,6 +23,8 @@ namespace slamon
         public:
 
 
+            /** \brief Empty class constructor.
+             */
             Queue() {}
 
 

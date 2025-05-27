@@ -258,7 +258,7 @@ namespace slamon
                     map_->addEdge(vertex_0_id, vertex_1_id, edge);
                 }
             }
-                
+
             // Connect this keyframe with the previous
             if (c_keyframe_id_ > 0)
             {
@@ -297,7 +297,7 @@ namespace slamon
                     }
                 }
 
-                if (closest_vertices.size() > 0)
+                if (!closest_vertices.empty())
                 {
                     tf::Transform edge = closest_poses[0].inverse() * closest_poses[1];
                     map_->addEdge(closest_vertices[0], closest_vertices[1], edge);
@@ -467,12 +467,19 @@ namespace slamon
     void Mapmaker::fromStereoAttributesToFrame(const slamon::StereoImageAttributesConstPtr& msg,
                                                Frame& frame)
     {
+        // Pre-allocates memory.
+        size_t msg_size = msg->l_kpts.size();
+        std::vector<cv::Point3f> l_cam_pts;
+        std::vector<cv::KeyPoint> l_kpts, r_kpts;
+        l_kpts.reserve(msg_size);
+        r_kpts.reserve(msg_size);
+        l_cam_pts.reserve(msg_size);
+
+        // Unpacks message.
         cv::KeyPoint kpt;
         cv::Point3f cam_pt;
         std::vector<float> desc;
         cv::Mat l_descs, r_descs;
-        std::vector<cv::Point3f> l_cam_pts;
-        std::vector<cv::KeyPoint> l_kpts, r_kpts;
         for (size_t i = 0; i < msg->l_kpts.size(); ++i)
         {
             kpt.pt.x = msg->l_kpts[i].pt.x;

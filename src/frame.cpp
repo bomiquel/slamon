@@ -40,7 +40,7 @@ void Frame::regionClustering()
     const size_t no_keys = l_kpts_.size();
 
     // Init visited and clustered.
-    for (size_t k = 0; k < no_keys; k++)
+    for (size_t k = 0; k < no_keys; ++k)
     {
         visited.push_back(false);
         clustered.push_back(false);
@@ -190,7 +190,7 @@ std::vector<int> Frame::regionQuery(float eps,
     std::vector<int> ret_keys;
     for (size_t i = 0; i < kpts->size(); i++)
     {
-        dist = std::sqrt(std::pow((kpt->pt.x - kpts->at(i).pt.x),2)+std::pow((kpt->pt.y - kpts->at(i).pt.y),2));
+        dist = std::sqrt(std::pow((kpt->pt.x - kpts->at(i).pt.x),2) + std::pow((kpt->pt.y - kpts->at(i).pt.y),2));
         if (dist <= eps && dist != 0.0)
             ret_keys.push_back(i);
     }

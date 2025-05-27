@@ -60,7 +60,7 @@ namespace slamon
 
         // Loop
         ros::Rate r(10);
-        Cluster c_cluster;
+        Cluster q_cluster;
         int p_loop_closures_num;
         double start_module_time;
         double start_iteration_time;
@@ -82,15 +82,15 @@ namespace slamon
                     getProjectionMatrices(l_proj_mat_, r_proj_mat_);
                 
                 start_module_time = ros::Time::now().toSec();
-                c_cluster = cluster_queue_->getFront();
-                processNewCluster(c_cluster);
+                q_cluster = cluster_queue_->getFront();
+                processNewCluster(q_cluster);
                 run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Process current cluster run time.
 
                 if (enable_debugging_)
-                    ROS_INFO_STREAM("[LC->run]: Cluster: " << c_cluster.getGlobalId() << " from keyframe: " << c_cluster.getKeyframeId());
+                    ROS_INFO_STREAM("[LC->run]: Cluster: " << q_cluster.getGlobalId() << " from keyframe: " << q_cluster.getKeyframeId());
 
                 if (cluster_num_pub_.getNumSubscribers() > 0)
-                    publishCounter(c_cluster.getGlobalId() + 1, cluster_num_pub_);
+                    publishCounter(q_cluster.getGlobalId() + 1, cluster_num_pub_);
                 
                 // Candidates.
                 std::vector<std::pair<Cluster, std::string>> cand_clusters;
@@ -99,7 +99,7 @@ namespace slamon
                 // Searches by proximity candidates to close loops.
                 start_module_time = ros::Time::now().toSec();
                 std::vector<int> cand_cluster_ids_by_proximity;
-                map_->findClosestVertices(c_cluster.getGlobalId(), lc_discard_window_, c_cluster.getGlobalId(), lc_candidates_, cand_cluster_ids_by_proximity);
+                map_->findClosestVertices(q_cluster.getGlobalId(), lc_discard_window_, q_cluster.getGlobalId(), lc_candidates_, cand_cluster_ids_by_proximity);
                 run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by proximity.
                 start_module_time = ros::Time::now().toSec();
                 readCandidateClusters("proximity", cand_cluster_ids_by_proximity, cand_clusters, neighbours_cand_clusters);
@@ -108,7 +108,7 @@ namespace slamon
                 // Searches by hash candidates to close loops.
                 start_module_time = ros::Time::now().toSec();
                 std::vector<int> cand_cluster_ids_by_hash;
-                getHashCandidates(c_cluster.getGlobalId(), lc_candidates_, cand_cluster_ids_by_proximity, cand_cluster_ids_by_hash);
+                getHashCandidates(q_cluster.getGlobalId(), lc_candidates_, cand_cluster_ids_by_proximity, cand_cluster_ids_by_hash);
                 run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Search for candidates to close loops by hash.
                 start_module_time = ros::Time::now().toSec();
                 readCandidateClusters("hash", cand_cluster_ids_by_hash, cand_clusters, neighbours_cand_clusters);
@@ -123,7 +123,7 @@ namespace slamon
                 {
                     // Tries to detect a loop between query cluster and a candidate cluster.
                     start_module_time = ros::Time::now().toSec();
-                    loop_detected = detectLoop(c_cluster,
+                    loop_detected = detectLoop(q_cluster,
                                                cand_clusters[i].first,
                                                neighbours_cand_clusters[i],
                                                estimated_motion,
@@ -139,7 +139,7 @@ namespace slamon
                     start_module_time = ros::Time::now().toSec();
                     if (loop_detected)
                     {
-                        loop_closed = loopCorrection(c_cluster.getKeyframeId(),
+                        loop_closed = loopCorrection(q_cluster.getKeyframeId(),
                                                      cand_clusters[i].first.getGlobalId(),
                                                      cand_clusters[i].second,
                                                      estimated_motion,
@@ -167,7 +167,7 @@ namespace slamon
                     estimated_motion.setIdentity();
                 }
                 p_cand_clusters_ = cand_clusters;
-                p_q_cluster_neighbours_.emplace_back(c_cluster);
+                p_q_cluster_neighbours_.emplace_back(q_cluster);
                 p_cands_cluster_neighbours_ = neighbours_cand_clusters;
 
                 if (loop_closure_num_pub_.getNumSubscribers() > 0)
@@ -213,29 +213,29 @@ namespace slamon
     }
 
 
-    void LoopCloser::processNewCluster(const Cluster& c_cluster)
+    void LoopCloser::processNewCluster(const Cluster& q_cluster)
     {
         // Initialise hash.
         if (!haloc_.isInitialized())
-            haloc_.init(c_cluster.getLeftDescs());
+            haloc_.init(q_cluster.getLeftDescs());
 
         // Clears the vector of previous clusters if the current cluster belongs to a new frame.
-        if (c_cluster.getLocalId() == 0)
+        if (q_cluster.getLocalId() == 0)
             p_q_cluster_neighbours_.clear();
 
         // Create a locking element.
-        std::string cluster_path = execution_path_ + convertTo5Digits(c_cluster.getGlobalId()) + ".yml";
+        std::string cluster_path = execution_path_ + convertTo5Digits(q_cluster.getGlobalId()) + ".yml";
         std::string lock_path = cluster_path + ".lock";
         std::fstream lock_file(lock_path.c_str(), std::ios::out | std::ios::trunc);
 
         // Store.
         cv::FileStorage fs(cluster_path, cv::FileStorage::WRITE);
-        cv::write(fs, "l_kpts", c_cluster.getLeftKpts());
-        cv::write(fs, "r_kpts", c_cluster.getRightKpts());
-        cv::write(fs, "l_descs", c_cluster.getLeftDescs());
-        cv::write(fs, "r_descs", c_cluster.getRightDescs());
-        cv::write(fs, "keyframe_id", c_cluster.getKeyframeId());
-        cv::write(fs, "l_cam_pts", c_cluster.getLeftCameraPoints());
+        cv::write(fs, "l_kpts", q_cluster.getLeftKpts());
+        cv::write(fs, "r_kpts", q_cluster.getRightKpts());
+        cv::write(fs, "l_descs", q_cluster.getLeftDescs());
+        cv::write(fs, "r_descs", q_cluster.getRightDescs());
+        cv::write(fs, "keyframe_id", q_cluster.getKeyframeId());
+        cv::write(fs, "l_cam_pts", q_cluster.getLeftCameraPoints());
         fs.release();
 
         // Unlock.
@@ -244,11 +244,11 @@ namespace slamon
             ROS_ERROR("[LC->processNewCluster]: Error deleting the locking file!");
 
         // Save hash to table.
-        hash_table_.emplace_back(c_cluster.getGlobalId(), haloc_.getHash(c_cluster.getLeftDescs()));
+        hash_table_.emplace_back(q_cluster.getGlobalId(), haloc_.getHash(q_cluster.getLeftDescs()));
     }
 
 
-    void LoopCloser::getHashCandidates(const int c_cluster_id,
+    void LoopCloser::getHashCandidates(const int q_cluster_id,
                                        const size_t cand_num,
                                        std::vector<int>& no_cand,
                                        std::vector<int>& closest_cand)
@@ -263,28 +263,28 @@ namespace slamon
         // Fills the non-candidates list with those clusters that have already closed the loop.
         for (size_t i = 0; i < cluster_lc_found_.size(); ++i)
         {
-            if (cluster_lc_found_[i].first == c_cluster_id)
+            if (cluster_lc_found_[i].first == q_cluster_id)
                 no_cand.push_back(cluster_lc_found_[i].second);
-            if (cluster_lc_found_[i].second == c_cluster_id)
+            if (cluster_lc_found_[i].second == q_cluster_id)
                 no_cand.push_back(cluster_lc_found_[i].first);
         }
 
         // Query hash.
-        std::vector<float> q_hash = hash_table_[c_cluster_id].second;
+        std::vector<float> q_hash = hash_table_[q_cluster_id].second;
 
         // Loop over all the hashes stored.
         int cand_id;
         float match_dist;
         std::vector<float> cand_hash;
         std::vector<std::pair<int, float>> candidates;
-        const int lower_limit = c_cluster_id - lc_discard_window_;
-        const int upper_limit = c_cluster_id + lc_discard_window_;
+        const int lower_limit = q_cluster_id - lc_discard_window_;
+        const int upper_limit = q_cluster_id + lc_discard_window_;
         for (size_t i = 0; i < hash_table_.size(); ++i)
         {
             cand_id = hash_table_[i].first;
 
             // Do not compute the hash matching with itself.
-            if (cand_id == c_cluster_id)
+            if (cand_id == q_cluster_id)
                 continue;
 
             // Discards window.
@@ -300,7 +300,7 @@ namespace slamon
             match_dist = haloc_.match(q_hash, cand_hash);
             candidates.emplace_back(cand_id, match_dist);
         }
-        
+
         // Exit if no candidates.
         if (candidates.empty())
             return;
@@ -308,14 +308,14 @@ namespace slamon
         // Sorts the candidates from least to furthest matching distance to the query neighbour.
         std::sort(candidates.begin(), candidates.end(), sortByMatching);
 
-        // Gets closest matches (minnor mmatching distance)
+        // Gets closest matches (minnor matching distance).
         const size_t final_cand_num = std::min(cand_num, candidates.size());
         for (size_t i = 0; i < final_cand_num; ++i)
             closest_cand.emplace_back(candidates[i].first);
     }
 
 
-    Cluster LoopCloser::readCluster(int id)
+    Cluster LoopCloser::readCluster(const int id)
     {
         Cluster tmp_cluster;
         std::string cluster_path = execution_path_ + convertTo5Digits(id) + ".yml";
@@ -594,7 +594,10 @@ namespace slamon
                 // Sanity check.
                 tmp_l_kpts = p_q_cluster_neighbours_[i].getLeftKpts();
                 if (tmp_l_kpts.empty())
+                {
+                    ROS_WARN_STREAM("[-LC->closeLoopBetween:] Problems with query neighbours.");
                     continue;
+                }
 
                 // Gets data from the query cluster's ith neighbour.
                 tmp_r_kpts = p_q_cluster_neighbours_[i].getRightKpts();
@@ -698,7 +701,7 @@ namespace slamon
         std::vector<int> inliers_per_pair,cand_keyframe_ids;
         std::vector<std::pair<int, int>> cluster_pairs, cand_cluster_keyframe_relations;
         getInliersPerClusterPair(i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, inliers_per_pair,
-                                cand_keyframe_ids, cluster_pairs, cand_cluster_keyframe_relations);
+                                 cand_keyframe_ids, cluster_pairs, cand_cluster_keyframe_relations);
 
         // Pre-allocates memory.
         size_t inliers_per_pair_size = inliers_per_pair.size();

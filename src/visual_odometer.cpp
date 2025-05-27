@@ -268,7 +268,7 @@ namespace slamon
         double counter = 0.0;
         for (int i = 0; i < l_proj_mat_.rows; ++i)
         {
-            for (int j = 0; j < l_proj_mat_.cols; ++j) 
+            for (int j = 0; j < l_proj_mat_.cols; ++j)
                 counter += l_proj_mat_.at<double>(i, j);
         }
         if (counter == 0.0)

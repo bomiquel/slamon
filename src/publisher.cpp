@@ -307,8 +307,14 @@ void Publisher::publishStereoImageAttributes(const cv::Mat& l_descs,
                                              const std::vector<cv::KeyPoint>& r_kpts,
                                              const std::vector<cv::Point3f>& l_cam_pts)
 {
-    // Create and fill StereoImageAttributes msg.
+    // Pre-allocates memory.
+    size_t msg_size = l_kpts.size();
     slamon::StereoImageAttributes msg;
+    msg.l_kpts.reserve(msg_size);
+    msg.r_kpts.reserve(msg_size);
+    msg.l_cam_pts.reserve(msg_size);
+    
+    // Create and fill StereoImageAttributes msg.
     geometry_msgs::Point cam_pt_msg;
     slamon::Keypoint l_kpt_msg, r_kpt_msg;
     msg.header.stamp = stamp;
@@ -392,8 +398,8 @@ void Publisher::writeLoopClosureEdges(const std::string& o_path,
 {
     std::string l_path = o_path + ".lock";
 
-     // Wait until lock file has been released.
-    while(std::filesystem::exists(l_path));
+    // Wait until lock file has been released.
+    while (std::filesystem::exists(l_path));
 
     // Create a locking element.
     std::fstream lock_file(l_path.c_str(), std::ios::out | std::ios::trunc);

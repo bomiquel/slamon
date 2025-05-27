@@ -82,19 +82,19 @@ namespace slamon
 
 
             /** \brief Processes the new cluster.
-             *  \param[in] c_cluster The current cluster.
+             *  \param[in] q_cluster The query cluster.
              */
-            void processNewCluster(const Cluster& c_cluster);
+            void processNewCluster(const Cluster& q_cluster);
 
 
             /** \brief Get the best candidates to close a loop by hash.
-             *  \param[in] c_cluster_id The current cluster id.
+             *  \param[in] q_cluster_id The query cluster id.
              *  \param[in] cand_num The number of best candidates to be retrieved.
              *  \param[in] no_cand Clusters list, outside the discard window, that cannot be
              *  candidates for closing loop.
              *  \param[out] closest_cand The list of best candidates.
              */
-            void getHashCandidates(const int c_cluster_id, 
+            void getHashCandidates(const int q_cluster_id, 
                                    const size_t cand_num,
                                    std::vector<int>& no_cand,
                                    std::vector<int>& closest_cand);
@@ -116,7 +116,7 @@ namespace slamon
              *  \param[in] id Cluster id.
              *  @return The cluster.
              */
-            Cluster readCluster(int id);
+            Cluster readCluster(const int id);
 
 
             /** \brief Checks if the current cluster was already read from disk in
