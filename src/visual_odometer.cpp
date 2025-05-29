@@ -5,8 +5,7 @@ namespace slamon
 {
 
 
-    VisualOdometer::VisualOdometer(double ratio,
-                                   int min_inliers,
+    VisualOdometer::VisualOdometer(int min_inliers,
                                    int min_lc_inliers,
                                    int max_kpts_bucket,
                                    int max_kpts_retained,
@@ -18,7 +17,7 @@ namespace slamon
                                    std::string& matching_type,
                                    std::string& robot_frame_id,
                                    std::string& motion_estimation_type):
-                                   KeypointMatcher(ratio, matching_type), 
+                                   KeypointMatcher(matching_type), 
                                    MotionEstimator(motion_estimation_type),
                                    c_frame_id_{0}, min_inliers_{min_inliers}, min_lc_inliers_{min_lc_inliers}, 
                                    max_kpts_bucket_{max_kpts_bucket}, max_kpts_retained_{max_kpts_retained}, status_{UNINITIALISED}, 

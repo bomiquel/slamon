@@ -6,7 +6,6 @@ namespace slamon
 
 
     LoopCloser::LoopCloser(Map* map,
-                           double ratio,
                            int lc_neighbors,
                            int lc_candidates,
                            int min_lc_inliers,
@@ -16,7 +15,7 @@ namespace slamon
                            std::string& matching_type,
                            Queue<Cluster>* cluster_queue,
                            std::string& motion_estimation_type):
-                           KeypointMatcher(ratio, matching_type), 
+                           KeypointMatcher(matching_type), 
                            MotionEstimator(motion_estimation_type),
                            enable_debugging_{enable_debugging}, init_loop_closer_{false}, lc_neighbors_{lc_neighbors},
                            lc_candidates_{lc_candidates}, min_lc_inliers_{min_lc_inliers}, lc_discard_window_{lc_discard_window},
@@ -698,7 +697,7 @@ namespace slamon
                                     const std::vector<cv::KeyPoint>& i_cand_r_kpts)
     {
         // Gets the inliers per cluster pair.
-        std::vector<int> inliers_per_pair,cand_keyframe_ids;
+        std::vector<int> inliers_per_pair, cand_keyframe_ids;
         std::vector<std::pair<int, int>> cluster_pairs, cand_cluster_keyframe_relations;
         getInliersPerClusterPair(i_q_cluster_ids, i_cand_cluster_ids, i_q_l_kpts, inliers_per_pair,
                                  cand_keyframe_ids, cluster_pairs, cand_cluster_keyframe_relations);

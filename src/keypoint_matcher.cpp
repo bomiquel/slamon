@@ -1,9 +1,7 @@
 #include "keypoint_matcher.hpp"
 
 
-KeypointMatcher::KeypointMatcher(const double ratio,
-                                 const std::string& matching_type): 
-                                 ratio_{ratio}
+KeypointMatcher::KeypointMatcher(const std::string& matching_type)
 {
     // Sanity check
     std::string lower_matching_type = matching_type;
@@ -265,7 +263,7 @@ void KeypointMatcher::ratioMatching(const cv::Mat& descs_0,
         if (knn_matches[i].size() < 2)
             continue;
 
-        if (knn_matches[i][0].distance <= knn_matches[i][1].distance * ratio_)
+        if (knn_matches[i][0].distance <= knn_matches[i][1].distance * 0.8)
         {
             idx_0 = knn_matches[i][0].queryIdx;
             idx_1 = knn_matches[i][0].trainIdx;

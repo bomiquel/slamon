@@ -41,8 +41,7 @@ class KeypointMatcher
         /** \brief Class constructor. 
          *  \param[in] matching_type Desired matching type name.
          */
-        KeypointMatcher(const double ratio,
-                        const std::string& matching_type);
+        KeypointMatcher(const std::string& matching_type);
 
 
         /** \brief Matches keypoints of the same stereo pair and removes outliers. To
@@ -384,10 +383,6 @@ class KeypointMatcher
                                        std::vector<int>& f_cluster_ids_0,
                                        std::vector<int>& f_cluster_ids_1);
 
-
-        // Attributes:
-
-        double ratio_ = 0.8; //!> Lowe's ratio.
        
 };
 

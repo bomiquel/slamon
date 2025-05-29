@@ -39,7 +39,6 @@ namespace slamon
 
             /** \brief Class constructor
              *  \param[in] map Map object pointer.
-             *  \param[in] ratio The ratio for Lowe's ratio test.
              *  \param[in] lc_neighbors Number of neighbours to recover in order to 
              *  increase the possibility of closing a loop.
              *  \param[in] lc_candidates Number of candidates to close a loop.
@@ -52,7 +51,6 @@ namespace slamon
              *  \param[in] motion_estimation_type Desired motion type name.
              */
             LoopCloser(Map* map,
-                       double ratio,
                        int lc_neighbors,
                        int lc_candidates,
                        int min_lc_inliers,
@@ -74,8 +72,8 @@ namespace slamon
 
             /** \brief Obtains, from the VO through a service, 
              *  the stereo camera projection matrices. 
-             *  \param[in] l_proj_mat Left projection matrix.
-             *  \param[in] r_proj_mat Right projection matrix.
+             *  \param[out] l_proj_mat Left projection matrix.
+             *  \param[out] r_proj_mat Right projection matrix.
              */
             void getProjectionMatrices(cv::Mat& l_proj_mat,
                                        cv::Mat& r_proj_mat);

@@ -6,7 +6,6 @@ slamon:
   lc_candidates: 3
   lc_discard_window: 20
   lc_neighbors: 3
-  lowe_ratio: 0.8
   matching_type: ratio_matching
   max_kpts_bucket: 3
   max_kpts_retained: 1500

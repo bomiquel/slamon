@@ -168,7 +168,7 @@ namespace slamon
 
             // Save the frame timestamp
             map_->addTimestamp(stamp.toSec());
-            
+
             // Pre-allocates memory.
             start_module_time = ros::Time::now().toSec();
             size_t clusters_num = clusters.size();
@@ -224,7 +224,7 @@ namespace slamon
                                 cluster_l_kpts, cluster_r_kpts, cluster_l_cam_pts);
                 clusters_to_close_loop.emplace_back(cluster);
 
-                // Clear variables
+                // Clear variables.
                 cluster_l_kpts.clear();
                 cluster_r_kpts.clear();
                 cluster_l_cam_pts.clear();
@@ -259,7 +259,7 @@ namespace slamon
                 }
             }
 
-            // Connect this keyframe with the previous
+            // Connect this keyframe with the previous.
             if (c_keyframe_id_ > 0)
             {
                 // Retrieves the vertices of the previous keyframe.

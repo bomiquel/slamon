@@ -47,7 +47,6 @@ namespace slamon
 
 
             /** \brief Class constructor.
-             *  \param[in] ratio The ratio for Lowe's ratio test.
              *  \param[in] min_inliers Minimum number of keypoints to estimate the movement.
              *  \param[in] min_lc_inliers Minimum number of inliers for loop closure.
              *  \param[in] max_kpts_bucket Maximum number of keypoints per bucket.
@@ -62,8 +61,7 @@ namespace slamon
              *  \param[in] robot_frame_id Robot odometry coordinate axis identficator.
              *  \param[in] motion_estimation_type Motion estimation type.
              */
-            VisualOdometer(double ratio,
-                           int min_inliers,
+            VisualOdometer(int min_inliers,
                            int min_lc_inliers,
                            int max_kpts_bucket,
                            int max_kpts_retained,

@@ -166,11 +166,13 @@ namespace slamon
 
             std::vector<tf::Transform> initial_cluster_pose_history_; //!> Stores the initial cluster poses, before graph update.
 
-            Map* map_; // Map pointer.
+            Map* map_; //!> Map pointer.
 
-            Queue<Cluster>* cluster_queue_; // Cluster queue pointer.
+            Frame p_keyframe_; //!> Previous keyframe.
 
-            RunTimes run_times_; // !> Internal map execution times.
+            Queue<Cluster>* cluster_queue_; //!> Cluster queue pointer.
+
+            RunTimes run_times_; //!> Internal map execution times.
 
 
             // Topic sync
