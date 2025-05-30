@@ -204,6 +204,22 @@ class Publisher
                                            const std::vector<std::vector<int>>& clusters);
 
 
+        /** \brief Draws and publishes keypoints clustering.
+         *  \param[in] l_img Left image.
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] cluster_num Number of clusters.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] cluster_ids Cluster identifiers.
+         *  \param[in] l_kpts Left keypoints.
+         */
+        void publishImgKeypointsClustering(const cv::Mat& l_img,
+                                           const ros::Time& stamp,
+                                           const size_t cluster_num,
+                                           const ros::Publisher& publisher,
+                                           const std::vector<int>& cluster_ids,
+                                           const std::vector<cv::KeyPoint>& l_kpts);
+
+
         /** \brief Draws and writes on disk keypoints clustering.
          *  \param[in] l_img Left image.
          *  \param[in] l_kpts Left keypoints.
@@ -215,6 +231,21 @@ class Publisher
                                          const std::string& o_path,
                                          const std::vector<cv::KeyPoint>& l_kpts,
                                          const std::vector<std::vector<int>>& clusters);
+
+
+        /** \brief Draws and writes on disk keypoints clustering.
+         *  \param[in] l_img Left image.
+         *  \param[in] cluster_num Number of clusters.
+         *  \param[in] o_path Image output path. The name of the final
+         *  file must be included.
+         *  \param[in] cluster_ids Cluster identifiers.
+         *  \param[in] l_kpts Left keypoints.
+         */
+        void writeImgKeypointsClustering(const cv::Mat& l_img,
+                                         const size_t cluster_num,
+                                         const std::string& o_path,
+                                         const std::vector<int>& cluster_ids,
+                                         const std::vector<cv::KeyPoint>& l_kpts);
 
 
         /** \brief Draws and publishes a loop closure image with all the correspondences
@@ -494,6 +525,18 @@ class Publisher
         cv::Mat drawImgKeypointsClustering(const cv::Mat& img,
                                            const std::vector<cv::KeyPoint>& kpts,
                                            const std::vector<std::vector<int>>& clusters);
+
+
+        /** \brief Draws keypoints clustering.
+         *  \param[in] img The image where draw the keypoints clusters.
+         *  \param[in] cluster_num Number of clusters.
+         *  \param[in] cluster_ids Cluster identifiers.
+         *  \param[in] kpts The keypoints.
+         */
+        cv::Mat drawImgKeypointsClustering(const cv::Mat& img,
+                                           const size_t cluster_num,
+                                           const std::vector<int>& cluster_ids,
+                                           const std::vector<cv::KeyPoint>& kpts);
 
 
         /** \brief Draws a loop closure image with all the correspondences

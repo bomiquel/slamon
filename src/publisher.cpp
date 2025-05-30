@@ -143,6 +143,21 @@ void Publisher::publishImgKeypointsClustering(const cv::Mat& l_img,
 }
 
 
+void Publisher::publishImgKeypointsClustering(const cv::Mat& l_img,
+                                              const ros::Time& stamp,
+                                              const size_t cluster_num,
+                                              const ros::Publisher& publisher,
+                                              const std::vector<int>& cluster_ids,
+                                              const std::vector<cv::KeyPoint>& l_kpts)
+{
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawImgKeypointsClustering(l_img, cluster_num, cluster_ids, l_kpts);
+
+    // Publishes image.
+    publishImg(o_img, stamp, publisher);
+}
+
+
 void Publisher::writeImgKeypointsClustering(const cv::Mat& l_img,
                                             const std::string& o_path,
                                             const std::vector<cv::KeyPoint>& l_kpts,
@@ -150,6 +165,20 @@ void Publisher::writeImgKeypointsClustering(const cv::Mat& l_img,
 {
     // Draws keypoints clustering.
     cv::Mat o_img = drawImgKeypointsClustering(l_img, l_kpts, clusters);
+
+    // Writes image.
+    cv::imwrite(o_path + ".png", o_img);
+}
+
+
+void Publisher::writeImgKeypointsClustering(const cv::Mat& l_img,
+                                            const size_t cluster_num,
+                                            const std::string& o_path,
+                                            const std::vector<int>& cluster_ids,
+                                            const std::vector<cv::KeyPoint>& l_kpts)
+{
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawImgKeypointsClustering(l_img, cluster_num, cluster_ids, l_kpts);
 
     // Writes image.
     cv::imwrite(o_path + ".png", o_img);
@@ -616,9 +645,11 @@ cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
     cv::Mat drawn_img;
     img.copyTo(drawn_img);
 
+    // Sanity check.
     if (clusters.empty())
         return drawn_img;
 
+    // Draws clusters.
     cv::RNG rng(12345);
     for (size_t i = 0; i < clusters.size(); ++i)
     {
@@ -630,6 +661,37 @@ cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
     // Writes text
     std::stringstream caption;
     caption << " Number of clusters: " << clusters.size();
+    cv::Mat o_img = drawTxtInImg(true, drawn_img, caption, 20);
+
+    return o_img;
+}
+
+
+cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
+                                              const size_t cluster_num,
+                                              const std::vector<int>& cluster_ids,
+                                              const std::vector<cv::KeyPoint>& kpts)
+{
+    cv::Mat drawn_img;
+    img.copyTo(drawn_img);
+
+    // Sanity check.
+    if (cluster_ids.empty())
+        return drawn_img;
+
+    // Builds the vector of colors.
+    cv::RNG rng(12345);
+    std::vector<cv::Scalar> colors;
+    for (size_t i = 0; i < cluster_num; ++i)
+        colors.emplace_back(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+
+    // Draws clusters.
+    for (size_t i = 0; i < kpts.size(); ++i)
+        cv::circle(drawn_img, kpts[i].pt, 2, colors[cluster_ids[i]], -1);
+
+    // Writes text.
+    std::stringstream caption;
+    caption << " Number of clusters: " << cluster_num;
     cv::Mat o_img = drawTxtInImg(true, drawn_img, caption, 20);
 
     return o_img;
