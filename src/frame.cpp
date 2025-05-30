@@ -182,6 +182,58 @@ void Frame::regionClustering()
 }
 
 
+void Frame::sortClusters()
+{
+    // Pre-allocates memory.
+    size_t overall_size = l_kpts_.size();
+    std::vector<int> cluster_ids;
+    std::vector<cv::Point3f> l_cam_pts;
+    std::vector<std::vector<int>> clusters;
+    std::vector<cv::KeyPoint> l_kpts, r_kpts;
+    l_kpts.reserve(overall_size);
+    r_kpts.reserve(overall_size);
+    l_cam_pts.reserve(overall_size);
+    clusters.reserve(clusters_.size());
+    cluster_ids.reserve(overall_size);
+
+    // Sorts clusters.
+    size_t cluster_size;
+    int idx, counter = 0;
+    cv::Mat l_descs, r_descs;
+    for (size_t i = 0; i < clusters_.size(); ++i)
+    {
+        // Pre-allocates memory.
+        clusters.emplace_back();
+        cluster_size = clusters_.size();
+        clusters[i].reserve(cluster_size);
+
+        // Sort cluster.
+        for (size_t j = 0; j < cluster_size; ++j)
+        {
+            cluster_ids.push_back(static_cast<int>(i));
+            clusters[i].push_back(counter);
+            counter++;
+            
+            idx = clusters_[i][j];
+            l_kpts.emplace_back(l_kpts_[idx]);
+            r_kpts.emplace_back(r_kpts_[idx]);
+            l_cam_pts.emplace_back(l_cam_pts_[idx]);
+            l_descs.push_back(l_descs_.row(idx));
+            r_descs.push_back(r_descs_.row(idx));
+        }
+    }
+
+    // Stores.
+    l_kpts_ = l_kpts;
+    r_kpts_ = r_kpts;
+    l_descs_ = l_descs;
+    r_descs_ = r_descs;
+    clusters_ = clusters;
+    l_cam_pts_ = l_cam_pts;
+    cluster_ids_ = cluster_ids;
+}
+
+
 std::vector<int> Frame::regionQuery(float eps, 
                                     cv::KeyPoint *kpt, 
                                     std::vector<cv::KeyPoint> *kpts)
