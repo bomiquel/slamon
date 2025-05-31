@@ -185,7 +185,7 @@ void Frame::regionClustering()
     cluster_ids.reserve(total_size);
 
     // Sorts clusters.
-    int idx;
+    idx = -1;
     cv::Mat l_descs, r_descs;
     for (size_t i = 0; i < all_clusters.size(); ++i)
     {
