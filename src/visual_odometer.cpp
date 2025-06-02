@@ -19,7 +19,7 @@ namespace slamon
                                    std::string& motion_estimation_type):
                                    KeypointMatcher(matching_type), 
                                    MotionEstimator(motion_estimation_type),
-                                   c_frame_id_{0}, min_inliers_{min_inliers}, min_lc_inliers_{min_lc_inliers}, 
+                                   c_keyframe_id_{0}, min_inliers_{min_inliers}, min_lc_inliers_{min_lc_inliers}, 
                                    max_kpts_bucket_{max_kpts_bucket}, max_kpts_retained_{max_kpts_retained}, status_{UNINITIALISED}, 
                                    enable_debugging_{enable_debugging}, enable_bucketing_{enable_bucketing}, enable_enhacement_{enable_enhacement},
                                    initialised_odom_{false}, feature_detector_name_{feature_detector_name}, robot_frame_id_{robot_frame_id}
@@ -50,17 +50,18 @@ namespace slamon
         proj_mat_server_ = nhp.advertiseService("send_projection_matrices", &VisualOdometer::sendProjectionMatrices, this);
 
         // Publishers.
+        keyframe_pub_ = nhp.advertise<slamon::Keyframe>("keyframe", 1);
         run_times_pub_ = nhp.advertise<slamon::Performance>("vo_performance", 1);
         robot_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_odom", 1);
         camera_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_odom", 1);
         inliers_num_pub_ = nhp.advertise<std_msgs::Int32>("inliers_num", 1);
         inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("inliers_img", 1);
         stereo_kpts_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
-        stereo_attributes_pub_ = nhp.advertise<slamon::StereoImageAttributes>("stereo_attributes", 1);
         stereo_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("stereo_matches_num", 1);
         stereo_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_matches_img", 1);
         temporal_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("temporal_matches_num", 1);
         temporal_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("temporal_matches_img", 1);
+        keyframe_inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("keyframe_insertion_decision_img", 1);
 
         // Subscribers.
         image_transport::SubscriberFilter l_img_sub, r_img_sub;
@@ -77,6 +78,30 @@ namespace slamon
         
         // Calls callback when synchronised messages arrives.
         ros::spin();
+    }
+
+
+    bool VisualOdometer::sendRobot2Camera(slamon::GetTransform::Request& req,
+                                          slamon::GetTransform::Response& res)
+    {
+        res.tf.header.frame_id = camera_frame_id_;
+        tf::poseTFToMsg(robot2camera_, res.tf.pose);
+        return true;
+    }
+
+
+    bool VisualOdometer::sendProjectionMatrices(slamon::GetProjectionMatrices::Request& req,
+                                                slamon::GetProjectionMatrices::Response& res)
+    {
+        for (int row = 0; row < l_proj_mat_.rows; row++)
+        {
+            for (int col = 0; col < l_proj_mat_.cols; col++)
+            {
+                res.l_proj_mat[l_proj_mat_.cols * row + col] = l_proj_mat_.at<double>(row, col);
+                res.r_proj_mat[r_proj_mat_.cols * row + col] = r_proj_mat_.at<double>(row, col);
+            }
+        }
+        return true;
     }
 
 
@@ -108,7 +133,16 @@ namespace slamon
                     break;
                 if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
-                    status_ = RUNNING;
+                    c_frame.regionClustering();
+                    if (!c_frame.getClustersCentroids().empty())
+                    {
+                        keyframe_ = c_frame;
+                        status_ = RUNNING;
+                    }
+                    else
+                    {
+                        ROS_WARN_STREAM("[VO->callback:] The image produces 0 clusters, is it not possible to send it to the mapmaker!");
+                    }
                 }
                 else
                 {
@@ -125,7 +159,16 @@ namespace slamon
                     ROS_INFO_STREAM("[VO->status:] BOOTSTRAPPING");
                 if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
-                    status_ = RUNNING;
+                    c_frame.regionClustering();
+                    if (!c_frame.getClustersCentroids().empty())
+                    {
+                        keyframe_ = c_frame;
+                        status_ = RUNNING;
+                    }
+                    else
+                    {
+                        ROS_WARN_STREAM("[VO->callback:] The image produces 0 clusters, is it not possible to send it to the mapmaker!");
+                    }
                 }
                 run_times_.run_time_3 = 0.0; // Succesive matching run time
                 run_times_.run_time_4 = 0.0; // Bucketing run time
@@ -148,19 +191,21 @@ namespace slamon
                             initialised_odom_ = true;
 
                             if (enable_debugging_)
-                            {
-                                c_frame_name = convertTo5Digits(c_frame_id_);
-                                cv::imwrite(frame_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
-                                cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
-                            }
-                            publishStereoImageAttributes(p_frame_.getLeftDescs(), p_frame_.getRightDescs(), p_frame_.getTimestamp(), 
-                                                         stereo_attributes_pub_, p_frame_.getLeftKpts(), p_frame_.getRightKpts(), p_frame_.getLeftCameraPoints());
+                                publishKeyframe(c_keyframe_id_, keyframe_.getLeftImg(), keyframe_.getRightImg(),
+                                                keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
+                                                keyframe_pub_, std::vector<int>(), keyframe_.getClusterIds(), 
+                                                keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
+                                                std::vector<std::pair<int, int>>());
+                            else
+                                publishKeyframe(c_keyframe_id_, keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
+                                                keyframe_pub_, std::vector<int>(), keyframe_.getClusterIds(), 
+                                                keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
+                                                std::vector<std::pair<int, int>>());
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_odom_camera_pose_, tf::Transform(),
                                                    camera_odom_pub_, camera_frame_id_);
                             publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_odom_robot_pose_, tf::Transform(),
                                                    robot_odom_pub_, robot_frame_id_);                            
                         }
-                        c_frame_id_++;
 
                         // From {c_cam}^T_{p_cam} to {p_cam}^T_{c_cam}.
                         c_camera_motion = c_camera_motion.inverse();
@@ -178,18 +223,30 @@ namespace slamon
                         c_odom_robot_pose_ *= c_robot_motion;
                         tf::Transform c_odom_robot_pose = c_odom_robot_pose_;
 
-                        if (enable_debugging_)
-                        {
-                            c_frame_name = convertTo5Digits(c_frame_id_);
-                            cv::imwrite(frame_path_ + c_frame_name + "_left.png", p_frame_.getLeftImg());
-                            cv::imwrite(frame_path_ + c_frame_name + "_right.png", p_frame_.getRightImg());
-                        }
-                        publishStereoImageAttributes(c_frame.getLeftDescs(), c_frame.getRightDescs(), c_frame.getTimestamp(),
-                                                     stereo_attributes_pub_, c_frame.getLeftKpts(), c_frame.getRightKpts(), c_frame.getLeftCameraPoints());
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_camera_pose_, c_camera_motion,
                                                camera_odom_pub_, camera_frame_id_);
                         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_robot_pose, c_robot_motion,
                                                robot_odom_pub_, robot_frame_id_);
+                        
+                        std::vector<int> inliers_per_pair;
+                        std::vector<std::pair<int, int>> cluster_pairs;
+                        bool add_new_keyframe = needNewKeyframe(c_frame, inliers_per_pair, cluster_pairs);
+                        if (add_new_keyframe)
+                        {
+                            if (enable_debugging_)
+                                publishKeyframe(c_keyframe_id_, keyframe_.getLeftImg(), keyframe_.getRightImg(),
+                                                keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
+                                                keyframe_pub_, inliers_per_pair, keyframe_.getClusterIds(), 
+                                                keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
+                                                cluster_pairs);
+                            else
+                                publishKeyframe(c_keyframe_id_, keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
+                                                keyframe_pub_, inliers_per_pair, keyframe_.getClusterIds(), 
+                                                keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
+                                                cluster_pairs);
+
+                            keyframe_ = c_frame;
+                        }
                     }
                 }
                 else
@@ -211,30 +268,6 @@ namespace slamon
         run_times_.total_run_time = ros::Time::now().toSec() - start_callback_time;
         if (run_times_pub_.getNumSubscribers() > 0)
             publishPerformance(l_img_msg->header.stamp, (int)valid_motion, run_times_, run_times_pub_);
-    }
-
-
-    bool VisualOdometer::sendRobot2Camera(slamon::GetTransform::Request& req,
-                                          slamon::GetTransform::Response& res)
-    {
-        res.tf.header.frame_id = camera_frame_id_;
-        tf::poseTFToMsg(robot2camera_, res.tf.pose);
-        return true;
-    }
-
-
-    bool VisualOdometer::sendProjectionMatrices(slamon::GetProjectionMatrices::Request& req,
-                                                slamon::GetProjectionMatrices::Response& res)
-    {
-        for (int row = 0; row < l_proj_mat_.rows; row++)
-        {
-            for (int col = 0; col < l_proj_mat_.cols; col++)
-            {
-                res.l_proj_mat[l_proj_mat_.cols * row + col] = l_proj_mat_.at<double>(row, col);
-                res.r_proj_mat[r_proj_mat_.cols * row + col] = r_proj_mat_.at<double>(row, col);
-            }
-        }
-        return true;
     }
 
 
@@ -412,7 +445,7 @@ namespace slamon
         // Auxilary variable to set the start time of a module.
         double start_module_time;
 
-        // Search for matches of keypoints between successive frames or pairs of frames.
+        // Search for keypoint matches between successive frames or pairs of frames.
         start_module_time = ros::Time::now().toSec();
         std::vector<cv::Point3f> m_c_l_cam_pts, m_p_l_cam_pts;
         std::vector<cv::KeyPoint> m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts;
@@ -515,6 +548,93 @@ namespace slamon
         // Build a TF
         if(!fromMatToTf(camera_rotation, camera_translation, c_camera_motion))
             return false;
+
+        return true;
+    }
+
+
+    bool VisualOdometer::needNewKeyframe(Frame& c_frame,
+                                         std::vector<int>& inliers_per_pair,
+                                         std::vector<std::pair<int, int>>& cluster_pairs)
+    {
+        // Cluster keypoints.
+        c_frame.regionClustering();
+
+        // Sanity check.
+        if (c_frame.getClustersCentroids().empty())
+        {
+            ROS_WARN_STREAM("[VO->Keyframe inserter:] The image produces 0 clusters, is it not possible to send it to the mapmaker!");
+            return false;
+        }
+
+        // Searches for keypoint matches between current frame and keyframe.
+        std::vector<int> m_c_cluster_ids, m_k_cluster_ids;
+        std::vector<cv::Point3f> m_c_l_cam_pts, m_k_l_cam_pts;
+        std::vector<cv::KeyPoint> m_c_l_kpts, m_c_r_kpts, m_k_l_kpts, m_k_r_kpts;
+        matchTemporalClusters(c_frame.getLeftDescs(), c_frame.getRightDescs(), keyframe_.getLeftDescs(), keyframe_.getRightDescs(),
+                              c_frame.getClusterIds(), keyframe_.getClusterIds(), c_frame.getLeftKpts(), c_frame.getRightKpts(),
+                              keyframe_.getLeftKpts(), keyframe_.getRightKpts(), c_frame.getLeftCameraPoints(), keyframe_.getLeftCameraPoints(),
+                              m_c_cluster_ids, m_k_cluster_ids, m_c_l_kpts, m_c_r_kpts, m_k_l_kpts, m_k_r_kpts, m_c_l_cam_pts, m_k_l_cam_pts);
+
+        // Estimates the motion.
+        cv::Mat camera_rotation, camera_translation;
+        std::vector<int> i_c_cluster_ids, i_k_cluster_ids;
+        std::vector<cv::Point3f> i_c_l_cam_pts, i_k_l_cam_pts;
+        std::vector<cv::KeyPoint> i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts; 
+        estimateMotion(l_proj_mat_, r_proj_mat_, 
+                       m_c_cluster_ids, m_k_cluster_ids, m_c_l_kpts, m_c_r_kpts, m_k_l_kpts, m_k_r_kpts, m_c_l_cam_pts, m_k_l_cam_pts,
+                       camera_rotation, camera_translation,
+                       i_c_cluster_ids, i_k_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts, i_c_l_cam_pts, i_k_l_cam_pts);
+
+        // Inliers debugging.
+        if (keyframe_inliers_img_pub_.getNumSubscribers() > 0)
+        {
+            if (matching_type_ == RATIO_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
+                publishImgMatches(true, c_frame.getLeftImg(), keyframe_.getLeftImg(), c_frame.getTimestamp(),
+                                  keyframe_inliers_img_pub_, i_c_l_kpts, i_k_l_kpts);
+            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
+                publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), keyframe_.getLeftImg(), keyframe_.getRightImg(),
+                                          c_frame.getTimestamp(), keyframe_inliers_img_pub_, i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts);
+            else
+                ROS_ERROR_STREAM("[VO->Motion estimator debugger:] Unforeseen type of matching!");
+        }
+
+        // It does not insert keyframe.
+        if (static_cast<size_t>(1.25 * min_lc_inliers_) < i_c_l_kpts.size())
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->needNewKeyframe:] No keyframe is inserted because there is still too much overlap.");
+            return false;
+        }
+
+        if (enable_debugging_)
+            ROS_INFO_STREAM("[VO->needNewKeyframe:] Sending keyframe to the map!");
+
+        // Gets inlier per cluster pair.
+        bool cluster_pair_found;
+        int c_cluster_id, k_cluster_id;
+        for (size_t i = 0; i < i_c_cluster_ids.size(); ++i)
+        {
+            c_cluster_id = i_c_cluster_ids[i];
+            k_cluster_id = i_k_cluster_ids[i];
+
+            // Searches if this pair already exists.
+            cluster_pair_found = false;
+            for (size_t j = 0; j < cluster_pairs.size(); ++j)
+            {
+                if ((cluster_pairs[j].first == c_cluster_id) && (cluster_pairs[j].second == k_cluster_id))
+                {
+                    inliers_per_pair[j]++;
+                    cluster_pair_found = true;
+                    break;
+                }
+            }
+            if (!cluster_pair_found)
+            {
+                cluster_pairs.emplace_back(c_cluster_id, k_cluster_id);
+                inliers_per_pair.push_back(1);
+            }
+        }
 
         return true;
     }

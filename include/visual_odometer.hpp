@@ -83,19 +83,6 @@ namespace slamon
         private:
 
 
-            /** \brief Image callback. This function is called when synchronized stereo image
-             *  messages are received.
-             *  \param[in] l_img_msg ROS message containing the left image.
-             *  \param[in] r_img_msg ROS message containing the right image.
-             *  \param[in] l_info_msg ROS message containing the info of the left image.
-             *  \param[in] r_info_msg ROS message containing the info of the right image.
-             */  
-            void callback(const sensor_msgs::ImageConstPtr& l_img_msg,
-                          const sensor_msgs::ImageConstPtr& r_img_msg,
-                          const sensor_msgs::CameraInfoConstPtr& l_info_msg,
-                          const sensor_msgs::CameraInfoConstPtr& r_info_msg);
-
-
             /** \brief Service callback. This function is called when another part of the
              *  system requests the transform between the robot centre (base_link) and the
              *  sensor (camera).
@@ -113,6 +100,19 @@ namespace slamon
              */
             bool sendProjectionMatrices(slamon::GetProjectionMatrices::Request& req,
                                         slamon::GetProjectionMatrices::Response& res);
+
+
+            /** \brief Image callback. This function is called when synchronized stereo image
+             *  messages are received.
+             *  \param[in] l_img_msg ROS message containing the left image.
+             *  \param[in] r_img_msg ROS message containing the right image.
+             *  \param[in] l_info_msg ROS message containing the info of the left image.
+             *  \param[in] r_info_msg ROS message containing the info of the right image.
+             */  
+            void callback(const sensor_msgs::ImageConstPtr& l_img_msg,
+                          const sensor_msgs::ImageConstPtr& r_img_msg,
+                          const sensor_msgs::CameraInfoConstPtr& l_info_msg,
+                          const sensor_msgs::CameraInfoConstPtr& r_info_msg);
 
 
             /** \brief Initialise the visual odometer by setting the transform between the camera
@@ -159,8 +159,18 @@ namespace slamon
              *  it calls a service and waits for another part of the system to respond. If there is a
              *  response, the received odometry is assigned, otherwise the odometry is initialised to 0
              *  (identity).
-             */                        
+             */
             void getInitialOdom();
+
+            
+            /** \brief Check if it is necessary to insert a keyframe in the map.
+             *  \param[in, out] c_frame Current frame.
+             *  \param[out] inliers_per_pair Number of inliers per cluster pair.
+             *  \param[out] cluster_pairs Cluster pairs.
+             */
+            bool needNewKeyframe(Frame& c_frame,
+                                 std::vector<int>& inliers_per_pair,
+                                 std::vector<std::pair<int, int>>& cluster_pairs);
 
 
             /** \brief Detects keypoints in ROS images. To do this, it transforms images of 
@@ -195,8 +205,8 @@ namespace slamon
 
 
             // Atributes:
-            
-            int c_frame_id_; //!> Current frame id.
+
+            int c_keyframe_id_; //!> Current keyframe id.
 
             int img_height_; //!> Number of image rows.
 
@@ -215,6 +225,8 @@ namespace slamon
             cv::Mat r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Right projection matrix.
             
             Frame p_frame_; //!> Previous frame.
+
+            Frame keyframe_; //!> Current keyframe.
             
             VOStatus status_; //!> Visual odometer state.
 
@@ -242,10 +254,12 @@ namespace slamon
 
             tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.
 
+            ros::Publisher keyframe_pub_; //!> Publisher for the current keyframe.
+            
             ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
-
+            
             ros::Publisher robot_odom_pub_; //!> Publishes current velocity and accumulated movement (odometry) relative to robot.
-
+            
             ros::Publisher camera_odom_pub_; //!> Publishes current velocity and accumulated movement (odometry) relative to camera.
             
             ros::Publisher inliers_num_pub_; //!> Publisher for the number of inliers.
@@ -253,16 +267,16 @@ namespace slamon
             ros::Publisher inliers_img_pub_; //!> Publisher for the image with drawn inliers.
             
             ros::Publisher stereo_kpts_img_pub_; //!> Publisher for the image with drawn stereo keypoints.
-
-            ros::Publisher stereo_attributes_pub_; //!> Publishes current relevant information from a stereo pair of images.
             
             ros::Publisher stereo_matches_num_pub_; //!> Publisher for the number of stereo matches.
-
+            
             ros::Publisher stereo_matches_img_pub_; //!> Publisher for the image with drawn stereo matches.
-
+            
             ros::Publisher temporal_matches_num_pub_; //!> Publisher for the number of temporal matches.
-
+            
             ros::Publisher temporal_matches_img_pub_; //!> Publisher for the image with drawn temporal matches.
+            
+            ros::Publisher keyframe_inliers_img_pub_; //!> Publisher for the inliers between current and key frames.
 
             ros::ServiceClient initial_odom_client_; //!> Service for requesting the initial position to the SLAM.
             
