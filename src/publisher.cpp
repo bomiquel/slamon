@@ -371,6 +371,72 @@ void Publisher::publishStereoImageAttributes(const cv::Mat& l_descs,
 }
 
 
+void Publisher::publishKeyframe(const int keyframe_id,
+                                const cv::Mat& l_descs,
+                                const cv::Mat& r_descs,
+                                const ros::Time& stamp,
+                                const ros::Publisher& publisher,
+                                const std::vector<int>& inliers,
+                                const std::vector<int>& cluster_ids,
+                                const std::vector<cv::KeyPoint>& l_kpts,
+                                const std::vector<cv::KeyPoint>& r_kpts,
+                                const std::vector<cv::Point3f>& l_cam_pts,
+                                const std::vector<std::pair<int, int>>& cluster_pairs)
+{
+    // Builds keyframe message.
+    slamon::Keyframe msg = buildKeyframe(keyframe_id,
+                                         l_descs,
+                                         r_descs,
+                                         stamp,
+                                         inliers,
+                                         cluster_ids,
+                                         l_kpts,
+                                         r_kpts,
+                                         l_cam_pts,
+                                         cluster_pairs);
+
+    // Publishes.
+    publisher.publish(msg);
+}
+
+
+void Publisher::publishKeyframe(const int keyframe_id,
+                                const cv::Mat& l_img,
+                                const cv::Mat& r_img,
+                                const cv::Mat& l_descs,
+                                const cv::Mat& r_descs,
+                                const ros::Time& stamp,
+                                const ros::Publisher& publisher,
+                                const std::vector<int>& inliers,
+                                const std::vector<int>& cluster_ids,
+                                const std::vector<cv::KeyPoint>& l_kpts,
+                                const std::vector<cv::KeyPoint>& r_kpts,
+                                const std::vector<cv::Point3f>& l_cam_pts,
+                                const std::vector<std::pair<int, int>>& cluster_pairs)
+{
+    // Builds keyframe message.
+    slamon::Keyframe keyframe_msg = buildKeyframe(keyframe_id,
+                                                  l_descs,
+                                                  r_descs,
+                                                  stamp,
+                                                  inliers,
+                                                  cluster_ids,
+                                                  l_kpts,
+                                                  r_kpts,
+                                                  l_cam_pts,
+                                                  cluster_pairs);
+    
+    // Set images.
+    sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", l_img).toImageMsg();
+    keyframe_msg.l_img = *img_msg;
+    img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", r_img).toImageMsg();
+    keyframe_msg.r_img = *img_msg;
+
+    // Publishes.
+    publisher.publish(keyframe_msg);
+}
+
+
 void Publisher::publishCounter(const int counter,
                                const ros::Publisher& publisher)
 {
@@ -849,6 +915,76 @@ nav_msgs::Odometry Publisher::buildPoseMsg(const ros::Time& c_stamp,
     tf::poseTFToMsg(c_pose, msg.pose.pose);
 
     return msg;
+}
+
+
+slamon::Keyframe Publisher::buildKeyframe(const int keyframe_id,
+                                          const cv::Mat& l_descs,
+                                          const cv::Mat& r_descs,
+                                          const ros::Time& stamp,
+                                          const std::vector<int>& inliers,
+                                          const std::vector<int>& cluster_ids,
+                                          const std::vector<cv::KeyPoint>& l_kpts,
+                                          const std::vector<cv::KeyPoint>& r_kpts,
+                                          const std::vector<cv::Point3f>& l_cam_pts,
+                                          const std::vector<std::pair<int, int>>& cluster_pairs)
+{
+    // Creates messages.
+    slamon::Batch batch_msg;
+    slamon::Keyframe keyframe_msg;
+    geometry_msgs::Point l_cam_pt_msg;
+    slamon::Keypoint l_kpt_msg, r_kpt_msg;
+
+    // Fills non-clusters attributes.
+    keyframe_msg.header.stamp = stamp;
+    keyframe_msg.keyframe_id = keyframe_id;
+    keyframe_msg.inliers_per_pair.reserve(inliers.size());
+    keyframe_msg.cluster_pairs.reserve(cluster_pairs.size() * 2);
+    for (size_t i = 0; i < inliers.size(); ++i)
+    {
+        keyframe_msg.inliers_per_pair.push_back(inliers[i]);
+        keyframe_msg.cluster_pairs.push_back(cluster_pairs[i].first);
+        keyframe_msg.cluster_pairs.push_back(cluster_pairs[i].second);
+    }
+
+    // Fills clusters.
+    size_t i = 0;
+    int c_cluster_id = 0;
+    while (i < cluster_ids.size())
+    {
+        c_cluster_id = cluster_ids[i];
+
+        // Start a new batch for the current cluster.
+        batch_msg.l_kpts.clear();
+        batch_msg.r_kpts.clear();
+        batch_msg.l_cam_pts.clear();
+
+        // Collect all keypoints belonging to the current cluster.
+        while (i < cluster_ids.size() && cluster_ids[i] == c_cluster_id)
+        {
+            l_kpt_msg.pt.x = l_kpts[i].pt.x;
+            l_kpt_msg.pt.y = l_kpts[i].pt.y;
+            l_kpt_msg.desc = l_descs.row(i);
+
+            r_kpt_msg.pt.x = r_kpts[i].pt.x;
+            r_kpt_msg.pt.y = r_kpts[i].pt.y;
+            r_kpt_msg.desc = r_descs.row(i);
+
+            l_cam_pt_msg.x = l_cam_pts[i].x;
+            l_cam_pt_msg.y = l_cam_pts[i].y;
+            l_cam_pt_msg.z = l_cam_pts[i].z;
+
+            batch_msg.l_kpts.push_back(l_kpt_msg);
+            batch_msg.r_kpts.push_back(r_kpt_msg);
+            batch_msg.l_cam_pts.push_back(l_cam_pt_msg);
+
+            ++i;
+        }
+
+        keyframe_msg.batches.push_back(batch_msg);
+    }
+
+    return keyframe_msg;
 }
 
 

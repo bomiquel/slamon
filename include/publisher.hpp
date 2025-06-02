@@ -25,6 +25,7 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include "slamon/Keypoint.h"
+#include "slamon/Keyframe.h"
 #include "slamon/Performance.h"
 #include "slamon/StereoImageAttributes.h"
 
@@ -388,6 +389,62 @@ class Publisher
                                           const std::vector<cv::Point3f>& l_cam_pts);
 
 
+        /** \brief Publishes a keyframe in ROS.
+         *  \param[in] keyframe_id Keyframe identifier.
+         *  \param[in] l_descs Keyframe left descriptors.
+         *  \param[in] r_descs Keyframe right descriptors.
+         *  \param[in] stamp Current image ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] inliers Number of inliers per cluster pair.
+         *  \param[in] cluster_ids Keyframe cluster ids.
+         *  \param[in] l_kpts Keyframe left keypoints.
+         *  \param[in] r_kpts Keyframe right keypoints.
+         *  \param[in] l_cam_pts Keyframe left camera points.
+         *  \param[in] cluster_pairs Cluster pairs.
+         */
+        void publishKeyframe(const int keyframe_id,
+                             const cv::Mat& l_descs,
+                             const cv::Mat& r_descs,
+                             const ros::Time& stamp,
+                             const ros::Publisher& publisher,
+                             const std::vector<int>& inliers,
+                             const std::vector<int>& cluster_ids,
+                             const std::vector<cv::KeyPoint>& l_kpts,
+                             const std::vector<cv::KeyPoint>& r_kpts,
+                             const std::vector<cv::Point3f>& l_cam_pts,
+                             const std::vector<std::pair<int, int>>& cluster_pairs);
+
+
+        /** \brief Publishes a keyframe in ROS.
+         *  \param[in] keyframe_id Keyframe identifier.
+         *  \param[in] l_img Keyframe left image.
+         *  \param[in] r_img Keyframe right image.
+         *  \param[in] l_descs Keyframe left descriptors.
+         *  \param[in] r_descs Keyframe right descriptors.
+         *  \param[in] stamp Current image ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] inliers Number of inliers per cluster pair.
+         *  \param[in] cluster_ids Keyframe cluster ids.
+         *  \param[in] l_kpts Keyframe left keypoints.
+         *  \param[in] r_kpts Keyframe right keypoints.
+         *  \param[in] l_cam_pts Keyframe left camera points.
+         *  \param[in] cluster_pairs Cluster pairs.
+         */
+        void publishKeyframe(const int keyframe_id,
+                             const cv::Mat& l_img,
+                             const cv::Mat& r_img,
+                             const cv::Mat& l_descs,
+                             const cv::Mat& r_descs,
+                             const ros::Time& stamp,
+                             const ros::Publisher& publisher,
+                             const std::vector<int>& inliers,
+                             const std::vector<int>& cluster_ids,
+                             const std::vector<cv::KeyPoint>& l_kpts,
+                             const std::vector<cv::KeyPoint>& r_kpts,
+                             const std::vector<cv::Point3f>& l_cam_pts,
+                             const std::vector<std::pair<int, int>>& cluster_pairs);
+
+
         /** \brief Publishes counters to ROS.
          *  \param[in] counter The data to be published.
          *  \param[in] publisher The ROS publisher. 
@@ -582,6 +639,30 @@ class Publisher
         nav_msgs::Odometry buildPoseMsg(const ros::Time& c_stamp,
                                         const tf::Transform& c_pose,
                                         const std::string& reference_frame_id);
+
+
+        /** \brief Builds a slamon::Keyframe.
+         *  \param[in] keyframe_id Keyframe identifier.
+         *  \param[in] l_descs Keyframe left descriptors.
+         *  \param[in] r_descs Keyframe right descriptors.
+         *  \param[in] stamp Current image ROS timestamp.
+         *  \param[in] inliers Number of inliers per cluster pair.
+         *  \param[in] cluster_ids Keyframe cluster ids.
+         *  \param[in] l_kpts Keyframe left keypoints.
+         *  \param[in] r_kpts Keyframe right keypoints.
+         *  \param[in] l_cam_pts Keyframe left camera points.
+         *  \param[in] cluster_pairs Cluster pairs.
+         */
+        slamon::Keyframe buildKeyframe(const int keyframe_id,
+                                       const cv::Mat& l_descs,
+                                       const cv::Mat& r_descs,
+                                       const ros::Time& stamp,
+                                       const std::vector<int>& inliers,
+                                       const std::vector<int>& cluster_ids,
+                                       const std::vector<cv::KeyPoint>& l_kpts,
+                                       const std::vector<cv::KeyPoint>& r_kpts,
+                                       const std::vector<cv::Point3f>& l_cam_pts,
+                                       const std::vector<std::pair<int, int>>& cluster_pairs);
 
 
         /** \brief Publishes images.
