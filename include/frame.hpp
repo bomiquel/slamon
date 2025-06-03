@@ -146,6 +146,12 @@ class Frame
         inline std::vector<cv::Point3f> getClustersCentroids() const {return cluster_centroids_;}
 
 
+        /** \brief Does the frame have clusters?
+         *  @return if it contains clusters.
+         */
+        inline bool hasClusters() const {return !cluster_centroids_.empty();}
+
+
         /** \brief Get the relationship between the keypoint index and the cluster to which it belongs.
          *  @return Cluster ids.
          */
