@@ -146,12 +146,12 @@ namespace slamon
              *  or computing the best essential matrix (with RANSAC). Finally, the movement between
              *  frames is estimated using the 3D to 2D method (PnP + RANSAC).
              *  \param[in] c_frame Current stereo frame.
-             *  \param[out] c_camera_motion Estimated movement between the two images, referenced to
+             *  \param[out] camera_delta_odom Estimated movement between the two images, referenced to
              *  camera coordinate axis.
              *  @return Whether it was possible to match keypoints, filter outliers and estimate movement. 
              */ 
-            bool computeMotionSuccessiveFrames(const Frame& c_frame,
-                                               tf::Transform& c_camera_motion);
+            bool computeOdometry(const Frame& c_frame,
+                                 tf::Transform& camera_delta_odom);
 
 
             /** \brief Initialises the robot odometry relative to the robot coordinate axis. To do this,
@@ -172,11 +172,11 @@ namespace slamon
 
             /** \brief Integrates and publishes odometry.
              *  \param[in] c_frame Current frame.
-             *  \param[in] c_camera_motion Estimated movement between the two images, referenced to
+             *  \param[in] camera_delta_odom Estimated movement between the two images, referenced to
              *  camera coordinate axis.
              */
             void integrateAndPublish(const Frame& c_frame,
-                                     tf::Transform& c_camera_motion);
+                                     tf::Transform& camera_delta_odom);
 
 
             /** \brief Sends a keyframe if the map needs it
@@ -254,9 +254,9 @@ namespace slamon
 
             std::string camera_frame_id_; //!> Camera odometry coordinate axis identficator.
 
-            tf::Transform c_odom_robot_pose_; //!> Current robot odometry.
+            tf::Transform c_robot_odom_; //!> Current robot odometry.
 
-            tf::Transform c_odom_camera_pose_; //!> Current world-odom camera pose.
+            tf::Transform c_camera_odom_; //!> Current camera odometry.
 
             std::string feature_detector_name_; //!> The name of the feature detector.
 

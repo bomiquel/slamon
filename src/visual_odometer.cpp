@@ -176,8 +176,8 @@ namespace slamon
                         ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
                     break;
                 }
-                tf::Transform c_camera_motion;
-                valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);
+                tf::Transform camera_delta_odom;
+                valid_motion = computeOdometry(c_frame, camera_delta_odom);
                 if (!valid_motion)
                     break;
                 status_ = RUNNING;
@@ -192,12 +192,12 @@ namespace slamon
                     lost = false;
                 }
                 sendKeyframe(std::vector<int>(), std::vector<std::pair<int, int>>());
-                publishPose(keyframe_.getTimestamp(), c_odom_robot_pose_, lost, robot_odom_pub_, robot_frame_id_);
-                publishPose(keyframe_.getTimestamp(), c_odom_camera_pose_, lost, camera_odom_pub_, camera_frame_id_);
+                publishPose(keyframe_.getTimestamp(), c_robot_odom_, lost, robot_odom_pub_, robot_frame_id_);
+                publishPose(keyframe_.getTimestamp(), c_camera_odom_, lost, camera_odom_pub_, camera_frame_id_);
                 c_keyframe_id_++;
                 
                 // Computes and publishes odometry.
-                integrateAndPublish(c_frame, c_camera_motion);
+                integrateAndPublish(c_frame, camera_delta_odom);
 
                 // Sends a keyframe to the map if necessary.
                 sendKeyframeIfNecessary(c_frame);
@@ -223,8 +223,8 @@ namespace slamon
                         ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
                     break;
                 }
-                tf::Transform c_camera_motion;
-                valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);
+                tf::Transform camera_delta_odom;
+                valid_motion = computeOdometry(c_frame, camera_delta_odom);
                 if (!valid_motion)
                 {
                     status_ = LOST;
@@ -232,7 +232,7 @@ namespace slamon
                 }
                                 
                 // Computes and publishes odometry.
-                integrateAndPublish(c_frame, c_camera_motion);
+                integrateAndPublish(c_frame, camera_delta_odom);
 
                 // Sends a keyframe to the map if necessary.
                 sendKeyframeIfNecessary(c_frame);
@@ -424,8 +424,8 @@ namespace slamon
     }
 
 
-    bool VisualOdometer::computeMotionSuccessiveFrames(const Frame& c_frame,
-                                                       tf::Transform& c_camera_motion)
+    bool VisualOdometer::computeOdometry(const Frame& c_frame,
+                                         tf::Transform& camera_delta_odom)
     {
         // Auxilary variable to set the start time of a module.
         double start_module_time;
@@ -531,7 +531,7 @@ namespace slamon
         }
 
         // Build a TF
-        if(!fromMatToTf(camera_rotation, camera_translation, c_camera_motion))
+        if(!fromMatToTf(camera_rotation, camera_translation, camera_delta_odom))
             return false;
 
         return true;
@@ -543,22 +543,22 @@ namespace slamon
         slamon::GetTransform srv;
         if (initial_odom_client_.call(srv))
         {
-            tf::poseMsgToTF(srv.response.tf.pose, c_odom_robot_pose_);
+            tf::poseMsgToTF(srv.response.tf.pose, c_robot_odom_);
             ROS_WARN_STREAM("[VO->Initial odom:] GetTransform service call successful. The initial odometry is as follows:" << std::endl <<
-                            "tx: " << c_odom_robot_pose_.getOrigin().getX() << std::endl << 
-                            "ty: " << c_odom_robot_pose_.getOrigin().getY() << std::endl << 
-                            "tz: " << c_odom_robot_pose_.getOrigin().getZ() << std::endl << 
-                            "qx: " << c_odom_robot_pose_.getRotation().getX() << std::endl << 
-                            "qy: " << c_odom_robot_pose_.getRotation().getY() << std::endl << 
-                            "qz: " << c_odom_robot_pose_.getRotation().getZ() << std::endl << 
-                            "qw: " << c_odom_robot_pose_.getRotation().getW());
+                            "tx: " << c_robot_odom_.getOrigin().getX() << std::endl << 
+                            "ty: " << c_robot_odom_.getOrigin().getY() << std::endl << 
+                            "tz: " << c_robot_odom_.getOrigin().getZ() << std::endl << 
+                            "qx: " << c_robot_odom_.getRotation().getX() << std::endl << 
+                            "qy: " << c_robot_odom_.getRotation().getY() << std::endl << 
+                            "qz: " << c_robot_odom_.getRotation().getZ() << std::endl << 
+                            "qw: " << c_robot_odom_.getRotation().getW());
         }
         else
         {
             ROS_WARN_STREAM("[VO->Initial odom:] Failed to call GetTransform service. The initial odometry will be assumed as the identity.");
-            c_odom_robot_pose_.setIdentity();
+            c_robot_odom_.setIdentity();
         }
-        c_odom_camera_pose_ = c_odom_robot_pose_ * robot2camera_;
+        c_camera_odom_ = c_robot_odom_ * robot2camera_;
     }
 
 
@@ -580,26 +580,26 @@ namespace slamon
 
 
     void VisualOdometer::integrateAndPublish(const Frame& c_frame,
-                                             tf::Transform& c_camera_motion)
+                                             tf::Transform& camera_delta_odom)
     {
         // From {c_cam}^T_{p_cam} to {p_cam}^T_{c_cam}.
-        c_camera_motion = c_camera_motion.inverse();
+        camera_delta_odom = camera_delta_odom.inverse();
 
         // Calculates the camera's current odometry by accumulating its movement.
         // {wo}^T_{c_cam} = {wo}^T_{p_cam} * {p_cam}^T_{c_cam}.
-        c_odom_camera_pose_ *= c_camera_motion;
+        c_camera_odom_ *= camera_delta_odom;
 
         // Changes the coordinate axis of the movement. From camera to robot. 
         // {p_robot}^T_{c_robot} = {robot}^T_{cam} * {p_cam}^T_{c_cam} * {cam}^T_{robot}.
-        tf::Transform c_robot_motion = robot2camera_ * c_camera_motion * robot2camera_.inverse();
+        tf::Transform robot_delta_odom = robot2camera_ * camera_delta_odom * robot2camera_.inverse();
 
         // Calculates the robot's current odometry by accumulating its movement.
         // {wo}^T_{c_robot} = {wo}^T_{p_robot} * {p_robot}^T_{c_robot}.
-        c_odom_robot_pose_ *= c_robot_motion;
+        c_robot_odom_ *= robot_delta_odom;
 
-        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_camera_pose_, c_camera_motion,
+        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_camera_odom_, camera_delta_odom,
                                false, false, camera_odom_pub_, camera_frame_id_);
-        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_robot_pose_, c_robot_motion,
+        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_robot_odom_, robot_delta_odom,
                                false, false, robot_odom_pub_, robot_frame_id_);
     }
 
