@@ -42,7 +42,8 @@ namespace slamon
             {
                 UNINITIALISED    = 0,
                 BOOTSTRAPPING    = 1,
-                RUNNING          = 2
+                LOST             = 2,
+                RUNNING          = 3
             };
 
 
@@ -50,29 +51,27 @@ namespace slamon
              *  \param[in] min_inliers Minimum number of keypoints to estimate the movement.
              *  \param[in] min_lc_inliers Minimum number of inliers for loop closure.
              *  \param[in] max_kpts_bucket Maximum number of keypoints per bucket.
-             *  \param[in] max_kpts Maximum number of keypoints to be retained.
+             *  \param[in] max_kpts_retained Maximum number of keypoints to be retained.
              *  \param[in] enable_debugging Enabling or disabling debugging messages and topics.
              *  \param[in] enable_bucketing Enabling or disabling keypoints bucketing.
              *  \param[in] enable_enhacement Enabling or disabling image enhacement.
-             *  \param[in] w_path Working path for debugging purpose.
-             *  \param[in] feature_detector_type String containing the name of the desired detector for detecting
-             *  image keypoints.
              *  \param[in] matching_type Matching type.
              *  \param[in] robot_frame_id Robot odometry coordinate axis identficator.
+             *  \param[in] feature_detector_name String containing the name of the desired detector for detecting
+             *  image keypoints.
              *  \param[in] motion_estimation_type Motion estimation type.
              */
-            VisualOdometer(int min_inliers,
-                           int min_lc_inliers,
-                           int max_kpts_bucket,
-                           int max_kpts_retained,
-                           bool enable_debugging,
-                           bool enable_bucketing,
-                           bool enable_enhacement,
-                           const std::string& w_path,
+            VisualOdometer(const int min_inliers,
+                           const int min_lc_inliers,
+                           const int max_kpts_bucket,
+                           const int max_kpts_retained,
+                           const bool enable_debugging,
+                           const bool enable_bucketing,
+                           const bool enable_enhacement,
+                           const std::string& matching_type,
+                           const std::string& robot_frame_id,
                            const std::string& feature_detector_name,
-                           std::string& matching_type,
-                           std::string& robot_frame_id,
-                           std::string& motion_estimation_type);
+                           const std::string& motion_estimation_type);
 
 
             /** \brief Starts tracking
@@ -147,12 +146,12 @@ namespace slamon
              *  or computing the best essential matrix (with RANSAC). Finally, the movement between
              *  frames is estimated using the 3D to 2D method (PnP + RANSAC).
              *  \param[in] c_frame Current stereo frame.
-             *  \param[out] robot_motion Estimated movement between the two images, referenced to
-             *  robot coordinate axis.
+             *  \param[out] c_camera_motion Estimated movement between the two images, referenced to
+             *  camera coordinate axis.
              *  @return Whether it was possible to match keypoints, filter outliers and estimate movement. 
              */ 
             bool computeMotionSuccessiveFrames(const Frame& c_frame,
-                                               tf::Transform& robot_motion);
+                                               tf::Transform& c_camera_motion);
 
 
             /** \brief Initialises the robot odometry relative to the robot coordinate axis. To do this,
@@ -162,15 +161,28 @@ namespace slamon
              */
             void getInitialOdom();
 
-            
-            /** \brief Check if it is necessary to insert a keyframe in the map.
-             *  \param[in, out] c_frame Current frame.
-             *  \param[out] inliers_per_pair Number of inliers per cluster pair.
-             *  \param[out] cluster_pairs Cluster pairs.
+
+            /** \brief Publish a keyframe. Depending on enable_debugging_ the keyframe contains the images.
+             *  \param[in] inliers_per_pair Number of inliers per cluster pair.
+             *  \param[in] cluster_pairs Cluster pairs.
              */
-            bool needNewKeyframe(Frame& c_frame,
-                                 std::vector<int>& inliers_per_pair,
-                                 std::vector<std::pair<int, int>>& cluster_pairs);
+            void sendKeyframe(const std::vector<int>& inliers_per_pair,
+                              const std::vector<std::pair<int, int>>& cluster_pairs);
+
+
+            /** \brief Integrates and publishes odometry.
+             *  \param[in] c_frame Current frame.
+             *  \param[in] c_camera_motion Estimated movement between the two images, referenced to
+             *  camera coordinate axis.
+             */
+            void integrateAndPublish(const Frame& c_frame,
+                                     tf::Transform& c_camera_motion);
+
+
+            /** \brief Sends a keyframe if the map needs it
+             *  \param[in] c_frame Current frame.
+             */
+            void sendKeyframeIfNecessary(const Frame& c_frame);
 
 
             /** \brief Detects keypoints in ROS images. To do this, it transforms images of 
@@ -207,11 +219,11 @@ namespace slamon
             // Atributes:
 
             int c_keyframe_id_; //!> Current keyframe id.
-
+            
             int img_height_; //!> Number of image rows.
-
+            
             int img_width_; //!> Number of image cols.
-
+            
             int min_inliers_; //!> Minimum number of inliers to estimate the movement.
 
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
@@ -228,7 +240,7 @@ namespace slamon
 
             Frame keyframe_; //!> Current keyframe.
             
-            VOStatus status_; //!> Visual odometer state.
+            VOStatus status_; //!> Visual odometer status.
 
             bool enable_debugging_; //!> Enabling or disabling debugging messages.
 
@@ -238,10 +250,6 @@ namespace slamon
 
             bool initialised_odom_; //!> Flag that indicates if the robot's odom has been initialised.
 
-            std::string feature_detector_name_; //!> The name of the feature detector.
-
-            std::string frame_path_; //!> Path to store frames with debugging purpose.
-
             std::string robot_frame_id_; //!> Robot odometry coordinate axis identficator.
 
             std::string camera_frame_id_; //!> Camera odometry coordinate axis identficator.
@@ -249,6 +257,8 @@ namespace slamon
             tf::Transform c_odom_robot_pose_; //!> Current robot odometry.
 
             tf::Transform c_odom_camera_pose_; //!> Current world-odom camera pose.
+
+            std::string feature_detector_name_; //!> The name of the feature detector.
 
             tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 

@@ -51,6 +51,17 @@ class Publisher
             double run_time_4 = 0.0;     //!> Time needed for VO: Bucketing, MM: Write graph to disk and publish updated robot pose or LC: Loop detection.
             double run_time_5 = 0.0;     //!> Time needed for VO: Motion estimation, MM: Nothing or LC: Close loop.
             double total_run_time = 0.0; //!> Time needed for each thread to perform one iteration.
+
+            void reset()
+            {
+                run_time_0 = 0.0;
+                run_time_1 = 0.0;
+                run_time_2 = 0.0;
+                run_time_3 = 0.0;
+                run_time_4 = 0.0;
+                run_time_5 = 0.0;
+                total_run_time = 0.0;
+            }
         };
 
 

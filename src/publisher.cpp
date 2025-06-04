@@ -273,7 +273,7 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
 {
     nav_msgs::Odometry msg = buildPoseMsg(c_stamp, c_pose, reference_frame_id);
 
-    // Set linear velocity
+    // Set velocity
     double delta_t = (c_stamp - p_stamp).toSec();
     if (delta_t == 0.0)
     {

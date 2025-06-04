@@ -5,34 +5,23 @@ namespace slamon
 {
 
 
-    VisualOdometer::VisualOdometer(int min_inliers,
-                                   int min_lc_inliers,
-                                   int max_kpts_bucket,
-                                   int max_kpts_retained,
-                                   bool enable_debugging,
-                                   bool enable_bucketing,
-                                   bool enable_enhacement,
-                                   const std::string& w_path,
+    VisualOdometer::VisualOdometer(const int min_inliers,
+                                   const int min_lc_inliers,
+                                   const int max_kpts_bucket,
+                                   const int max_kpts_retained,
+                                   const bool enable_debugging,
+                                   const bool enable_bucketing,
+                                   const bool enable_enhacement,
+                                   const std::string& matching_type,
+                                   const std::string& robot_frame_id,
                                    const std::string& feature_detector_name,
-                                   std::string& matching_type,
-                                   std::string& robot_frame_id,
-                                   std::string& motion_estimation_type):
+                                   const std::string& motion_estimation_type):
                                    KeypointMatcher(matching_type), 
                                    MotionEstimator(motion_estimation_type),
                                    c_keyframe_id_{0}, min_inliers_{min_inliers}, min_lc_inliers_{min_lc_inliers}, 
                                    max_kpts_bucket_{max_kpts_bucket}, max_kpts_retained_{max_kpts_retained}, status_{UNINITIALISED}, 
                                    enable_debugging_{enable_debugging}, enable_bucketing_{enable_bucketing}, enable_enhacement_{enable_enhacement},
-                                   initialised_odom_{false}, feature_detector_name_{feature_detector_name}, robot_frame_id_{robot_frame_id}
-    {
-        // Create debugging directories.
-        if (enable_debugging_)
-        {
-            frame_path_ = w_path + "frames/";
-            if (std::filesystem::exists(frame_path_))
-                std::filesystem::remove_all(frame_path_);
-            std::filesystem::create_directory(frame_path_);
-        }
-    }
+                                   initialised_odom_{false}, robot_frame_id_{robot_frame_id}, feature_detector_name_{feature_detector_name} {}
 
 
     void VisualOdometer::run()
@@ -119,155 +108,149 @@ namespace slamon
         // Valid motion flag.
         bool valid_motion = false;
 
-        // Current camera motion.
-        tf::Transform c_camera_motion;
+        // Reset run time structure.
+        run_times_.reset();
 
-        // Different actions depending on the state.
+        // Different actions depending on the status.
         switch (status_)
         {
             case UNINITIALISED:
             {
                 if (enable_debugging_)
-                    ROS_INFO_STREAM("[VO->status:] UNINITIALIZED");
+                    ROS_WARN_STREAM("[VO->Status:] UNINITIALISED");
+
+                // Transition.
                 if (!initialisation(l_info_msg, r_info_msg))
                     break;
-                if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
-                {
-                    c_frame.regionClustering();
-                    if (!c_frame.getClustersCentroids().empty())
-                    {
-                        keyframe_ = c_frame;
-                        status_ = RUNNING;
-                    }
-                    else
-                    {
-                        ROS_WARN_STREAM("[VO->callback:] The image produces 0 clusters, is it not possible to send it to the mapmaker!");
-                    }
-                }
-                else
+                if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
                     status_ = BOOTSTRAPPING;
+                    break;
                 }
-                run_times_.run_time_3 = 0.0; // Succesive matching run time
-                run_times_.run_time_4 = 0.0; // Bucketing run time
-                run_times_.run_time_5 = 0.0; // Motion estimation run time
+                c_frame.regionClustering();
+                if (!c_frame.hasClusters())
+                {
+                    status_ = BOOTSTRAPPING;
+                    if (enable_debugging_)
+                        ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
+                    break;
+                }
+                status_ = LOST;
                 break;
             }
             case BOOTSTRAPPING:
             {
                 if (enable_debugging_)
-                    ROS_INFO_STREAM("[VO->status:] BOOTSTRAPPING");
-                if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
+                    ROS_WARN_STREAM("[VO->Status:] BOOTSTRAPPING");
+
+                // Transition.
+                if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
+                    break;
+                c_frame.regionClustering();
+                if (!c_frame.hasClusters())
                 {
-                    c_frame.regionClustering();
-                    if (!c_frame.getClustersCentroids().empty())
-                    {
-                        keyframe_ = c_frame;
-                        status_ = RUNNING;
-                    }
-                    else
-                    {
-                        ROS_WARN_STREAM("[VO->callback:] The image produces 0 clusters, is it not possible to send it to the mapmaker!");
-                    }
+                    if (enable_debugging_)
+                        ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
+                    break;
                 }
-                run_times_.run_time_3 = 0.0; // Succesive matching run time
-                run_times_.run_time_4 = 0.0; // Bucketing run time
-                run_times_.run_time_5 = 0.0; // Motion estimation run time
+                status_ = LOST;
+
+                break;
+            }
+            case LOST:
+            {
+                if (enable_debugging_)
+                    ROS_WARN_STREAM("[VO->Status:] LOST");
+                
+                // Transition.
+                if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
+                {
+                    status_ = BOOTSTRAPPING;
+                    break;
+                }
+                c_frame.regionClustering();
+                if (!c_frame.hasClusters())
+                {
+                    status_ = BOOTSTRAPPING;
+                    if (enable_debugging_)
+                        ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
+                    break;
+                }
+                tf::Transform c_camera_motion;
+                valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);
+                if (!valid_motion)
+                    break;
+                status_ = RUNNING;
+
+                // Sends keyframe.
+                keyframe_ = p_frame_;
+                if (!initialised_odom_)
+                {
+                    initialised_odom_ = true;
+                    getInitialOdom();
+                }
+                sendKeyframe(std::vector<int>(), std::vector<std::pair<int, int>>());
+                publishPose(keyframe_.getTimestamp(), c_odom_robot_pose_, robot_odom_pub_, robot_frame_id_);
+                publishPose(keyframe_.getTimestamp(), c_odom_camera_pose_, camera_odom_pub_, camera_frame_id_);
+                c_keyframe_id_++;
+                
+                // Computes and publishes odometry.
+                integrateAndPublish(c_frame, c_camera_motion);
+
+                // Sends a keyframe to the map if necessary.
+                sendKeyframeIfNecessary(c_frame);
+
                 break;
             }
             case RUNNING:
             {
                 if (enable_debugging_)
-                    ROS_INFO_STREAM("[VO->status:] RUNNING");
-                if (processCurrentFrame(l_img_msg, r_img_msg, c_frame))
-                {
-                    valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);
-                    if (valid_motion)
-                    {
-                        std::string c_frame_name;
-                        if (!initialised_odom_)
-                        {
-                            getInitialOdom();
-                            initialised_odom_ = true;
+                    ROS_WARN_STREAM("[VO->Status:] RUNNING");
 
-                            if (enable_debugging_)
-                                publishKeyframe(c_keyframe_id_, keyframe_.getLeftImg(), keyframe_.getRightImg(),
-                                                keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
-                                                keyframe_pub_, std::vector<int>(), keyframe_.getClusterIds(), 
-                                                keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
-                                                std::vector<std::pair<int, int>>());
-                            else
-                                publishKeyframe(c_keyframe_id_, keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
-                                                keyframe_pub_, std::vector<int>(), keyframe_.getClusterIds(), 
-                                                keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
-                                                std::vector<std::pair<int, int>>());
-                            publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_odom_camera_pose_, tf::Transform(),
-                                                   camera_odom_pub_, camera_frame_id_);
-                            publishPoseAndVelocity(p_frame_.getTimestamp(), p_frame_.getTimestamp(), c_odom_robot_pose_, tf::Transform(),
-                                                   robot_odom_pub_, robot_frame_id_);                            
-                        }
-
-                        // From {c_cam}^T_{p_cam} to {p_cam}^T_{c_cam}.
-                        c_camera_motion = c_camera_motion.inverse();
-
-                        // Calculates the camera's current odometry by accumulating its movement.
-                        // {wo}^T_{c_cam} = {wo}^T_{p_cam} * {p_cam}^T_{c_cam}
-                        c_odom_camera_pose_ *= c_camera_motion;
-
-                        // Changes the coordinate axis of the movement. From camera to robot. 
-                        // {p_robot}^T_{c_robot} = {robot}^T_{cam} * {p_cam}^T_{c_cam} * {cam}^T_{robot}
-                        tf::Transform c_robot_motion = robot2camera_ * c_camera_motion * robot2camera_.inverse();
-
-                        // Calculates the robot's current odometry by accumulating its movement.
-                        // {wo}^T_{c_robot} = {wo}^T_{p_robot} * {p_robot}^T_{c_robot}
-                        c_odom_robot_pose_ *= c_robot_motion;
-                        tf::Transform c_odom_robot_pose = c_odom_robot_pose_;
-
-                        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_camera_pose_, c_camera_motion,
-                                               camera_odom_pub_, camera_frame_id_);
-                        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_robot_pose, c_robot_motion,
-                                               robot_odom_pub_, robot_frame_id_);
-                        
-                        std::vector<int> inliers_per_pair;
-                        std::vector<std::pair<int, int>> cluster_pairs;
-                        bool add_new_keyframe = needNewKeyframe(c_frame, inliers_per_pair, cluster_pairs);
-                        if (add_new_keyframe)
-                        {
-                            if (enable_debugging_)
-                                publishKeyframe(c_keyframe_id_, keyframe_.getLeftImg(), keyframe_.getRightImg(),
-                                                keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
-                                                keyframe_pub_, inliers_per_pair, keyframe_.getClusterIds(), 
-                                                keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
-                                                cluster_pairs);
-                            else
-                                publishKeyframe(c_keyframe_id_, keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
-                                                keyframe_pub_, inliers_per_pair, keyframe_.getClusterIds(), 
-                                                keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
-                                                cluster_pairs);
-
-                            keyframe_ = c_frame;
-                        }
-                    }
-                }
-                else
+                // Transition.
+                if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
                     status_ = BOOTSTRAPPING;
-                    run_times_.run_time_3 = 0.0; // Succesive matching run time
-                    run_times_.run_time_4 = 0.0; // Bucketing run time
-                    run_times_.run_time_5 = 0.0; // Motion estimation run time
+                    break;
                 }
+                c_frame.regionClustering();
+                if (!c_frame.hasClusters())
+                {
+                    status_ = BOOTSTRAPPING;
+                    if (enable_debugging_)
+                        ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
+                    break;
+                }
+                tf::Transform c_camera_motion;
+                valid_motion = computeMotionSuccessiveFrames(c_frame, c_camera_motion);
+                if (!valid_motion)
+                {
+                    status_ = LOST;
+                    break;
+                }
+                                
+                // Computes and publishes odometry.
+                integrateAndPublish(c_frame, c_camera_motion);
+
+                // Sends a keyframe to the map if necessary.
+                sendKeyframeIfNecessary(c_frame);
+
+                break;
+            }
+            default:
+            {
+                ROS_ERROR_STREAM("[VO->Status:] Unknown status encountered.");
                 break;
             }
         }
 
         // Store current frame as previous.
         p_frame_ = c_frame;
-        
+
         // Publishes last iteration performance.
-        run_times_.run_time_5 = 0.0; // Nothing.
         run_times_.total_run_time = ros::Time::now().toSec() - start_callback_time;
         if (run_times_pub_.getNumSubscribers() > 0)
-            publishPerformance(l_img_msg->header.stamp, (int)valid_motion, run_times_, run_times_pub_);
+            publishPerformance(l_img_msg->header.stamp, static_cast<int>(valid_motion), run_times_, run_times_pub_);
     }
 
 
@@ -380,7 +363,7 @@ namespace slamon
             publishImgStereoKeypoints(l_img, r_img, l_img_msg->header.stamp, stereo_kpts_img_pub_, l_kpts, r_kpts);
 
         // Sanity check.
-        if (l_kpts.size() < static_cast<size_t>(min_lc_inliers_/2))
+        if (l_kpts.size() < static_cast<size_t>(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo keypoints detector:] There are not enough keypoints to match and filter!");
@@ -397,7 +380,7 @@ namespace slamon
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Stereo matching run time.
 
         // Sanity check.
-        if (m_l_kpts.size() < static_cast<size_t>(min_lc_inliers_/2))
+        if (m_l_kpts.size() < static_cast<size_t>(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
@@ -416,7 +399,7 @@ namespace slamon
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Triangulation run time.
 
         // Sanity check.
-        if (f_l_kpts.size() < static_cast<size_t>(min_lc_inliers_/2))
+        if (f_l_kpts.size() < static_cast<size_t>(min_inliers_))
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Triangulator:] There are not enough 3D points after triangulation!");
@@ -467,14 +450,14 @@ namespace slamon
                 publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), p_frame_.getLeftImg(), p_frame_.getRightImg(),
                                           c_frame.getTimestamp(), temporal_matches_img_pub_, m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts);
             else
-                ROS_ERROR_STREAM("[VO->Non-stereo matcher debugger:] Unforeseen type of matching!");
+                ROS_ERROR_STREAM("[VO->Temporal matcher debugger:] Unforeseen type of matching!");
         }
 
         // Sanity check.
         if (m_c_l_kpts.size() < static_cast<size_t>(min_inliers_))
         {
             if (enable_debugging_)
-                ROS_INFO_STREAM("[VO->Non-stereo matcher:] There are not enough keypoints after outlier filtering!");
+                ROS_INFO_STREAM("[VO->Temporal matcher:] There are not enough keypoints after outlier filtering!");
             run_times_.run_time_4 = 0.0; // Bucketing run time.
             run_times_.run_time_5 = 0.0; // Motion estimation run time.
             return false;
@@ -482,7 +465,7 @@ namespace slamon
         else
         {
             if (enable_debugging_)
-                ROS_INFO_STREAM("[VO->Non-stereo matcher:] Succesful matching!");
+                ROS_INFO_STREAM("[VO->Temporal matcher:] Succesful matching!");
         }
 
         // Buckets keypoints.
@@ -553,20 +536,74 @@ namespace slamon
     }
 
 
-    bool VisualOdometer::needNewKeyframe(Frame& c_frame,
-                                         std::vector<int>& inliers_per_pair,
-                                         std::vector<std::pair<int, int>>& cluster_pairs)
+    void VisualOdometer::getInitialOdom()
     {
-        // Cluster keypoints.
-        c_frame.regionClustering();
-
-        // Sanity check.
-        if (c_frame.getClustersCentroids().empty())
+        slamon::GetTransform srv;
+        if (initial_odom_client_.call(srv))
         {
-            ROS_WARN_STREAM("[VO->Keyframe inserter:] The image produces 0 clusters, is it not possible to send it to the mapmaker!");
-            return false;
+            tf::poseMsgToTF(srv.response.tf.pose, c_odom_robot_pose_);
+            ROS_WARN_STREAM("[VO->Initial odom:] GetTransform service call successful. The initial odometry is as follows:" << std::endl <<
+                            "tx: " << c_odom_robot_pose_.getOrigin().getX() << std::endl << 
+                            "ty: " << c_odom_robot_pose_.getOrigin().getY() << std::endl << 
+                            "tz: " << c_odom_robot_pose_.getOrigin().getZ() << std::endl << 
+                            "qx: " << c_odom_robot_pose_.getRotation().getX() << std::endl << 
+                            "qy: " << c_odom_robot_pose_.getRotation().getY() << std::endl << 
+                            "qz: " << c_odom_robot_pose_.getRotation().getZ() << std::endl << 
+                            "qw: " << c_odom_robot_pose_.getRotation().getW());
         }
+        else
+        {
+            ROS_WARN_STREAM("[VO->Initial odom:] Failed to call GetTransform service. The initial odometry will be assumed as the identity.");
+            c_odom_robot_pose_.setIdentity();
+        }
+        c_odom_camera_pose_ = c_odom_robot_pose_ * robot2camera_;
+    }
 
+
+    void VisualOdometer::sendKeyframe(const std::vector<int>& inliers_per_pair,
+                                      const std::vector<std::pair<int, int>>& cluster_pairs)
+    {
+        if (enable_debugging_)
+            publishKeyframe(c_keyframe_id_, keyframe_.getLeftImg(), keyframe_.getRightImg(),
+                            keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
+                            keyframe_pub_, inliers_per_pair, keyframe_.getClusterIds(), 
+                            keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
+                            cluster_pairs);
+        else
+            publishKeyframe(c_keyframe_id_, keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
+                            keyframe_pub_, inliers_per_pair, keyframe_.getClusterIds(), 
+                            keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
+                            cluster_pairs);
+    }
+
+
+    void VisualOdometer::integrateAndPublish(const Frame& c_frame,
+                                             tf::Transform& c_camera_motion)
+    {
+        // From {c_cam}^T_{p_cam} to {p_cam}^T_{c_cam}.
+        c_camera_motion = c_camera_motion.inverse();
+
+        // Calculates the camera's current odometry by accumulating its movement.
+        // {wo}^T_{c_cam} = {wo}^T_{p_cam} * {p_cam}^T_{c_cam}.
+        c_odom_camera_pose_ *= c_camera_motion;
+
+        // Changes the coordinate axis of the movement. From camera to robot. 
+        // {p_robot}^T_{c_robot} = {robot}^T_{cam} * {p_cam}^T_{c_cam} * {cam}^T_{robot}.
+        tf::Transform c_robot_motion = robot2camera_ * c_camera_motion * robot2camera_.inverse();
+
+        // Calculates the robot's current odometry by accumulating its movement.
+        // {wo}^T_{c_robot} = {wo}^T_{p_robot} * {p_robot}^T_{c_robot}.
+        c_odom_robot_pose_ *= c_robot_motion;
+
+        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_camera_pose_, c_camera_motion,
+                               camera_odom_pub_, camera_frame_id_);
+        publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_robot_pose_, c_robot_motion,
+                               robot_odom_pub_, robot_frame_id_);
+    }
+
+
+    void VisualOdometer::sendKeyframeIfNecessary(const Frame& c_frame)
+    {
         // Searches for keypoint matches between current frame and keyframe.
         std::vector<int> m_c_cluster_ids, m_k_cluster_ids;
         std::vector<cv::Point3f> m_c_l_cam_pts, m_k_l_cam_pts;
@@ -596,23 +633,25 @@ namespace slamon
                 publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), keyframe_.getLeftImg(), keyframe_.getRightImg(),
                                           c_frame.getTimestamp(), keyframe_inliers_img_pub_, i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts);
             else
-                ROS_ERROR_STREAM("[VO->Motion estimator debugger:] Unforeseen type of matching!");
+                ROS_ERROR_STREAM("[VO->Keyframe inserter debugger:] Unforeseen type of matching!");
         }
 
         // It does not insert keyframe.
         if (static_cast<size_t>(1.25 * min_lc_inliers_) < i_c_l_kpts.size())
         {
             if (enable_debugging_)
-                ROS_INFO_STREAM("[VO->needNewKeyframe:] No keyframe is inserted because there is still too much overlap.");
-            return false;
+                ROS_INFO_STREAM("[VO->Keyframe inserter:] No keyframe is inserted because there is still too much overlap.");
+            return;
         }
 
         if (enable_debugging_)
-            ROS_INFO_STREAM("[VO->needNewKeyframe:] Sending keyframe to the map!");
+            ROS_INFO_STREAM("[VO->Keyframe inserter:] Sending keyframe to the map!");
 
         // Gets inlier per cluster pair.
         bool cluster_pair_found;
         int c_cluster_id, k_cluster_id;
+        std::vector<int> inliers_per_pair;
+        std::vector<std::pair<int, int>> cluster_pairs;
         for (size_t i = 0; i < i_c_cluster_ids.size(); ++i)
         {
             c_cluster_id = i_c_cluster_ids[i];
@@ -636,31 +675,12 @@ namespace slamon
             }
         }
 
-        return true;
-    }
+        // Send cluster.
+        sendKeyframe(inliers_per_pair, cluster_pairs);
+        c_keyframe_id_++;
+        keyframe_ = c_frame;
 
-
-    void VisualOdometer::getInitialOdom()
-    {
-        slamon::GetTransform srv;
-        if (initial_odom_client_.call(srv))
-        {
-            tf::poseMsgToTF(srv.response.tf.pose, c_odom_robot_pose_);
-            ROS_WARN_STREAM("[VO->Initial odom:] GetTransform service call successful. The initial odometry is as follows:" << std::endl <<
-                            "tx: " << c_odom_robot_pose_.getOrigin().getX() << std::endl << 
-                            "ty: " << c_odom_robot_pose_.getOrigin().getY() << std::endl << 
-                            "tz: " << c_odom_robot_pose_.getOrigin().getZ() << std::endl << 
-                            "qx: " << c_odom_robot_pose_.getRotation().getX() << std::endl << 
-                            "qy: " << c_odom_robot_pose_.getRotation().getY() << std::endl << 
-                            "qz: " << c_odom_robot_pose_.getRotation().getZ() << std::endl << 
-                            "qw: " << c_odom_robot_pose_.getRotation().getW());
-        }
-        else
-        {
-            ROS_WARN_STREAM("[VO->Initial odom:] Failed to call GetTransform service. The initial odometry will be assumed as the identity.");
-            c_odom_robot_pose_.setIdentity();
-        }
-        c_odom_camera_pose_ = c_odom_robot_pose_ * robot2camera_;
+        return;
     }
 
 
