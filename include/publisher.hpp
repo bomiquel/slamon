@@ -338,12 +338,14 @@ class Publisher
         /** \brief Publishes current robot pose.
          *  \param[in] c_stamp Current pose timestamp.
          *  \param[in] c_pose The current pose to be published.
+         *  \param[in] bad_pose_covariance Has the module been lost?
          *  \param[in] publisher The ROS publisher.
          *  \param[in] reference_frame_id The ID of the frame to which the pose
          *  is relative.
          */
         void publishPose(const ros::Time& c_stamp,
                          const tf::Transform& c_pose,
+                         const bool bad_pose_covariance,
                          const ros::Publisher& publisher,
                          const std::string& reference_frame_id);
 
@@ -354,6 +356,8 @@ class Publisher
          *  \param[in] c_pose The current pose to be published.
          *  \param[in] c_motion The movement between current and previous frames.
          *  Used to calculate velocity.
+         *  \param[in] bad_pose_covariance Has the module been lost?
+         *  \param[in] bad_twist_covariance Has the module been lost?
          *  \param[in] publisher The ROS publisher.
          *  \param[in] reference_frame_id The ID of the frame to which the pose and 
          *  velocity are relative.
@@ -362,6 +366,8 @@ class Publisher
                                     const ros::Time& p_stamp,
                                     const tf::Transform& c_pose,
                                     const tf::Transform& c_motion,
+                                    const bool bad_pose_covariance,
+                                    const bool bad_twist_covariance,
                                     const ros::Publisher& publisher,
                                     const std::string& reference_frame_id);
 
@@ -644,11 +650,13 @@ class Publisher
         /** \brief Builds nav_msgs::Odometry msg with current pose.
          *  \param[in] c_stamp Current pose timestamp.
          *  \param[in] c_pose The current pose to be published.
+         *  \param[in] bad_pose_covariance Has the module been lost?
          *  \param[in] reference_frame_id The ID of the frame to which 
          *  the current pose is relative.
          */
         nav_msgs::Odometry buildPoseMsg(const ros::Time& c_stamp,
                                         const tf::Transform& c_pose,
+                                        const bool bad_pose_covariance,
                                         const std::string& reference_frame_id);
 
 
@@ -684,6 +692,34 @@ class Publisher
         void publishImg(const cv::Mat& img,
                         const ros::Time& stamp,
                         const ros::Publisher& publisher);
+
+
+        // Attributes:
+
+        // Some arbitrary values.
+        const boost::array<double, 36> GOOD_POSE_COVARIANCE_ = 
+        { { 0.1,     0,     0,     0,     0,     0,
+              0,   0.1,     0,     0,     0,     0,
+              0,     0,   0.1,     0,     0,     0,
+              0,     0,     0,  0.17,     0,     0,
+              0,     0,     0,     0,  0.17,     0,
+              0,     0,     0,     0,     0,  0.17 } };
+
+        const boost::array<double, 36> GOOD_TWIST_COVARIANCE_ = 
+        { { 0.002,     0,     0,     0,     0,     0,
+                0, 0.002,     0,     0,     0,     0,
+                0,     0,  0.05,     0,     0,     0,
+                0,     0,     0,  0.09,     0,     0,
+                0,     0,     0,     0,  0.09,     0,
+                0,     0,     0,     0,     0,  0.09 } };
+
+        const boost::array<double, 36> BAD_COVARIANCE_ = 
+        { { 9999,      0,     0,     0,     0,     0,
+               0,   9999,     0,     0,     0,     0,
+               0,      0,  9999,     0,     0,     0,
+               0,      0,     0,  9999,     0,     0,
+               0,      0,     0,     0,  9999,     0,
+               0,      0,     0,     0,     0,  9999 } };
 };
 
 

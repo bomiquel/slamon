@@ -254,10 +254,14 @@ void Publisher::writeImgLoopClosure(const std::string& o_path,
 
 void Publisher::publishPose(const ros::Time& c_stamp,
                             const tf::Transform& c_pose,
+                            const bool bad_pose_covariance,
                             const ros::Publisher& publisher,
                             const std::string& reference_frame_id)
 {
-    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, c_pose, reference_frame_id);
+    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, 
+                                          c_pose, 
+                                          bad_pose_covariance, 
+                                          reference_frame_id);
 
     // Publish pose
     publisher.publish(msg);
@@ -268,10 +272,15 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
                                        const ros::Time& p_stamp,
                                        const tf::Transform& c_pose,
                                        const tf::Transform& c_motion,
+                                       const bool bad_pose_covariance,
+                                       const bool bad_twist_covariance,
                                        const ros::Publisher& publisher,
                                        const std::string& reference_frame_id)
 {
-    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, c_pose, reference_frame_id);
+    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, 
+                                          c_pose,
+                                          bad_pose_covariance,
+                                          reference_frame_id);
 
     // Set velocity
     double delta_t = (c_stamp - p_stamp).toSec();
@@ -296,6 +305,8 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
         msg.twist.twist.angular.x = angular_velocity.x();
         msg.twist.twist.angular.y = angular_velocity.y();
         msg.twist.twist.angular.z = angular_velocity.z();
+        if (!bad_twist_covariance)
+            msg.twist.covariance = GOOD_TWIST_COVARIANCE_;
     }
 
     // Publish pose and velocity
@@ -903,6 +914,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
 nav_msgs::Odometry Publisher::buildPoseMsg(const ros::Time& c_stamp,
                                            const tf::Transform& c_pose,
+                                           const bool bad_pose_covariance,
                                            const std::string& reference_frame_id)
 {
     nav_msgs::Odometry msg;
@@ -913,6 +925,13 @@ nav_msgs::Odometry Publisher::buildPoseMsg(const ros::Time& c_stamp,
 
     // Set pose
     tf::poseTFToMsg(c_pose, msg.pose.pose);
+
+    // Set covariances.
+    if (bad_pose_covariance)
+        msg.pose.covariance = BAD_COVARIANCE_;
+    else
+        msg.pose.covariance = GOOD_POSE_COVARIANCE_;
+    msg.twist.covariance = BAD_COVARIANCE_;
 
     return msg;
 }

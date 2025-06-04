@@ -184,14 +184,16 @@ namespace slamon
 
                 // Sends keyframe.
                 keyframe_ = p_frame_;
+                bool lost = true;
                 if (!initialised_odom_)
                 {
                     initialised_odom_ = true;
                     getInitialOdom();
+                    lost = false;
                 }
                 sendKeyframe(std::vector<int>(), std::vector<std::pair<int, int>>());
-                publishPose(keyframe_.getTimestamp(), c_odom_robot_pose_, robot_odom_pub_, robot_frame_id_);
-                publishPose(keyframe_.getTimestamp(), c_odom_camera_pose_, camera_odom_pub_, camera_frame_id_);
+                publishPose(keyframe_.getTimestamp(), c_odom_robot_pose_, lost, robot_odom_pub_, robot_frame_id_);
+                publishPose(keyframe_.getTimestamp(), c_odom_camera_pose_, lost, camera_odom_pub_, camera_frame_id_);
                 c_keyframe_id_++;
                 
                 // Computes and publishes odometry.
@@ -596,9 +598,9 @@ namespace slamon
         c_odom_robot_pose_ *= c_robot_motion;
 
         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_camera_pose_, c_camera_motion,
-                               camera_odom_pub_, camera_frame_id_);
+                               false, false, camera_odom_pub_, camera_frame_id_);
         publishPoseAndVelocity(c_frame.getTimestamp(), p_frame_.getTimestamp(), c_odom_robot_pose_, c_robot_motion,
-                               robot_odom_pub_, robot_frame_id_);
+                               false, false, robot_odom_pub_, robot_frame_id_);
     }
 
 
