@@ -5,5 +5,8 @@ int32 global_id
 Keypoint[] l_kpts
 Keypoint[] r_kpts
 
-# 3D points.
+# 3D camera points.
 geometry_msgs/Point[] l_cam_pts
+
+# 3D centroid
+geometry_msgs/Point centroid

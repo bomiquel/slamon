@@ -421,6 +421,7 @@ class Publisher
          *  \param[in] l_kpts Keyframe left keypoints.
          *  \param[in] r_kpts Keyframe right keypoints.
          *  \param[in] l_cam_pts Keyframe left camera points.
+         *  \param[in] cluster_centroids Cluster centroids.
          *  \param[in] cluster_pairs Cluster pairs.
          */
         void publishKeyframe(const int keyframe_id,
@@ -433,6 +434,7 @@ class Publisher
                              const std::vector<cv::KeyPoint>& l_kpts,
                              const std::vector<cv::KeyPoint>& r_kpts,
                              const std::vector<cv::Point3f>& l_cam_pts,
+                             const std::vector<cv::Point3f>& cluster_centroids,
                              const std::vector<std::pair<int, int>>& cluster_pairs);
 
 
@@ -449,6 +451,7 @@ class Publisher
          *  \param[in] l_kpts Keyframe left keypoints.
          *  \param[in] r_kpts Keyframe right keypoints.
          *  \param[in] l_cam_pts Keyframe left camera points.
+         *  \param[in] cluster_centroids Cluster centroids.
          *  \param[in] cluster_pairs Cluster pairs.
          */
         void publishKeyframe(const int keyframe_id,
@@ -463,6 +466,7 @@ class Publisher
                              const std::vector<cv::KeyPoint>& l_kpts,
                              const std::vector<cv::KeyPoint>& r_kpts,
                              const std::vector<cv::Point3f>& l_cam_pts,
+                             const std::vector<cv::Point3f>& cluster_centroids,
                              const std::vector<std::pair<int, int>>& cluster_pairs);
 
 
@@ -674,6 +678,7 @@ class Publisher
          *  \param[in] l_kpts Keyframe left keypoints.
          *  \param[in] r_kpts Keyframe right keypoints.
          *  \param[in] l_cam_pts Keyframe left camera points.
+         *  \param[in] cluster_centroids Cluster centroids.
          *  \param[in] cluster_pairs Cluster pairs.
          */
         slamon::Keyframe buildKeyframe(const int keyframe_id,
@@ -685,6 +690,7 @@ class Publisher
                                        const std::vector<cv::KeyPoint>& l_kpts,
                                        const std::vector<cv::KeyPoint>& r_kpts,
                                        const std::vector<cv::Point3f>& l_cam_pts,
+                                       const std::vector<cv::Point3f>& cluster_centroids,
                                        const std::vector<std::pair<int, int>>& cluster_pairs);
 
 

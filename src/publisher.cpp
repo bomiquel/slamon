@@ -394,6 +394,7 @@ void Publisher::publishKeyframe(const int keyframe_id,
                                 const std::vector<cv::KeyPoint>& l_kpts,
                                 const std::vector<cv::KeyPoint>& r_kpts,
                                 const std::vector<cv::Point3f>& l_cam_pts,
+                                const std::vector<cv::Point3f>& cluster_centroids,
                                 const std::vector<std::pair<int, int>>& cluster_pairs)
 {
     // Builds keyframe message.
@@ -406,6 +407,7 @@ void Publisher::publishKeyframe(const int keyframe_id,
                                          l_kpts,
                                          r_kpts,
                                          l_cam_pts,
+                                         cluster_centroids,
                                          cluster_pairs);
 
     // Publishes.
@@ -425,6 +427,7 @@ void Publisher::publishKeyframe(const int keyframe_id,
                                 const std::vector<cv::KeyPoint>& l_kpts,
                                 const std::vector<cv::KeyPoint>& r_kpts,
                                 const std::vector<cv::Point3f>& l_cam_pts,
+                                const std::vector<cv::Point3f>& cluster_centroids,
                                 const std::vector<std::pair<int, int>>& cluster_pairs)
 {
     // Builds keyframe message.
@@ -437,6 +440,7 @@ void Publisher::publishKeyframe(const int keyframe_id,
                                                   l_kpts,
                                                   r_kpts,
                                                   l_cam_pts,
+                                                  cluster_centroids,
                                                   cluster_pairs);
     
     // Set images.
@@ -948,13 +952,14 @@ slamon::Keyframe Publisher::buildKeyframe(const int keyframe_id,
                                           const std::vector<cv::KeyPoint>& l_kpts,
                                           const std::vector<cv::KeyPoint>& r_kpts,
                                           const std::vector<cv::Point3f>& l_cam_pts,
+                                          const std::vector<cv::Point3f>& cluster_centroids,
                                           const std::vector<std::pair<int, int>>& cluster_pairs)
 {
     // Creates messages.
     slamon::Batch batch_msg;
     slamon::Keyframe keyframe_msg;
-    geometry_msgs::Point l_cam_pt_msg;
     slamon::Keypoint l_kpt_msg, r_kpt_msg;
+    geometry_msgs::Point l_cam_pt_msg, centroid_msg;
 
     // Fills non-clusters attributes.
     keyframe_msg.header.stamp = stamp;
@@ -969,7 +974,7 @@ slamon::Keyframe Publisher::buildKeyframe(const int keyframe_id,
     }
 
     // Fills clusters.
-    size_t i = 0;
+    size_t i = 0, j = 0;
     int c_cluster_id = 0;
     while (i < cluster_ids.size())
     {
@@ -1001,6 +1006,13 @@ slamon::Keyframe Publisher::buildKeyframe(const int keyframe_id,
 
             ++i;
         }
+
+        // Add centroid.
+        centroid_msg.x = cluster_centroids[j].x;
+        centroid_msg.y = cluster_centroids[j].y;
+        centroid_msg.z = cluster_centroids[j].z;
+        batch_msg.centroid = centroid_msg;
+        ++j;
 
         keyframe_msg.batches.push_back(batch_msg);
     }

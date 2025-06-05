@@ -543,12 +543,12 @@ namespace slamon
                             keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
                             keyframe_pub_, inliers_per_pair, keyframe_.getClusterIds(), 
                             keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
-                            cluster_pairs);
+                            keyframe_.getClustersCentroids(), cluster_pairs);
         else
             publishKeyframe(c_keyframe_id_, keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
                             keyframe_pub_, inliers_per_pair, keyframe_.getClusterIds(), 
                             keyframe_.getLeftKpts(), keyframe_.getRightKpts(), keyframe_.getLeftCameraPoints(),
-                            cluster_pairs);
+                            keyframe_.getClustersCentroids(), cluster_pairs);
     }
 
 
