@@ -47,9 +47,11 @@ class Publisher
             double run_time_0 = 0.0;     //!> Time needed for VO: Feature extraction, MM: From Frame msg to Frame object or LC: Process current cluster.
             double run_time_1 = 0.0;     //!> Time needed for VO: Stereo matching, MM: Need new keyframe? or LC: Search for candidates to close loops by proximity.
             double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
-            double run_time_3 = 0.0;     //!> Time needed for VO: Temporal matching, MM: Add edges to graph or LC: Read cluster candidates.
-            double run_time_4 = 0.0;     //!> Time needed for VO: Bucketing, MM: Write graph to disk and publish updated robot pose or LC: Loop detection.
-            double run_time_5 = 0.0;     //!> Time needed for VO: Motion estimation, MM: Nothing or LC: Close loop.
+            double run_time_3 = 0.0;     //!> Time needed for VO: Clustering, MM: Add edges to graph or LC: Read cluster candidates.
+            double run_time_4 = 0.0;     //!> Time needed for VO: Temporal matching, MM: Write graph to disk and publish updated robot pose  or LC: Loop detection.
+            double run_time_5 = 0.0;     //!> Time needed for VO: Bucketing, MM: Nothing or LC: Close loop.
+            double run_time_6 = 0.0;     //!> Time needed for VO: Motion estimation, MM: Nothing or LC: Nothing.
+            double run_time_7 = 0.0;     //!> Time needed for VO: Keyframe insertion decision, MM: Nothing or LC: Nothing.
             double total_run_time = 0.0; //!> Time needed for each thread to perform one iteration.
 
             void reset()
@@ -60,6 +62,8 @@ class Publisher
                 run_time_3 = 0.0;
                 run_time_4 = 0.0;
                 run_time_5 = 0.0;
+                run_time_6 = 0.0;
+                run_time_7 = 0.0;
                 total_run_time = 0.0;
             }
         };

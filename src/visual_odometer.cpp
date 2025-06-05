@@ -127,14 +127,6 @@ namespace slamon
                     status_ = BOOTSTRAPPING;
                     break;
                 }
-                c_frame.regionClustering();
-                if (!c_frame.hasClusters())
-                {
-                    status_ = BOOTSTRAPPING;
-                    if (enable_debugging_)
-                        ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
-                    break;
-                }
                 status_ = LOST;
                 break;
             }
@@ -146,13 +138,6 @@ namespace slamon
                 // Transition.
                 if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                     break;
-                c_frame.regionClustering();
-                if (!c_frame.hasClusters())
-                {
-                    if (enable_debugging_)
-                        ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
-                    break;
-                }
                 status_ = LOST;
 
                 break;
@@ -166,14 +151,6 @@ namespace slamon
                 if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
                     status_ = BOOTSTRAPPING;
-                    break;
-                }
-                c_frame.regionClustering();
-                if (!c_frame.hasClusters())
-                {
-                    status_ = BOOTSTRAPPING;
-                    if (enable_debugging_)
-                        ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
                     break;
                 }
                 tf::Transform camera_delta_odom;
@@ -213,14 +190,6 @@ namespace slamon
                 if (!processCurrentFrame(l_img_msg, r_img_msg, c_frame))
                 {
                     status_ = BOOTSTRAPPING;
-                    break;
-                }
-                c_frame.regionClustering();
-                if (!c_frame.hasClusters())
-                {
-                    status_ = BOOTSTRAPPING;
-                    if (enable_debugging_)
-                        ROS_WARN_STREAM("[VO->callback:] Image produces 0 clusters, cannot be sent to mapmaker!");
                     break;
                 }
                 tf::Transform camera_delta_odom;
@@ -344,7 +313,7 @@ namespace slamon
         // Auxilary variable to set the start time of a module.
         double start_module_time;
 
-        // From ROS image message to cv::Mat and detects stereo keypoints.
+        // Detects features in a ROS image.
         start_module_time = ros::Time::now().toSec();
         bool l_result, r_result;
         cv::Mat l_img, r_img, l_descs, r_descs;
@@ -369,8 +338,6 @@ namespace slamon
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo keypoints detector:] There are not enough keypoints to match and filter!");
-            run_times_.run_time_1 = 0.0; // Stereo matching run time.
-            run_times_.run_time_2 = 0.0; // Triangulation run time.
             return false;
         }
 
@@ -386,7 +353,6 @@ namespace slamon
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Stereo matcher:] There are not enough keypoints after epipolar filtering!");
-            run_times_.run_time_2 = 0.0; // Triangulation run time.
             return false;
         }
             
@@ -417,6 +383,19 @@ namespace slamon
         // Fill Frame object
         c_frame = Frame(l_img, r_img, f_l_descs, f_r_descs, l_img_msg->header.stamp, f_l_kpts, f_r_kpts, f_l_cam_pts);
 
+        // Keypoint clustering.
+        start_module_time = ros::Time::now().toSec();
+        c_frame.regionClustering();
+        run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Clustering run time.
+
+        // Sanity check.
+        if (!c_frame.hasClusters())
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Clusterator:] Image produces 0 clusters, cannot be sent to mapmaker!");
+            return false;
+        }
+
         if (enable_debugging_)
             ROS_INFO_STREAM("[VO->Stereo frame processor:] Stereoscopic image processed successfully!");
 
@@ -438,7 +417,7 @@ namespace slamon
                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), 
                                c_frame.getLeftCameraPoints(), p_frame_.getLeftCameraPoints(),
                                m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_l_cam_pts, m_p_l_cam_pts);
-        run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Temporal matching run time.
+        run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Temporal matching run time.
 
         // Non stereo matching keypoints debugging.
         if (temporal_matches_num_pub_.getNumSubscribers() > 0)
@@ -460,15 +439,11 @@ namespace slamon
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Temporal matcher:] There are not enough keypoints after outlier filtering!");
-            run_times_.run_time_4 = 0.0; // Bucketing run time.
-            run_times_.run_time_5 = 0.0; // Motion estimation run time.
             return false;
         }
-        else
-        {
-            if (enable_debugging_)
-                ROS_INFO_STREAM("[VO->Temporal matcher:] Succesful matching!");
-        }
+
+        if (enable_debugging_)
+            ROS_INFO_STREAM("[VO->Temporal matcher:] Succesful matching!");
 
         // Buckets keypoints.
         start_module_time = ros::Time::now().toSec();
@@ -489,7 +464,7 @@ namespace slamon
             f_c_l_cam_pts = m_c_l_cam_pts;
             f_p_l_cam_pts = m_p_l_cam_pts;
         }
-        run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Bucketing run time.
+        run_times_.run_time_5 = ros::Time::now().toSec() - start_module_time; // Bucketing run time.
 
         // Estimate the motion.
         start_module_time = ros::Time::now().toSec();
@@ -500,7 +475,7 @@ namespace slamon
                               f_c_l_kpts, f_c_r_kpts, f_p_l_kpts, f_p_r_kpts, f_c_l_cam_pts, f_p_l_cam_pts,
                               camera_rotation, camera_translation, 
                               i_c_l_kpts, i_c_r_kpts, i_p_l_kpts, i_p_r_kpts, i_c_l_cam_pts, i_p_l_cam_pts);
-        run_times_.run_time_5 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
+        run_times_.run_time_6 = ros::Time::now().toSec() - start_module_time; // Motion estimation run time.
 
         // Inliers debugging.
         if (inliers_num_pub_.getNumSubscribers() > 0)
@@ -524,11 +499,9 @@ namespace slamon
                 ROS_INFO_STREAM("[VO->Motion estimator:] There are not enough inliers after motion estimation!");
             return false;
         }
-        else
-        {
-            if (enable_debugging_)
-                ROS_INFO_STREAM("[VO->Motion estimator:] Succesful motion estimation!");
-        }
+
+        if (enable_debugging_)
+            ROS_INFO_STREAM("[VO->Motion estimator:] Succesful motion estimation!");
 
         // Build a TF
         if(!fromMatToTf(camera_rotation, camera_translation, camera_delta_odom))
@@ -606,6 +579,9 @@ namespace slamon
 
     void VisualOdometer::sendKeyframeIfNecessary(const Frame& c_frame)
     {
+        // Auxilary variable to set the start time of a module.
+        double start_module_time = ros::Time::now().toSec();
+
         // Searches for keypoint matches between current frame and keyframe.
         std::vector<int> m_c_cluster_ids, m_k_cluster_ids;
         std::vector<cv::Point3f> m_c_l_cam_pts, m_k_l_cam_pts;
@@ -643,6 +619,7 @@ namespace slamon
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Keyframe inserter:] No keyframe is inserted because there is still too much overlap.");
+            run_times_.run_time_7 = ros::Time::now().toSec() - start_module_time; // Keyframe insertion decision run time.
             return;
         }
 
@@ -682,6 +659,7 @@ namespace slamon
         c_keyframe_id_++;
         keyframe_ = c_frame;
 
+        run_times_.run_time_7 = ros::Time::now().toSec() - start_module_time; // Keyframe insertion decision run time.
         return;
     }
 
