@@ -2,7 +2,7 @@
 Header header
 
 # Keyframe id.
-int32 keyframe_id
+int32 id
 
 # Clusters.
 Batch[] batches

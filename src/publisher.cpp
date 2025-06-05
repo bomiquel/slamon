@@ -962,8 +962,8 @@ slamon::Keyframe Publisher::buildKeyframe(const int keyframe_id,
     geometry_msgs::Point l_cam_pt_msg, centroid_msg;
 
     // Fills non-clusters attributes.
+    keyframe_msg.id = keyframe_id;
     keyframe_msg.header.stamp = stamp;
-    keyframe_msg.keyframe_id = keyframe_id;
     keyframe_msg.inliers_per_pair.reserve(inliers.size());
     keyframe_msg.cluster_pairs.reserve(cluster_pairs.size() * 2);
     for (size_t i = 0; i < inliers.size(); ++i)
