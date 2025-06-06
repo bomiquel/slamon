@@ -348,7 +348,8 @@ namespace slamon
 
     void Map::addEdge(const int vertex_0_id,
                       const int vertex_1_id,
-                      tf::Transform tf_edge)
+                      const double confidence,
+                      const tf::Transform& relative_movement)
     {
         // Locks map.
         std::scoped_lock lock(mutex_graph_);
@@ -367,14 +368,14 @@ namespace slamon
             return;
         }
 
-        // Adds graph edge to graph.
-        g2o::EdgeSE3* graph_edge = new g2o::EdgeSE3();
-        Eigen::Isometry3d iso_edge = fromTfToIsometry(tf_edge);
-        graph_edge->setVertex(0, vertex_0);
-        graph_edge->setVertex(1, vertex_1);
-        graph_edge->setMeasurement(iso_edge);
+        // Adds edge to graph.
+        g2o::EdgeSE3* edge = new g2o::EdgeSE3();
+        edge->setVertex(0, vertex_0);
+        edge->setVertex(1, vertex_1);
+        edge->setMeasurement(fromTfToIsometry(relative_movement));
+        edge->setInformation(Eigen::Matrix<double, 6, 6>::Identity() * confidence);
 
-        graph_.addEdge(graph_edge);
+        graph_.addEdge(edge);
     }
 
 

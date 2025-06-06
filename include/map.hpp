@@ -163,14 +163,16 @@ namespace slamon
             int addVertex(const tf::Transform& pose);
 
 
-            /** \brief Add an edge to the graph.
-             *  \param[in] vertex_0_id Index of graph vertex 0.
-             *  \param[in] vertex_1_id Index of graph vertex 1.
-             *  \param[in] transformation Transformation between graph vertices.
+            /** \brief Adds an edge to the graph.
+             *  \param[in] vertex_0_id Index of one of the two vertices of the graph joined by the edge.
+             *  \param[in] vertex_1_id Index of the other vertex of the graph joined by the edge.
+             *  \param[in] confidence The confidence in the edge.
+             *  \param[in] relative_movement Coordinate transformation between graph vertices.
              */
             void addEdge(const int vertex_0_id, 
-                         const int vertex_1_id, 
-                         tf::Transform tf_edge);
+                         const int vertex_1_id,
+                         const double confidence,
+                         const tf::Transform& relative_movement);
 
 
             /** \brief Performs a Pose-Graph Optimisation.
