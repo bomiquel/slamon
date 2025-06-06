@@ -630,7 +630,7 @@ namespace slamon
         bool cluster_pair_found;
         int c_cluster_id, k_cluster_id;
         std::vector<int> inliers_per_pair;
-        std::vector<std::pair<int, int>> cluster_pairs;
+        std::vector<std::pair<int, int>> cluster_pairs; // c_cluster_id - k_cluster_id
         for (size_t i = 0; i < i_c_cluster_ids.size(); ++i)
         {
             c_cluster_id = i_c_cluster_ids[i];
@@ -654,10 +654,10 @@ namespace slamon
             }
         }
 
-        // Send cluster.
+        // Sends the new keyframe.
+        keyframe_ = c_frame;
         sendKeyframe(inliers_per_pair, cluster_pairs);
         c_keyframe_id_++;
-        keyframe_ = c_frame;
 
         run_times_.run_time_7 = ros::Time::now().toSec() - start_module_time; // Keyframe insertion decision run time.
         return;
