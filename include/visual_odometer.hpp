@@ -207,15 +207,6 @@ namespace slamon
                                     std::vector<cv::KeyPoint>& kpts);
 
 
-            /** \brief Convert ROS image message to cv::Mat
-             *  \param[in] msg ROS message containing an img.
-             *  \param[out] img Will contain the image in cv::Mat type.
-             *  @return If the conversion has been possible.
-             */
-            bool fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
-                                 cv::Mat& img);
-
-
             // Atributes:
 
             int c_keyframe_id_; //!> Current keyframe id.

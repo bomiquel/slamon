@@ -17,7 +17,6 @@ void readParams(int& lc_neighbors,
                 int& min_lc_inliers,
                 int& lc_discard_window,
                 bool& enable_debugging,
-                double& min_dist_keyframe,
                 std::string& working_path,
                 std::string& matching_type,
                 std::string& robot_frame_id,
@@ -33,7 +32,6 @@ void readParams(int& lc_neighbors,
     nh.param("slamon/robot_frame_id",         robot_frame_id,         std::string("base_link"));
     nh.param("slamon/enable_debugging",       enable_debugging,       true);
     nh.param("slamon/lc_discard_window",      lc_discard_window,      20);
-    nh.param("slamon/min_dist_keyframe",      min_dist_keyframe,      0.5);
     nh.param("slamon/motion_estimation_type", motion_estimation_type, std::string("p3p"));
 
     // Printing parameters values.
@@ -46,7 +44,6 @@ void readParams(int& lc_neighbors,
                     "Robot frame id                  = " << robot_frame_id << std::endl <<
                     "Enable debugging                = " << enable_debugging << std::endl <<
                     "Num loop closing discard window = " << lc_discard_window << std::endl <<
-                    "Min dist between keyframes      = " << min_dist_keyframe << std::endl <<
                     "Motion estimation type          = " << motion_estimation_type);
 
     // Checking the validity of the parameters
@@ -86,11 +83,6 @@ void readParams(int& lc_neighbors,
         lc_discard_window = 10;
         invalid_parameter = true;
     }
-    if (min_dist_keyframe < 0.15 || min_dist_keyframe > 1.0)
-    {
-        min_dist_keyframe = 0.5;
-        invalid_parameter = true;
-    }
     if (invalid_parameter)
     {
         ROS_INFO_STREAM("[MAP]: Some parameter was invalid and has been assigned its default value." << std::endl <<
@@ -102,7 +94,6 @@ void readParams(int& lc_neighbors,
                         "Robot frame id                  = " << robot_frame_id << std::endl <<
                         "Enable debugging                = " << enable_debugging << std::endl <<
                         "Num loop closing discard window = " << lc_discard_window << std::endl <<
-                        "Min dist between keyframes      = " << min_dist_keyframe << std::endl <<
                         "Motion estimation type          = " << motion_estimation_type);
     }
 }
@@ -116,7 +107,6 @@ int main(int argc, char **argv)
 
     // Read parameters.
     bool enable_debugging;
-    double min_dist_keyframe;
     int lc_neighbors, min_lc_inliers, lc_discard_window, lc_candidates;
     std::string working_path, matching_type, robot_frame_id, motion_estimation_type;
     readParams(lc_neighbors, 
@@ -124,7 +114,6 @@ int main(int argc, char **argv)
                min_lc_inliers,
                lc_discard_window,
                enable_debugging,
-               min_dist_keyframe,
                working_path,
                matching_type,
                robot_frame_id,
@@ -138,7 +127,6 @@ int main(int argc, char **argv)
     slamon::Mapmaker mapmaker(&map,
                               min_lc_inliers, 
                               enable_debugging, 
-                              min_dist_keyframe, 
                               working_path, 
                               &cluster_queue,
                               robot_frame_id);

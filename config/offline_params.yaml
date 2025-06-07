@@ -9,9 +9,8 @@ slamon:
   matching_type: ratio_matching
   max_kpts_bucket: 3
   max_kpts_retained: 1500
-  min_dist_keyframe: 0.5
   min_inliers: 40
   min_lc_inliers: 80
   motion_estimation_type: ap3p
   robot_frame_id: /turbot/base_link
-  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/portals/full_cut/refined/ratio_matching/ap3p/execution_3/
+  # working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/portals/full_cut/refined/ratio_matching/ap3p/execution_3/

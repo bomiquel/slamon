@@ -21,6 +21,9 @@ namespace slamon
                            lc_candidates_{lc_candidates}, min_lc_inliers_{min_lc_inliers}, lc_discard_window_{lc_discard_window},
                            loop_closure_num_{0}, map_{map}, cluster_queue_{cluster_queue}
     {
+        // Computes maximum inliers for edges.
+        max_edge_inliers_ = min_lc_inliers * 2;
+
         // Creates execution directory
         execution_path_ = w_path + "haloc/";
         if (std::filesystem::exists(execution_path_))
@@ -349,8 +352,8 @@ namespace slamon
         fs.release();
 
         // Sets the properties of the cluster.
-        tf::Transform map_camera_pose = map_->getVertexCameraPose(id, true);
-        Cluster cluster(id, keyframe_id, l_descs, r_descs, map_camera_pose, l_kpts, r_kpts, l_cam_pts);
+        tf::Transform camera_map_pose = map_->getVertexCameraPose(id, true);
+        Cluster cluster(id, keyframe_id, l_descs, r_descs, camera_map_pose, l_kpts, r_kpts, l_cam_pts);
         return cluster;
     }
 
@@ -460,8 +463,8 @@ namespace slamon
 
     void LoopCloser::updateClusterPose(Cluster& cluster)
     {
-        tf::Transform map_camera_pose = map_->getVertexCameraPose(cluster.getGlobalId(), true);
-        cluster.updateCameraPose(map_camera_pose);
+        tf::Transform camera_map_pose = map_->getVertexCameraPose(cluster.getGlobalId(), true);
+        cluster.updateCameraPose(camera_map_pose);
     }
 
 
@@ -711,10 +714,10 @@ namespace slamon
 
         // Adds the corresponding edges.
         bool lc_already_exists, some_edge_added = false;
-        tf::Transform edge, cand_cluster_pose, q_cluster_pose_relative_to_camera;
+        tf::Transform relative_movement, cand_cluster_map_pose, q_cluster_camera_pose;
         for (size_t i = 0; i < inliers_per_pair_size; ++i)
         {
-            if (inliers_per_pair[i] >= 30)
+            if (inliers_per_pair[i] >= static_cast<int>(max_edge_inliers_ * 0.1))
             {
                 // Checks if this loop closure exists.
                 lc_already_exists = false;
@@ -731,13 +734,13 @@ namespace slamon
                     continue;
                 
                 // Computes correct transform between edges.
-                cand_cluster_pose = map_->getVertexPose(cluster_pairs[i].second, true); // {O}^T_{cand_cluster}
-                q_cluster_pose_relative_to_camera = map_->getVertexPoseRelativeToCamera(cluster_pairs[i].first); // {q_cam}^T_{q_cluster}
-                edge = cand_cluster_pose.inverse() * estimated_motion * q_cluster_pose_relative_to_camera; // {cand_cluster}^T_{q_cluster} = {cand_cluster}^T_{O} * {O}^T_{q_cam} * {q_cam}^T_{q_cluster}
+                cand_cluster_map_pose = map_->getVertexPose(cluster_pairs[i].second, true); // {O}^T_{cand_cluster}
+                q_cluster_camera_pose = map_->getVertexPoseRelativeToCamera(cluster_pairs[i].first); // {q_cam}^T_{q_cluster}
+                relative_movement = cand_cluster_map_pose.inverse() * estimated_motion * q_cluster_camera_pose; // {cand_cluster}^T_{q_cluster} = {cand_cluster}^T_{O} * {O}^T_{q_cam} * {q_cam}^T_{q_cluster}
 
                 // Adds this edge to the graph.
                 some_edge_added = true;
-                map_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, edge);                           
+                map_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, normalisation(max_edge_inliers_, inliers_per_pair[i]), relative_movement);                           
                 definitive_inliers_per_pair.push_back(inliers_per_pair[i]);
                 definitive_cluster_pairs.emplace_back(cluster_pairs[i].first, cluster_pairs[i].second); // q_cluster_id - cand_cluster_id
 

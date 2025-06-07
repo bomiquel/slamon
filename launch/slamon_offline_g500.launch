@@ -88,7 +88,7 @@
         <!-- MAP SLAMON -->
         <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen">
             <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
-            <remap from = "stereo_attributes"           to = "slamon_vo/stereo_attributes"/>
+            <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
             <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
             <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
         </node>

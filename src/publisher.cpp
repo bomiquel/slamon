@@ -132,6 +132,19 @@ void Publisher::writeImgCircularMatches(const cv::Mat& c_l_img,
 void Publisher::publishImgKeypointsClustering(const cv::Mat& l_img,
                                               const ros::Time& stamp,
                                               const ros::Publisher& publisher,
+                                              const std::vector<std::vector<cv::KeyPoint>>& l_kpts)
+{
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawImgKeypointsClustering(l_img, l_kpts);
+
+    // Publishes image.
+    publishImg(o_img, stamp, publisher);
+}
+
+
+void Publisher::publishImgKeypointsClustering(const cv::Mat& l_img,
+                                              const ros::Time& stamp,
+                                              const ros::Publisher& publisher,
                                               const std::vector<cv::KeyPoint>& l_kpts,
                                               const std::vector<std::vector<int>>& clusters)
 {
@@ -155,6 +168,18 @@ void Publisher::publishImgKeypointsClustering(const cv::Mat& l_img,
 
     // Publishes image.
     publishImg(o_img, stamp, publisher);
+}
+
+
+void Publisher::writeImgKeypointsClustering(const cv::Mat& l_img,
+                                            const std::string& o_path,
+                                            const std::vector<std::vector<cv::KeyPoint>>& l_kpts)
+{
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawImgKeypointsClustering(l_img, l_kpts);
+
+    // Writes image.
+    cv::imwrite(o_path + ".png", o_img);
 }
 
 
@@ -327,12 +352,12 @@ void Publisher::publishPerformance(const ros::Time& stamp,
 
     // Sets payload.
     msg.successes_num = successes_num;
-    msg.run_time_0 = run_times.run_time_0; // Time needed for VO: Feature extraction, MM: From Frame msg to Frame object or LC: Process current cluster.
-    msg.run_time_1 = run_times.run_time_1; // Time needed for VO: Stereo matching, MM: Need new keyframe? or LC: Search for candidates to close loops by proximity.
-    msg.run_time_2 = run_times.run_time_2; // Time needed for VO: Triangulation, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
-    msg.run_time_3 = run_times.run_time_3; // Time needed for VO: Clustering, MM: Add edges to graph or LC: Read cluster candidates.
-    msg.run_time_4 = run_times.run_time_4; // Time needed for VO: Temporal matching, MM: Write graph to disk and publish updated robot pose or LC: Loop detection.
-    msg.run_time_5 = run_times.run_time_5; // Time needed for VO: Bucketing, MM: Nothing or LC: Close loop.
+    msg.run_time_0 = run_times.run_time_0; // Time needed for VO: Feature extraction, MM: Pose update or LC: Process current cluster.
+    msg.run_time_1 = run_times.run_time_1; // Time needed for VO: Stereo matching, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by proximity.
+    msg.run_time_2 = run_times.run_time_2; // Time needed for VO: Triangulation, MM: Add co-framed edges to graph or LC: Search for candidates to close loops by hash.
+    msg.run_time_3 = run_times.run_time_3; // Time needed for VO: Clustering, MM: Add inter-frames edges to graph or LC: Read cluster candidates.
+    msg.run_time_4 = run_times.run_time_4; // Time needed for VO: Temporal matching, MM: Publish or LC: Loop detection.
+    msg.run_time_5 = run_times.run_time_5; // Time needed for VO: Bucketing, MM: Data write or LC: Close loop.
     msg.run_time_6 = run_times.run_time_6; // Time needed for VO: Motion estimation, MM: Nothing or LC: Nothing.
     msg.run_time_7 = run_times.run_time_7; // Time needed for VO: Keyframe insertion decision, MM: Nothing or LC: Nothing.
     msg.total_run_time = run_times.total_run_time; // Time needed for each thread to perform one iteration.
@@ -444,7 +469,8 @@ void Publisher::publishKeyframe(const int keyframe_id,
                                                   cluster_pairs);
     
     // Set images.
-    sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", l_img).toImageMsg();
+    sensor_msgs::ImagePtr img_msg;
+    img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", l_img).toImageMsg();
     keyframe_msg.l_img = *img_msg;
     img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", r_img).toImageMsg();
     keyframe_msg.r_img = *img_msg;
@@ -722,6 +748,35 @@ cv::Mat Publisher::drawImgCircularMatches(const cv::Mat& c_l_img,
 
 
 cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
+                                              const std::vector<std::vector<cv::KeyPoint>>& l_kpts)
+{
+    cv::Mat drawn_img;
+    img.copyTo(drawn_img);
+
+    // Sanity check.
+    if (l_kpts.empty())
+        return drawn_img;
+
+    // Draws clusters.
+    cv::Scalar color;
+    cv::RNG rng(12345);
+    for (size_t i = 0; i < l_kpts.size(); ++i)
+    {
+        color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
+        for (size_t j = 0; j < l_kpts[i].size(); ++j)
+            cv::circle(drawn_img, l_kpts[i][j].pt, 2, color, -1);
+    }
+
+    // Writes text
+    std::stringstream caption;
+    caption << " Number of clusters: " << l_kpts.size();
+    cv::Mat o_img = drawTxtInImg(true, drawn_img, caption, 20);
+
+    return o_img;
+}
+
+
+cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
                                               const std::vector<cv::KeyPoint>& kpts,
                                               const std::vector<std::vector<int>>& clusters)
 {
@@ -733,10 +788,11 @@ cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
         return drawn_img;
 
     // Draws clusters.
+    cv::Scalar color;
     cv::RNG rng(12345);
     for (size_t i = 0; i < clusters.size(); ++i)
     {
-        cv::Scalar color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
+        color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
         for (size_t j = 0; j < clusters[i].size(); ++j)
             cv::circle(drawn_img, kpts[clusters[i][j]].pt, 2, color, -1);
     }

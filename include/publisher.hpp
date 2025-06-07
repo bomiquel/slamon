@@ -44,12 +44,12 @@ class Publisher
          */
         struct RunTimes
         {
-            double run_time_0 = 0.0;     //!> Time needed for VO: Feature extraction, MM: From Frame msg to Frame object or LC: Process current cluster.
-            double run_time_1 = 0.0;     //!> Time needed for VO: Stereo matching, MM: Need new keyframe? or LC: Search for candidates to close loops by proximity.
-            double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
-            double run_time_3 = 0.0;     //!> Time needed for VO: Clustering, MM: Add edges to graph or LC: Read cluster candidates.
-            double run_time_4 = 0.0;     //!> Time needed for VO: Temporal matching, MM: Write graph to disk and publish updated robot pose  or LC: Loop detection.
-            double run_time_5 = 0.0;     //!> Time needed for VO: Bucketing, MM: Nothing or LC: Close loop.
+            double run_time_0 = 0.0;     //!> Time needed for VO: Feature extraction, MM: Pose update or LC: Process current cluster.
+            double run_time_1 = 0.0;     //!> Time needed for VO: Stereo matching, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by proximity.
+            double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MM: Add co-framed edges to graph or LC: Search for candidates to close loops by hash.
+            double run_time_3 = 0.0;     //!> Time needed for VO: Clustering, MM: Add inter-frames edges to graph or LC: Read cluster candidates.
+            double run_time_4 = 0.0;     //!> Time needed for VO: Temporal matching, MM: Publish or LC: Loop detection.
+            double run_time_5 = 0.0;     //!> Time needed for VO: Bucketing, MM: Data write or LC: Close loop.
             double run_time_6 = 0.0;     //!> Time needed for VO: Motion estimation, MM: Nothing or LC: Nothing.
             double run_time_7 = 0.0;     //!> Time needed for VO: Keyframe insertion decision, MM: Nothing or LC: Nothing.
             double total_run_time = 0.0; //!> Time needed for each thread to perform one iteration.
@@ -210,6 +210,18 @@ class Publisher
          *  \param[in] l_img Left image.
          *  \param[in] stamp The ROS timestamp.
          *  \param[in] publisher The ROS publisher.
+         *  \param[in] l_kpts Clustered left keypoints.
+         */
+        void publishImgKeypointsClustering(const cv::Mat& l_img,
+                                           const ros::Time& stamp,
+                                           const ros::Publisher& publisher,
+                                           const std::vector<std::vector<cv::KeyPoint>>& l_kpts);
+
+
+        /** \brief Draws and publishes keypoints clustering.
+         *  \param[in] l_img Left image.
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
          *  \param[in] l_kpts Left keypoints.
          *  \param[in] clusters Keypoints clustering.
          */
@@ -234,6 +246,17 @@ class Publisher
                                            const ros::Publisher& publisher,
                                            const std::vector<int>& cluster_ids,
                                            const std::vector<cv::KeyPoint>& l_kpts);
+
+
+        /** \brief Draws and writes on disk keypoints clustering.
+         *  \param[in] l_img Left image.
+         *  \param[in] o_path Image output path. The name of the final
+         *  file must be included.
+         *  \param[in] l_kpts Clustered left keypoints.
+         */
+        void writeImgKeypointsClustering(const cv::Mat& l_img,
+                                         const std::string& o_path,
+                                         const std::vector<std::vector<cv::KeyPoint>>& l_kpts);
 
 
         /** \brief Draws and writes on disk keypoints clustering.
@@ -597,6 +620,14 @@ class Publisher
                                        const std::vector<cv::KeyPoint>& m_c_r_kpts,
                                        const std::vector<cv::KeyPoint>& m_p_l_kpts,
                                        const std::vector<cv::KeyPoint>& m_p_r_kpts);
+
+
+        /** \brief Draws keypoints clustering.
+         *  \param[in] img The image where draw the keypoints clusters.
+         *  \param[in] l_kpts Clustered left keypoints.
+         */
+        cv::Mat drawImgKeypointsClustering(const cv::Mat& img,
+                                           const std::vector<std::vector<cv::KeyPoint>>& l_kpts);
 
 
         /** \brief Draws keypoints clustering.

@@ -246,6 +246,8 @@ namespace slamon
 
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
 
+            int max_edge_inliers_; //!> Maximum number of inliers for an edge.
+
             int lc_discard_window_; //!> Window size of discarded graph vertices (clusters).
             
             int loop_closure_num_; //!> Stores the number of loop closures.

@@ -8,7 +8,7 @@ int32 id
 Batch[] batches
 
 # Cluster pairs.
-int32[] cluster_pairs
+int32[] cluster_pairs # c_cluster_id - p_cluster_id
 
 # Inliers per cluster pair.
 int32[] inliers_per_pair
