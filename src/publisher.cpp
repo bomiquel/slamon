@@ -366,49 +366,6 @@ void Publisher::publishPerformance(const ros::Time& stamp,
 }
 
 
-void Publisher::publishStereoImageAttributes(const cv::Mat& l_descs,
-                                             const cv::Mat& r_descs,
-                                             const ros::Time& stamp,
-                                             const ros::Publisher& publisher,
-                                             const std::vector<cv::KeyPoint>& l_kpts,
-                                             const std::vector<cv::KeyPoint>& r_kpts,
-                                             const std::vector<cv::Point3f>& l_cam_pts)
-{
-    // Pre-allocates memory.
-    size_t msg_size = l_kpts.size();
-    slamon::StereoImageAttributes msg;
-    msg.l_kpts.reserve(msg_size);
-    msg.r_kpts.reserve(msg_size);
-    msg.l_cam_pts.reserve(msg_size);
-    
-    // Create and fill StereoImageAttributes msg.
-    geometry_msgs::Point cam_pt_msg;
-    slamon::Keypoint l_kpt_msg, r_kpt_msg;
-    msg.header.stamp = stamp;
-    for (size_t i = 0; i < l_kpts.size(); ++i)
-    {
-        // Fill base msgs
-        cam_pt_msg.x = l_cam_pts[i].x;
-        cam_pt_msg.y = l_cam_pts[i].y;
-        cam_pt_msg.z = l_cam_pts[i].z;
-        l_kpt_msg.pt.x = l_kpts[i].pt.x;
-        l_kpt_msg.pt.y = l_kpts[i].pt.y;
-        r_kpt_msg.pt.x = r_kpts[i].pt.x;
-        r_kpt_msg.pt.y = r_kpts[i].pt.y;
-        l_kpt_msg.desc = l_descs.row(i);
-        r_kpt_msg.desc = r_descs.row(i);
-
-        // Fill StereoImageAttributes msg.
-        msg.l_kpts.emplace_back(l_kpt_msg);
-        msg.r_kpts.emplace_back(r_kpt_msg);
-        msg.l_cam_pts.emplace_back(cam_pt_msg);
-    }
-
-    // Publishes.
-    publisher.publish(msg);
-}
-
-
 void Publisher::publishKeyframe(const int keyframe_id,
                                 const cv::Mat& l_descs,
                                 const cv::Mat& r_descs,

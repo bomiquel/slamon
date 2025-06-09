@@ -77,7 +77,6 @@ add_message_files(
         Keyframe.msg
         Keypoint.msg
         Performance.msg
-        StereoImageAttributes.msg
 )
 
 # Declare custom ROS services

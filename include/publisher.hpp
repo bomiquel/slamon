@@ -27,7 +27,6 @@
 #include "slamon/Keypoint.h"
 #include "slamon/Keyframe.h"
 #include "slamon/Performance.h"
-#include "slamon/StereoImageAttributes.h"
 
 
 class Publisher
@@ -411,26 +410,7 @@ class Publisher
         void publishPerformance(const ros::Time& stamp,
                                 const int successes_num,
                                 const RunTimes& run_times,
-                                const ros::Publisher& publisher);              
-
-
-        /** \brief Publishes relevant information from a stereo pair of images.
-         *  \param[in] stamp Current image ROS timestamp.
-         *  \param[in] l_descs The left image keypoints descriptors.
-         *  \param[in] r_descs The right image keypoints descriptors.
-         *  \param[in] l_kpts The left image keypoints.
-         *  \param[in] r_kpts The right image keypoints.
-         *  \param[in] l_cam_pts 3D points of the scene obtained from the stereo data
-         *  and relative to left camera.
-         *  \param[in] publisher The ROS publisher.
-        */
-        void publishStereoImageAttributes(const cv::Mat& l_descs,
-                                          const cv::Mat& r_descs,
-                                          const ros::Time& stamp,
-                                          const ros::Publisher& publisher,
-                                          const std::vector<cv::KeyPoint>& l_kpts,
-                                          const std::vector<cv::KeyPoint>& r_kpts,
-                                          const std::vector<cv::Point3f>& l_cam_pts);
+                                const ros::Publisher& publisher);
 
 
         /** \brief Publishes a keyframe in ROS.
