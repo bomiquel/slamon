@@ -531,6 +531,7 @@ void Publisher::writePoses(const std::string& o_path,
 
 
 void Publisher::writeLoopClosureEdges(const std::string& o_path,
+                                      const std::vector<double>& weights,
                                       const std::vector<std::pair<int, int>> edges_ids,
                                       const std::vector<std::pair<tf::Transform, tf::Transform>>& edges_poses)
 {
@@ -546,7 +547,7 @@ void Publisher::writeLoopClosureEdges(const std::string& o_path,
     std::fstream edges_file(o_path.c_str(), std::ios::out | std::ios::trunc);
 
     // First line
-    edges_file << std::fixed << std::setprecision(9) << "frame a,frame b,ax,ay,az,aqx,aqy,aqz,aqw,bx,by,bz,bqx,bqy,bqz,bqw" << std::endl;
+    edges_file << std::fixed << std::setprecision(9) << "frame a,frame b,weights,ax,ay,az,aqx,aqy,aqz,aqw,bx,by,bz,bqx,bqy,bqz,bqw" << std::endl;
 
     // Write 
     for (size_t i = 0; i < edges_ids.size(); ++i)
@@ -554,6 +555,7 @@ void Publisher::writeLoopClosureEdges(const std::string& o_path,
         edges_file <<
         edges_ids[i].first << "," <<
         edges_ids[i].second << "," <<
+        weights[i] << "," <<
         edges_poses[i].first.getOrigin().getX() << "," <<
         edges_poses[i].first.getOrigin().getY() << "," <<
         edges_poses[i].first.getOrigin().getZ() << "," <<

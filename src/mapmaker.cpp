@@ -139,8 +139,6 @@ namespace slamon
         p_robot_odom_ = c_robot_odom;
         run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Pose update run time.
 
-        ROS_INFO_STREAM("[MM->Includer]: Hello there Loop over frame clusters.");
-
         // Saves the keyframe timestamp.
         map_->addTimestamp(stamp.toSec());
 
@@ -186,8 +184,6 @@ namespace slamon
         }
         run_times_.run_time_1 = ros::Time::now().toSec() - start_module_time; // Vertex insertion run time.
 
-        ROS_INFO_STREAM("[MM->Includer]: Hello there Adds edges between clusters of the same frame.");
-
         // Adds edges between clusters of the same frame.
         start_module_time = ros::Time::now().toSec();
         if (clusters_num > 1)
@@ -210,8 +206,6 @@ namespace slamon
             }
         }
         run_times_.run_time_2 = ros::Time::now().toSec() - start_module_time; // Co-framed edges insertion run time.
-
-        ROS_INFO_STREAM("[MM->Includer]: Hello there Connects this keyframe with the previous.");
 
         // Connects this keyframe with the previous.
         start_module_time = ros::Time::now().toSec();
@@ -294,8 +288,6 @@ namespace slamon
         }
         run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Inter-frames edges insertion run time.
 
-        ROS_INFO_STREAM("[MM->Includer]: Hello there Publishes to ROS.");
-
         // Publishes to ROS.
         start_module_time = ros::Time::now().toSec();
 
@@ -323,8 +315,6 @@ namespace slamon
             publishCounter(keyframe_id + 1, keyframes_num_pub_);
         run_times_.run_time_4 = ros::Time::now().toSec() - start_module_time; // Publishing run time.
 
-        ROS_INFO_STREAM("[MM->Includer]: Hello there Writes data to disk.");
-
         // Writes data to disk.
         start_module_time = ros::Time::now().toSec();
         if (enable_debugging_)
@@ -338,15 +328,16 @@ namespace slamon
             writePoses(poses_file_, stamps, keyframe_poses);
 
             // Saves loop closure edges to file.
+            std::vector<double> edges_weights;
             std::vector<std::pair<int, int>> edges_keyframe_ids;
             std::vector<std::pair<tf::Transform, tf::Transform>> edges_keyframe_poses;
-            map_->getLoopClosureEdges(edges_keyframe_ids, edges_keyframe_poses);
+            map_->getLoopClosureEdges(edges_weights, edges_keyframe_ids, edges_keyframe_poses);
             for (size_t i = 0; i < edges_keyframe_poses.size(); ++i)
             {
                 edges_keyframe_poses[i].first = edges_keyframe_poses[i].first * robot2camera_.inverse();
                 edges_keyframe_poses[i].second = edges_keyframe_poses[i].second * robot2camera_.inverse();
             }
-            writeLoopClosureEdges(edges_file_, edges_keyframe_ids, edges_keyframe_poses);
+            writeLoopClosureEdges(edges_file_, edges_weights, edges_keyframe_ids, edges_keyframe_poses);
 
             if (l_img_ok && r_img_ok)
             {

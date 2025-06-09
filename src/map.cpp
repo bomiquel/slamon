@@ -195,7 +195,8 @@ namespace slamon
     }
 
 
-    void Map::getLoopClosureEdges(std::vector<std::pair<int, int>>& keyframe_ids,
+    void Map::getLoopClosureEdges(std::vector<double>& weights,
+                                  std::vector<std::pair<int, int>>& keyframe_ids,
                                   std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses)
     {
         // Locks map.
@@ -230,6 +231,7 @@ namespace slamon
             pose_1 = getVertexCameraPose(edge->vertices()[1]->id(), false);
 
             // Save data.
+            weights.push_back(edge->information().trace()); // Get the confidence from this edge.
             keyframe_ids.emplace_back(keyframe_0, keyframe_1);
             keyframe_poses.emplace_back(pose_0, pose_1);
         }

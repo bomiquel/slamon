@@ -117,10 +117,12 @@ namespace slamon
 
 
             /** \brief Gets all loop closure edge information.
+             *  \param[out] weights A simple scalar list reflecting the total confidence in all dimensions of each graph edge.
              *  \param[out] keyframe_ids A list of the identifiers of the keyframe pairs that close a loop.
              *  \param[out] keyframe_poses A list of the poses of the keyframe pairs that close a loop.
              */
-            void getLoopClosureEdges(std::vector<std::pair<int, int>>& keyframe_ids,
+            void getLoopClosureEdges(std::vector<double>& weights,
+                                     std::vector<std::pair<int, int>>& keyframe_ids,
                                      std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses);
 
 

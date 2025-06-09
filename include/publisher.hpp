@@ -515,12 +515,15 @@ class Publisher
         /** \brief Writes a list of edges.
          *  \param[in] o_path File output path. The name of the final 
          *  file must be included.
+         *  \param[in] weights A simple scalar list reflecting the total 
+         *  confidence in all dimensions of each graph edge.
          *  \param[in] edges_ids A list of the identifiers of the keyframe
          *  pairs that close a loop.
          *  \param[in] edges_poses A list of the poses of the keyframe pairs
          *  that close a loop.
          */
         void writeLoopClosureEdges(const std::string& o_path,
+                                   const std::vector<double>& weights,
                                    const std::vector<std::pair<int, int>> edges_ids,
                                    const std::vector<std::pair<tf::Transform, tf::Transform>>& edges_poses);
 
