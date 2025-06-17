@@ -58,7 +58,7 @@ namespace slamon
         robot2camera_client_ = nh.serviceClient<slamon::GetTransform>("get_robot_to_camera_tf");
 
         // Publishers.
-        cloud_pub_ = nhp.advertise<sensor_msgs::PointCloud2>("keycloud", 1);
+        keycloud_pub_ = nhp.advertise<sensor_msgs::PointCloud2>("keycloud", 1);
         robot_map_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_map", 1);
         camera_map_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_map", 1);
         run_times_pub_ = nhp.advertise<slamon::Performance>("mapmaker_performance", 1);
@@ -72,8 +72,8 @@ namespace slamon
 
         // Message sync.
         boost::shared_ptr<Sync_> sync;
-        odom_sub.subscribe(nh, "odom", 1);
-        keycloud_sub.subscribe(nh, "points2", 1);
+        odom_sub.subscribe(nh, "odom", 5);
+        keycloud_sub.subscribe(nh, "points2", 5);
         keyframe_sub.subscribe(nh, "keyframe", 5);
         sync.reset(new Sync_(SyncPolicy_(10), odom_sub, keyframe_sub, keycloud_sub));
         sync->registerCallback(boost::bind(&Mapmaker::callback, this, _1, _2, _3));
@@ -85,7 +85,7 @@ namespace slamon
 
     void Mapmaker::callback(const nav_msgs::OdometryConstPtr& odom_msg,
                             const slamon::KeyframeConstPtr& keyframe_msg,
-                            const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
+                            const sensor_msgs::PointCloud2ConstPtr& keycloud_msg)
     {
         // Time at which the program enters into the callback.
         double start_callback_time = ros::Time::now().toSec();
@@ -302,7 +302,7 @@ namespace slamon
         publishPose(stamp, updated_robot_map_pose, false, robot_map_pub_, robot_frame_id_);
 
         // Publish keyframe pointcloud
-        publishCloud(cloud_pub_, cloud_msg);
+        publishCloud(keycloud_pub_, keycloud_msg);
 
         // Publishes clustered keyframe.
         cv::Mat l_img, r_img;

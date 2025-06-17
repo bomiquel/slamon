@@ -66,11 +66,11 @@ namespace slamon
              *  data and odom messages are received.
              *  \param[in] odom_msg ROS message containing current robot odometry.
              *  \param[in] keyframe_msg Custom ROS message containing a keyframe.
-             *  \param[in] cloud_msg ROS message containing the pointcloud of the scene.
+             *  \param[in] keycloud_msg ROS message containing the pointcloud of the scene.
              */  
             void callback(const nav_msgs::OdometryConstPtr& odom_msg,
                           const slamon::KeyframeConstPtr& keyframe_msg,
-                          const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
+                          const sensor_msgs::PointCloud2ConstPtr& keycloud_msg);
 
 
             /** \brief Obtains, from the VO and through a service, the transformation
@@ -126,7 +126,7 @@ namespace slamon
 
             tf::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
 
-            ros::Publisher cloud_pub_; //!> Pointcloud publisher.
+            ros::Publisher keycloud_pub_; //!> Pointcloud publisher.
 
             ros::Publisher robot_map_pub_; //!> Updated robot pose publisher.
             
