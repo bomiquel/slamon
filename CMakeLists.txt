@@ -47,8 +47,8 @@ find_package(
 )
 
 # Dependencies - G2O:
-# Use script to find g2o. If it's not installed, set G2O_INCLUDE_DIRS manually
-# using -DG2O_INCLUDE_DIRS.
+# Use script to find g2o. If it's not installed, set G2O_INCLUDE_DIR manually
+# using -DG2O_INCLUDE_DIR.
 find_package(G2O REQUIRED)
 
 # Dependencies - OpenCV:
@@ -73,9 +73,10 @@ add_message_files(
     DIRECTORY 
         msg 
     FILES
+        Batch.msg
+        Keyframe.msg
         Keypoint.msg
         Performance.msg
-        StereoImageAttributes.msg
 )
 
 # Declare custom ROS services
@@ -91,6 +92,7 @@ add_service_files(
 generate_messages(
     DEPENDENCIES
         std_msgs
+        sensor_msgs
         geometry_msgs
 )
 
@@ -111,7 +113,7 @@ include_directories(include
                     ${OpenCV_INCLUDE_DIRS}
                     ${EIGEN3_INCLUDE_DIRS}
                     ${SUITESPARSE_INCLUDE_DIRS}
-                    ${G2O_INCLUDE_DIRS})
+                    ${G2O_INCLUDE_DIR})
 link_directories(${OpenCV_INCLUDE_DIRS})
 
 # Executables

@@ -23,6 +23,8 @@ namespace slamon
         public:
 
 
+            /** \brief Empty class constructor.
+             */
             Queue() {}
 
 
@@ -33,6 +35,16 @@ namespace slamon
             {
                 std::scoped_lock lock(mutex_queue_);
                 queue_.push_back(item);
+            }
+
+
+            /** \brief Adds an item to the end of the queue.
+             *  \param[in] item The item to be inserted.
+             */
+            inline void emplaceBack(T item)
+            {
+                std::scoped_lock lock(mutex_queue_);
+                queue_.emplace_back(item);
             }
 
 

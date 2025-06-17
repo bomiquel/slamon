@@ -54,8 +54,8 @@ std::vector<float> haloc::Hash::getHash(cv::Mat desc)
   if (desc.rows == 0) return hash;
 
   // Project the descriptors
-  unsigned int k = 0;
-  for (unsigned int i=0; i<r_.size(); i++)
+  size_t k = 0;
+  for (size_t i=0; i<r_.size(); i++)
   {
     for (int n=0; n<desc.cols; n++)
     {
@@ -76,7 +76,7 @@ float haloc::Hash::match(std::vector<float> hash_1, std::vector<float> hash_2)
 {
   // Compute the distance
   float sum = 0.0;
-  for (unsigned int i=0; i<hash_1.size(); i++)
+  for (size_t i=0; i<hash_1.size(); i++)
     sum += fabs(hash_1[i] - hash_2[i]);
 
   return sum;
@@ -108,11 +108,11 @@ void haloc::Hash::initProjections(int desc_size)
 
     // Get the right terms (b)
     Eigen::VectorXf b(r_.size());
-    for (unsigned int n=0; n<r_.size(); n++)
+    for (size_t n=0; n<r_.size(); n++)
     {
       std::vector<float> cur_v = r_[n];
       float sum = 0.0;
-      for (unsigned int m=0; m<new_v.size(); m++)
+      for (size_t m=0; m<new_v.size(); m++)
       {
         sum += new_v[m]*cur_v[m];
       }
@@ -121,10 +121,10 @@ void haloc::Hash::initProjections(int desc_size)
 
     // Get the matrix of equations (A)
     Eigen::MatrixXf A(i, i);
-    for (unsigned int n=0; n<r_.size(); n++)
+    for (size_t n=0; n<r_.size(); n++)
     {
-      unsigned int k=0;
-      for (unsigned int m=r_[n].size()-i; m<r_[n].size(); m++)
+      size_t k=0;
+      for (size_t m=r_[n].size()-i; m<r_[n].size(); m++)
       {
         A(n,k) = r_[n][m];
         k++;
@@ -135,7 +135,7 @@ void haloc::Hash::initProjections(int desc_size)
     Eigen::VectorXf x = A.colPivHouseholderQr().solve(b);
 
     // Add the solutions to the new vector
-    for (unsigned int n=0; n<r_.size(); n++)
+    for (size_t n=0; n<r_.size(); n++)
       new_v.push_back(x(n));
     new_v = unit_vector(new_v);
 
@@ -159,12 +159,12 @@ std::vector<float> haloc::Hash::unit_vector(std::vector<float> x)
 {
   // Compute the norm
   float sum = 0.0;
-  for (unsigned int i=0; i<x.size(); i++)
+  for (size_t i=0; i<x.size(); i++)
     sum += pow(x[i], 2.0);
   float x_norm = sqrt(sum);
 
   // x^ = x/|x|
-  for (unsigned int i=0; i<x.size(); i++)
+  for (size_t i=0; i<x.size(); i++)
     x[i] = x[i] / x_norm;
 
   return x;

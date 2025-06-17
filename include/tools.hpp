@@ -10,10 +10,11 @@
 #define TOOLS_HPP
 
 
+#include <opencv2/core.hpp>
+
 #include <ros/ros.h>
 #include <tf/tf.h>
-
-#include <opencv2/core.hpp>
+#include <cv_bridge/cv_bridge.h>
 
 
 namespace slamon
@@ -80,6 +81,55 @@ namespace slamon
     {
         tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
         return sqrt(d.x()*d.x() + d.y()*d.y() + d.z()*d.z());
+    }
+
+
+    /** \brief Non-linear normalisation.
+     *  \param[in] max The maximum expected value.
+     *  \param[in] value The current value to standardize.
+     *  @return Normalised value.
+     */
+    static inline double normalisation(const double max,
+                                       const double value)
+    {
+        // Minimum value.
+        if (value == 0.0)
+            return 0.05;
+
+        // Avoids division by zero.
+        if (max <= 0.0)
+            return 0.05;
+
+        // Normalisation.
+        return std::clamp(value / max, 0.1, 1.0);
+    }
+
+
+    /** \brief Convert ROS image message to cv::Mat
+     *  \param[in] msg ROS message containing an img.
+     *  \param[out] img Will contain the image in cv::Mat type.
+     *  @return If the conversion has been possible.
+     */
+    static inline bool fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
+                                       cv::Mat& img)
+    {
+        // Convert message to cv::Mat
+        cv_bridge::CvImagePtr img_ptr;
+        try
+        {
+            // TODO: cv_bridge gives problems with OpenCV-4.2.0-contrib. 
+            img_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+        }
+        catch (const cv_bridge::Exception& e)
+        {
+            ROS_ERROR_STREAM("[Caster:] cv_bridge exception: " << e.what());
+            return false;
+        }
+        
+        // Set the images
+        img = img_ptr->image;
+        
+        return true;
     }
 
 

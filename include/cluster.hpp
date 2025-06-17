@@ -32,7 +32,6 @@ class Cluster
          *  \param[in] keyframe_id Keyframe id.
          *  \param[in] l_descs Cluster left descriptors.
          *  \param[in] r_descs Cluster right descriptors.
-         *  \param[in] map_camera_pose World-map camera pose when the cluster was obtained.
          *  \param[in] l_kpts Cluster left keypoints.
          *  \param[in] r_kpts Cluster right keypoints.
          *  \param[in] l_cam_pts Cluster 3D points relative to left camera.
@@ -41,7 +40,6 @@ class Cluster
                 int keyframe_id,
                 cv::Mat l_descs,
                 cv::Mat r_descs,
-                tf::Transform map_camera_pose,
                 std::vector<cv::KeyPoint> l_kpts,
                 std::vector<cv::KeyPoint> r_kpts,
                 std::vector<cv::Point3f> l_cam_pts);
@@ -53,7 +51,6 @@ class Cluster
          *  \param[in] keyframe_id Keyframe id.
          *  \param[in] l_descs Cluster left descriptors.
          *  \param[in] r_descs Cluster right descriptors.
-         *  \param[in] map_camera_pose World-map camera pose when the cluster was obtained.
          *  \param[in] l_kpts Cluster left keypoints.
          *  \param[in] r_kpts Cluster right keypoints.
          *  \param[in] l_cam_pts Cluster 3D points relative to left camera.
@@ -63,7 +60,48 @@ class Cluster
                 int keyframe_id,
                 cv::Mat l_descs,
                 cv::Mat r_descs,
-                tf::Transform map_camera_pose,
+                std::vector<cv::KeyPoint> l_kpts,
+                std::vector<cv::KeyPoint> r_kpts,
+                std::vector<cv::Point3f> l_cam_pts);
+
+
+        /** \brief Class constructor.
+         *  \param[in] global_id Global cluster id.
+         *  \param[in] keyframe_id Keyframe id.
+         *  \param[in] l_descs Cluster left descriptors.
+         *  \param[in] r_descs Cluster right descriptors.
+         *  \param[in] camera_map_pose World-map camera pose when the cluster was obtained.
+         *  \param[in] l_kpts Cluster left keypoints.
+         *  \param[in] r_kpts Cluster right keypoints.
+         *  \param[in] l_cam_pts Cluster 3D points relative to left camera.
+         */
+        Cluster(int global_id,
+                int keyframe_id,
+                cv::Mat l_descs,
+                cv::Mat r_descs,
+                tf::Transform camera_map_pose,
+                std::vector<cv::KeyPoint> l_kpts,
+                std::vector<cv::KeyPoint> r_kpts,
+                std::vector<cv::Point3f> l_cam_pts);
+
+
+        /** \brief Class constructor.
+         *  \param[in] global_id Global cluster id.
+         *  \param[in] local_id Local cluster id.
+         *  \param[in] keyframe_id Keyframe id.
+         *  \param[in] l_descs Cluster left descriptors.
+         *  \param[in] r_descs Cluster right descriptors.
+         *  \param[in] camera_map_pose World-map camera pose when the cluster was obtained.
+         *  \param[in] l_kpts Cluster left keypoints.
+         *  \param[in] r_kpts Cluster right keypoints.
+         *  \param[in] l_cam_pts Cluster 3D points relative to left camera.
+         */
+        Cluster(int global_id,
+                int local_id,
+                int keyframe_id,
+                cv::Mat l_descs,
+                cv::Mat r_descs,
+                tf::Transform camera_map_pose,
                 std::vector<cv::KeyPoint> l_kpts,
                 std::vector<cv::KeyPoint> r_kpts,
                 std::vector<cv::Point3f> l_cam_pts);
@@ -108,7 +146,7 @@ class Cluster
         /** \brief Get camera world-map pose.
          *  @return The camera world-map pose.
          */
-        inline tf::Transform getCameraPose() const {return map_camera_pose_;}
+        inline tf::Transform getCameraPose() const {return camera_map_pose_;}
 
 
         /** \brief Get cluster right keypoints.
@@ -131,9 +169,9 @@ class Cluster
 
 
         /** \brief Set a new world-map camera pose.
-         *  \param[in] map_camera_pose New world-map camera pose.
+         *  \param[in] camera_map_pose New world-map camera pose.
          */
-        inline void updateCameraPose(const tf::Transform map_camera_pose) {map_camera_pose_ = map_camera_pose;}
+        inline void updateCameraPose(const tf::Transform camera_map_pose) {camera_map_pose_ = camera_map_pose;}
     
 
     private:
@@ -150,7 +188,7 @@ class Cluster
 
         cv::Mat r_descs_; //!> Cluster right descriptors.
 
-        tf::Transform map_camera_pose_; //!> World-map camera pose when the cluster was obtained.
+        tf::Transform camera_map_pose_; //!> World-map camera pose when the cluster was obtained.
 
         std::vector<cv::KeyPoint> l_kpts_; //!> Cluster left keypoints.
 

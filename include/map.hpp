@@ -117,10 +117,12 @@ namespace slamon
 
 
             /** \brief Gets all loop closure edge information.
+             *  \param[out] weights A simple scalar list reflecting the total confidence in all dimensions of each graph edge.
              *  \param[out] keyframe_ids A list of the identifiers of the keyframe pairs that close a loop.
              *  \param[out] keyframe_poses A list of the poses of the keyframe pairs that close a loop.
              */
-            void getLoopClosureEdges(std::vector<std::pair<int, int>>& keyframe_ids,
+            void getLoopClosureEdges(std::vector<double>& weights,
+                                     std::vector<std::pair<int, int>>& keyframe_ids,
                                      std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses);
 
 
@@ -163,14 +165,16 @@ namespace slamon
             int addVertex(const tf::Transform& pose);
 
 
-            /** \brief Add an edge to the graph.
-             *  \param[in] vertex_0_id Index of graph vertex 0.
-             *  \param[in] vertex_1_id Index of graph vertex 1.
-             *  \param[in] transformation Transformation between graph vertices.
+            /** \brief Adds an edge to the graph.
+             *  \param[in] vertex_0_id Index of one of the two vertices of the graph joined by the edge.
+             *  \param[in] vertex_1_id Index of the other vertex of the graph joined by the edge.
+             *  \param[in] confidence The confidence in the edge.
+             *  \param[in] relative_movement Coordinate transformation between graph vertices.
              */
             void addEdge(const int vertex_0_id, 
-                         const int vertex_1_id, 
-                         tf::Transform tf_edge);
+                         const int vertex_1_id,
+                         const double confidence,
+                         const tf::Transform& relative_movement);
 
 
             /** \brief Performs a Pose-Graph Optimisation.

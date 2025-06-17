@@ -140,19 +140,25 @@ class Frame
         inline tf::Transform getCameraPose() const {return odom_camera_pose_;}
 
 
-        /** \brief Get the clustering for the current frame.
-         *  @return The keypoints clustering.
-         */
-        inline std::vector<std::vector<int>> getClusters() const {return clusters_;}
-
-
-        /** \brief Get the clustering centroids.
+        /** \brief Get the cluster centroids.
          *  @return The centroids.
          */
         inline std::vector<cv::Point3f> getClustersCentroids() const {return cluster_centroids_;}
 
 
-        /** \brief Cluster keypoints
+        /** \brief Does the frame have clusters?
+         *  @return if it contains clusters.
+         */
+        inline bool hasClusters() const {return !cluster_centroids_.empty();}
+
+
+        /** \brief Get the relationship between the keypoint index and the cluster to which it belongs.
+         *  @return Cluster ids.
+         */
+        inline std::vector<int> getClusterIds() const {return cluster_ids_;}
+
+
+        /** \brief Clustering keypoints.
          */
         void regionClustering();
 
@@ -190,14 +196,14 @@ class Frame
         cv::Mat l_descs_; //!> Left descriptors.
         cv::Mat r_descs_; //!> Right descriptors.
 
+        tf::Transform odom_camera_pose_; //!> World-odom camera pose for this frame.
+
+        std::vector<int> cluster_ids_; //!> Relationship between the keypoint index and the cluster to which it belongs.
+
         std::vector<cv::KeyPoint> l_kpts_; //!> Left keypoints.
         std::vector<cv::KeyPoint> r_kpts_; //!> Right keypoints.
 
         std::vector<cv::Point3f> l_cam_pts_; //!> Stereo 3D points relative to left camera.
-
-        tf::Transform odom_camera_pose_; //!> World-odom camera pose for this frame.
-
-        std::vector<std::vector<int>> clusters_; //!> Keypoints clustering.
 
         std::vector<cv::Point3f> cluster_centroids_; //!> Central point for every cluster.
 };

@@ -8,31 +8,40 @@ void KeypointDetector::detectKeypoints(const cv::Mat& img,
                                        cv::Mat& descs,
                                        std::vector<cv::KeyPoint>& kpts)
 {
-    // If necessary, converts the image to greyscale.
-    cv::Mat g_img;
-    if (img.type() == CV_8UC3)
+    // First sanity check.
+    if (img.empty())
     {
-        cv::cvtColor(img, g_img, cv::COLOR_BGR2GRAY);
-    }
-    else if (img.type() == CV_8UC1)
-    {
-        g_img = img;
-    }
-    else
-    {
-        std::cerr << "Invalid image type, only CV_8UC1 and CV_8UC3 are allowed. Exiting!" << std::endl;
+        std::cerr << "Image is empty!" << std::endl;
         return;
     }
+
+    // Second sanity check.
+    if (img.type() != CV_8UC3 && img.type() != CV_8UC1)
+    {
+        std::cerr << "Unsupported image type. Only CV_8UC1 and CV_8UC3 are allowed." << std::endl;
+        return;
+    }
+
+    // Third sanity check.
+    kpts.clear();
+    descs.release();
+
+    // Converts to grayscale if needed.
+    cv::Mat g_img;
+    if (img.type() == CV_8UC3)
+        cv::cvtColor(img, g_img, cv::COLOR_BGR2GRAY);
+    else 
+        g_img = img;
 
     // Enhances the image using CLAHE.
     cv::Mat proc_img;
     if (enable_enhacement)
     {
-        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2, cv::Size(8, 8));
+        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8, 8));
         clahe->apply(g_img, proc_img);
-        if (proc_img.rows == 0)
+        if (proc_img.empty())
         {
-            std::cerr << "Something went wrong with the image enhancement. Exiting!" << std::endl;
+            std::cerr << "CLAHE enhancement failed." << std::endl;
             return;
         }
     }
@@ -41,7 +50,7 @@ void KeypointDetector::detectKeypoints(const cv::Mat& img,
         proc_img = g_img;
     }
 
-    // Selects detector.
+    // Selects feature detector.
     cv::Ptr<cv::Feature2D> detector;
     if (detector_name == "sift")
         detector = cv::xfeatures2d::SIFT::create(0, 3, 0.04, 10, 1.6);
@@ -54,7 +63,7 @@ void KeypointDetector::detectKeypoints(const cv::Mat& img,
 
     // Detects keypoints and computes descriptors.
     detector->detect(proc_img, kpts, cv::noArray());
-    if (max_kpts > 0)
+    if (max_kpts > 0 && kpts.size() > static_cast<size_t>(max_kpts))
         cv::KeyPointsFilter::retainBest(kpts, max_kpts);
     detector->compute(proc_img, kpts, descs);
 }

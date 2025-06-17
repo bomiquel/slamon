@@ -11,7 +11,10 @@
 
 #include <vector>
 #include <string>
+#include <random>
+#include <numeric>
 #include <iostream>
+#include <algorithm>
 
 #include <opencv2/calib3d.hpp>
 #include <opencv2/features2d.hpp>
@@ -41,7 +44,7 @@ class MotionEstimator
         /** \brief Class constructor.
          *  \param[in] motion_estimation_type Desired motion type name.
          */
-        MotionEstimator(std::string& motion_estimation_type);
+        MotionEstimator(const std::string& motion_estimation_type);
 
 
         /** \brief Builds a projection matrix from a stereo camera from its
@@ -102,9 +105,9 @@ class MotionEstimator
          *      3. The median of the set of slopes is computed.
          *      4. Finally, the keypoints that generate the lines with slopes most similar to the
          *         median are retained.
+         *  \param[in] max_kpts Maximum number of keypoints per bucket.
          *  \param[in] img_width Number of columns in the image.
          *  \param[in] img_height Number of rows in the image.
-         *  \param[in] max_kpts Maximum number of keypoints per bucket.
          *  \param[in] c_l_kpts Current left keypoints.
          *  \param[in] c_r_kpts Current right keypoints.
          *  \param[in] p_l_kpts Previous left keypoints.
@@ -118,9 +121,9 @@ class MotionEstimator
          *  \param[out] f_c_l_cam_pts Bucketed current 3D points relative to left camera.
          *  \param[out] f_p_l_cam_pts Bucketed previous 3D points relative to left camera.
          */
-        std::vector<std::vector<std::pair<int, cv::KeyPoint>>> bucketKeypoints(const float img_width,
+        std::vector<std::vector<std::pair<int, cv::KeyPoint>>> bucketKeypoints(const size_t max_kpts,
+                                                                               const float img_width,
                                                                                const float img_height,
-                                                                               const unsigned int max_kpts,
                                                                                const std::vector<cv::KeyPoint>& c_l_kpts,
                                                                                const std::vector<cv::KeyPoint>& c_r_kpts,
                                                                                const std::vector<cv::KeyPoint>& p_l_kpts,
@@ -135,9 +138,8 @@ class MotionEstimator
                                                                                std::vector<cv::Point3f>& f_p_l_cam_pts);
 
 
-        /** \brief Estimates motion between two stereo images using keypoints and
-         *  3D-to-2D method. The user can choose between the following methods to 
-         *  estimate the movement:
+        /** \brief Estimates motion between two stereo images using keypoints and 3D-to-2D method.
+         *  The user can choose between the following methods to estimate the movement:
          *      - p3p.
          *      - ap3p.
          *      - epnp.
@@ -280,6 +282,153 @@ class MotionEstimator
                             std::vector<cv::Point3f>& f_scene_pts_0,
                             std::vector<cv::Point3f>& f_scene_pts_1);
 
+
+        /** \brief Estimates motion between two stereo images using keypoints and 3D-to-2D method.
+         *  The user can choose between the following methods to estimate the movement:
+         *      - p3p.
+         *      - ap3p.
+         *      - epnp.
+         *      - ippe.
+         *      - dual.
+         *  To be robust against outliers, the motion estimation is wrapped in a RANSAC scheme.
+         *  Then the motion estimated is refined.
+         *  \param[in] l_proj_mat Left projection matrix.
+         *  \param[in] r_proj_mat Right projection matrix.
+         *  \param[in] l_kpts_0 Left keypoints of the first stereo image. In consecutive images:
+         *  current left keypoints. In loop closing images: query left keypoints.
+         *  \param[in] r_kpts_0 Right keypoints of the first stereo image. In consecutive images:
+         *  current right keypoints. In loop closing images: query right keypoints. 
+         *  \param[in] l_kpts_1 Left keypoints of the second stereo image. In consecutive images:
+         *  previous left keypoints. In loop closing images: candidate left keypoints.
+         *  \param[in] r_kpts_1 Right keypoints of the second stereo image. In consecutive images: 
+         *  previous right keypoints. In loop closing images: candidate right keypoints.
+         *  \param[in] scene_pts_0 3D points of the first stereo image. In consecutive images: 
+         *  current 3D points relative to left camera. In loop closing images: query 3D points
+         *  relative to left camera.
+         *  \param[in] scene_pts_1 3D points of the second stereo image. In consecutive images: 
+         *  previous 3D points relative to left camera. In loop closing images: candidate 3D
+         *  points relative to world.
+         *  \param[out] r_vec Estimated rotation vector.
+         *  \param[out] t_vec Estimated translation matrix.
+         *  \param[out] f_l_kpts_0 Filtered left keypoints of the first stereo image. In consecutive
+         *  images: current left keypoints filtered out. In loop closing images: query left
+         *  keypoints filtered out.
+         *  \param[out] f_r_kpts_0 Filtered right keypoints of the first stereo image. In consecutive
+         *  images: current right keypoints filtered out. In loop closing images: query right
+         *  keypoints filtered out.
+         *  \param[out] f_l_kpts_1 Filtered left keypoints of the second stereo image. In consecutive
+         *  images: previous left keypoints filtered out. In loop closing images: candidate left
+         *  keypoints filtered out.
+         *  \param[out] f_r_kpts_1 Filtered right keypoints of the second stereo image. In consecutive
+         *  images: previous right keypoints filtered out. In loop closing images: candidate right
+         *  keypoints filtered out.
+         *  \param[out] f_scene_pts_0 Filtered 3D points of the first stereo image. In consecutive images:
+         *  current 3D points relative to left camera filtered out. In loop closing images: query
+         *  3D points relative to left camera filtered out.
+         *  \param[out] f_scene_pts_1 Filtered 3D points of the second stereo image. In consecutive images:
+         *  previous 3D points relative to left camera filtered out. In loop closing images: candidate
+         *  3D points relative to world filtered out.
+         */
+        void estimateRefinedMotion(const cv::Mat& l_proj_mat,
+                                   const cv::Mat& r_proj_mat,
+                                   const std::vector<cv::KeyPoint>& l_kpts_0,
+                                   const std::vector<cv::KeyPoint>& r_kpts_0,
+                                   const std::vector<cv::KeyPoint>& l_kpts_1,
+                                   const std::vector<cv::KeyPoint>& r_kpts_1,
+                                   const std::vector<cv::Point3f>& scene_pts_0,
+                                   const std::vector<cv::Point3f>& scene_pts_1,
+                                   cv::Mat& r_vec,
+                                   cv::Mat& t_vec,
+                                   std::vector<cv::KeyPoint>& r_l_kpts_0,
+                                   std::vector<cv::KeyPoint>& r_r_kpts_0,
+                                   std::vector<cv::KeyPoint>& r_l_kpts_1,
+                                   std::vector<cv::KeyPoint>& r_r_kpts_1,
+                                   std::vector<cv::Point3f>& r_scene_pts_0,
+                                   std::vector<cv::Point3f>& r_scene_pts_1);
+
+
+        /** \brief Estimate motion between two sets of keypoints using 3D-to-2D method. These sets 
+         *  must come from at least two different stereo pairs. These sets may consist of different
+         *  keypoint clusters which in turn may belong to different stereo images. If the sets are 
+         *  divided into clusters, the cluster_ids_0 and cluster_ids_1 variables must be filled
+         *  appropriately. If the sets are not divided into clusters, the cluster_ids_0 and 
+         *  cluster_ids_1 variables may be empty. The user can choose between the following methods
+         *  to estimate the movement:
+         *      - p3p.
+         *      - ap3p.
+         *      - epnp.
+         *      - ippe.
+         *      - dual.
+         *  To be robust against outliers, the motion estimation is wrapped in a RANSAC scheme.
+         *  Then the motion estimated is refined.
+         *  \param[in] l_proj_mat Left projection matrix.
+         *  \param[in] r_proj_mat Right projection matrix.
+         *  \param[in] cluster_ids_0 Subset identifiers of the first set. In consecutive images:
+         *   current identifiers. In loop closing images: query identifiers.
+         *  \param[in] cluster_ids_1 Subset identifiers of the second set. In consecutive images: 
+         *  previous identifiers. In loop closing images: candidate identifiers.
+         *  \param[in] l_kpts_0 Left keypoints of the first set In consecutive images: current
+         *  left keypoints. In loop closing images: query left keypoints.
+         *  \param[in] r_kpts_0 Right keypoints of the first set. In consecutive images: current 
+         *  right keypoints. In loop closing images: query right keypoints.
+         *  \param[in] l_kpts_1 Left keypoints of the second set. In consecutive images: previous
+         *  left keypoints. In loop closing images: candidate left keypoints.
+         *  \param[in] r_kpts_1 Right keypoints of the second set. In consecutive images: previous
+         *  right keypoints. In loop closing images: candidate right keypoints.
+         *  \param[in] scene_pts_0 3D points of the first set. In consecutive images: current
+         *  3D points relative to left camera. In loop closing images: query 3D points
+         *  relative to left camera.
+         *  \param[in] scene_pts_1 3D points of the second set. In consecutive images: previous
+         *  3D points relative to left camera. In loop closing images: candidate 3D points
+         *  relative to world.
+         *  \param[out] r_vec Estimated rotation vector.
+         *  \param[out] t_vec Estimated translation matrix.
+         *  \param[out] f_cluster_ids_0 Filtered subset identifiers of the first set. In consecutive
+         *  images: current identifiers filtered out. In loop closing images: query identifiers
+         *  filtered out.
+         *  \param[out] f_cluster_ids_1 Filtered subset identifiers of the second set In consecutive
+         *  images: previous identifiers filtered out. In loop closing images: candidate identifiers 
+         *  filtered out.
+         *  \param[out] f_l_kpts_0 Filtered left keypoints of the first set. In consecutive images: 
+         *  current left keypoints filtered out. In loop closing images: query left keypoints
+         *  filtered out.
+         *  \param[out] f_r_kpts_0 Filtered right keypoints of the first set. In consecutive images: 
+         *  current right keypoints filtered out. In loop closing images: query right keypoints
+         *  filtered out.
+         *  \param[out] f_l_kpts_1 Filtered left keypoints of the second set. In consecutive images:
+         *  previous left keypoints filtered out. In loop closing images: candidate left keypoints
+         *  filtered out.
+         *  \param[out] f_r_kpts_1 Filtered right keypoints of the second set. In consecutive images:
+         *  previous right keypoints filtered out. In loop closing images: candidate right keypoints
+         *  filtered out.
+         *  \param[out] f_scene_pts_0 Filtered 3D points of the first set. In consecutive images: current
+         *  3D points relative to left camera filtered out. In loop closing images: query 3D points 
+         *  relative to left camera filtered out.
+         *  \param[out] f_scene_pts_1 Filtered 3D points of the second set. In consecutive images: previous
+         *  3D points relative to left camera filtered out. In loop closing images: candidate 3D points 
+         *  relative to world filtered out.
+         */
+        void estimateRefinedMotion(const cv::Mat& l_proj_mat,
+                                   const cv::Mat& r_proj_mat,
+                                   const std::vector<int>& cluster_ids_0,
+                                   const std::vector<int>& cluster_ids_1,
+                                   const std::vector<cv::KeyPoint>& l_kpts_0,
+                                   const std::vector<cv::KeyPoint>& r_kpts_0,
+                                   const std::vector<cv::KeyPoint>& l_kpts_1,
+                                   const std::vector<cv::KeyPoint>& r_kpts_1,
+                                   const std::vector<cv::Point3f>& scene_pts_0,
+                                   const std::vector<cv::Point3f>& scene_pts_1,
+                                   cv::Mat& r_vec,
+                                   cv::Mat& t_vec,
+                                   std::vector<int>& f_cluster_ids_0,
+                                   std::vector<int>& f_cluster_ids_1,
+                                   std::vector<cv::KeyPoint>& f_l_kpts_0,
+                                   std::vector<cv::KeyPoint>& f_r_kpts_0,
+                                   std::vector<cv::KeyPoint>& f_l_kpts_1,
+                                   std::vector<cv::KeyPoint>& f_r_kpts_1,
+                                   std::vector<cv::Point3f>& f_scene_pts_0,
+                                   std::vector<cv::Point3f>& f_scene_pts_1);
+
     
     private:
 
@@ -304,7 +453,7 @@ class MotionEstimator
          *  \param[in] motion_type Desired motion estimation type name.
          *  @return a MotionEstimator::Type value.
          */
-        MotionEstimator::Type selectMotionEstimationType(std::string& motion_estimation_type);
+        MotionEstimator::Type selectMotionEstimationType(const std::string& motion_estimation_type);
 
 
         /** \brief By minimising the sum of the reprojection errors, obtain the transform
@@ -341,8 +490,8 @@ class MotionEstimator
          *  \param[in] n_rand_idxs Number of random indices to be obtained (m).
          *  @return A vector of m positions with random and uniques indices.
          */
-        std::vector<int> getRandomIndices(unsigned int size, 
-                                          unsigned int n_rand_idxs);
+        std::vector<int> getRandomIndices(const int size, 
+                                          const int n_rand_idxs);
 
 
         /** \brief Updates the transform values.
@@ -437,7 +586,7 @@ class MotionEstimator
          *  \param[out] pre_pts Predicted 2D points.
          *  \param[out] res_pts Residuals (res_pts = obs_pts - pre_pts).
          */ 
-        std::vector<int> getInliers(double reproj_error,
+        std::vector<int> getInliers(const double reproj_error,
                                     const cv::Mat& l_proj_mat,
                                     const cv::Mat& r_proj_mat,
                                     const std::vector<cv::Point2f>& l_pts_0,

@@ -26,8 +26,8 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include "slamon/Keypoint.h"
+#include "slamon/Keyframe.h"
 #include "slamon/Performance.h"
-#include "slamon/StereoImageAttributes.h"
 
 
 class Publisher
@@ -44,13 +44,28 @@ class Publisher
          */
         struct RunTimes
         {
-            double run_time_0 = 0.0;     //!> Time needed for VO: Feature extraction, MM: From Frame msg to Frame object or LC: Process current cluster.
-            double run_time_1 = 0.0;     //!> Time needed for VO: Stereo matching, MM: Need new keyframe? or LC: Search for candidates to close loops by proximity.
-            double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
-            double run_time_3 = 0.0;     //!> Time needed for VO: Temporal matching, MM: Add edges to graph or LC: Read cluster candidates.
-            double run_time_4 = 0.0;     //!> Time needed for VO: Bucketing, MM: Write graph to disk and publish updated robot pose or LC: Loop detection.
-            double run_time_5 = 0.0;     //!> Time needed for VO: Motion estimation, MM: Nothing or LC: Close loop.
+            double run_time_0 = 0.0;     //!> Time needed for VO: Feature extraction, MM: Pose update or LC: Process current cluster.
+            double run_time_1 = 0.0;     //!> Time needed for VO: Stereo matching, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by proximity.
+            double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MM: Add co-framed edges to graph or LC: Search for candidates to close loops by hash.
+            double run_time_3 = 0.0;     //!> Time needed for VO: Clustering, MM: Add inter-frames edges to graph or LC: Read cluster candidates.
+            double run_time_4 = 0.0;     //!> Time needed for VO: Temporal matching, MM: Publish or LC: Loop detection.
+            double run_time_5 = 0.0;     //!> Time needed for VO: Bucketing, MM: Data write or LC: Close loop.
+            double run_time_6 = 0.0;     //!> Time needed for VO: Motion estimation, MM: Nothing or LC: Nothing.
+            double run_time_7 = 0.0;     //!> Time needed for VO: Keyframe insertion decision, MM: Nothing or LC: Nothing.
             double total_run_time = 0.0; //!> Time needed for each thread to perform one iteration.
+
+            void reset()
+            {
+                run_time_0 = 0.0;
+                run_time_1 = 0.0;
+                run_time_2 = 0.0;
+                run_time_3 = 0.0;
+                run_time_4 = 0.0;
+                run_time_5 = 0.0;
+                run_time_6 = 0.0;
+                run_time_7 = 0.0;
+                total_run_time = 0.0;
+            }
         };
 
 
@@ -195,6 +210,18 @@ class Publisher
          *  \param[in] l_img Left image.
          *  \param[in] stamp The ROS timestamp.
          *  \param[in] publisher The ROS publisher.
+         *  \param[in] l_kpts Clustered left keypoints.
+         */
+        void publishImgKeypointsClustering(const cv::Mat& l_img,
+                                           const ros::Time& stamp,
+                                           const ros::Publisher& publisher,
+                                           const std::vector<std::vector<cv::KeyPoint>>& l_kpts);
+
+
+        /** \brief Draws and publishes keypoints clustering.
+         *  \param[in] l_img Left image.
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
          *  \param[in] l_kpts Left keypoints.
          *  \param[in] clusters Keypoints clustering.
          */
@@ -203,6 +230,33 @@ class Publisher
                                            const ros::Publisher& publisher,
                                            const std::vector<cv::KeyPoint>& l_kpts,
                                            const std::vector<std::vector<int>>& clusters);
+
+
+        /** \brief Draws and publishes keypoints clustering.
+         *  \param[in] l_img Left image.
+         *  \param[in] stamp The ROS timestamp.
+         *  \param[in] cluster_num Number of clusters.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] cluster_ids Cluster identifiers.
+         *  \param[in] l_kpts Left keypoints.
+         */
+        void publishImgKeypointsClustering(const cv::Mat& l_img,
+                                           const ros::Time& stamp,
+                                           const size_t cluster_num,
+                                           const ros::Publisher& publisher,
+                                           const std::vector<int>& cluster_ids,
+                                           const std::vector<cv::KeyPoint>& l_kpts);
+
+
+        /** \brief Draws and writes on disk keypoints clustering.
+         *  \param[in] l_img Left image.
+         *  \param[in] o_path Image output path. The name of the final
+         *  file must be included.
+         *  \param[in] l_kpts Clustered left keypoints.
+         */
+        void writeImgKeypointsClustering(const cv::Mat& l_img,
+                                         const std::string& o_path,
+                                         const std::vector<std::vector<cv::KeyPoint>>& l_kpts);
 
 
         /** \brief Draws and writes on disk keypoints clustering.
@@ -216,6 +270,21 @@ class Publisher
                                          const std::string& o_path,
                                          const std::vector<cv::KeyPoint>& l_kpts,
                                          const std::vector<std::vector<int>>& clusters);
+
+
+        /** \brief Draws and writes on disk keypoints clustering.
+         *  \param[in] l_img Left image.
+         *  \param[in] cluster_num Number of clusters.
+         *  \param[in] o_path Image output path. The name of the final
+         *  file must be included.
+         *  \param[in] cluster_ids Cluster identifiers.
+         *  \param[in] l_kpts Left keypoints.
+         */
+        void writeImgKeypointsClustering(const cv::Mat& l_img,
+                                         const size_t cluster_num,
+                                         const std::string& o_path,
+                                         const std::vector<int>& cluster_ids,
+                                         const std::vector<cv::KeyPoint>& l_kpts);
 
 
         /** \brief Draws and publishes a loop closure image with all the correspondences
@@ -296,12 +365,14 @@ class Publisher
         /** \brief Publishes current robot pose.
          *  \param[in] c_stamp Current pose timestamp.
          *  \param[in] c_pose The current pose to be published.
+         *  \param[in] bad_pose_covariance Has the module been lost?
          *  \param[in] publisher The ROS publisher.
          *  \param[in] reference_frame_id The ID of the frame to which the pose
          *  is relative.
          */
         void publishPose(const ros::Time& c_stamp,
                          const tf::Transform& c_pose,
+                         const bool bad_pose_covariance,
                          const ros::Publisher& publisher,
                          const std::string& reference_frame_id);
 
@@ -312,6 +383,8 @@ class Publisher
          *  \param[in] c_pose The current pose to be published.
          *  \param[in] c_motion The movement between current and previous frames.
          *  Used to calculate velocity.
+         *  \param[in] bad_pose_covariance Has the module been lost?
+         *  \param[in] bad_twist_covariance Has the module been lost?
          *  \param[in] publisher The ROS publisher.
          *  \param[in] reference_frame_id The ID of the frame to which the pose and 
          *  velocity are relative.
@@ -320,6 +393,8 @@ class Publisher
                                     const ros::Time& p_stamp,
                                     const tf::Transform& c_pose,
                                     const tf::Transform& c_motion,
+                                    const bool bad_pose_covariance,
+                                    const bool bad_twist_covariance,
                                     const ros::Publisher& publisher,
                                     const std::string& reference_frame_id);
 
@@ -336,7 +411,7 @@ class Publisher
         void publishPerformance(const ros::Time& stamp,
                                 const int successes_num,
                                 const RunTimes& run_times,
-                                const ros::Publisher& publisher);      
+                                const ros::Publisher& publisher);
 
 
         /** \brief Publishes pointcloud.
@@ -344,26 +419,67 @@ class Publisher
          *  \param[in] cloud_msg ROS message containing the pointcloud.
          */
         void publishCloud(const ros::Publisher& publisher,
-                          const sensor_msgs::PointCloud2ConstPtr& cloud_msg);          
+                          const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
 
 
-        /** \brief Publishes relevant information from a stereo pair of images.
+        /** \brief Publishes a keyframe in ROS.
+         *  \param[in] keyframe_id Keyframe identifier.
+         *  \param[in] l_descs Keyframe left descriptors.
+         *  \param[in] r_descs Keyframe right descriptors.
          *  \param[in] stamp Current image ROS timestamp.
-         *  \param[in] l_descs The left image keypoints descriptors.
-         *  \param[in] r_descs The right image keypoints descriptors.
-         *  \param[in] l_kpts The left image keypoints.
-         *  \param[in] r_kpts The right image keypoints.
-         *  \param[in] l_cam_pts 3D points of the scene obtained from the stereo data
-         *  and relative to left camera.
          *  \param[in] publisher The ROS publisher.
-        */
-        void publishStereoImageAttributes(const cv::Mat& l_descs,
-                                          const cv::Mat& r_descs,
-                                          const ros::Time& stamp,
-                                          const ros::Publisher& publisher,
-                                          const std::vector<cv::KeyPoint>& l_kpts,
-                                          const std::vector<cv::KeyPoint>& r_kpts,
-                                          const std::vector<cv::Point3f>& l_cam_pts);
+         *  \param[in] inliers Number of inliers per cluster pair.
+         *  \param[in] cluster_ids Keyframe cluster ids.
+         *  \param[in] l_kpts Keyframe left keypoints.
+         *  \param[in] r_kpts Keyframe right keypoints.
+         *  \param[in] l_cam_pts Keyframe left camera points.
+         *  \param[in] cluster_centroids Cluster centroids.
+         *  \param[in] cluster_pairs Cluster pairs.
+         */
+        void publishKeyframe(const int keyframe_id,
+                             const cv::Mat& l_descs,
+                             const cv::Mat& r_descs,
+                             const ros::Time& stamp,
+                             const ros::Publisher& publisher,
+                             const std::vector<int>& inliers,
+                             const std::vector<int>& cluster_ids,
+                             const std::vector<cv::KeyPoint>& l_kpts,
+                             const std::vector<cv::KeyPoint>& r_kpts,
+                             const std::vector<cv::Point3f>& l_cam_pts,
+                             const std::vector<cv::Point3f>& cluster_centroids,
+                             const std::vector<std::pair<int, int>>& cluster_pairs);
+
+
+        /** \brief Publishes a keyframe in ROS.
+         *  \param[in] keyframe_id Keyframe identifier.
+         *  \param[in] l_img Keyframe left image.
+         *  \param[in] r_img Keyframe right image.
+         *  \param[in] l_descs Keyframe left descriptors.
+         *  \param[in] r_descs Keyframe right descriptors.
+         *  \param[in] stamp Current image ROS timestamp.
+         *  \param[in] publisher The ROS publisher.
+         *  \param[in] inliers Number of inliers per cluster pair.
+         *  \param[in] cluster_ids Keyframe cluster ids.
+         *  \param[in] l_kpts Keyframe left keypoints.
+         *  \param[in] r_kpts Keyframe right keypoints.
+         *  \param[in] l_cam_pts Keyframe left camera points.
+         *  \param[in] cluster_centroids Cluster centroids.
+         *  \param[in] cluster_pairs Cluster pairs.
+         */
+        void publishKeyframe(const int keyframe_id,
+                             const cv::Mat& l_img,
+                             const cv::Mat& r_img,
+                             const cv::Mat& l_descs,
+                             const cv::Mat& r_descs,
+                             const ros::Time& stamp,
+                             const ros::Publisher& publisher,
+                             const std::vector<int>& inliers,
+                             const std::vector<int>& cluster_ids,
+                             const std::vector<cv::KeyPoint>& l_kpts,
+                             const std::vector<cv::KeyPoint>& r_kpts,
+                             const std::vector<cv::Point3f>& l_cam_pts,
+                             const std::vector<cv::Point3f>& cluster_centroids,
+                             const std::vector<std::pair<int, int>>& cluster_pairs);
 
 
         /** \brief Publishes counters to ROS.
@@ -388,12 +504,15 @@ class Publisher
         /** \brief Writes a list of edges.
          *  \param[in] o_path File output path. The name of the final 
          *  file must be included.
+         *  \param[in] weights A simple scalar list reflecting the total 
+         *  confidence in all dimensions of each graph edge.
          *  \param[in] edges_ids A list of the identifiers of the keyframe
          *  pairs that close a loop.
          *  \param[in] edges_poses A list of the poses of the keyframe pairs
          *  that close a loop.
          */
         void writeLoopClosureEdges(const std::string& o_path,
+                                   const std::vector<double>& weights,
                                    const std::vector<std::pair<int, int>> edges_ids,
                                    const std::vector<std::pair<tf::Transform, tf::Transform>>& edges_poses);
 
@@ -497,12 +616,32 @@ class Publisher
 
         /** \brief Draws keypoints clustering.
          *  \param[in] img The image where draw the keypoints clusters.
+         *  \param[in] l_kpts Clustered left keypoints.
+         */
+        cv::Mat drawImgKeypointsClustering(const cv::Mat& img,
+                                           const std::vector<std::vector<cv::KeyPoint>>& l_kpts);
+
+
+        /** \brief Draws keypoints clustering.
+         *  \param[in] img The image where draw the keypoints clusters.
          *  \param[in] kpts The keypoints.
          *  \param[in] clusters Keypoints clustering.
          */
         cv::Mat drawImgKeypointsClustering(const cv::Mat& img,
                                            const std::vector<cv::KeyPoint>& kpts,
                                            const std::vector<std::vector<int>>& clusters);
+
+
+        /** \brief Draws keypoints clustering.
+         *  \param[in] img The image where draw the keypoints clusters.
+         *  \param[in] cluster_num Number of clusters.
+         *  \param[in] cluster_ids Cluster identifiers.
+         *  \param[in] kpts The keypoints.
+         */
+        cv::Mat drawImgKeypointsClustering(const cv::Mat& img,
+                                           const size_t cluster_num,
+                                           const std::vector<int>& cluster_ids,
+                                           const std::vector<cv::KeyPoint>& kpts);
 
 
         /** \brief Draws a loop closure image with all the correspondences
@@ -542,12 +681,40 @@ class Publisher
         /** \brief Builds nav_msgs::Odometry msg with current pose.
          *  \param[in] c_stamp Current pose timestamp.
          *  \param[in] c_pose The current pose to be published.
+         *  \param[in] bad_pose_covariance Has the module been lost?
          *  \param[in] reference_frame_id The ID of the frame to which 
          *  the current pose is relative.
          */
         nav_msgs::Odometry buildPoseMsg(const ros::Time& c_stamp,
                                         const tf::Transform& c_pose,
+                                        const bool bad_pose_covariance,
                                         const std::string& reference_frame_id);
+
+
+        /** \brief Builds a slamon::Keyframe.
+         *  \param[in] keyframe_id Keyframe identifier.
+         *  \param[in] l_descs Keyframe left descriptors.
+         *  \param[in] r_descs Keyframe right descriptors.
+         *  \param[in] stamp Current image ROS timestamp.
+         *  \param[in] inliers Number of inliers per cluster pair.
+         *  \param[in] cluster_ids Keyframe cluster ids.
+         *  \param[in] l_kpts Keyframe left keypoints.
+         *  \param[in] r_kpts Keyframe right keypoints.
+         *  \param[in] l_cam_pts Keyframe left camera points.
+         *  \param[in] cluster_centroids Cluster centroids.
+         *  \param[in] cluster_pairs Cluster pairs.
+         */
+        slamon::Keyframe buildKeyframe(const int keyframe_id,
+                                       const cv::Mat& l_descs,
+                                       const cv::Mat& r_descs,
+                                       const ros::Time& stamp,
+                                       const std::vector<int>& inliers,
+                                       const std::vector<int>& cluster_ids,
+                                       const std::vector<cv::KeyPoint>& l_kpts,
+                                       const std::vector<cv::KeyPoint>& r_kpts,
+                                       const std::vector<cv::Point3f>& l_cam_pts,
+                                       const std::vector<cv::Point3f>& cluster_centroids,
+                                       const std::vector<std::pair<int, int>>& cluster_pairs);
 
 
         /** \brief Publishes images.
@@ -558,6 +725,34 @@ class Publisher
         void publishImg(const cv::Mat& img,
                         const ros::Time& stamp,
                         const ros::Publisher& publisher);
+
+
+        // Attributes:
+
+        // Some arbitrary values.
+        const boost::array<double, 36> GOOD_POSE_COVARIANCE_ = 
+        { { 0.1,     0,     0,     0,     0,     0,
+              0,   0.1,     0,     0,     0,     0,
+              0,     0,   0.1,     0,     0,     0,
+              0,     0,     0,  0.17,     0,     0,
+              0,     0,     0,     0,  0.17,     0,
+              0,     0,     0,     0,     0,  0.17 } };
+
+        const boost::array<double, 36> GOOD_TWIST_COVARIANCE_ = 
+        { { 0.002,     0,     0,     0,     0,     0,
+                0, 0.002,     0,     0,     0,     0,
+                0,     0,  0.05,     0,     0,     0,
+                0,     0,     0,  0.09,     0,     0,
+                0,     0,     0,     0,  0.09,     0,
+                0,     0,     0,     0,     0,  0.09 } };
+
+        const boost::array<double, 36> BAD_COVARIANCE_ = 
+        { { 9999,      0,     0,     0,     0,     0,
+               0,   9999,     0,     0,     0,     0,
+               0,      0,  9999,     0,     0,     0,
+               0,      0,     0,  9999,     0,     0,
+               0,      0,     0,     0,  9999,     0,
+               0,      0,     0,     0,     0,  9999 } };
 };
 
 

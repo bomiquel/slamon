@@ -6,11 +6,9 @@ slamon:
   lc_candidates: 3
   lc_discard_window: 20
   lc_neighbors: 3
-  lowe_ratio: 0.8
   matching_type: ratio_matching
   max_kpts_bucket: 3
   max_kpts_retained: 1500
-  min_dist_keyframe: 0.5
   min_inliers: 40
   min_lc_inliers: 100
   motion_estimation_type: ap3p

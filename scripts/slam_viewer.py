@@ -162,35 +162,36 @@ def drawEdges():
 
     # Read the data
     try:
-      data = np.loadtxt(loop_closing_edges_data_path, delimiter = ",", skiprows = 1, usecols = (0, 1, 2, 3, 4, 9, 10, 11))
+      data = np.loadtxt(loop_closing_edges_data_path, delimiter = ",", skiprows = 1, usecols = (0, 1, 2, 3, 4, 5, 10, 11, 12))
     except Exception as e:
       print(f"The following exception was detected while trying to load the SLAM algorithm edges: {e} ")
       return
 
-    # Sanity check
+    # Sanity check.
     if (len(data.shape) == 1):
       edges_shown = True
       return
+    
+    # Sanity check 2.
+    if (data.size == 0):
+      edges_shown = True
+      return
 
-    valid_color = False
+    # Confidence column.
+    confidences = data[:,2]
+    max_confidence = max(confidences)
+    min_confidence = min(confidences)
 
-    # # Inliers column
-    # inliers = data[:,2]
-    # max_inliers = max(inliers)
-    # min_inliers = min(inliers)
+    # Check for valid color mapping.
+    valid_color = (max_confidence - min_confidence != 0)
 
-    # valid_color = True
-    # if (min_inliers - max_inliers == 0):
-    #   valid_color = False
-
-    # if (valid_color):
-    #   # red color
-    #   m_red = (255) / (min_inliers - max_inliers)
-    #   n_red = -m_red * max_inliers
-
-    #   # blue color
-    #   m_blue = (255) / (max_inliers - min_inliers)
-    #   n_blue = -m_blue * min_inliers
+    # Pink base value for green and blue.
+    pink_gb_start = 204
+    
+    # Compute mapping for green and blue if valid.
+    if valid_color:
+      m_gb = -pink_gb_start / (max_confidence - min_confidence)
+      n_gb = pink_gb_start - m_gb * min_confidence
 
     # Pre-process plot if necessary.
     if (len(data.shape) == 1):
@@ -199,23 +200,16 @@ def drawEdges():
     # Plot.
     ax_edges = []
     for i in range(len(data)):
-      # Get the color depending on the inlier value
       if (valid_color):
-        # red = hex(int(m_red * data[i,2] + n_red))
-        # blue = hex(int(m_blue * data[i,2] + n_blue))
-        # red = red[2:]
-        # blue = blue[2:]
-        # if (len(red) == 1):
-        #   red += '0'
-        # if (len(blue) == 1):
-        #   blue += '0'
-        # color = '#' + red + '00' + blue
-        color = "green"
+        gb_value = int(m_gb * data[i, 2] + n_gb)
+        gb_value = max(0, min(pink_gb_start, gb_value))
+        gb_hex = f'{gb_value:02x}'
+        color = f'#ff{gb_hex}{gb_hex}'
       else:
-        color = "red"
+        color = "#ff0000"
       vect = []
-      vect.append([data[i, 2], data[i, 3], data[i, 4]])
-      vect.append([data[i, 5], data[i, 6], data[i, 7]])
+      vect.append([data[i, 3], data[i, 4], data[i, 5]])
+      vect.append([data[i, 6], data[i, 7], data[i, 8]])
       vect =  np.array(vect)
       if (plot_dim == 3):
         if i == 0:

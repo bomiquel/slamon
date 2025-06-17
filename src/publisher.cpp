@@ -132,6 +132,19 @@ void Publisher::writeImgCircularMatches(const cv::Mat& c_l_img,
 void Publisher::publishImgKeypointsClustering(const cv::Mat& l_img,
                                               const ros::Time& stamp,
                                               const ros::Publisher& publisher,
+                                              const std::vector<std::vector<cv::KeyPoint>>& l_kpts)
+{
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawImgKeypointsClustering(l_img, l_kpts);
+
+    // Publishes image.
+    publishImg(o_img, stamp, publisher);
+}
+
+
+void Publisher::publishImgKeypointsClustering(const cv::Mat& l_img,
+                                              const ros::Time& stamp,
+                                              const ros::Publisher& publisher,
                                               const std::vector<cv::KeyPoint>& l_kpts,
                                               const std::vector<std::vector<int>>& clusters)
 {
@@ -143,6 +156,33 @@ void Publisher::publishImgKeypointsClustering(const cv::Mat& l_img,
 }
 
 
+void Publisher::publishImgKeypointsClustering(const cv::Mat& l_img,
+                                              const ros::Time& stamp,
+                                              const size_t cluster_num,
+                                              const ros::Publisher& publisher,
+                                              const std::vector<int>& cluster_ids,
+                                              const std::vector<cv::KeyPoint>& l_kpts)
+{
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawImgKeypointsClustering(l_img, cluster_num, cluster_ids, l_kpts);
+
+    // Publishes image.
+    publishImg(o_img, stamp, publisher);
+}
+
+
+void Publisher::writeImgKeypointsClustering(const cv::Mat& l_img,
+                                            const std::string& o_path,
+                                            const std::vector<std::vector<cv::KeyPoint>>& l_kpts)
+{
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawImgKeypointsClustering(l_img, l_kpts);
+
+    // Writes image.
+    cv::imwrite(o_path + ".png", o_img);
+}
+
+
 void Publisher::writeImgKeypointsClustering(const cv::Mat& l_img,
                                             const std::string& o_path,
                                             const std::vector<cv::KeyPoint>& l_kpts,
@@ -150,6 +190,20 @@ void Publisher::writeImgKeypointsClustering(const cv::Mat& l_img,
 {
     // Draws keypoints clustering.
     cv::Mat o_img = drawImgKeypointsClustering(l_img, l_kpts, clusters);
+
+    // Writes image.
+    cv::imwrite(o_path + ".png", o_img);
+}
+
+
+void Publisher::writeImgKeypointsClustering(const cv::Mat& l_img,
+                                            const size_t cluster_num,
+                                            const std::string& o_path,
+                                            const std::vector<int>& cluster_ids,
+                                            const std::vector<cv::KeyPoint>& l_kpts)
+{
+    // Draws keypoints clustering.
+    cv::Mat o_img = drawImgKeypointsClustering(l_img, cluster_num, cluster_ids, l_kpts);
 
     // Writes image.
     cv::imwrite(o_path + ".png", o_img);
@@ -225,10 +279,14 @@ void Publisher::writeImgLoopClosure(const std::string& o_path,
 
 void Publisher::publishPose(const ros::Time& c_stamp,
                             const tf::Transform& c_pose,
+                            const bool bad_pose_covariance,
                             const ros::Publisher& publisher,
                             const std::string& reference_frame_id)
 {
-    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, c_pose, reference_frame_id);
+    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, 
+                                          c_pose, 
+                                          bad_pose_covariance, 
+                                          reference_frame_id);
 
     // Publish pose
     publisher.publish(msg);
@@ -239,12 +297,17 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
                                        const ros::Time& p_stamp,
                                        const tf::Transform& c_pose,
                                        const tf::Transform& c_motion,
+                                       const bool bad_pose_covariance,
+                                       const bool bad_twist_covariance,
                                        const ros::Publisher& publisher,
                                        const std::string& reference_frame_id)
 {
-    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, c_pose, reference_frame_id);
+    nav_msgs::Odometry msg = buildPoseMsg(c_stamp, 
+                                          c_pose,
+                                          bad_pose_covariance,
+                                          reference_frame_id);
 
-    // Set linear velocity
+    // Set velocity
     double delta_t = (c_stamp - p_stamp).toSec();
     if (delta_t == 0.0)
     {
@@ -267,6 +330,8 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
         msg.twist.twist.angular.x = angular_velocity.x();
         msg.twist.twist.angular.y = angular_velocity.y();
         msg.twist.twist.angular.z = angular_velocity.z();
+        if (!bad_twist_covariance)
+            msg.twist.covariance = GOOD_TWIST_COVARIANCE_;
     }
 
     // Publish pose and velocity
@@ -287,12 +352,14 @@ void Publisher::publishPerformance(const ros::Time& stamp,
 
     // Sets payload.
     msg.successes_num = successes_num;
-    msg.run_time_0 = run_times.run_time_0; // Time needed for VO: Feature extraction, MM: From Frame msg to Frame object or LC: Process current cluster.
-    msg.run_time_1 = run_times.run_time_1; // Time needed for VO: Stereo matching, MM: Need new keyframe? or LC: Search for candidates to close loops by proximity.
-    msg.run_time_2 = run_times.run_time_2; // Time needed for VO: Triangulation, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by hash.
-    msg.run_time_3 = run_times.run_time_3; // Time needed for VO: temporal matching, MM: Add edges to graph or LC: Read cluster candidates.
-    msg.run_time_4 = run_times.run_time_4; // Time needed for VO: Bucketing, MM: Write graph to disk and publish updated robot pose or LC: Loop detection.
-    msg.run_time_5 = run_times.run_time_5; // Time needed for VO: Motion estimation, MM: Nothing or LC: Close loop.
+    msg.run_time_0 = run_times.run_time_0; // Time needed for VO: Feature extraction, MM: Pose update or LC: Process current cluster.
+    msg.run_time_1 = run_times.run_time_1; // Time needed for VO: Stereo matching, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by proximity.
+    msg.run_time_2 = run_times.run_time_2; // Time needed for VO: Triangulation, MM: Add co-framed edges to graph or LC: Search for candidates to close loops by hash.
+    msg.run_time_3 = run_times.run_time_3; // Time needed for VO: Clustering, MM: Add inter-frames edges to graph or LC: Read cluster candidates.
+    msg.run_time_4 = run_times.run_time_4; // Time needed for VO: Temporal matching, MM: Publish or LC: Loop detection.
+    msg.run_time_5 = run_times.run_time_5; // Time needed for VO: Bucketing, MM: Data write or LC: Close loop.
+    msg.run_time_6 = run_times.run_time_6; // Time needed for VO: Motion estimation, MM: Nothing or LC: Nothing.
+    msg.run_time_7 = run_times.run_time_7; // Time needed for VO: Keyframe insertion decision, MM: Nothing or LC: Nothing.
     msg.total_run_time = run_times.total_run_time; // Time needed for each thread to perform one iteration.
 
     publisher.publish(msg);
@@ -306,40 +373,74 @@ void Publisher::publishCloud(const ros::Publisher& publisher,
 }
 
 
-void Publisher::publishStereoImageAttributes(const cv::Mat& l_descs,
-                                             const cv::Mat& r_descs,
-                                             const ros::Time& stamp,
-                                             const ros::Publisher& publisher,
-                                             const std::vector<cv::KeyPoint>& l_kpts,
-                                             const std::vector<cv::KeyPoint>& r_kpts,
-                                             const std::vector<cv::Point3f>& l_cam_pts)
+void Publisher::publishKeyframe(const int keyframe_id,
+                                const cv::Mat& l_descs,
+                                const cv::Mat& r_descs,
+                                const ros::Time& stamp,
+                                const ros::Publisher& publisher,
+                                const std::vector<int>& inliers,
+                                const std::vector<int>& cluster_ids,
+                                const std::vector<cv::KeyPoint>& l_kpts,
+                                const std::vector<cv::KeyPoint>& r_kpts,
+                                const std::vector<cv::Point3f>& l_cam_pts,
+                                const std::vector<cv::Point3f>& cluster_centroids,
+                                const std::vector<std::pair<int, int>>& cluster_pairs)
 {
-    // Create and fill StereoImageAttributes msg.
-    slamon::StereoImageAttributes msg;
-    geometry_msgs::Point cam_pt_msg;
-    slamon::Keypoint l_kpt_msg, r_kpt_msg;
-    msg.header.stamp = stamp;
-    for (unsigned int i = 0; i < l_kpts.size(); i++)
-    {
-        // Fill base msgs
-        cam_pt_msg.x = l_cam_pts[i].x;
-        cam_pt_msg.y = l_cam_pts[i].y;
-        cam_pt_msg.z = l_cam_pts[i].z;
-        l_kpt_msg.pt.x = l_kpts[i].pt.x;
-        l_kpt_msg.pt.y = l_kpts[i].pt.y;
-        r_kpt_msg.pt.x = r_kpts[i].pt.x;
-        r_kpt_msg.pt.y = r_kpts[i].pt.y;
-        l_kpt_msg.desc = l_descs.row(i);
-        r_kpt_msg.desc = r_descs.row(i);
-
-        // Fill StereoImageAttributes msg.
-        msg.l_kpts.push_back(l_kpt_msg);
-        msg.r_kpts.push_back(r_kpt_msg);
-        msg.l_cam_pts.push_back(cam_pt_msg);
-    }
+    // Builds keyframe message.
+    slamon::Keyframe msg = buildKeyframe(keyframe_id,
+                                         l_descs,
+                                         r_descs,
+                                         stamp,
+                                         inliers,
+                                         cluster_ids,
+                                         l_kpts,
+                                         r_kpts,
+                                         l_cam_pts,
+                                         cluster_centroids,
+                                         cluster_pairs);
 
     // Publishes.
     publisher.publish(msg);
+}
+
+
+void Publisher::publishKeyframe(const int keyframe_id,
+                                const cv::Mat& l_img,
+                                const cv::Mat& r_img,
+                                const cv::Mat& l_descs,
+                                const cv::Mat& r_descs,
+                                const ros::Time& stamp,
+                                const ros::Publisher& publisher,
+                                const std::vector<int>& inliers,
+                                const std::vector<int>& cluster_ids,
+                                const std::vector<cv::KeyPoint>& l_kpts,
+                                const std::vector<cv::KeyPoint>& r_kpts,
+                                const std::vector<cv::Point3f>& l_cam_pts,
+                                const std::vector<cv::Point3f>& cluster_centroids,
+                                const std::vector<std::pair<int, int>>& cluster_pairs)
+{
+    // Builds keyframe message.
+    slamon::Keyframe keyframe_msg = buildKeyframe(keyframe_id,
+                                                  l_descs,
+                                                  r_descs,
+                                                  stamp,
+                                                  inliers,
+                                                  cluster_ids,
+                                                  l_kpts,
+                                                  r_kpts,
+                                                  l_cam_pts,
+                                                  cluster_centroids,
+                                                  cluster_pairs);
+    
+    // Set images.
+    sensor_msgs::ImagePtr img_msg;
+    img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", l_img).toImageMsg();
+    keyframe_msg.l_img = *img_msg;
+    img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", r_img).toImageMsg();
+    keyframe_msg.r_img = *img_msg;
+
+    // Publishes.
+    publisher.publish(keyframe_msg);
 }
 
 
@@ -371,7 +472,7 @@ void Publisher::writePoses(const std::string& o_path,
     poses_file << std::fixed << std::setprecision(9) << "timestamp,id,x,y,z,qx,qy,qz,qw" << std::endl;
 
     // Write poses and timestamps
-    for (unsigned int i = 0; i < poses.size(); i++)
+    for (size_t i = 0; i < poses.size(); ++i)
     {
         poses_file << 
         stamps[i] << "," <<
@@ -394,13 +495,14 @@ void Publisher::writePoses(const std::string& o_path,
 
 
 void Publisher::writeLoopClosureEdges(const std::string& o_path,
+                                      const std::vector<double>& weights,
                                       const std::vector<std::pair<int, int>> edges_ids,
                                       const std::vector<std::pair<tf::Transform, tf::Transform>>& edges_poses)
 {
     std::string l_path = o_path + ".lock";
 
-     // Wait until lock file has been released.
-    while(std::filesystem::exists(l_path));
+    // Wait until lock file has been released.
+    while (std::filesystem::exists(l_path));
 
     // Create a locking element.
     std::fstream lock_file(l_path.c_str(), std::ios::out | std::ios::trunc);
@@ -409,14 +511,15 @@ void Publisher::writeLoopClosureEdges(const std::string& o_path,
     std::fstream edges_file(o_path.c_str(), std::ios::out | std::ios::trunc);
 
     // First line
-    edges_file << std::fixed << std::setprecision(9) << "frame a,frame b,ax,ay,az,aqx,aqy,aqz,aqw,bx,by,bz,bqx,bqy,bqz,bqw" << std::endl;
+    edges_file << std::fixed << std::setprecision(9) << "frame a,frame b,weights,ax,ay,az,aqx,aqy,aqz,aqw,bx,by,bz,bqx,bqy,bqz,bqw" << std::endl;
 
     // Write 
-    for (unsigned int i = 0; i < edges_ids.size(); i++)
+    for (size_t i = 0; i < edges_ids.size(); ++i)
     {
         edges_file <<
         edges_ids[i].first << "," <<
         edges_ids[i].second << "," <<
+        weights[i] << "," <<
         edges_poses[i].first.getOrigin().getX() << "," <<
         edges_poses[i].first.getOrigin().getY() << "," <<
         edges_poses[i].first.getOrigin().getZ() << "," <<
@@ -443,7 +546,7 @@ void Publisher::writeLoopClosureEdges(const std::string& o_path,
 
 std::string Publisher::convertTo5Digits(int in)
 {
-    unsigned int val = (unsigned int)in;
+    size_t val = static_cast<size_t>(in);
     std::string output;
     int digits = 5;
     while (digits-- > 0) 
@@ -464,7 +567,7 @@ cv::Mat Publisher::drawImgKeypoints(const cv::Mat& img,
     img.copyTo(o_img);
 
     // Draw points
-    for (unsigned int i = 0; i < kpts.size(); i++)
+    for (size_t i = 0; i < kpts.size(); ++i)
         cv::circle(o_img, kpts[i].pt, 2, color, -1);
 
     return o_img;
@@ -545,7 +648,7 @@ cv::Mat Publisher::drawImgMatches(const bool vertical,
 
     // Draw keypoints and matches
     cv::Point2f m_q_kpt_offset;
-    for (unsigned int i = 0; i < m_kpts_0.size(); i++)
+    for (size_t i = 0; i < m_kpts_0.size(); ++i)
     {
         m_q_kpt_offset = m_kpts_1[i].pt;
         if (vertical)
@@ -584,7 +687,7 @@ cv::Mat Publisher::drawImgCircularMatches(const cv::Mat& c_l_img,
     int x_offset = c_l_img.cols;
     int y_offset = c_l_img.rows;
     cv::Point2f m_c_r_pt_offset, m_p_l_pt_offset, m_p_r_pt_offset;
-    for (unsigned int i = 0; i < m_c_l_kpts.size(); i++)
+    for (size_t i = 0; i < m_c_l_kpts.size(); ++i)
     {
         // Add offset to filtered current right keypoints
         m_c_r_pt_offset = m_c_r_kpts[i].pt;
@@ -611,26 +714,89 @@ cv::Mat Publisher::drawImgCircularMatches(const cv::Mat& c_l_img,
 
 
 cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
+                                              const std::vector<std::vector<cv::KeyPoint>>& l_kpts)
+{
+    cv::Mat drawn_img;
+    img.copyTo(drawn_img);
+
+    // Sanity check.
+    if (l_kpts.empty())
+        return drawn_img;
+
+    // Draws clusters.
+    cv::Scalar color;
+    cv::RNG rng(12345);
+    for (size_t i = 0; i < l_kpts.size(); ++i)
+    {
+        color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
+        for (size_t j = 0; j < l_kpts[i].size(); ++j)
+            cv::circle(drawn_img, l_kpts[i][j].pt, 2, color, -1);
+    }
+
+    // Writes text
+    std::stringstream caption;
+    caption << " Number of clusters: " << l_kpts.size();
+    cv::Mat o_img = drawTxtInImg(true, drawn_img, caption, 20);
+
+    return o_img;
+}
+
+
+cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
                                               const std::vector<cv::KeyPoint>& kpts,
                                               const std::vector<std::vector<int>>& clusters)
 {
     cv::Mat drawn_img;
     img.copyTo(drawn_img);
 
-    if (clusters.size() == 0)
+    // Sanity check.
+    if (clusters.empty())
         return drawn_img;
 
+    // Draws clusters.
+    cv::Scalar color;
     cv::RNG rng(12345);
-    for (unsigned int i = 0; i < clusters.size(); i++)
+    for (size_t i = 0; i < clusters.size(); ++i)
     {
-        cv::Scalar color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
-        for (unsigned int j = 0; j < clusters[i].size(); j++)
+        color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
+        for (size_t j = 0; j < clusters[i].size(); ++j)
             cv::circle(drawn_img, kpts[clusters[i][j]].pt, 2, color, -1);
     }
 
     // Writes text
     std::stringstream caption;
     caption << " Number of clusters: " << clusters.size();
+    cv::Mat o_img = drawTxtInImg(true, drawn_img, caption, 20);
+
+    return o_img;
+}
+
+
+cv::Mat Publisher::drawImgKeypointsClustering(const cv::Mat& img,
+                                              const size_t cluster_num,
+                                              const std::vector<int>& cluster_ids,
+                                              const std::vector<cv::KeyPoint>& kpts)
+{
+    cv::Mat drawn_img;
+    img.copyTo(drawn_img);
+
+    // Sanity check.
+    if (cluster_ids.empty())
+        return drawn_img;
+
+    // Builds the vector of colors.
+    cv::RNG rng(12345);
+    std::vector<cv::Scalar> colors;
+    for (size_t i = 0; i < cluster_num; ++i)
+        colors.emplace_back(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+
+    // Draws clusters.
+    for (size_t i = 0; i < kpts.size(); ++i)
+        cv::circle(drawn_img, kpts[i].pt, 2, colors[cluster_ids[i]], -1);
+
+    // Writes text.
+    std::stringstream caption;
+    caption << " Number of clusters: " << cluster_num;
     cv::Mat o_img = drawTxtInImg(true, drawn_img, caption, 20);
 
     return o_img;
@@ -656,7 +822,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
  
     // Builds candidate keyframe vector.
     cv::Mat cand_keyframe_vector_img;
-    for (unsigned int i = 0; i < cand_keyframe_ids.size(); i++)
+    for (size_t i = 0; i < cand_keyframe_ids.size(); ++i)
     {
         // Reads candidate keyframes.
         img = cv::imread(i_path + convertTo5Digits(cand_keyframe_ids[i]) + "_left.png", cv::IMREAD_COLOR);
@@ -678,7 +844,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
     // Count definitive inliers.
     int definitive_inliers_counter = 0;
-    for (unsigned int i = 0; i < definitive_inliers_per_pair.size(); i++)
+    for (size_t i = 0; i < definitive_inliers_per_pair.size(); ++i)
         definitive_inliers_counter += definitive_inliers_per_pair[i];
 
     // Adds title to query keyframe.
@@ -698,14 +864,14 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
     // Builds the vector of colors.
     cv::RNG rng(12345);
     std::vector<cv::Scalar> colors;
-    for (unsigned int i = 0; i < definitive_inliers_per_pair.size(); i++)
-        colors.push_back(cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)));
+    for (size_t i = 0; i < definitive_inliers_per_pair.size(); ++i)
+        colors.emplace_back(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
 
     // Draws the matchings.
     cv::Point2f q_l_kpt, cand_l_kpt;
     int color_idx, keyframe_position;
     int cand_cluster_id, cand_keyframe_id;
-    for (unsigned int i = 0; i < f_q_l_kpts.size(); i++)
+    for (size_t i = 0; i < f_q_l_kpts.size(); ++i)
     {
         // Gets the ith keypoints.
         q_l_kpt = f_q_l_kpts[i].pt;
@@ -716,7 +882,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
         // Gets the candidate keyframe id due to the relation between clusters and keyframes.
         cand_keyframe_id = -1;
-        for (unsigned int j = 0; j < cand_cluster_keyframe_relations.size(); j++)
+        for (size_t j = 0; j < cand_cluster_keyframe_relations.size(); ++j)
         {
             if (cand_cluster_keyframe_relations[j].first == cand_cluster_id)
                 cand_keyframe_id = cand_cluster_keyframe_relations[j].second;
@@ -724,7 +890,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
         // Gets the index of the candidate keyframe within the variable cand_keyframe_vector_img.
         keyframe_position = -1;
-        for (unsigned int j = 0; j < cand_keyframe_ids.size(); j++)
+        for (size_t j = 0; j < cand_keyframe_ids.size(); ++j)
         {
             if (cand_keyframe_id == cand_keyframe_ids[j])
             {
@@ -739,7 +905,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
             // Decides the color. Weak edges (less than 5 inliers) are not inserted into the graph
             // and are therefore not drawn nor assigned a colour.
             color_idx = -1;
-            for (unsigned int j = 0; j < definitive_inliers_per_pair.size(); j++)
+            for (size_t j = 0; j < definitive_inliers_per_pair.size(); ++j)
             {
                 if (definitive_cluster_pairs[j].second == cand_cluster_id)
                 {
@@ -776,6 +942,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
 nav_msgs::Odometry Publisher::buildPoseMsg(const ros::Time& c_stamp,
                                            const tf::Transform& c_pose,
+                                           const bool bad_pose_covariance,
                                            const std::string& reference_frame_id)
 {
     nav_msgs::Odometry msg;
@@ -787,7 +954,92 @@ nav_msgs::Odometry Publisher::buildPoseMsg(const ros::Time& c_stamp,
     // Set pose
     tf::poseTFToMsg(c_pose, msg.pose.pose);
 
+    // Set covariances.
+    if (bad_pose_covariance)
+        msg.pose.covariance = BAD_COVARIANCE_;
+    else
+        msg.pose.covariance = GOOD_POSE_COVARIANCE_;
+    msg.twist.covariance = BAD_COVARIANCE_;
+
     return msg;
+}
+
+
+slamon::Keyframe Publisher::buildKeyframe(const int keyframe_id,
+                                          const cv::Mat& l_descs,
+                                          const cv::Mat& r_descs,
+                                          const ros::Time& stamp,
+                                          const std::vector<int>& inliers,
+                                          const std::vector<int>& cluster_ids,
+                                          const std::vector<cv::KeyPoint>& l_kpts,
+                                          const std::vector<cv::KeyPoint>& r_kpts,
+                                          const std::vector<cv::Point3f>& l_cam_pts,
+                                          const std::vector<cv::Point3f>& cluster_centroids,
+                                          const std::vector<std::pair<int, int>>& cluster_pairs)
+{
+    // Creates messages.
+    slamon::Batch batch_msg;
+    slamon::Keyframe keyframe_msg;
+    slamon::Keypoint l_kpt_msg, r_kpt_msg;
+    geometry_msgs::Point l_cam_pt_msg, centroid_msg;
+
+    // Fills non-clusters attributes.
+    keyframe_msg.id = keyframe_id;
+    keyframe_msg.header.stamp = stamp;
+    keyframe_msg.inliers_per_pair.reserve(inliers.size());
+    keyframe_msg.cluster_pairs.reserve(cluster_pairs.size() * 2);
+    for (size_t i = 0; i < inliers.size(); ++i)
+    {
+        keyframe_msg.inliers_per_pair.push_back(inliers[i]);
+        keyframe_msg.cluster_pairs.push_back(cluster_pairs[i].first);
+        keyframe_msg.cluster_pairs.push_back(cluster_pairs[i].second);
+    }
+
+    // Fills clusters.
+    size_t i = 0, j = 0;
+    int c_cluster_id = 0;
+    while (i < cluster_ids.size())
+    {
+        c_cluster_id = cluster_ids[i];
+
+        // Start a new batch for the current cluster.
+        batch_msg.l_kpts.clear();
+        batch_msg.r_kpts.clear();
+        batch_msg.l_cam_pts.clear();
+
+        // Collect all keypoints belonging to the current cluster.
+        while (i < cluster_ids.size() && cluster_ids[i] == c_cluster_id)
+        {
+            l_kpt_msg.pt.x = l_kpts[i].pt.x;
+            l_kpt_msg.pt.y = l_kpts[i].pt.y;
+            l_kpt_msg.desc = l_descs.row(i);
+
+            r_kpt_msg.pt.x = r_kpts[i].pt.x;
+            r_kpt_msg.pt.y = r_kpts[i].pt.y;
+            r_kpt_msg.desc = r_descs.row(i);
+
+            l_cam_pt_msg.x = l_cam_pts[i].x;
+            l_cam_pt_msg.y = l_cam_pts[i].y;
+            l_cam_pt_msg.z = l_cam_pts[i].z;
+
+            batch_msg.l_kpts.push_back(l_kpt_msg);
+            batch_msg.r_kpts.push_back(r_kpt_msg);
+            batch_msg.l_cam_pts.push_back(l_cam_pt_msg);
+
+            ++i;
+        }
+
+        // Add centroid.
+        centroid_msg.x = cluster_centroids[j].x;
+        centroid_msg.y = cluster_centroids[j].y;
+        centroid_msg.z = cluster_centroids[j].z;
+        batch_msg.centroid = centroid_msg;
+        ++j;
+
+        keyframe_msg.batches.push_back(batch_msg);
+    }
+
+    return keyframe_msg;
 }
 
 

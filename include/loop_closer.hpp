@@ -39,7 +39,6 @@ namespace slamon
 
             /** \brief Class constructor
              *  \param[in] map Map object pointer.
-             *  \param[in] ratio The ratio for Lowe's ratio test.
              *  \param[in] lc_neighbors Number of neighbours to recover in order to 
              *  increase the possibility of closing a loop.
              *  \param[in] lc_candidates Number of candidates to close a loop.
@@ -52,7 +51,6 @@ namespace slamon
              *  \param[in] motion_estimation_type Desired motion type name.
              */
             LoopCloser(Map* map,
-                       double ratio,
                        int lc_neighbors,
                        int lc_candidates,
                        int min_lc_inliers,
@@ -74,28 +72,28 @@ namespace slamon
 
             /** \brief Obtains, from the VO through a service, 
              *  the stereo camera projection matrices. 
-             *  \param[in] l_proj_mat Left projection matrix.
-             *  \param[in] r_proj_mat Right projection matrix.
+             *  \param[out] l_proj_mat Left projection matrix.
+             *  \param[out] r_proj_mat Right projection matrix.
              */
             void getProjectionMatrices(cv::Mat& l_proj_mat,
                                        cv::Mat& r_proj_mat);
 
 
             /** \brief Processes the new cluster.
-             *  \param[in] c_cluster The current cluster.
+             *  \param[in] q_cluster The query cluster.
              */
-            void processNewCluster(const Cluster& c_cluster);
+            void processNewCluster(const Cluster& q_cluster);
 
 
             /** \brief Get the best candidates to close a loop by hash.
-             *  \param[in] c_cluster_id The current cluster id.
+             *  \param[in] q_cluster_id The query cluster id.
              *  \param[in] cand_num The number of best candidates to be retrieved.
              *  \param[in] no_cand Clusters list, outside the discard window, that cannot be
              *  candidates for closing loop.
              *  \param[out] closest_cand The list of best candidates.
              */
-            void getHashCandidates(int c_cluster_id, 
-                                   unsigned int cand_num,
+            void getHashCandidates(const int q_cluster_id, 
+                                   const size_t cand_num,
                                    std::vector<int>& no_cand,
                                    std::vector<int>& closest_cand);
 
@@ -116,7 +114,7 @@ namespace slamon
              *  \param[in] id Cluster id.
              *  @return The cluster.
              */
-            Cluster readCluster(int id);
+            Cluster readCluster(const int id);
 
 
             /** \brief Checks if the current cluster was already read from disk in
@@ -247,6 +245,8 @@ namespace slamon
             int lc_candidates_; //!> Number of candidates to close a loop.
 
             int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
+
+            int max_edge_inliers_; //!> Maximum number of inliers for an edge.
 
             int lc_discard_window_; //!> Window size of discarded graph vertices (clusters).
             

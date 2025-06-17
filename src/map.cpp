@@ -37,7 +37,7 @@ namespace slamon
         std::scoped_lock lock(mutex_cluster_keyframe_relations_);
 
         int frame_id = -1;
-        for (unsigned int i = 0; i < cluster_keyframe_relations_.size(); i++)
+        for (size_t i = 0; i < cluster_keyframe_relations_.size(); ++i)
         {
             if (cluster_keyframe_relations_[i].first == vertex_id)
             {
@@ -142,7 +142,7 @@ namespace slamon
         std::scoped_lock lock(mutex_cluster_keyframe_relations_);
 
         vertices.clear();
-        for (unsigned int i = 0; i < cluster_keyframe_relations_.size(); i++)
+        for (size_t i = 0; i < cluster_keyframe_relations_.size(); ++i)
         {
             if (cluster_keyframe_relations_[i].second == keyframe_id)
                 vertices.push_back(cluster_keyframe_relations_[i].first);
@@ -195,7 +195,8 @@ namespace slamon
     }
 
 
-    void Map::getLoopClosureEdges(std::vector<std::pair<int, int>>& keyframe_ids,
+    void Map::getLoopClosureEdges(std::vector<double>& weights,
+                                  std::vector<std::pair<int, int>>& keyframe_ids,
                                   std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses)
     {
         // Locks map.
@@ -230,6 +231,7 @@ namespace slamon
             pose_1 = getVertexCameraPose(edge->vertices()[1]->id(), false);
 
             // Save data.
+            weights.push_back(edge->information().trace()); // Get the confidence from this edge.
             keyframe_ids.emplace_back(keyframe_0, keyframe_1);
             keyframe_poses.emplace_back(pose_0, pose_1);
         }
@@ -293,7 +295,7 @@ namespace slamon
         // Gets closest vertices (minnor distance)
         const int final_closest_neighbors_num = std::min(closest_neighbors_num, static_cast<int>(neighbors.size()));
         closest_neighbors.reserve(final_closest_neighbors_num);
-        for (int i = 0; i < final_closest_neighbors_num; i++)
+        for (int i = 0; i < final_closest_neighbors_num; ++i)
             closest_neighbors.emplace_back(neighbors[i].first);
     }
 
@@ -308,14 +310,14 @@ namespace slamon
     void Map::addLocalClusterPose(const tf::Transform& local_cluster_pose)
     {
         std::scoped_lock lock(mutex_local_cluster_poses_);
-        local_cluster_poses_.push_back(local_cluster_pose);
+        local_cluster_poses_.emplace_back(local_cluster_pose);
     }
 
 
     void Map::addClusterKeyframeRelation(const std::pair<int, int>& relation)
     {
         std::scoped_lock lock(mutex_cluster_keyframe_relations_);
-        cluster_keyframe_relations_.push_back(relation);
+        cluster_keyframe_relations_.emplace_back(relation);
     }
 
 
@@ -348,7 +350,8 @@ namespace slamon
 
     void Map::addEdge(const int vertex_0_id,
                       const int vertex_1_id,
-                      tf::Transform tf_edge)
+                      const double confidence,
+                      const tf::Transform& relative_movement)
     {
         // Locks map.
         std::scoped_lock lock(mutex_graph_);
@@ -367,14 +370,14 @@ namespace slamon
             return;
         }
 
-        // Adds graph edge to graph.
-        g2o::EdgeSE3* graph_edge = new g2o::EdgeSE3();
-        Eigen::Isometry3d iso_edge = fromTfToIsometry(tf_edge);
-        graph_edge->setVertex(0, vertex_0);
-        graph_edge->setVertex(1, vertex_1);
-        graph_edge->setMeasurement(iso_edge);
+        // Adds edge to graph.
+        g2o::EdgeSE3* edge = new g2o::EdgeSE3();
+        edge->setVertex(0, vertex_0);
+        edge->setVertex(1, vertex_1);
+        edge->setMeasurement(fromTfToIsometry(relative_movement));
+        edge->setInformation(Eigen::Matrix<double, 6, 6>::Identity() * confidence);
 
-        graph_.addEdge(graph_edge);
+        graph_.addEdge(edge);
     }
 
 
