@@ -75,10 +75,8 @@ namespace slamon
                 start_iteration_time = ros::Time::now().toSec();
 
                 // Initialisation of the variables necessary to measure thread performance.
+                run_times_.reset();
                 p_loop_closures_num = loop_closure_num_;
-                run_times_.run_time_3 = 0.0; // Read cluster candidates run time.
-                run_times_.run_time_4 = 0.0; // Loop detection run time.
-                run_times_.run_time_5 = 0.0; // Close loop run time.
 
                 if (!init_loop_closer_)
                     getProjectionMatrices(l_proj_mat_, r_proj_mat_);
