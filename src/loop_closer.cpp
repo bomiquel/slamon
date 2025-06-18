@@ -6,15 +6,15 @@ namespace slamon
 
 
     LoopCloser::LoopCloser(Map* map,
-                           int lc_neighbors,
-                           int lc_candidates,
-                           int min_lc_inliers,
-                           int lc_discard_window,
-                           bool enable_debugging,
-                           const std::string& w_path,
-                           std::string& matching_type,
+                           const int lc_neighbors,
+                           const int lc_candidates,
+                           const int min_lc_inliers,
+                           const int lc_discard_window,
+                           const bool enable_debugging,
                            Queue<Cluster>* cluster_queue,
-                           std::string& motion_estimation_type):
+                           const std::string& w_path,
+                           const std::string& matching_type,
+                           const std::string& motion_estimation_type):
                            KeypointMatcher(matching_type), 
                            MotionEstimator(motion_estimation_type),
                            enable_debugging_{enable_debugging}, init_loop_closer_{false}, lc_neighbors_{lc_neighbors},
@@ -44,12 +44,12 @@ namespace slamon
 
 
     void LoopCloser::run()
-    { 
+    {
         // Create ROS node.
         ros::NodeHandle nh;
         ros::NodeHandle nhp("~");
 
-        // Client services.
+        // ROS client services.
         proj_mat_client_ = nh.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
 
         // Publishers.
@@ -80,7 +80,8 @@ namespace slamon
 
                 if (!init_loop_closer_)
                     getProjectionMatrices(l_proj_mat_, r_proj_mat_);
-                
+
+                // Process new cluster.
                 start_module_time = ros::Time::now().toSec();
                 q_cluster = cluster_queue_->getFront();
                 processNewCluster(q_cluster);
@@ -738,7 +739,7 @@ namespace slamon
 
                 // Adds this edge to the graph.
                 some_edge_added = true;
-                map_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, normalisation(max_edge_inliers_, inliers_per_pair[i]), relative_movement);                           
+                map_->addEdge(cluster_pairs[i].second, cluster_pairs[i].first, normalisation(max_edge_inliers_, inliers_per_pair[i]), relative_movement);
                 definitive_inliers_per_pair.push_back(inliers_per_pair[i]);
                 definitive_cluster_pairs.emplace_back(cluster_pairs[i].first, cluster_pairs[i].second); // q_cluster_id - cand_cluster_id
 
@@ -752,12 +753,12 @@ namespace slamon
             map_->optimiseGraphPoses();
             loop_closure_num_++;
 
-            ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
+            ROS_INFO_STREAM("[LC->loopCorrection:] ------------------------------");
             ROS_INFO_STREAM("                      LOOP CLOSURE: " << loop_closure_num_);
             ROS_INFO_STREAM("Between keyframe " << q_keyframe_id << " and " << cand_keyframe_id);
             ROS_INFO_STREAM("Method: " << search_method);
             ROS_INFO_STREAM("Inliers: " << i_q_l_kpts.size());
-            ROS_INFO_STREAM("[LC->closeLoopBetween:] ------------------------------");
+            ROS_INFO_STREAM("[LC->loopCorrection:] ------------------------------");
 
             if (enable_debugging_)
             {

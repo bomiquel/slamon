@@ -41,15 +41,15 @@ namespace slamon
             /** \brief Class constructor
              *  \param[in] map Map object pointer.
              *  \param[in] min_lc_inliers Minimum number of inliers for loop closure.
-             *  \param[in] enable_debugging Enabling or disabling debugging.
              *  \param[in] w_path Working path for debugging purpose.
+             *  \param[in] enable_debugging Enabling or disabling debugging.
              *  \param[in] cluster_queue Cluster queue pointer.
              *  \param[in] robot_frame_id Robot coordinate axis identficator (base link).
              */
             Mapmaker(Map* map,
-                     int min_lc_inliers,
-                     bool enable_debugging,
+                     const int min_lc_inliers,
                      const std::string& w_path,
+                     const bool enable_debugging,
                      Queue<Cluster>* cluster_queue, 
                      const std::string& robot_frame_id);
 

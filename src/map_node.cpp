@@ -86,6 +86,7 @@ void readParams(int& lc_neighbors,
     if (invalid_parameter)
     {
         ROS_INFO_STREAM("[MAP]: Some parameter was invalid and has been assigned its default value." << std::endl <<
+                        "Current parameter values are: " << std::endl <<
                         "Num loop closing neighbors      = " << lc_neighbors << std::endl <<
                         "Working path                    = " << working_path << std::endl <<
                         "Num loop closing candidates     = " << lc_candidates << std::endl <<
@@ -126,8 +127,8 @@ int main(int argc, char **argv)
     // Declare threads.
     slamon::Mapmaker mapmaker(&map,
                               min_lc_inliers, 
-                              enable_debugging, 
                               working_path, 
+                              enable_debugging,
                               &cluster_queue,
                               robot_frame_id);
     slamon::LoopCloser loop_closer(&map,
@@ -136,9 +137,9 @@ int main(int argc, char **argv)
                                    min_lc_inliers,
                                    lc_discard_window,
                                    enable_debugging,
+                                   &cluster_queue,
                                    working_path,
                                    matching_type,
-                                   &cluster_queue,
                                    motion_estimation_type);
 
     // Launch threads.

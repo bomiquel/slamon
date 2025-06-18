@@ -20,4 +20,4 @@ float64 run_time_4      # Time needed for VO: Temporal matching, MM: Publish or 
 float64 run_time_5      # Time needed for VO: Bucketing, MM: Data write or LC: Close loop.
 float64 run_time_6      # Time needed for VO: Motion estimation, MM: Nothing or LC: Nothing.
 float64 run_time_7      # Time needed for VO: Keyframe insertion decision, MM: Nothing or LC: Nothing.
-float64 total_run_time  # Time needed for each thread to perform one iteration. 
+float64 total_run_time  # Time needed for each thread to perform one iteration.
