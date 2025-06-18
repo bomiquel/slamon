@@ -45,21 +45,21 @@ namespace slamon
              *  \param[in] min_lc_inliers Minimum number of inliers for loop closure.
              *  \param[in] lc_discard_window Window size of discarded graph vertices.
              *  \param[in] enable_debugging Enabling or disabling debugging.
-             *  \param[in] w_path Working path for debugging purpose.
-             *  \param[in] matching_type Desired matching type name.
              *  \param[in] cluster_queue Cluster queue pointer.
+             *  \param[in] w_path Working path.
+             *  \param[in] matching_type Desired matching type name.
              *  \param[in] motion_estimation_type Desired motion type name.
              */
             LoopCloser(Map* map,
-                       int lc_neighbors,
-                       int lc_candidates,
-                       int min_lc_inliers,
-                       int lc_discard_window,
-                       bool enable_debugging,
-                       const std::string& w_path,
-                       std::string& matching_type,
+                       const int lc_neighbors,
+                       const int lc_candidates,
+                       const int min_lc_inliers,
+                       const int lc_discard_window,
+                       const bool enable_debugging,
                        Queue<Cluster>* cluster_queue,
-                       std::string& motion_estimation_type);
+                       const std::string& w_path,
+                       const std::string& matching_type,
+                       const std::string& motion_estimation_type);
 
 
             /** \brief Starts loop closer.
@@ -146,7 +146,7 @@ namespace slamon
              *  \param[in out] cluster to be upgraded.
              */
             void updateClusterPose(Cluster& cluster);
-                                
+
 
             /** \brief It tries to detect a loop closure between the query cluster
              *  and the candidate.

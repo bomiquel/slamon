@@ -125,10 +125,10 @@ namespace slamon
             ROS_ERROR_STREAM("[Caster:] cv_bridge exception: " << e.what());
             return false;
         }
-        
+
         // Set the images
         img = img_ptr->image;
-        
+
         return true;
     }
 

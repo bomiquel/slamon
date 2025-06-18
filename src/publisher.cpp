@@ -307,7 +307,7 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
                                           bad_pose_covariance,
                                           reference_frame_id);
 
-    // Set velocity
+    // Set velocity.
     double delta_t = (c_stamp - p_stamp).toSec();
     if (delta_t == 0.0)
     {

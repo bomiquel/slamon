@@ -22,7 +22,7 @@ class Cluster
 {
     public:
 
-        /** \brief Empty class constructor
+        /** \brief Empty class constructor.
          */
         Cluster();
 

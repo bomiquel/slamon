@@ -93,7 +93,7 @@ class Frame
         inline cv::Mat getRightImg() const {return r_img_;}
 
 
-        /** \brief Get keyframe timestamp
+        /** \brief Get keyframe timestamp.
          *  @return The time stamp when taking the image.
          */
         inline ros::Time getTimestamp() const {return stamp_;}

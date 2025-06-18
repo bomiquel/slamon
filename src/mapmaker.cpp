@@ -6,9 +6,9 @@ namespace slamon
 
     
     Mapmaker::Mapmaker(Map* map,
-                       int min_lc_inliers,
-                       bool enable_debugging,
+                       const int min_lc_inliers,
                        const std::string& w_path,
+                       const bool enable_debugging,
                        Queue<Cluster>* cluster_queue,
                        const std::string& robot_frame_id):
                        initialised_map_{false}, enable_debugging_{enable_debugging}, 
@@ -350,7 +350,6 @@ namespace slamon
                 // Saves clustered image.
                 writeImgKeypointsClustering(l_img, clusters_path_ + keyframe_name, clustered_l_kpts);
             }
-
         }
         run_times_.run_time_5 = ros::Time::now().toSec() - start_module_time; // Data write run time.
 
