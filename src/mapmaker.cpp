@@ -209,7 +209,7 @@ namespace slamon
 
         // Connects this keyframe with the previous.
         start_module_time = ros::Time::now().toSec();
-        if (keyframe_id > 0)
+        if (keyframe_id > 1)
         {
             // Retrieves the clusters ids of the previous keyframe.
             std::vector<int> p_clusters_ids;

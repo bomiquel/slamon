@@ -203,6 +203,7 @@ namespace slamon
         std::scoped_lock lock(mutex_graph_);
 
         // Sanity check
+        weights.clear();
         keyframe_ids.clear();
         keyframe_poses.clear();
 
