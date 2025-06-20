@@ -24,7 +24,7 @@ Frame::Frame(cv::Mat l_img,
 
 
 // FROM: http://codereview.stackexchange.com/questions/23966/density-based-clustering-of-image-keypoints
-void Frame::regionClustering()
+void Frame::regionClustering(int c_global_cluster_id)
 {
     int c;
     const float eps = 50.0;
@@ -191,7 +191,7 @@ void Frame::regionClustering()
     {
         for (size_t j = 0; j < all_clusters[i].size(); ++j)
         {
-            cluster_ids.push_back(static_cast<int>(i));
+            cluster_ids.push_back(c_global_cluster_id);
 
             idx = all_clusters[i][j];
             l_kpts.emplace_back(l_kpts_[idx]);
@@ -200,6 +200,7 @@ void Frame::regionClustering()
             l_descs.push_back(l_descs_.row(idx));
             r_descs.push_back(r_descs_.row(idx));
         }
+        c_global_cluster_id++;
     }
 
     // Stores sorted clusters.
@@ -209,6 +210,14 @@ void Frame::regionClustering()
     r_descs_ = r_descs;
     l_cam_pts_ = l_cam_pts;
     cluster_ids_ = cluster_ids;
+    clusters_num_ = static_cast<int>(all_clusters.size());
+}
+
+
+void Frame::increaseClustersIds(int increase)
+{
+    for (size_t i = 0; i < cluster_ids_.size(); ++i)
+        cluster_ids_[i] += increase;
 }
 
 
