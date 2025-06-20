@@ -210,6 +210,8 @@ namespace slamon
             // Atributes:
 
             int c_keyframe_id_; //!> Current keyframe id.
+
+            int c_cluster_id_; //!> Current cluster id.
             
             int img_height_; //!> Number of image rows.
             

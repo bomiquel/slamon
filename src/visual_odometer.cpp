@@ -18,7 +18,7 @@ namespace slamon
                                    const std::string& motion_estimation_type):
                                    KeypointMatcher(matching_type), 
                                    MotionEstimator(motion_estimation_type),
-                                   c_keyframe_id_{0}, min_inliers_{min_inliers}, min_lc_inliers_{min_lc_inliers}, 
+                                   c_keyframe_id_{0}, c_cluster_id_{0}, min_inliers_{min_inliers}, min_lc_inliers_{min_lc_inliers}, 
                                    max_kpts_bucket_{max_kpts_bucket}, max_kpts_retained_{max_kpts_retained}, status_{UNINITIALISED}, 
                                    enable_debugging_{enable_debugging}, enable_bucketing_{enable_bucketing}, enable_enhacement_{enable_enhacement},
                                    initialised_odom_{false}, robot_frame_id_{robot_frame_id}, feature_detector_name_{feature_detector_name} {}
@@ -171,10 +171,14 @@ namespace slamon
                 sendKeyframe(std::vector<int>(), std::vector<std::pair<int, int>>());
                 publishPose(keyframe_.getTimestamp(), c_robot_odom_, lost, robot_odom_pub_, robot_frame_id_);
                 publishPose(keyframe_.getTimestamp(), c_camera_odom_, lost, camera_odom_pub_, camera_frame_id_);
+                c_cluster_id_ += keyframe_.getClustersNumber();
                 c_keyframe_id_++;
                 
                 // Computes and publishes odometry.
                 integrateAndPublish(c_frame, camera_delta_odom);
+
+                // Updates current frame clusters ids.
+                c_frame.increaseClustersIds(keyframe_.getClustersNumber());
 
                 // Sends a keyframe to the map if necessary.
                 sendKeyframeIfNecessary(c_frame);
@@ -385,7 +389,7 @@ namespace slamon
 
         // Keypoint clustering.
         start_module_time = ros::Time::now().toSec();
-        c_frame.regionClustering();
+        c_frame.regionClustering(c_cluster_id_);
         run_times_.run_time_3 = ros::Time::now().toSec() - start_module_time; // Clustering run time.
 
         // Sanity check.
@@ -657,7 +661,10 @@ namespace slamon
         // Sends the new keyframe.
         keyframe_ = c_frame;
         sendKeyframe(inliers_per_pair, cluster_pairs);
+
+        // Updates attributes.
         c_keyframe_id_++;
+        c_cluster_id_ += keyframe_.getClustersNumber();
 
         run_times_.run_time_7 = ros::Time::now().toSec() - start_module_time; // Keyframe insertion decision run time.
         return;

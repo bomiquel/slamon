@@ -162,7 +162,7 @@ namespace slamon
              *  \param[in] pose Vertex pose.
              *  @return the vertex id.
              */
-            int addVertex(const tf::Transform& pose);
+            void addVertex(const tf::Transform& pose);
 
 
             /** \brief Adds an edge to the graph.

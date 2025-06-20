@@ -76,7 +76,7 @@ namespace slamon
         if (vertex)
             vertex_pose = fromVertexToTf(vertex);
         else
-            ROS_WARN_STREAM("[Map->getVertexPose:] Problems getting vertix: " << vertex_id << "! Returning identity!");
+            ROS_WARN_STREAM("[Map->getVertexPose:] Problems getting vertex: " << vertex_id << "! Returning identity!");
 
         return vertex_pose;
     }
@@ -321,7 +321,7 @@ namespace slamon
     }
 
 
-    int Map::addVertex(const tf::Transform& pose)
+    void Map::addVertex(const tf::Transform& pose)
     {
         // Locks map.
         std::scoped_lock lock(mutex_graph_);
@@ -343,8 +343,6 @@ namespace slamon
 
         // Add vertex.
         graph_.addVertex(c_vertex);
-
-        return id;
     }
 
 

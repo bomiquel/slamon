@@ -63,6 +63,12 @@ class Frame
               std::vector<cv::Point3f> l_cam_pts);
 
 
+        /** \brief Set keyframe timestamp.
+         *  \param[in] stamp Keyframe timestamp.
+         */
+        inline void setTimestamp(const ros::Time stamp) {stamp_ = stamp;}
+
+
         /** \brief Set left image.
          *  \param[in] l_img Left image.
          */
@@ -75,10 +81,16 @@ class Frame
         inline void setRightImg(const cv::Mat r_img) {r_img_ = r_img;}
 
 
-        /** \brief Set keyframe timestamp.
-         *  \param[in] stamp Keyframe timestamp.
+        /** \brief Gets the number of clusters.
+         *  @return The clusters number.
          */
-        inline void setTimestamp(const ros::Time stamp) {stamp_ = stamp;}
+        inline int getClustersNumber() const {return clusters_num_;}
+
+
+        /** \brief Get keyframe timestamp.
+         *  @return The time stamp when taking the image.
+         */
+        inline ros::Time getTimestamp() const {return stamp_;}
 
 
         /** \brief Get left image.
@@ -91,12 +103,6 @@ class Frame
          *  @return The right image of the stereo pair
          */
         inline cv::Mat getRightImg() const {return r_img_;}
-
-
-        /** \brief Get keyframe timestamp.
-         *  @return The time stamp when taking the image.
-         */
-        inline ros::Time getTimestamp() const {return stamp_;}
 
 
         /** \brief Get left descriptors.
@@ -159,8 +165,15 @@ class Frame
 
 
         /** \brief Clustering keypoints.
+         *  \param[in] c_global_cluster_id
          */
-        void regionClustering();
+        void regionClustering(int c_global_cluster_id);
+
+
+        /** \brief Increases all cluster identifiers by a given value.
+         *  \param[in] increase The value to add to each cluster identifier.
+         */
+        void increaseClustersIds(int increase);
 
 
     protected:
@@ -187,6 +200,8 @@ class Frame
     private:
 
         // Attributes:
+
+        int clusters_num_; //!> Stores the number of clusters.
 
         ros::Time stamp_; //!> Store the frame timestamp.
 
