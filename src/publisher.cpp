@@ -997,10 +997,9 @@ slamon::Keyframe Publisher::buildKeyframe(const int keyframe_id,
 
     // Fills clusters.
     size_t i = 0, j = 0;
-    int c_cluster_id = 0;
     while (i < cluster_ids.size())
     {
-        c_cluster_id = cluster_ids[i];
+        batch_msg.global_id = cluster_ids[i];
 
         // Start a new batch for the current cluster.
         batch_msg.l_kpts.clear();
@@ -1008,7 +1007,7 @@ slamon::Keyframe Publisher::buildKeyframe(const int keyframe_id,
         batch_msg.l_cam_pts.clear();
 
         // Collect all keypoints belonging to the current cluster.
-        while (i < cluster_ids.size() && cluster_ids[i] == c_cluster_id)
+        while (i < cluster_ids.size() && cluster_ids[i] == batch_msg.global_id)
         {
             l_kpt_msg.pt.x = l_kpts[i].pt.x;
             l_kpt_msg.pt.y = l_kpts[i].pt.y;

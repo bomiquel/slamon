@@ -82,13 +82,11 @@ namespace slamon
             /** \brief Cast a batch custom ROS message to a cluster object.
              *  \param[in] keyframe_id Identifier of the keyframe to which the cluster belongs.
              *  \param[in] cluster_local_id Cluster identifier within the keyframe.
-             *  \param[in] cluster_global_id Cluster identifier within the map.
              *  \param[in] batch_msg Batch custom ROS message.
              *  @return A cluster object.
              */
             Cluster fromBatchToCluster(const int keyframe_id,
                                        const int cluster_local_id,
-                                       const int cluster_global_id,
                                        const slamon::Batch& batch_msg);
 
 

@@ -76,7 +76,7 @@ namespace slamon
         if (vertex)
             vertex_pose = fromVertexToTf(vertex);
         else
-            ROS_WARN_STREAM("[Map->getVertexPose:] Problems getting vertix: " << vertex_id << "! Returning identity!");
+            ROS_WARN_STREAM("[Map->getVertexPose:] Problems getting vertex: " << vertex_id << "! Returning identity!");
 
         return vertex_pose;
     }
@@ -203,6 +203,7 @@ namespace slamon
         std::scoped_lock lock(mutex_graph_);
 
         // Sanity check
+        weights.clear();
         keyframe_ids.clear();
         keyframe_poses.clear();
 
@@ -321,16 +322,14 @@ namespace slamon
     }
 
 
-    int Map::addVertex(const tf::Transform& pose)
+    void Map::addVertex(const int id,
+                        const tf::Transform& pose)
     {
         // Locks map.
         std::scoped_lock lock(mutex_graph_);
 
         // Convert pose for graph.
         Eigen::Isometry3d vertex_pose = fromTfToIsometry(pose);
-
-        // Set node id equal to graph size.
-        int id = graph_.vertices().size();
 
         // Build the vertex.
         g2o::VertexSE3* c_vertex = new g2o::VertexSE3();
@@ -343,8 +342,6 @@ namespace slamon
 
         // Add vertex.
         graph_.addVertex(c_vertex);
-
-        return id;
     }
 
 

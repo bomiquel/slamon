@@ -107,7 +107,7 @@ namespace slamon
         ros::Time stamp = keyframe_msg->header.stamp;
 
         if (enable_debugging_)
-            ROS_INFO_STREAM("[MM->Includer]: Adding keyframe: " << keyframe_id);
+            ROS_INFO_STREAM("[MM->Includer:] Adding keyframe: " << keyframe_id);
 
         // Updates pose.
         start_module_time = ros::Time::now().toSec();
@@ -157,6 +157,9 @@ namespace slamon
         clustered_l_kpts.reserve(clusters_num);
         for (size_t i = 0; i < clusters_num; ++i)
         {
+            // Gets cluster id.
+            cluster_id = keyframe_msg->batches[i].global_id;
+
             // Gets {c_cam}^T_{c_cluster}.
             local_cluster_pose.setIdentity();
             local_cluster_pose.setOrigin(tf::Vector3(keyframe_msg->batches[i].centroid.x,
@@ -167,7 +170,7 @@ namespace slamon
             cluster_map_pose = c_camera_map_pose * local_cluster_pose;
 
             // Adds cluster to the graph.
-            cluster_id = map_->addVertex(cluster_map_pose);
+            map_->addVertex(cluster_id, cluster_map_pose);
 
             // Stores information.
             c_clusters_ids.push_back(cluster_id);
@@ -177,7 +180,6 @@ namespace slamon
             // Creates cluster.
             Cluster cluster = fromBatchToCluster(keyframe_id,
                                                  i,
-                                                 cluster_id,
                                                  keyframe_msg->batches[i]);
 
             // Sends the new clusters to the loop closing thread.
@@ -213,15 +215,15 @@ namespace slamon
 
         // Connects this keyframe with the previous.
         start_module_time = ros::Time::now().toSec();
-        if (keyframe_id > 0)
+        if (keyframe_id > 1)
         {
-            // Retrieves the clusters ids of the previous keyframe.
-            std::vector<int> p_clusters_ids;
-            map_->getKeyframeVertices(keyframe_id - 1, p_clusters_ids);
-
-            if (keyframe_msg->cluster_pairs.empty())
+            if (keyframe_msg->cluster_pairs.empty()) // Connects only the closest clusters between the two keyframes.
             {
-                // Connects only the closest clusters between the two keyframes.
+                // Retrieves the clusters ids of the previous keyframe.
+                std::vector<int> p_clusters_ids;
+                map_->getKeyframeVertices(keyframe_id - 1, p_clusters_ids);
+                
+                // Searches for the nearest clusters.
                 std::pair<int, int> closest_clusters;
                 tf::Transform c_cluster_map_pose, p_cluster_map_pose;
                 std::pair<tf::Transform, tf::Transform> closest_poses;
@@ -257,23 +259,19 @@ namespace slamon
                 else
                     ROS_ERROR_STREAM("[MM->Vertex linker:] Unable to connect current and previous keyframe (when there are no inliers). Graph will have non-connected vertices!");
             }
-            else
+            else // Connects the keyframe clusters with the number of inliers between clusters as confidence.
             {
-                // Connect the keyframe clusters with the number of inliers between clusters as confidence.
                 std::vector<int> inliers_per_pair = keyframe_msg->inliers_per_pair;
                 std::vector<int> cluster_pairs = keyframe_msg->cluster_pairs;
                 if (cluster_pairs.size() == inliers_per_pair.size() * 2)
                 {
-                    // Sorts the clusters of the previous keyframe in ascending order.
-                    std::sort(p_clusters_ids.begin(), p_clusters_ids.end());
-
                     int c_cluster_id, p_cluster_id;
                     tf::Transform c_cluster_map_pose, p_cluster_map_pose;
                     for (size_t i = 0; i < inliers_per_pair.size(); ++i)
                     {
                         // Gets clusters ids.
-                        c_cluster_id = c_clusters_ids[cluster_pairs[i * 2]];
-                        p_cluster_id = p_clusters_ids[cluster_pairs[i * 2 + 1]];
+                        c_cluster_id = cluster_pairs[i * 2];
+                        p_cluster_id = cluster_pairs[i * 2 + 1];
 
                         // Gets clusters poses.
                         c_cluster_map_pose = map_->getVertexPose(c_cluster_id, true);
@@ -393,7 +391,6 @@ namespace slamon
 
     Cluster Mapmaker::fromBatchToCluster(const int keyframe_id,
                                          const int cluster_local_id,
-                                         const int cluster_global_id,
                                          const slamon::Batch& batch_msg)
     {
         // Pre-allocates.
@@ -427,7 +424,7 @@ namespace slamon
             l_cam_pts.emplace_back(cam_pt);
         }
 
-        Cluster cluster(cluster_global_id, cluster_local_id, keyframe_id,
+        Cluster cluster(batch_msg.global_id, cluster_local_id, keyframe_id,
                         l_descs, r_descs, l_kpts, r_kpts, l_cam_pts);
         return cluster;
     }
