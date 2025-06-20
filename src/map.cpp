@@ -321,16 +321,14 @@ namespace slamon
     }
 
 
-    void Map::addVertex(const tf::Transform& pose)
+    void Map::addVertex(const int id,
+                        const tf::Transform& pose)
     {
         // Locks map.
         std::scoped_lock lock(mutex_graph_);
 
         // Convert pose for graph.
         Eigen::Isometry3d vertex_pose = fromTfToIsometry(pose);
-
-        // Set node id equal to graph size.
-        int id = graph_.vertices().size();
 
         // Build the vertex.
         g2o::VertexSE3* c_vertex = new g2o::VertexSE3();

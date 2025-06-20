@@ -159,10 +159,11 @@ namespace slamon
 
 
             /** \brief Adds a vertex to the graph.
+             *  \param[in] id Vertex identifier.
              *  \param[in] pose Vertex pose.
-             *  @return the vertex id.
              */
-            void addVertex(const tf::Transform& pose);
+            void addVertex(const int id,
+                           const tf::Transform& pose);
 
 
             /** \brief Adds an edge to the graph.

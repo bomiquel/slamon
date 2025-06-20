@@ -166,7 +166,7 @@ namespace slamon
             cluster_map_pose = c_camera_map_pose * local_cluster_pose;
 
             // Adds cluster to the graph.
-            map_->addVertex(cluster_map_pose);
+            map_->addVertex(cluster_id, cluster_map_pose);
 
             // Stores information.
             c_clusters_ids.push_back(cluster_id);

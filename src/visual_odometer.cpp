@@ -543,6 +543,14 @@ namespace slamon
                                       const std::vector<std::pair<int, int>>& cluster_pairs)
     {
         if (enable_debugging_)
+        {
+            std::string text = "[VO->Keyframe sender:] Sending keyframe: " + std::to_string(c_keyframe_id_) + " with clusters: ";
+            for (int i = 0; i < keyframe_.getClustersNumber(); ++i)
+                text += std::to_string(c_cluster_id_ + i) + " ";
+            ROS_INFO_STREAM(text);
+        }
+
+        if (enable_debugging_)
             publishKeyframe(c_keyframe_id_, keyframe_.getLeftImg(), keyframe_.getRightImg(),
                             keyframe_.getLeftDescs(), keyframe_.getRightDescs(), keyframe_.getTimestamp(),
                             keyframe_pub_, inliers_per_pair, keyframe_.getClusterIds(), 
