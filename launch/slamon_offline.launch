@@ -70,21 +70,21 @@
         <!-- VO SLAMON -->
         <rosparam command = "load" file = "$(find slamon)/config/offline_params.yaml"/>
         <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x1 == true)">
-            <remap from = "get_first_pose"              to = "slamon_vo/get_first_pose"/>
+            <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
             <remap from = "left_camera_info"            to = "/$(arg camera_name)/left/camera_info"/>
             <remap from = "right_camera_info"           to = "/$(arg camera_name)/right/camera_info"/>
             <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/left/image_rect_color"/>
             <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/right/image_rect_color"/> 
         </node>
         <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x2 == true)">
-            <remap from = "get_first_pose"              to = "slamon_vo/get_first_pose"/>
+            <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
             <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x2/left/camera_info"/>
             <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x2/right/camera_info"/>
             <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x2/left/image_rect_color"/>
             <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/scaled_x2/right/image_rect_color"/> 
         </node>
         <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x4 == true)">
-            <remap from = "get_first_pose"              to = "slamon_vo/get_first_pose"/>
+            <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
             <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x4/left/camera_info"/>
             <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x4/right/camera_info"/>
             <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x4/left/image_rect_color"/>
