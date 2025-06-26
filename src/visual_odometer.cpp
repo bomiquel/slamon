@@ -627,7 +627,7 @@ namespace slamon
         }
 
         // It does not insert keyframe.
-        if (static_cast<size_t>(1.25 * min_lc_inliers_) < i_c_l_kpts.size())
+        if (static_cast<size_t>(1.10 * min_lc_inliers_) < i_c_l_kpts.size())
         {
             if (enable_debugging_)
                 ROS_INFO_STREAM("[VO->Keyframe inserter:] No keyframe is inserted because there is still too much overlap.");

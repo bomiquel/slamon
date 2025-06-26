@@ -211,7 +211,7 @@ namespace slamon
 
         // Connects this keyframe with the previous.
         start_module_time = ros::Time::now().toSec();
-        if (keyframe_id > 1)
+        if (keyframe_id > 0)
         {
             if (keyframe_msg->cluster_pairs.empty()) // Connects only the closest clusters between the two keyframes.
             {
