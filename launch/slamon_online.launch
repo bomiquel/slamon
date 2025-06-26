@@ -1,8 +1,12 @@
 <launch>
 
-    <!-- Image parameters -->
+    <!-- Camera parameters -->
     <arg name = "camera_name"        default = "stereo_down"/>
     <arg name = "resolution"         default = "full"/>
+    <arg name = "slave_camera_name"  default = "right"/>
+    <arg name = "master_camera_name" default = "left"/>
+
+    <!-- Image parameters -->
     <arg name = "enable_decimate_x1" default = "false"/>
     <arg name = "enable_decimate_x2" default = "false"/>
     <arg name = "enable_decimate_x4" default = "true"/>
@@ -12,24 +16,24 @@
     <rosparam command = "load" file = "$(find slamon)/config/online_params.yaml"/>
     <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x1 == true)">
         <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
-        <remap from = "left_camera_info"            to = "/$(arg camera_name)/left/camera_info"/>
-        <remap from = "right_camera_info"           to = "/$(arg camera_name)/right/camera_info"/>
-        <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/left/image_rect_color"/>
-        <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/right/image_rect_color"/> 
+        <remap from = "left_camera_info"            to = "/$(arg camera_name)/$(arg master_camera_name)/camera_info"/>
+        <remap from = "right_camera_info"           to = "/$(arg camera_name)/$(arg slave_camera_name)/camera_info"/>
+        <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/$(arg master_camera_name)/image_rect_color"/>
+        <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/$(arg slave_camera_name)/image_rect_color"/> 
     </node>
     <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x2 == true)">
         <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
-        <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x2/left/camera_info"/>
-        <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x2/right/camera_info"/>
-        <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x2/left/image_rect_color"/>
-        <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/scaled_x2/right/image_rect_color"/> 
+        <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x2/$(arg master_camera_name)/camera_info"/>
+        <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x2/$(arg slave_camera_name)/camera_info"/>
+        <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x2/$(arg master_camera_name)/image_rect_color"/>
+        <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/scaled_x2/$(arg slave_camera_name)/image_rect_color"/> 
     </node>
     <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x4 == true)">
         <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
-        <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x4/left/camera_info"/>
-        <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x4/right/camera_info"/>
-        <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x4/left/image_rect_color"/>
-        <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/scaled_x4/right/image_rect_color"/> 
+        <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x4/$(arg master_camera_name)/camera_info"/>
+        <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x4/$(arg slave_camera_name)/camera_info"/>
+        <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x4/$(arg master_camera_name)/image_rect_color"/>
+        <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/scaled_x4/$(arg slave_camera_name)/image_rect_color"/> 
     </node>
 
     <!-- MAP SLAMON -->
