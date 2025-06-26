@@ -1,0 +1,19 @@
+<launch>
+
+  <arg name="input_topic" default="/stereo_down/scaled_x2/points2"/>
+  <arg name="output_topic" default="/stereo_down/scaled_x2/points2_filtered"/>
+
+  <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+
+  <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+    <remap from="~input" to="$(arg input_topic)" />
+    <remap from="~output" to="$(arg output_topic)" />
+    <rosparam>
+      filter_field_name: z
+      filter_limit_min: 0.8
+      filter_limit_max: 2
+      filter_limit_negative: False
+      leaf_size: 0.007
+    </rosparam>
+  </node>
+</launch>
