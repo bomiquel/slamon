@@ -1,0 +1,24 @@
+<launch>
+
+  <arg name = "disparity_params"/>
+
+    <node pkg = "stereo_image_proc" type = "stereo_image_proc" name = "stereo_image_proc" respawn = "true" output="screen">
+        <rosparam file = "$(arg disparity_params)"/>
+        <param name = "approximate_sync" value = "true" />
+        <!-- Remap inputs -->
+        <remap from="left/image_raw" to="port/image_raw" />
+        <remap from="left/camera_info" to="port/camera_info" />
+        <remap from="right/image_raw" to="starboard/image_raw" />
+        <remap from="right/camera_info" to="starboard/camera_info" />
+        <!-- Remap outputs -->
+        <remap from="left/image_rect" to="port/image_rect" />
+        <remap from="left/image_rect_color" to="port/image_rect_color" />
+        <remap from="left/image_mono" to="port/image_mono" />
+        <remap from="left/image_color" to="port/image_color" />
+        <remap from="right/image_rect" to="starboard/image_rect" />
+        <remap from="right/image_rect_color" to="starboard/image_rect_color" />
+        <remap from="right/image_mono" to="starboard/image_mono" />
+        <remap from="right/image_color" to="starboard/image_color" />
+    </node>
+
+</launch>

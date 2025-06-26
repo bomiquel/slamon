@@ -1,0 +1,65 @@
+<launch>
+
+  <arg name = "stereo"             default = "stereo_down"/>
+  <arg name = "resolution"         default = "full"/>
+  <arg name = "enable_decimate_x1" default = "true"/>
+  <arg name = "enable_decimate_x2" default = "true"/>
+  <arg name = "enable_decimate_x4" default = "false"/>
+  <arg name = "enable_decimate_x8" default = "false"/>
+
+  <!-- x1 decimate -->
+  <group if = "$(arg enable_decimate_x1)">
+    <group ns="$(arg stereo)">
+      <include file = "$(find slamon)/launch/marine_stereo_processing/stereo_image_proc.launch" >
+        <arg name = "disparity_params" value = "$(find slamon)/config/disparity/orat/disparity_params_$(arg resolution)_x1.yaml" />
+      </include>
+    </group>
+  </group>
+
+  <!-- x2 decimate -->
+  <group if = "$(arg enable_decimate_x2)">
+
+    <group ns="$(arg stereo)">
+      <include file = "$(find slamon)/launch/marine_stereo_processing/stereo_crop_decimate.launch" >
+        <arg name = "decimation" value = "2" />
+      </include>
+      <group ns="scaled_x2" >
+        <include file = "$(find slamon)/launch/marine_stereo_processing/stereo_image_proc.launch" >
+          <arg name = "disparity_params" value = "$(find slamon)/config/disparity/orat/disparity_params_$(arg resolution)_x2.yaml"/>
+        </include>
+      </group>
+    </group>
+  </group>
+
+  <!-- x4 decimate -->
+  <group if = "$(arg enable_decimate_x4)">
+
+    <group ns="$(arg stereo)">
+      <include file = "$(find slamon)/launch/marine_stereo_processing/stereo_crop_decimate.launch" >
+        <arg name = "decimation" value = "4" />
+      </include>
+      <group ns="scaled_x4" >
+        <include file = "$(find slamon)/launch/marine_stereo_processing/stereo_image_proc.launch" >
+          <arg name = "disparity_params" value = "$(find slamon)/config/disparity/orat/disparity_params_$(arg resolution)_x4.yaml"/>
+        </include>
+      </group>
+    </group>
+  </group>
+
+  <!-- x8 decimate -->
+  <group if = "$(arg enable_decimate_x8)">
+
+    <group ns="$(arg stereo)">
+      <include file = "$(find slamon)/launch/marine_stereo_processing/stereo_crop_decimate.launch" >
+        <arg name = "stereo"     value = "$(arg stereo)" />
+        <arg name = "decimation" value = "8" />
+      </include>
+      <group ns="$(arg stereo)/scaled_x8" >
+        <include file = "$(find slamon)/launch/marine_stereo_processing/stereo_image_proc.launch" >
+          <arg name = "disparity_params" value = "$(find slamon)/config/disparity/orat/disparity_params_$(arg resolution)_x8.yaml"/>
+        </include>
+      </group>
+    </group>
+  </group>
+
+</launch>

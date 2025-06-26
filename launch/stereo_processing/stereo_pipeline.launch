@@ -11,7 +11,7 @@
     <group if = "$(arg enable_decimate_x1)">
       <include file = "$(find slamon)/launch/stereo_processing/stereo_image_proc.launch" >
         <arg name = "stereo"           value = "$(arg stereo)" />
-        <arg name = "disparity_params" value = "$(find slamon)/config/disparity/disparity_params_$(arg resolution)_x1.yaml" />
+        <arg name = "disparity_params" value = "$(find slamon)/config/disparity/turbot/disparity_params_$(arg resolution)_x1.yaml" />
       </include>
     </group>
 
@@ -23,7 +23,7 @@
       </include>
       <include file = "$(find slamon)/launch/stereo_processing/stereo_image_proc.launch" >
         <arg name = "stereo"           value = "$(arg stereo)/scaled_x2" />
-        <arg name = "disparity_params" value = "$(find slamon)/config/disparity/disparity_params_$(arg resolution)_x2.yaml"/>
+        <arg name = "disparity_params" value = "$(find slamon)/config/disparity/turbot/disparity_params_$(arg resolution)_x2.yaml"/>
       </include>
     </group>
 
@@ -35,7 +35,7 @@
       </include>
       <include file = "$(find slamon)/launch/stereo_processing/stereo_image_proc.launch" >
         <arg name = "stereo"           value = "$(arg stereo)/scaled_x4" />
-        <arg name = "disparity_params" value = "$(find slamon)/config/disparity/disparity_params_$(arg resolution)_x4.yaml"/>
+        <arg name = "disparity_params" value = "$(find slamon)/config/disparity/turbot/disparity_params_$(arg resolution)_x4.yaml"/>
       </include>
     </group>
 
@@ -47,7 +47,7 @@
       </include>
       <include file = "$(find slamon)/launch/stereo_processing/stereo_image_proc.launch" >
         <arg name = "stereo"           value = "$(arg stereo)/scaled_x8" />
-        <arg name = "disparity_params" value = "$(find slamon)/config/disparity/disparity_params_$(arg resolution)_x8.yaml"/>
+        <arg name = "disparity_params" value = "$(find slamon)/config/disparity/turbot/disparity_params_$(arg resolution)_x8.yaml"/>
       </include>
     </group>
 
