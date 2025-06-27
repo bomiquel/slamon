@@ -18,7 +18,7 @@
     <!-- Bagfiles parameters -->
     <param name = "/use_sim_time"    value = "true"/>
 
-    <!-- Portals Vells T0 -->
+    <!-- Andratx -->
     <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48/sparus2_stereo_camera_2025-06-25-10-36-48_0.bag
                                      /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48/sparus2_stereo_camera_2025-06-25-10-39-17_1.bag
                                      /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48/sparus2_stereo_camera_2025-06-25-10-40-17_2.bag
@@ -31,19 +31,18 @@
                                                                                                     /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
                                                                                                     /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw" required = "true"/>
 
-
     <group ns = "$(arg robot_name)">
 
-        <!-- Processes stereo images -->        
+        <!-- Processes stereo images -->
         <include file = "$(find slamon)/launch/stereo_processing/stereo_pipeline.launch">
-            <arg name = "stereo"             value = "$(arg camera_name)" />
-            <arg name = "resolution"         value = "$(arg resolution)" />
+            <arg name = "stereo"             value = "$(arg camera_name)"/>
+            <arg name = "resolution"         value = "$(arg resolution)"/>
             <arg name = "slave_camera_name"  value = "$(arg slave_camera_name)"/>
             <arg name = "master_camera_name" value = "$(arg master_camera_name)"/>
-            <arg name = "enable_decimate_x1" value = "$(arg enable_decimate_x1)" />
-            <arg name = "enable_decimate_x2" value = "$(arg enable_decimate_x2)" />
-            <arg name = "enable_decimate_x4" value = "$(arg enable_decimate_x4)" />
-            <arg name = "enable_decimate_x8" value = "$(arg enable_decimate_x8)" />
+            <arg name = "enable_decimate_x1" value = "$(arg enable_decimate_x1)"/>
+            <arg name = "enable_decimate_x2" value = "$(arg enable_decimate_x2)"/>
+            <arg name = "enable_decimate_x4" value = "$(arg enable_decimate_x4)"/>
+            <arg name = "enable_decimate_x8" value = "$(arg enable_decimate_x8)"/>
         </include>
 
         <!-- VO SLAMON -->
