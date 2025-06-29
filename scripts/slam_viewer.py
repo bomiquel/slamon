@@ -143,15 +143,14 @@ def drawEdges():
       return
 
     # Sanity check.
-    if (len(data.shape) == 1):
-      edges_shown = True
-      return
-    
-    # Sanity check 2.
     if (data.size == 0):
       edges_shown = True
       return
 
+    # Sanity check 2.
+    if (len(data.shape) == 1):
+      data = np.array([data])
+    
     # Confidence column.
     confidences = data[:,2]
     max_confidence = max(confidences)
