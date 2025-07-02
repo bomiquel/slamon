@@ -348,9 +348,9 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
 
     # Plot.
     if (plot_dim == 3):
-      ax_vo = ax.plot(data[:, 0], data[:, 1], data[:, 2], "blue", label = "VO")
+      ax_vo = ax.plot(data[:, 0], data[:, 1], data[:, 2], "darkturquoise", label = "VO")
     else:
-      ax_vo = ax.plot(data[:, 0], data[:, 1], "blue", label = "VO")
+      ax_vo = ax.plot(data[:, 0], data[:, 1], "darkturquoise", label = "VO")
 
   # Load SLAM vertices (file saved with SLAM node)
   if (os.path.isfile(slam_data_path) and isFull(slam_data_path)):
