@@ -63,11 +63,40 @@ def isFull(path_to_file):
   Returns
   -------
   out : bool
-    True if the file length is greater than 0, False otherwise.
+    True if the file length is greater than 0. False otherwise.
   """
   with open(path_to_file, "r") as file:
     lines = file.readlines()
   return len(lines) > 0
+
+
+def color_gradient(value, min_val, max_val, color_start, color_end):
+  r"""
+  Interpolates between two RGB hex colors based on the value within a range.
+
+  Parameters
+  ----------
+    value : float
+      The current confidence/inlier value.
+    min_val : float
+      Minimum confidence value.
+    max_val : float
+      Maximum confidence value.
+    color_start : tuple
+      RGB tuple for low values, e.g., (255, 204, 204).
+    color_end : tuple
+      RGB tuple for high values, e.g., (255, 0, 0).
+      
+  Returns:
+  -------
+  out : str
+    Hex color string like '#ffcccc'
+  """
+  t = (value - min_val) / (max_val - min_val) if max_val != min_val else 1
+  r = int(color_start[0] * (1 - t) + color_end[0] * t)
+  g = int(color_start[1] * (1 - t) + color_end[1] * t)
+  b = int(color_start[2] * (1 - t) + color_end[2] * t)
+  return f'#{r:02x}{g:02x}{b:02x}'
 
 
 def removeAxes(ax):
@@ -178,48 +207,18 @@ def drawEdges():
     
     # Confidence column.
     confidences = data[:,2]
-    max_confidence = max(confidences)
-    min_confidence = min(confidences)
+    min_conf, max_conf = np.min(confidences), np.max(confidences)
 
-    # Check for valid color mapping.
-    valid_color = (max_confidence - min_confidence != 0)
-
-    # Pink base value for green and blue.
-    pink_gb_start = 204
-    
-    # Compute mapping for green and blue if valid.
-    if valid_color:
-      m_gb = -pink_gb_start / (max_confidence - min_confidence)
-      n_gb = pink_gb_start - m_gb * min_confidence
-
-    # Pre-process plot if necessary.
-    if (len(data.shape) == 1):
-      data = np.array([data])
-
-    # Plot.
-    ax_edges = []
-    for i in range(len(data)):
-      if (valid_color):
-        gb_value = int(m_gb * data[i, 2] + n_gb)
-        gb_value = max(0, min(pink_gb_start, gb_value))
-        gb_hex = f'{gb_value:02x}'
-        color = f'#ff{gb_hex}{gb_hex}'
+    # Plot intra loop closures edges.
+    for i, edge in enumerate(data):
+      color = color_gradient(edge[2], min_conf, max_conf, (255, 204, 204), (255, 0, 0))
+      vect = np.vstack((edge[3:6], edge[6:9]))
+      if plot_dim == 3:
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color = color,
+                            label = "Intra-loop closing edges" if i == 0 else "", linestyle = "-", zorder = 1)
       else:
-        color = "#ff0000"
-      vect = []
-      vect.append([data[i, 3], data[i, 4], data[i, 5]])
-      vect.append([data[i, 6], data[i, 7], data[i, 8]])
-      vect =  np.array(vect)
-      if (plot_dim == 3):
-        if i == 0:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, label = "Loop closing edges", linestyle = "-", zorder = 1)
-        else:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color, linestyle = "-", zorder = 1)
-      else:
-        if i == 0:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, label = "Loop closing edges", linestyle = "-", zorder = 1)
-        else:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color, linestyle = "-", zorder = 1)
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color = color,
+                            label = "Intra-loop closing edges" if i == 0 else "", linestyle = "-", zorder = 1)
       ax_edges.append(ax_edge)
 
   edges_shown = True
@@ -321,9 +320,9 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
   
     # Plot.
     if (plot_dim == 3):
-      ax_gt = ax.plot(data[:, 1], data[:, 2], data[:, 3], "orange", label = "Ground Truth")
+      ax_gt = ax.plot(data[:, 1], data[:, 2], data[:, 3], "black", label = "Ground Truth")
     else:
-      ax_gt = ax.plot(data[:, 1], data[:, 2], "orange", label = "Ground Truth")
+      ax_gt = ax.plot(data[:, 1], data[:, 2], "black", label = "Ground Truth")
 
   # Load visual odometry data (saved with rostopic echo -p /namespace/topic > file.txt).
   if (os.path.isfile(vo_data_path) and isFull(vo_data_path)):
@@ -340,7 +339,8 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
         with open(vo_data_path, "w") as file:
           file.writelines(lines)
         data = np.loadtxt(vo_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
-      return
+      else:
+        return
 
     # Pre-process plot if necessary.
     if (len(data.shape) == 1):
@@ -355,7 +355,7 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
   # Load SLAM vertices (file saved with SLAM node)
   if (os.path.isfile(slam_data_path) and isFull(slam_data_path)):
 
-    # Check if file is blocked
+    # Check if file is blocked.
     while (os.path.exists(vertices_lock_file)):
       time.sleep(0.5)
 
@@ -363,35 +363,22 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
     with open(slam_data_path, "r") as file:
       lines = file.readlines()
     size = lines[1].split(",")
-    if len(size) == 9:
-      try:
-        data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
-      except Exception as e:
-        print(f"The following exception was detected while trying to load the SLAM algorithm vertices (size 9): {e} ")
-        with open(slam_data_path, "r") as file:
-          lines = file.readlines()
-        if "shutdown" in lines[-1]:
-          lines.pop()
-          with open(slam_data_path, "w") as file:
-            file.writelines(lines)
-          data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
-        return
-    elif len(size) == 8:
-      try:
-        data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (1, 2, 3, 4, 5, 6, 7))
-      except Exception as e:
-        print(f"The following exception was detected while trying to load the SLAM algorithm vertices (size 8): {e} ")
-        with open(slam_data_path, "r") as file:
-          lines = file.readlines()
-        if "shutdown" in lines[-1]:
-          lines.pop()
-          with open(slam_data_path, "w") as file:
-            file.writelines(lines)
-          data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (1, 2, 3, 4, 5, 6, 7))
-        return
-    else:
+    if len(size) != 9:
       print(f"Wrong number of columns")
       return
+    try:
+      data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
+    except Exception as e:
+      print(f"The following exception was detected while trying to load the SLAM algorithm vertices (size 9): {e} ")
+      with open(slam_data_path, "r") as file:
+        lines = file.readlines()
+      if "shutdown" in lines[-1]:
+        lines.pop()
+        with open(slam_data_path, "w") as file:
+          file.writelines(lines)
+        data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
+      else:
+        return
 
     # Pre-process plot if necessary.
     if (len(data.shape) == 1):
