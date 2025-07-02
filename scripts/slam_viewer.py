@@ -416,8 +416,8 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
       pipes_map_x, pipes_map_y = readPLYVertices(os.path.join(pipes_folder_path, pipes_map_names[0]))
 
     # Plot pipes.
-    ax_pipes_odom = ax.plot(pipes_odom_x, pipes_odom_y, "gray", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 1)
-    ax_pipes_map = ax.plot(pipes_map_x, pipes_map_y, "black", label = "Pipes corrected", marker = "o", linestyle = 'None', markersize = 1)
+    ax_pipes_odom = ax.plot(pipes_odom_x, pipes_odom_y, "gold", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 2)
+    ax_pipes_map = ax.plot(pipes_map_x, pipes_map_y, "orange", label = "Pipes corrected", marker = "o", linestyle = 'None', markersize = 2)
 
   # Update the plot
   plt.draw()
