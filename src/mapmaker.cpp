@@ -30,18 +30,18 @@ namespace slamon
                 std::filesystem::remove_all(clusters_path_);
             std::filesystem::create_directory(clusters_path_);
 
-            poses_file_ = w_path + "keyframes_poses.txt";
+            poses_file_ = w_path + "keyframes_poses_0.txt";
             if (std::filesystem::exists(poses_file_))
                 std::filesystem::remove(poses_file_.c_str());
 
-            edges_file_ = w_path + "loop_closure_edges.txt";
+            edges_file_ = w_path + "loop_closure_edges_0.txt";
             if (std::filesystem::exists(edges_file_))
                 std::filesystem::remove(edges_file_.c_str());
 
-            std::string lock_file = w_path + "keyframes_poses.txt.lock";
+            std::string lock_file = w_path + "keyframes_poses_0.txt.lock";
             if (std::filesystem::exists(lock_file))
                 std::filesystem::remove(lock_file.c_str());
-            lock_file = w_path + "loop_closure_edges.txt.lock";
+            lock_file = w_path + "loop_closure_edges_0.txt.lock";
             if (std::filesystem::exists(lock_file))
                 std::filesystem::remove(lock_file.c_str());
         }
