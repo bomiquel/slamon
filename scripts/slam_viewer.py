@@ -215,7 +215,7 @@ def drawEdges():
       vect = np.vstack((edge[3:6], edge[6:9]))
       if plot_dim == 3:
           ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color = color, linestyle = "--",
-                            label = "Intra-loop closing edges" if i == 0 else "",  zorder = 1)
+                            label = "Intra-loop closing edges" if i == 0 else "", zorder = 1)
       else:
           ax_edge = ax.plot(vect[:, 0], vect[:, 1], color = color, linestyle = "--",
                             label = "Intra-loop closing edges" if i == 0 else "", zorder = 1)
@@ -416,8 +416,8 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
       pipes_map_x, pipes_map_y = readPLYVertices(os.path.join(pipes_folder_path, pipes_map_names[0]))
 
     # Plot pipes.
-    ax_pipes_odom = ax.plot(pipes_odom_x, pipes_odom_y, "gold", label = "Pipes first detection", marker = "o", linestyle = 'None', markersize = 2)
-    ax_pipes_map = ax.plot(pipes_map_x, pipes_map_y, "orange", label = "Pipes corrected", marker = "o", linestyle = 'None', markersize = 2)
+    ax_pipes_odom = ax.plot(pipes_odom_x, pipes_odom_y, color = "gold", linestyle = 'None', label = "Pipes first detection", marker = "o", markersize = 2)
+    ax_pipes_map = ax.plot(pipes_map_x, pipes_map_y, color = "orange", linestyle = 'None', label = "Pipes corrected", marker = "o", markersize = 2)
 
   # Update the plot
   plt.draw()
