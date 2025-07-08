@@ -189,11 +189,11 @@ def drawEdges():
       color = color_gradient(edge[2], min_conf, max_conf, (255, 204, 204), (255, 0, 0))
       vect = np.vstack((edge[3:6], edge[6:9]))
       if plot_dim == 3:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color = color,
-                            label = "Intra-loop closing edges" if i == 0 else "", linestyle = "-", zorder = 1)
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color = color, linestyle = "--",
+                            label = "Intra-loop closing edges" if i == 0 else "",  zorder = 1)
       else:
-          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color = color,
-                            label = "Intra-loop closing edges" if i == 0 else "", linestyle = "-", zorder = 1)
+          ax_edge = ax.plot(vect[:, 0], vect[:, 1], color = color, linestyle = "--",
+                            label = "Intra-loop closing edges" if i == 0 else "", zorder = 1)
       ax_edges.append(ax_edge)
 
   edges_shown = True
@@ -291,9 +291,9 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path):
   
     # Plot.
     if (plot_dim == 3):
-      ax_gt = ax.plot(data[:, 1], data[:, 2], data[:, 3], "black", label = "Ground Truth")
+      ax_gt = ax.plot(data[:, 1], data[:, 2], data[:, 3], color = "black", linestyle = "-", label = "Ground Truth")
     else:
-      ax_gt = ax.plot(data[:, 1], data[:, 2], "black", label = "Ground Truth")
+      ax_gt = ax.plot(data[:, 1], data[:, 2], color = "black", linestyle = "-", label = "Ground Truth")
 
   # Load visual odometry data (saved with rostopic echo -p /namespace/topic > file.txt).
   if (os.path.isfile(vo_data_path) and isFull(vo_data_path)):
@@ -319,9 +319,9 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path):
 
     # Plot.
     if (plot_dim == 3):
-      ax_vo = ax.plot(data[:, 0], data[:, 1], data[:, 2], "darkturquoise", label = "VO")
+      ax_vo = ax.plot(data[:, 0], data[:, 1], data[:, 2], color = "darkturquoise", linestyle = "-", label = "VO")
     else:
-      ax_vo = ax.plot(data[:, 0], data[:, 1], "darkturquoise", label = "VO")
+      ax_vo = ax.plot(data[:, 0], data[:, 1], color = "darkturquoise", linestyle = "-", label = "VO")
 
   # Load SLAM vertices (file saved with SLAM node)
   if (os.path.isfile(slam_data_path) and isFull(slam_data_path)):
@@ -357,9 +357,9 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path):
 
     # Plot.
     if (plot_dim == 3):
-      ax_vertices = ax.plot(data[:, 0], data[:, 1], data[:, 2], "green", label = "V-SLAM", marker = "o", zorder = 1)
+      ax_vertices = ax.plot(data[:, 0], data[:, 1], data[:, 2], color = "green", linestyle = "-", label = "V-SLAM", marker = "o", zorder = 1)
     else:
-      ax_vertices = ax.plot(data[:, 0], data[:, 1], "green", label = "V-SLAM", marker = "o", zorder = 1)
+      ax_vertices = ax.plot(data[:, 0], data[:, 1], color = "green", linestyle = "-", label = "V-SLAM", marker = "o", zorder = 1)
 
   # Show the edges
   if (edges_shown == True):
