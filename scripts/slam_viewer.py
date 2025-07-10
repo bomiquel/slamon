@@ -84,7 +84,7 @@ def color_gradient(value, min_val, max_val, color_start, color_end):
     color_end : tuple
       RGB tuple for high values, e.g., (255, 0, 0).
       
-  Returns:
+  Returns
   -------
   out : str
     Hex color string like '#ffcccc'
@@ -130,7 +130,7 @@ def updateLegend():
 
 
 def removeEdges():
-  r""" 
+  r"""
   Removes the loop's closing edges.
 
   Returns
@@ -273,7 +273,7 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path):
         return
     else:
       try:
-        data = np.loadtxt(gt_data_path, delimiter=',', skiprows = 1, usecols = (0, 1, 2, 3, 4, 5, 6, 7))
+        data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 2, 3, 4, 5, 6, 7, 8))
       except Exception as e:
         print(f"The following exception was detected while trying to load the GT (size <= 12): {e} ")
         with open(gt_data_path, "r") as file:
@@ -282,7 +282,7 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path):
           lines.pop()
           with open(gt_data_path, "w") as file:
             file.writelines(lines)
-          data = np.loadtxt(gt_data_path, delimiter=',', skiprows = 1, usecols = (0, 1, 2, 3, 4, 5, 6, 7))
+          data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 2, 3, 4, 5, 6, 7, 8))
         return
 
     # Pre-process plot if necessary.
