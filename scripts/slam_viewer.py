@@ -48,6 +48,39 @@ vertices_lock_file = ""
 loop_closing_edges_data_path = ""
 
 
+def str2bool(v):
+  r"""
+  Convert a string or boolean input to a proper boolean value.
+  
+  This is useful for argparse to interpret command-line flags like:
+    --flag True
+    --flag false
+    --flag 1
+    --flag no
+  
+  Accepted truthy values: 'yes', 'true', 'y', 't', '1'
+  Accepted falsy values: 'no', 'false', 'n', 'f', '0'
+
+  Parameters
+  ----------
+  v : str or bool
+    Input value to convert.
+
+  Returns
+  -------
+  out : bool
+    Converted boolean value.
+  """
+  if isinstance(v, bool):
+    return v
+  if v.lower() in ('yes', 'true', 'y', 't', '1'):
+    return True
+  elif v.lower() in ('no', 'false', 'n', 'f', '0'):
+    return False
+  else:
+    raise argparse.ArgumentTypeError("Boolean value expected.")
+
+
 def isFull(path_to_file):
   r"""
   Check if the file length is > 0.
@@ -394,6 +427,9 @@ if __name__ == "__main__":
   parser.add_argument("-dim", "--dim", type = int,
                       default = 2,
                       help = "Defines the plot dimensions: 2 for xy and 3 for xyz.")
+  parser.add_argument("-ned_axis", "--ned_axis", type = str2bool, 
+                      default = True,
+                      help = "Select NED (True) or ENU (False) axis.")
   args = parser.parse_args()
 
   # Some hardcode parameters
@@ -433,9 +469,14 @@ if __name__ == "__main__":
   if (plot_dim == 3):
     ax = fig.add_subplot(111, projection = '3d')
     ax.set_zlabel("z (m)")
+    if args.ned_axis:
+      ax.view_init(elev = -90, azim = 0)
+      ax.invert_zaxis()
   else:
     ax = fig.add_subplot(111)
     ax.grid()
+    if args.ned_axis:
+      ax.invert_yaxis()
 
   ax.set_title("Online viewer")
   ax.set_xlabel("x (m)")
