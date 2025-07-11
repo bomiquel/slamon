@@ -12,5 +12,5 @@ slamon:
   min_inliers: 40
   min_lc_inliers: 80
   motion_estimation_type: ap3p
-  robot_frame_id: /turbot/base_link
+  robot_frame_id: /girona500/base_link
   # working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/portals/full_cut/refined/ratio_matching/ap3p/execution_3/
