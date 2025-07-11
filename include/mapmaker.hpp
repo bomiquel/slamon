@@ -73,6 +73,12 @@ namespace slamon
                           const sensor_msgs::PointCloud2ConstPtr& keycloud_msg);
 
 
+            /** \brief Callback that is called when the timer is triggered.
+             *  \param[in] event ros::WallTimerEvent.
+             */
+            void timerCallback(const ros::WallTimerEvent& event);
+
+
             /** \brief Obtains, from the VO and through a service, the transformation
              *  between the centre of the robot (base_link) and the sensor (camera).
              */
@@ -100,6 +106,11 @@ namespace slamon
                                                              const size_t r);
 
 
+            /** \brief Writes the keyframe poses and the loop closure edges to disk.
+             */
+            void writeMapResults();
+
+
             // Attributes:
 
             bool initialised_map_; //!> Map status.
@@ -121,6 +132,8 @@ namespace slamon
             std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 
             std::string camera_frame_id_; //!> Camera coordinate axis identficator.
+
+            ros::WallTimer timer_; //!> Timer to write the last map update to disk.
 
             tf::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
 

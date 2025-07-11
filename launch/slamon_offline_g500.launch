@@ -19,27 +19,31 @@
     <param name = "/use_sim_time"    value = "true"/>
 
     <!-- UJI -->
-    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_0/2024-07-04-12-10-30.bag"/>
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_2_proc/2024-07-04-13-08-50.bag"/>
 
     <!-- Play bagfile -->
     <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /tf
                                                                                                     /tf_static
-                                                                                                    /$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/image_raw" required = "true"/>
+                                                                                                    /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                                    /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                                    /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                                    /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw"/>
+
+    <!-- Static TF's -->
+    <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_base_link_to_stereo_down" args = "0.57 -0.062 0.505 0.0 0.0 0.0 /$(arg robot_name)/base_link /$(arg robot_name)/stereo_down 30" />
+    <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_stereo_down_to_left_optical" args = "0.0 0.0 0.0 1.57 0.0 0.0 /$(arg robot_name)/stereo_down /$(arg robot_name)/stereo_down/left_optical 30" />
 
     <group ns = "$(arg robot_name)">
 
         <!-- Initial pose and orientation parameters -->  
         <!-- UJI -->
-        <arg name = "t_x" default = "0"/> 
-        <arg name = "t_y" default = "0"/> 
-        <arg name = "t_z" default = "2.0"/> 
-        <arg name = "q_x" default = "0"/>
-        <arg name = "q_y" default = "0"/>
-        <arg name = "q_z" default = "0"/>
-        <arg name = "q_w" default = "1"/>
+        <arg name = "t_x" default = "0.474042000"/> 
+        <arg name = "t_y" default = "0.245116000"/> 
+        <arg name = "t_z" default = "1.7704230546951294"/> 
+        <arg name = "q_x" default = "-0.0018122179286957757"/>
+        <arg name = "q_y" default = "-0.006523184935243455"/>
+        <arg name = "q_z" default = "-0.003526460890793371"/>
+        <arg name = "q_w" default = "0.999970863574567"/>
 
         <!-- Sends initial pose -->
         <node pkg = "slamon" type = "initial_pose_server_params" name = "initial_pose_server_params" output = "screen">
@@ -55,7 +59,7 @@
 
         <!-- Processes stereo images -->
         <include file = "$(find slamon)/launch/stereo_processing/stereo_pipeline.launch">
-            <arg name = "stereo"             value = "/$(arg camera_name)"/>
+            <arg name = "stereo"             value = "$(arg camera_name)"/>
             <arg name = "resolution"         value = "$(arg resolution)"/>
             <arg name = "slave_camera_name"  value = "$(arg slave_camera_name)"/>
             <arg name = "master_camera_name" value = "$(arg master_camera_name)"/>
@@ -69,24 +73,24 @@
         <rosparam command = "load" file = "$(find slamon)/config/offline_params.yaml"/>
         <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x1 == true)">
             <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
-            <remap from = "left_camera_info"            to = "/$(arg camera_name)/$(arg master_camera_name)/camera_info"/>
-            <remap from = "right_camera_info"           to = "/$(arg camera_name)/$(arg slave_camera_name)/camera_info"/>
-            <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/$(arg master_camera_name)/image_rect_color"/>
-            <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/$(arg slave_camera_name)/image_rect_color"/> 
+            <remap from = "left_camera_info"            to = "$(arg camera_name)/$(arg master_camera_name)/camera_info"/>
+            <remap from = "right_camera_info"           to = "$(arg camera_name)/$(arg slave_camera_name)/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "$(arg camera_name)/$(arg master_camera_name)/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "$(arg camera_name)/$(arg slave_camera_name)/image_rect_color"/> 
         </node>
         <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x2 == true)">
             <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
-            <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x2/$(arg master_camera_name)/camera_info"/>
-            <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x2/$(arg slave_camera_name)/camera_info"/>
-            <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x2/$(arg master_camera_name)/image_rect_color"/>
-            <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/scaled_x2/$(arg slave_camera_name)/image_rect_color"/> 
+            <remap from = "left_camera_info"            to = "$(arg camera_name)/scaled_x2/$(arg master_camera_name)/camera_info"/>
+            <remap from = "right_camera_info"           to = "$(arg camera_name)/scaled_x2/$(arg slave_camera_name)/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "$(arg camera_name)/scaled_x2/$(arg master_camera_name)/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "$(arg camera_name)/scaled_x2/$(arg slave_camera_name)/image_rect_color"/> 
         </node>
         <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x4 == true)">
             <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
-            <remap from = "left_camera_info"            to = "/$(arg camera_name)/scaled_x4/$(arg master_camera_name)/camera_info"/>
-            <remap from = "right_camera_info"           to = "/$(arg camera_name)/scaled_x4/$(arg slave_camera_name)/camera_info"/>
-            <remap from = "left_image_rect_color"       to = "/$(arg camera_name)/scaled_x4/$(arg master_camera_name)/image_rect_color"/>
-            <remap from = "right_image_rect_color"      to = "/$(arg camera_name)/scaled_x4/$(arg slave_camera_name)/image_rect_color"/> 
+            <remap from = "left_camera_info"            to = "$(arg camera_name)/scaled_x4/$(arg master_camera_name)/camera_info"/>
+            <remap from = "right_camera_info"           to = "$(arg camera_name)/scaled_x4/$(arg slave_camera_name)/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "$(arg camera_name)/scaled_x4/$(arg master_camera_name)/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "$(arg camera_name)/scaled_x4/$(arg slave_camera_name)/image_rect_color"/> 
         </node>
 
         <!-- MAP SLAMON -->
