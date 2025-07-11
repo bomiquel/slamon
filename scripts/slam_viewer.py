@@ -37,6 +37,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # Global variables
 ax_gt = None
+ax_re = None
 ax_vo = None
 ax_ekf = None
 plot_dim = 3
@@ -103,7 +104,31 @@ def isFull(path_to_file):
   return len(lines) > 0
 
 
-def color_gradient(value, min_val, max_val, color_start, color_end):
+def removeShutdownInTxt(path_to_file):
+  r"""
+  Deletes the last txt line if it contains the string: shutdown
+
+  Parameters
+  ----------
+  path_to_file : str
+    Path to the file to be analyzed.
+
+  Returns
+  -------
+  out : Bool
+    True if the last line has been removed.
+  """
+  with open(path_to_file, "r") as file:
+    lines = file.readlines()
+  if not "shutdown" in lines[-1]:
+    return False
+  lines.pop()
+  with open(path_to_file, "w") as file:
+    file.writelines(lines)
+  return True
+
+
+def colorGradient(value, min_val, max_val, color_start, color_end):
   r"""
   Interpolates between two RGB hex colors based on the value within a range.
 
@@ -244,7 +269,7 @@ def drawEdges():
 
     # Plot intra loop closures edges.
     for i, edge in enumerate(data):
-      color = color_gradient(edge[2], min_conf, max_conf, (255, 204, 204), (255, 0, 0))
+      color = colorGradient(edge[2], min_conf, max_conf, (255, 204, 204), (255, 0, 0))
       vect = np.vstack((edge[3:6], edge[6:9]))
       if plot_dim == 3:
           ax_edge = ax.plot(vect[:, 0], vect[:, 1], vect[:, 2], color = color, linestyle = "--",
@@ -283,14 +308,16 @@ def onClick(event):
     plt.draw()
 
 
-def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
+def plotOnline(gt_data_path, re_data_path, vo_data_path, slam_data_path, pipes_folder_path):
   r"""
-  Plots trajectory data from ground truth, visual odometry and SLAM. Also plots pipes positions.
+  Plots trajectory data from ground truth, robot, visual odometry, and SLAM sources. Also plots pipes positions.
 
   Parameters
   ----------
   gt_data_path : str
     Path to the file containing ground truth trajectory data.
+  re_data_path : str
+    Path to the file containing the robot trajectory estimation data.
   vo_data_path : str
     Path to the file containing visual odometry trajectory data.
   slam_data_path : str
@@ -302,10 +329,11 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
   ----------
   None
   """
-  global vertices_lock_file, legend_edited, ax_gt, ax_vo, ax_vertices, ax_pipes_map, ax_pipes_odom, edges_shown, plot_dim
+  global vertices_lock_file, legend_edited, ax_gt, ax_re, ax_vo, ax_vertices, ax_pipes_map, ax_pipes_odom, edges_shown, plot_dim
 
   # Remove the main axes
   removeAxes(ax_gt)
+  removeAxes(ax_re)
   removeAxes(ax_vo)
   removeAxes(ax_vertices)
   removeAxes(ax_pipes_map)
@@ -314,37 +342,25 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
   # Ground truth.
   if (gt_data_path is not None and os.path.isfile(gt_data_path) and isFull(gt_data_path)):
 
-    # Check gt file type.
+    # Checks gt file type.
     with open(gt_data_path, "r") as file:
       lines = file.readlines()
     size = lines[1].split(",")
-
-    # Read the data.
     if (len(size) > 12):
-      try:
-        data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 5, 6, 7, 8, 9, 10, 11))
-      except Exception as e:
-        print(f"The following exception was detected while trying to load the GT (size > 12): {e} ")
-        with open(gt_data_path, "r") as file:
-          lines = file.readlines()
-        if "shutdown" in lines[-1]:
-          lines.pop()
-          with open(gt_data_path, "w") as file:
-            file.writelines(lines)
-          data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 5, 6, 7, 8, 9, 10, 11))
-        return
+      cols = (0, 5, 6, 7, 8, 9, 10, 11)
+      symbol = ">"
     else:
-      try:
-        data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 2, 3, 4, 5, 6, 7, 8))
-      except Exception as e:
-        print(f"The following exception was detected while trying to load the GT (size <= 12): {e} ")
-        with open(gt_data_path, "r") as file:
-          lines = file.readlines()
-        if "shutdown" in lines[-1]:
-          lines.pop()
-          with open(gt_data_path, "w") as file:
-            file.writelines(lines)
-          data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = (0, 2, 3, 4, 5, 6, 7, 8))
+      cols = (0, 2, 3, 4, 5, 6, 7, 8)
+      symbol = "<="
+
+    # Reads data
+    try:
+      data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = cols)
+    except Exception as e:
+      print(f"The following exception was detected while trying to load the GT (size {symbol} 12): {e} ")
+      if removeShutdownInTxt(gt_data_path):
+        data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = cols)
+      else:
         return
 
     # Pre-process plot if necessary.
@@ -357,20 +373,49 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
     else:
       ax_gt = ax.plot(data[:, 1], data[:, 2], color = "black", linestyle = "-", label = "Ground Truth")
 
-  # Load visual odometry data (saved with rostopic echo -p /namespace/topic > file.txt).
-  if (os.path.isfile(vo_data_path) and isFull(vo_data_path)):
+  # Robot estimation.
+  if (re_data_path is not None and os.path.isfile(re_data_path) and isFull(re_data_path)):
 
-    # Read the data.
+    # Checks re file type.
+    with open(re_data_path, "r") as file:
+      lines = file.readlines()
+    size = lines[1].split(",")
+    if (len(size) > 12):
+      cols = (0, 5, 6, 7, 8, 9, 10, 11)
+      symbol = ">"
+    else:
+      cols = (0, 2, 3, 4, 5, 6, 7, 8)
+      symbol = "<="
+
+    # Reads data
+    try:
+      data = np.loadtxt(re_data_path, delimiter = ",", skiprows = 1, usecols = cols)
+    except Exception as e:
+      print(f"The following exception was detected while trying to load the robot's location estimation (size {symbol} 12): {e} ")
+      if removeShutdownInTxt(re_data_path):
+        data = np.loadtxt(re_data_path, delimiter = ",", skiprows = 1, usecols = cols)
+      else:
+        return
+
+    # Pre-process plot if necessary.
+    if (len(data.shape) == 1):
+      data = np.array([data])
+  
+    # Plot.
+    if (plot_dim == 3):
+      ax_gt = ax.plot(data[:, 1], data[:, 2], data[:, 3], color = "brown", linestyle = "-", label = "Robot's location estimation")
+    else:
+      ax_gt = ax.plot(data[:, 1], data[:, 2], color = "brown", linestyle = "-", label = "Robot's location estimation")
+
+  # Load visual odometry data (saved with rostopic echo -p /namespace/topic > file.txt).
+  if (vo_data_path is not None and os.path.isfile(vo_data_path) and isFull(vo_data_path)):
+
+    # Reads data
     try:
       data = np.loadtxt(vo_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
     except Exception as e:
       print(f"The following exception was detected while trying to load the vo: {e} ")
-      with open(vo_data_path, "r") as file:
-        lines = file.readlines()
-      if "shutdown" in lines[-1]:
-        lines.pop()
-        with open(vo_data_path, "w") as file:
-          file.writelines(lines)
+      if removeShutdownInTxt(vo_data_path):
         data = np.loadtxt(vo_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
       else:
         return
@@ -403,12 +448,7 @@ def plotOnline(gt_data_path, vo_data_path, slam_data_path, pipes_folder_path):
       data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
     except Exception as e:
       print(f"The following exception was detected while trying to load the SLAM algorithm vertices (size 9): {e} ")
-      with open(slam_data_path, "r") as file:
-        lines = file.readlines()
-      if "shutdown" in lines[-1]:
-        lines.pop()
-        with open(slam_data_path, "w") as file:
-          file.writelines(lines)
+      if removeShutdownInTxt(slam_data_path):
         data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
       else:
         return
@@ -467,9 +507,12 @@ if __name__ == "__main__":
   parser.add_argument("-gt", "--gt", type = str, 
                       default = None,
                       help = "Path to the file containing the ground truth data (optional).")
+  parser.add_argument("-re", "--re", type = str,
+                      default = None,
+                      help = "Path to the file containing the robot's location estimate (optional)." )
   parser.add_argument("-vo", "--vo", type = str, 
                       default = None,
-                      help = "Path to the file containing the visual odometry data (required).")
+                      help = "Path to the file containing the visual odometry data (optional).")
   parser.add_argument("-v", "--v", type = str, 
                       default = None,
                       help = "Path to the file containing the SLAM vertices data (required).")
@@ -482,16 +525,10 @@ if __name__ == "__main__":
   parser.add_argument("-dim", "--dim", type = int,
                       default = 2,
                       help = "Defines the plot dimensions: 2 for xy and 3 for xyz.")
-  parser.add_argument("-ned_axis", "--ned_axis", type = str2bool, 
+  parser.add_argument("-ned", "--ned", type = str2bool, 
                       default = True,
                       help = "Select NED (True) or ENU (False) axis.")
   args = parser.parse_args()
-
-  # Some hardcode parameters
-  # font = {'family' : 'Sans',
-  #         'weight' : 'normal',
-  #         'size'   : 30}
-  # pylab.rc('font', **font)
 
   # Sanity check
   if (args.v):
@@ -500,13 +537,6 @@ if __name__ == "__main__":
       sys.exit()
   else:
     print("Vertices is None.")
-    sys.exit()
-  if (args.vo):
-    if (not os.path.isfile(args.vo)):
-      print("VO is not a file.")
-      sys.exit()
-  else:
-    print("VO is None.")
     sys.exit()
 
   print("GRAPH VIEWER MOUSE INPUTS:")
@@ -524,13 +554,13 @@ if __name__ == "__main__":
   if (plot_dim == 3):
     ax = fig.add_subplot(111, projection = '3d')
     ax.set_zlabel("z (m)")
-    if args.ned_axis:
+    if args.ned:
       ax.view_init(elev = -90, azim = 0)
       ax.invert_zaxis()
   else:
     ax = fig.add_subplot(111)
     ax.grid()
-    if args.ned_axis:
+    if args.ned:
       ax.invert_yaxis()
 
   ax.set_title("Online viewer")
@@ -542,7 +572,7 @@ if __name__ == "__main__":
 
   # Start timer for real time plot
   timer = fig.canvas.new_timer(2500)
-  plotOnline(args.gt, args.vo, args.v, args.p)
-  timer.add_callback(plotOnline, args.gt, args.vo, args.v, args.p)
+  plotOnline(args.gt, args.re, args.vo, args.v, args.p)
+  timer.add_callback(plotOnline, args.gt, args.re, args.vo, args.v, args.p)
   timer.start()
   plt.show()
