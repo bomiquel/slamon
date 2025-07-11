@@ -75,6 +75,9 @@ namespace slamon
         sync.reset(new Sync_(SyncPolicy_(10), odom_sub, keyframe_sub));
         sync->registerCallback(boost::bind(&Mapmaker::callback, this, _1, _2));
 
+        // ROS timer.
+        timer_ = nh.createWallTimer(ros::WallDuration(30.0), &Mapmaker::timerCallback, this);
+
         // Calls callback when synchronised messages arrive
         ros::spin();
     }
@@ -83,6 +86,9 @@ namespace slamon
     void Mapmaker::callback(const nav_msgs::OdometryConstPtr& odom_msg,
                             const slamon::KeyframeConstPtr& keyframe_msg)
     {
+        // Stop timer.
+        timer_.stop();
+
         // Time at which the program enters into the callback.
         double start_callback_time = ros::Time::now().toSec();
         
@@ -317,25 +323,8 @@ namespace slamon
         start_module_time = ros::Time::now().toSec();
         if (enable_debugging_)
         {
-            // Saves keyframe map poses to file.
-            std::vector<double> stamps;
-            std::vector<tf::Transform> keyframe_poses;
-            map_->getKeyframePoses(stamps, keyframe_poses);
-            for (size_t i = 0; i < keyframe_poses.size(); ++i)
-                keyframe_poses[i] = keyframe_poses[i] * robot2camera_.inverse();
-            writePoses(poses_file_, stamps, keyframe_poses);
-
-            // Saves loop closure edges to file.
-            std::vector<double> edges_weights;
-            std::vector<std::pair<int, int>> edges_keyframe_ids;
-            std::vector<std::pair<tf::Transform, tf::Transform>> edges_keyframe_poses;
-            map_->getLoopClosureEdges(edges_weights, edges_keyframe_ids, edges_keyframe_poses);
-            for (size_t i = 0; i < edges_keyframe_poses.size(); ++i)
-            {
-                edges_keyframe_poses[i].first = edges_keyframe_poses[i].first * robot2camera_.inverse();
-                edges_keyframe_poses[i].second = edges_keyframe_poses[i].second * robot2camera_.inverse();
-            }
-            writeLoopClosureEdges(edges_file_, edges_weights, edges_keyframe_ids, edges_keyframe_poses);
+            // Saves keyframe map poses and loop closure edges to files.
+            writeMapResults();
 
             if (l_img_ok && r_img_ok)
             {
@@ -354,6 +343,18 @@ namespace slamon
         run_times_.total_run_time = ros::Time::now().toSec() - start_callback_time;
         if (run_times_pub_.getNumSubscribers() > 0)
             publishPerformance(ros::Time::now(), 1, run_times_, run_times_pub_);
+
+        // Start timer.
+        timer_.start();
+    }
+
+
+    void Mapmaker::timerCallback(const ros::WallTimerEvent& event)
+    {
+        ROS_WARN_STREAM("[MM->timerCallback:] Writing files!");
+
+        // Saves keyframe map poses and loop closure edges to files.
+        writeMapResults();
     }
 
 
@@ -444,6 +445,30 @@ namespace slamon
         while (std::prev_permutation(bitmask.begin(), bitmask.end()));
 
         return combinations;
+    }
+
+
+    void Mapmaker::writeMapResults()
+    {
+        // Saves keyframe map poses to file.
+        std::vector<double> stamps;
+        std::vector<tf::Transform> keyframe_poses;
+        map_->getKeyframePoses(stamps, keyframe_poses);
+        for (size_t i = 0; i < keyframe_poses.size(); ++i)
+            keyframe_poses[i] = keyframe_poses[i] * robot2camera_.inverse();
+        writePoses(poses_file_, stamps, keyframe_poses);
+
+        // Saves loop closure edges to file.
+        std::vector<double> edges_weights;
+        std::vector<std::pair<int, int>> edges_keyframe_ids;
+        std::vector<std::pair<tf::Transform, tf::Transform>> edges_keyframe_poses;
+        map_->getLoopClosureEdges(edges_weights, edges_keyframe_ids, edges_keyframe_poses);
+        for (size_t i = 0; i < edges_keyframe_poses.size(); ++i)
+        {
+            edges_keyframe_poses[i].first = edges_keyframe_poses[i].first * robot2camera_.inverse();
+            edges_keyframe_poses[i].second = edges_keyframe_poses[i].second * robot2camera_.inverse();
+        }
+        writeLoopClosureEdges(edges_file_, edges_weights, edges_keyframe_ids, edges_keyframe_poses);
     }
 
     
