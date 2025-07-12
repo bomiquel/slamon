@@ -374,9 +374,9 @@ def plotOnline(gt_data_path, re_data_path, vo_data_path, slam_data_path):
   
     # Plot.
     if (plot_dim == 3):
-      ax_gt = ax.plot(data[:, 1], data[:, 2], data[:, 3], color = "brown", linestyle = "-", label = "Robot's location estimation")
+      ax_re = ax.plot(data[:, 1], data[:, 2], data[:, 3], color = "brown", linestyle = "-", label = "Robot's location estimation")
     else:
-      ax_gt = ax.plot(data[:, 1], data[:, 2], color = "brown", linestyle = "-", label = "Robot's location estimation")
+      ax_re = ax.plot(data[:, 1], data[:, 2], color = "brown", linestyle = "-", label = "Robot's location estimation")
 
   # Load visual odometry data (saved with rostopic echo -p /namespace/topic > file.txt).
   if (vo_data_path is not None and os.path.isfile(vo_data_path) and isFull(vo_data_path)):
