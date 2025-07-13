@@ -31,6 +31,8 @@ import time
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import tools.casters as casters
+import tools.file_helpers as f_help
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -47,82 +49,6 @@ legend_edited = True
 edges_lock_file = ""
 vertices_lock_file = ""
 loop_closing_edges_data_path = ""
-
-
-def str2bool(v):
-  r"""
-  Convert a string or boolean input to a proper boolean value.
-  
-  This is useful for argparse to interpret command-line flags like:
-    --flag True
-    --flag false
-    --flag 1
-    --flag no
-  
-  Accepted truthy values: 'yes', 'true', 'y', 't', '1'
-  Accepted falsy values: 'no', 'false', 'n', 'f', '0'
-
-  Parameters
-  ----------
-  v : str or bool
-    Input value to convert.
-
-  Returns
-  -------
-  out : bool
-    Converted boolean value.
-  """
-  if isinstance(v, bool):
-    return v
-  if v.lower() in ('yes', 'true', 'y', 't', '1'):
-    return True
-  elif v.lower() in ('no', 'false', 'n', 'f', '0'):
-    return False
-  else:
-    raise argparse.ArgumentTypeError("Boolean value expected.")
-
-
-def isFull(path_to_file):
-  r"""
-  Check if the file length is > 0.
-
-  Parameters
-  ----------
-  path_to_file : str
-    Path to the file to be analyzed.
-
-  Returns
-  -------
-  out : bool
-    True if the file length is greater than 0. False otherwise.
-  """
-  with open(path_to_file, "r") as file:
-    lines = file.readlines()
-  return len(lines) > 0
-
-
-def removeShutdownInTxt(path_to_file):
-  r"""
-  Deletes the last txt line if it contains the string: shutdown
-
-  Parameters
-  ----------
-  path_to_file : str
-    Path to the file to be analyzed.
-
-  Returns
-  -------
-  out : Bool
-    True if the last line has been removed.
-  """
-  with open(path_to_file, "r") as file:
-    lines = file.readlines()
-  if not "shutdown" in lines[-1]:
-    return False
-  lines.pop()
-  with open(path_to_file, "w") as file:
-    file.writelines(lines)
-  return True
 
 
 def colorGradient(value, min_val, max_val, color_start, color_end):
@@ -216,7 +142,7 @@ def drawEdges():
   removeEdges()
 
   # Load SLAM edges (file saved with SLAM node)
-  if (loop_closing_edges_data_path is not None and os.path.isfile(loop_closing_edges_data_path) and isFull(loop_closing_edges_data_path)):
+  if (loop_closing_edges_data_path is not None and os.path.isfile(loop_closing_edges_data_path) and f_help.isFull(loop_closing_edges_data_path)):
 
     # Check if file is blocked
     while (os.path.exists(edges_lock_file)):
@@ -311,7 +237,7 @@ def plotOnline(gt_data_path, re_data_path, vo_data_path, slam_data_path):
   removeAxes(ax_vertices)
 
   # Ground truth.
-  if (gt_data_path is not None and os.path.isfile(gt_data_path) and isFull(gt_data_path)):
+  if (gt_data_path is not None and os.path.isfile(gt_data_path) and f_help.isFull(gt_data_path)):
 
     # Checks gt file type.
     with open(gt_data_path, "r") as file:
@@ -329,7 +255,7 @@ def plotOnline(gt_data_path, re_data_path, vo_data_path, slam_data_path):
       data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = cols)
     except Exception as e:
       print(f"The following exception was detected while trying to load the GT (size {symbol} 12): {e} ")
-      if removeShutdownInTxt(gt_data_path):
+      if f_help.removeShutdownInTxt(gt_data_path):
         data = np.loadtxt(gt_data_path, delimiter = ",", skiprows = 1, usecols = cols)
       else:
         return
@@ -345,7 +271,7 @@ def plotOnline(gt_data_path, re_data_path, vo_data_path, slam_data_path):
       ax_gt = ax.plot(data[:, 1], data[:, 2], color = "black", linestyle = "-", label = "Ground Truth")
 
   # Robot estimation.
-  if (re_data_path is not None and os.path.isfile(re_data_path) and isFull(re_data_path)):
+  if (re_data_path is not None and os.path.isfile(re_data_path) and f_help.isFull(re_data_path)):
 
     # Checks re file type.
     with open(re_data_path, "r") as file:
@@ -363,7 +289,7 @@ def plotOnline(gt_data_path, re_data_path, vo_data_path, slam_data_path):
       data = np.loadtxt(re_data_path, delimiter = ",", skiprows = 1, usecols = cols)
     except Exception as e:
       print(f"The following exception was detected while trying to load the robot's location estimation (size {symbol} 12): {e} ")
-      if removeShutdownInTxt(re_data_path):
+      if f_help.removeShutdownInTxt(re_data_path):
         data = np.loadtxt(re_data_path, delimiter = ",", skiprows = 1, usecols = cols)
       else:
         return
@@ -379,14 +305,14 @@ def plotOnline(gt_data_path, re_data_path, vo_data_path, slam_data_path):
       ax_re = ax.plot(data[:, 1], data[:, 2], color = "brown", linestyle = "-", label = "Robot's location estimation")
 
   # Load visual odometry data (saved with rostopic echo -p /namespace/topic > file.txt).
-  if (vo_data_path is not None and os.path.isfile(vo_data_path) and isFull(vo_data_path)):
+  if (vo_data_path is not None and os.path.isfile(vo_data_path) and f_help.isFull(vo_data_path)):
 
     # Reads data
     try:
       data = np.loadtxt(vo_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
     except Exception as e:
       print(f"The following exception was detected while trying to load the vo: {e} ")
-      if removeShutdownInTxt(vo_data_path):
+      if f_help.removeShutdownInTxt(vo_data_path):
         data = np.loadtxt(vo_data_path, delimiter = ",", skiprows = 1, usecols = (5, 6, 7, 8, 9, 10, 11))
       else:
         return
@@ -402,7 +328,7 @@ def plotOnline(gt_data_path, re_data_path, vo_data_path, slam_data_path):
       ax_vo = ax.plot(data[:, 0], data[:, 1], color = "darkturquoise", linestyle = "-", label = "VO")
 
   # Load SLAM vertices (file saved with SLAM node)
-  if (os.path.isfile(slam_data_path) and isFull(slam_data_path)):
+  if (os.path.isfile(slam_data_path) and f_help.isFull(slam_data_path)):
 
     # Check if file is blocked.
     while (os.path.exists(vertices_lock_file)):
@@ -419,7 +345,7 @@ def plotOnline(gt_data_path, re_data_path, vo_data_path, slam_data_path):
       data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
     except Exception as e:
       print(f"The following exception was detected while trying to load the SLAM algorithm vertices (size 9): {e} ")
-      if removeShutdownInTxt(slam_data_path):
+      if f_help.removeShutdownInTxt(slam_data_path):
         data = np.loadtxt(slam_data_path, delimiter = ",", skiprows = 1, usecols = (2, 3, 4, 5, 6, 7, 8))
       else:
         return
@@ -470,18 +396,13 @@ if __name__ == "__main__":
   parser.add_argument("-dim", "--dim", type = int,
                       default = 2,
                       help = "Defines the plot dimensions: 2 for xy and 3 for xyz.")
-  parser.add_argument("-ned", "--ned", type = str2bool, 
+  parser.add_argument("-ned", "--ned", type = casters.str2bool, 
                       default = True,
                       help = "Select NED (True) or ENU (False) axis.")
   args = parser.parse_args()
 
   # Sanity check
-  if (args.v):
-    if (not os.path.isfile(args.v)):
-      print("Vertices is not a file.")
-      sys.exit()
-  else:
-    print("Vertices is None.")
+  if not f_help.checkPathExistence(args.v, "Vertices"):
     sys.exit()
 
   print("GRAPH VIEWER MOUSE INPUTS:")
@@ -496,7 +417,7 @@ if __name__ == "__main__":
 
   # Init figure
   fig = plt.figure(1)
-  if (plot_dim == 3):
+  if plot_dim == 3:
     ax = fig.add_subplot(111, projection = '3d')
     ax.set_zlabel("z (m)")
     if args.ned:
