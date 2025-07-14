@@ -10,3 +10,6 @@ odom.txt
 graph_edges.txt
 graph_vertices.txt
 keyframes_poses.txt
+__pycache__/
+*/__pycache__/
+*pyc
