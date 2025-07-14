@@ -41,13 +41,15 @@ def checkFileType(path_to_file):
       lines = file.readlines()
   size = lines[1].split(",")
   if (len(size) > 12):
-      cols = (0, 5, 6, 7, 8, 9, 10, 11)
+      cols = (0, 5, 6, 7)
       symbol = ">"
+      time_in_seconds = False
   else:
-      cols = (0, 2, 3, 4, 5, 6, 7, 8)
+      cols = (0, 2, 3, 4)
       symbol = "<="
+      time_in_seconds = True
 
-  return cols, symbol
+  return cols, symbol, time_in_seconds
 
 
 def isFull(path_to_file):
