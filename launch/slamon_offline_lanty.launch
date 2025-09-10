@@ -22,12 +22,6 @@
     <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uib/2023_11_09/13_37_00/stereo_camera_images_2023-11-09-13-37-01_0.bag
                                      /home/bomiquel/datasets/bagfiles/uib/2023_11_09/13_37_00/stereo_camera_images_2023-11-09-13-42-34_1.bag"/>
 
-    <!-- Play bagfile -->
-    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/image_raw" required = "true"/>
-
     <group ns = "$(arg robot_name)">
 
         <!-- Initial pose and orientation parameters -->  
@@ -97,5 +91,11 @@
         </node>
 
     </group>
+
+    <!-- Play bagfile -->
+    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                                    /$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/image_raw" required = "true"/>
 
 </launch>
