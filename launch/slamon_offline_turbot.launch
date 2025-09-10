@@ -25,12 +25,6 @@
                                      /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_full_cut/images_2021-02-25-15-00-04_3.bag
                                      /home/bomiquel/datasets/bagfiles/portals/2021_02_25/turbot/14_41_06_full_cut/images_2021-02-25-15-06-23_4.bag"/>
 
-    <!-- Play bagfile -->
-    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/image_raw" required = "true"/>
-
     <!-- Static TF's -->
     <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_base_link_to_stereo_stick" args = "0.75 0.0 0.08 0.0 0.0 0.0 /$(arg robot_name)/base_link /$(arg robot_name)/stereo_stick 30" />
     <node pkg = "tf" type = "static_transform_publisher" name = "$(arg robot_name)_stereo_stick_to_stereo_base" args = "0.0 0.0 0.0 1.57 0.0 1.57 /$(arg robot_name)/stereo_stick /$(arg robot_name)/stereo_down/base 30" />
@@ -121,5 +115,11 @@
         </node>
 
     </group>
+
+    <!-- Play bagfile -->
+    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                                    /$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/image_raw" required = "true"/>
 
 </launch>
