@@ -1,8 +1,16 @@
 /**
- *  @file
+ *  @file motion_estimator.hpp
  *  @brief The MotionEstimtor class provides tools to compute the motion between stereo images.
- *  @author Bo Miquel Nordfeldt-Fiol
- *  @date 2024-2025
+ *
+ *  @author
+ *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *
+ *  @copyright
+ *    Copyright (c) 2025 Bo Miquel Nordfeldt-Fiol
+ *
+ *  @license BSD-3-Clause
+ *    This software is released under the BSD 3-Clause License.
+ *    See the LICENSE file for full text.
  */
 
 #ifndef MOTION_ESTIMATOR_HPP
@@ -31,8 +39,6 @@ class MotionEstimator
             EPNP = cv::SOLVEPNP_EPNP,
             P3P = cv::SOLVEPNP_P3P,
             AP3P = cv::SOLVEPNP_AP3P,
-            IPPE = cv::SOLVEPNP_IPPE,
-            DUAL = 10
         };
 
 
@@ -143,8 +149,6 @@ class MotionEstimator
          *      - p3p.
          *      - ap3p.
          *      - epnp.
-         *      - ippe.
-         *      - dual.
          *  To be robust against outliers, the motion estimation is wrapped in a RANSAC scheme.
          *  \param[in] l_proj_mat Left projection matrix.
          *  \param[in] r_proj_mat Right projection matrix.
@@ -211,8 +215,6 @@ class MotionEstimator
          *      - p3p.
          *      - ap3p.
          *      - epnp.
-         *      - ippe.
-         *      - dual.
          *  To be robust against outliers, the motion estimation is wrapped in a RANSAC scheme.
          *  \param[in] l_proj_mat Left projection matrix.
          *  \param[in] r_proj_mat Right projection matrix.
@@ -288,8 +290,6 @@ class MotionEstimator
          *      - p3p.
          *      - ap3p.
          *      - epnp.
-         *      - ippe.
-         *      - dual.
          *  To be robust against outliers, the motion estimation is wrapped in a RANSAC scheme.
          *  Then the motion estimated is refined.
          *  \param[in] l_proj_mat Left projection matrix.
@@ -357,8 +357,6 @@ class MotionEstimator
          *      - p3p.
          *      - ap3p.
          *      - epnp.
-         *      - ippe.
-         *      - dual.
          *  To be robust against outliers, the motion estimation is wrapped in a RANSAC scheme.
          *  Then the motion estimated is refined.
          *  \param[in] l_proj_mat Left projection matrix.
@@ -432,13 +430,6 @@ class MotionEstimator
     
     private:
 
-        enum DualResult
-        {
-            FAILED    = 0,
-            UPDATED   = 1,
-            CONVERGED = 2
-        };
-
         struct SortBucketsByMatchesSlopesAscending 
         {
             inline bool operator() (const std::pair<float, std::pair<int, cv::KeyPoint>>& pair_0, 
@@ -454,149 +445,6 @@ class MotionEstimator
          *  @return a MotionEstimator::Type value.
          */
         MotionEstimator::Type selectMotionEstimationType(const std::string& motion_estimation_type);
-
-
-        /** \brief By minimising the sum of the reprojection errors, obtain the transform
-         *  (R | t) between the 3D points of the scene and the keypoints. 
-         *  This code comes from/is a modification of LIBVISO2.
-         *  \param[in] ransac_iter RANSAC iterations.
-         *  \param[in] l_proj_mat Left projection matrix.
-         *  \param[in] r_proj_mat Right projection matrix.
-         *  \param[in] l_pts_0 Left keypoints of the first set. In consecutive images:
-         *  current left keypoints. In loop closing images: query left keypoints.
-         *  \param[in] r_pts_0 Right keypoints of the first set. In consecutive images:
-         *  current right keypoints. In loop closing images: query right keypoints.
-         *  \param[in] scene_pts_1 3D points of the second set. In consecutive images: previous
-         *  3D points relative to left camera. In loop closing images: candidate 3D points
-         *  relative to world.
-         *  \param[out] r_vec Estimated rotation vector.
-         *  \param[out] t_vec Estimated translation matrix.
-         *  \param[out] inliers Vector that contains indices of inliers in l_pts_0, r_pts_0 and scene_pts_1.
-         */
-        void solveDualPnPRansac(const int ransac_iter,
-                                const cv::Mat& l_proj_mat,
-                                const cv::Mat& r_proj_mat,
-                                const std::vector<cv::Point2f>& l_pts_0,
-                                const std::vector<cv::Point2f>& r_pts_0,
-                                const std::vector<cv::Point3f>& scene_pts_1,
-                                cv::Mat& r_vec,
-                                cv::Mat& t_vec,
-                                std::vector<int>& inliers);
-
-
-        /** \brief Gets random and unique indices from a vector of size N.
-         *  This code comes from/is a modification of LIBVISO2.
-         *  \param[in] size Number of values to choose from (N).
-         *  \param[in] n_rand_idxs Number of random indices to be obtained (m).
-         *  @return A vector of m positions with random and uniques indices.
-         */
-        std::vector<int> getRandomIndices(const int size, 
-                                          const int n_rand_idxs);
-
-
-        /** \brief Updates the transform values.
-         *  This code comes from/is a modification of LIBVISO2.
-         *  \param[in] eps Value from which it is considered to be 0, to avoid accuracy
-         *  errors.
-         *  \param[in] step_size 
-         *  \param[in] c_idxs Current indices, active indices.
-         *  \param[in] l_proj_mat Left projection matrix.
-         *  \param[in] r_proj_mat Right projection matrix.
-         *  \param[in] l_pts_0 Left keypoints of the first set. In consecutive images:
-         *  current left keypoints. In loop closing images: query left keypoints.
-         *  \param[in] r_pts_0 Right keypoints of the first set. In consecutive images:
-         *  current right keypoints. In loop closing images: query right keypoints.
-         *  \param[in] scene_pts_1 3D points of the second set. In consecutive images: previous
-         *  3D points relative to left camera. In loop closing images: candidate 3D points
-         *  relative to world.
-         *  \param[out] J Jacobians of the 3D point projection on the left and right image plane.
-         *  \param[out] tr Vector containing the translation and rotation (in Euler angles). The 
-         *  first three values are the translation and the next three are the rotation.
-         *  \param[out] obs_pts Observed 2D points.
-         *  \param[out] pre_pts Predicted 2D points.
-         *  \param[out] res_pts Residuals (res_pts = obs_pts - pre_pts).
-         *  @return whether it has failed, been updated or converged.
-         */
-        MotionEstimator::DualResult updateDualParams(const double eps,
-                                                     const double step_size,
-                                                     const cv::Mat& l_proj_mat,
-                                                     const cv::Mat& r_proj_mat,
-                                                     const std::vector<int>& c_idxs,
-                                                     const std::vector<cv::Point2f>& l_pts_0,
-                                                     const std::vector<cv::Point2f>& r_pts_0,
-                                                     const std::vector<cv::Point3f>& scene_pts_1,
-                                                     std::vector<double>& J,
-                                                     std::vector<double>& tr,
-                                                     std::vector<double>& obs_pts,
-                                                     std::vector<double>& pre_pts,
-                                                     std::vector<double>& res_pts);
-
-
-        /** \brief Computes observed, predicted and residuals points, and Jacobians.
-         *  This code comes from/is a modification of LIBVISO2.
-         *  \param[in] l_proj_mat Left projection matrix.
-         *  \param[in] r_proj_mat Right projection matrix.
-         *  \param[in] c_idxs Current indices, active indices.
-         *  \param[in] l_pts_0 Left keypoints of the first set. In consecutive images:
-         *  current left keypoints. In loop closing images: query left keypoints.
-         *  \param[in] r_pts_0 Right keypoints of the first set. In consecutive images:
-         *  current right keypoints. In loop closing images: query right keypoints.
-         *  \param[in] scene_pts_1 3D points of the second set. In consecutive images: previous
-         *  3D points relative to left camera. In loop closing images: candidate 3D points
-         *  relative to world.
-         *  \param[out] J Jacobians of the 3D point projection on the left and right image plane.
-         *  \param[out] tr Vector containing the translation and rotation (in Euler angles). The 
-         *  first three values are the translation and the next three are the rotation.
-         *  \param[out] obs_pts Observed 2D points.
-         *  \param[out] pre_pts Predicted 2D points.
-         *  \param[out] res_pts Residuals (res_pts = obs_pts - pre_pts).
-         */
-        void computeVectorsAndJacobians(const cv::Mat& l_proj_mat,
-                                        const cv::Mat& r_proj_mat,
-                                        const std::vector<int>& c_idxs,
-                                        const std::vector<cv::Point2f>& l_pts_0,
-                                        const std::vector<cv::Point2f>& r_pts_0,
-                                        const std::vector<cv::Point3f>& scene_pts_1,
-                                        std::vector<double>& J,
-                                        std::vector<double>& tr,
-                                        std::vector<double>& obs_pts,
-                                        std::vector<double>& pre_pts,
-                                        std::vector<double>& res_pts);
-
-                                        
-        /** \brief Checks which predicted points are at a distance less than reproj_error²
-         *  from the observed points.
-         *  This code comes from/is a modification of LIBVISO2.
-         *  \param[in] reproj_error Inlier threshold value. The parameter value is the
-         *  maximum allowed distance between the observed and predicted point 
-         *  projections to consider it an inlier. 
-         *  \param[in] l_proj_mat Left projection matrix.
-         *  \param[in] r_proj_mat Right projection matrix.
-         *  \param[in] l_pts_0 Left keypoints of the first set. In consecutive images:
-         *  current left keypoints. In loop closing images: query left keypoints.
-         *  \param[in] r_pts_0 Right keypoints of the first set. In consecutive images:
-         *  current right keypoints. In loop closing images: query right keypoints.
-         *  \param[in] scene_pts_1 3D points of the second set. In consecutive images: previous
-         *  3D points relative to left camera. In loop closing images: candidate 3D points
-         *  relative to world.
-         *  \param[out] J Jacobians of the 3D point projection on the left and right image plane.
-         *  \param[out] tr Vector containing the translation and rotation (in Euler angles). The 
-         *  first three values are the translation and the next three are the rotation.
-         *  \param[out] obs_pts Observed 2D points.
-         *  \param[out] pre_pts Predicted 2D points.
-         *  \param[out] res_pts Residuals (res_pts = obs_pts - pre_pts).
-         */ 
-        std::vector<int> getInliers(const double reproj_error,
-                                    const cv::Mat& l_proj_mat,
-                                    const cv::Mat& r_proj_mat,
-                                    const std::vector<cv::Point2f>& l_pts_0,
-                                    const std::vector<cv::Point2f>& r_pts_0,
-                                    const std::vector<cv::Point3f>& scene_pts_1,
-                                    std::vector<double>& J,
-                                    std::vector<double>& tr,
-                                    std::vector<double>& obs_pts,
-                                    std::vector<double>& pre_pts,
-                                    std::vector<double>& res_pts);
 
                                     
         // Attributes:

@@ -1,7 +1,17 @@
 /**
- *  @brief The KeypointDetector class provides the necessary tools to detect keypoints and calculate descriptors.
- *  @author Bo Miquel Nordfeldt-Fiol
- *  @date 2024-2025
+ *  @file keypoint_detector.hpp
+ *  @brief The KeypointDetector class provides the necessary tools to 
+ *         detect keypoints and calculate descriptors.
+ *
+ *  @author
+ *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *
+ *  @copyright
+ *    Copyright (c) 2025 Bo Miquel Nordfeldt-Fiol
+ *
+ *  @license BSD-3-Clause
+ *    This software is released under the BSD 3-Clause License.
+ *    See the LICENSE file for full text.
  */
 
 #ifndef KEYPOINT_DETECTOR_HPP

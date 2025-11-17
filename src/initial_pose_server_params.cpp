@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 
     readParams();
 
-    ROS_INFO_STREAM("Ready to send punctual pose");
+    ROS_INFO_STREAM("Ready to send punctual pose.");
     ros::spin();
 
     return 0;

@@ -1,9 +1,59 @@
 /**
- *  @file
- *  @brief The Publisher class is responsive to publish the image visualizations for debugging purposes.
- *  @author Pep Lluís Negre-Carrasco
- *  @date 2014-2016
- *  @modified Bo Miquel Nordfeldt-Fiol 2024-2025
+ *  @file publisher.hpp
+ *  @brief The Publisher class is responsive to publish the image visualizations 
+ *         for debugging purposes.
+ *
+ *  This file contains modified portions of code derived from the original
+ *  stereo_slam project developed by the Systems, Robotics and Vision Group 
+ *  (srv.uib.es), University of the Balearic Islands. The original work is 
+ *  licensed under the BSD 4-Clause License (see below).
+ *
+ *  @author
+ *  Original: 
+ *    Pep Lluís Negre-Carrasco
+ *  Modified by: 
+ *    Bo Miquel Nordfeldt-Fiol
+ * 
+ *  @copyright
+ *  Original copyright holder:
+ *      Systems, Robotics and Vision Group (srv.uib.es)
+ *      University of the Balearic Islands
+ *      Copyright (c) 2013
+ *  Modified by:
+ *      Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *      Copyright (c) 2025
+ *      Released under the BSD 3-Clause License.
+ *
+ *  ---------------------------------------------------------------------------
+ *  Original BSD 4-Clause License Notice:
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * All advertising materials mentioning features or use of this software
+ *        must display the following acknowledgement:
+ *          "This product includes software developed by the
+ *           Systems, Robotics and Vision Group,
+ *           University of the Balearic Islands"
+ *      * Neither the name of the Systems, Robotics and Vision Group,
+ *        University of the Balearic Islands nor the names of its contributors
+ *        may be used to endorse or promote products derived from this software
+ *        without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+ *  ---------------------------------------------------------------------------
+ *
+ *  Additional license for modifications:
+ *      The modifications made by Bo Miquel Nordfeldt-Fiol are released under
+ *      the BSD 3-Clause License. See the top-level LICENSE file for details.
  */
 
 #ifndef PUBLISHER_HPP
@@ -48,7 +98,7 @@ class Publisher
             double run_time_2 = 0.0;     //!> Time needed for VO: Triangulation, MM: Add co-framed edges to graph or LC: Search for candidates to close loops by hash.
             double run_time_3 = 0.0;     //!> Time needed for VO: Clustering, MM: Add inter-frames edges to graph or LC: Read cluster candidates.
             double run_time_4 = 0.0;     //!> Time needed for VO: Temporal matching, MM: Publish or LC: Loop detection.
-            double run_time_5 = 0.0;     //!> Time needed for VO: Bucketing, MM: Data write or LC: Close loop.
+            double run_time_5 = 0.0;     //!> Time needed for VO: Bucketing, MM: Data write or LC: Loop correction.
             double run_time_6 = 0.0;     //!> Time needed for VO: Motion estimation, MM: Nothing or LC: Nothing.
             double run_time_7 = 0.0;     //!> Time needed for VO: Keyframe insertion decision, MM: Nothing or LC: Nothing.
             double total_run_time = 0.0; //!> Time needed for each thread to perform one iteration.

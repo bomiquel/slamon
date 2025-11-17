@@ -2,14 +2,39 @@
 <package format="2">
 
     <name>slamon</name>
-    <version>0.0.1</version>
-    <description>SLAMON</description>
-    <author email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt Fiol</author>
-    <maintainer email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt Fiol</maintainer>
-    <license>BSD</license>
+    <version>1.0.0</version>
 
+    <description>
+       SLAMON is an improved and extended version of stereo_slam.
+       Like the original project, it implements a stereo visual SLAM 
+       system designed for underwater environments.
+
+       SLAMON runs three main threads:
+       1. A robust visual odometer for underwater environments.
+       2. A topological map creator where the nodes are clusters 
+          of keypoints and the edges are the number of matches 
+          and the relative movement between nodes.
+       3. A loop closer that detects revisited areas by proximity and hashes.
+    </description>
+
+    <url type="website">https://github.com/bomiquel/slamon</url>
+    <url type="bugtracker">https://github.com/bomiquel/slamon/issues</url>
+    <url type="repository">https://github.com/bomiquel/slamon</url>
+
+    <author email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt-Fiol</author>
+    <maintainer email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt-Fiol</maintainer>
+
+    <!--
+        Licensing notice:
+        - The project includes original code from stereo_slam (2013) under BSD-4-Clause.
+        - All modifications by Bo Miquel Nordfeldt-Fiol are under BSD-3-Clause.
+    -->
+    <license>BSD-4-Clause AND BSD-3-Clause</license>
+
+    <!-- Build tool -->
     <buildtool_depend>catkin</buildtool_depend>
 
+    <!-- Build dependencies -->
     <build_depend>roscpp</build_depend>
     <build_depend>nav_msgs</build_depend>
     <build_depend>cv_bridge</build_depend>
@@ -21,6 +46,7 @@
     <build_depend>message_filters</build_depend>
     <build_depend>message_generation</build_depend>
 
+    <!-- Exec dependencies -->
     <exec_depend>roscpp</exec_depend>
     <exec_depend>nav_msgs</exec_depend>
     <exec_depend>cv_bridge</exec_depend>
