@@ -1,9 +1,58 @@
 /**
- *  @file
- *  @brief The Frame class represents each stereo camera frame (presentation).
- *  @author Pep Lluís Negre-Carrasco
- *  @date 2014-2016
- *  @modified Bo Miquel Nordfeldt-Fiol 2024-2025
+ *  @file frame.hpp
+ *  @brief Frame class representing a stereo camera frame.
+ *
+ *  This file contains modified portions of code derived from the original
+ *  stereo_slam project developed by the Systems, Robotics and Vision Group 
+ *  (srv.uib.es), University of the Balearic Islands. The original work is 
+ *  licensed under the BSD 4-Clause License (see below).
+ *
+ *  @author
+ *  Original: 
+ *    Pep Lluís Negre-Carrasco
+ *  Modified by: 
+ *    Bo Miquel Nordfeldt-Fiol
+ * 
+ *  @copyright
+ *  Original copyright holder:
+ *      Systems, Robotics and Vision Group (srv.uib.es)
+ *      University of the Balearic Islands
+ *      Copyright (c) 2013
+ *  Modified by:
+ *      Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *      Copyright (c) 2025
+ *      Released under the BSD 3-Clause License.
+ *
+ *  ---------------------------------------------------------------------------
+ *  Original BSD 4-Clause License Notice:
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * All advertising materials mentioning features or use of this software
+ *        must display the following acknowledgement:
+ *          "This product includes software developed by the
+ *           Systems, Robotics and Vision Group,
+ *           University of the Balearic Islands"
+ *      * Neither the name of the Systems, Robotics and Vision Group,
+ *        University of the Balearic Islands nor the names of its contributors
+ *        may be used to endorse or promote products derived from this software
+ *        without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+ *  ---------------------------------------------------------------------------
+ *
+ *  Additional license for modifications:
+ *      The modifications made by Bo Miquel Nordfeldt-Fiol are released under
+ *      the BSD 3-Clause License. See the top-level LICENSE file for details.
  */
 
 #ifndef FRAME_HPP
@@ -81,6 +130,12 @@ class Frame
         inline void setRightImg(const cv::Mat r_img) {r_img_ = r_img;}
 
 
+        /** \brief Set world-odom camera pose.
+         *  \param[in] odom_camera_pose World-odom camera pose when taking the image.
+         */
+        inline void setCameraPose(const tf::Transform& odom_camera_pose){odom_camera_pose_ = odom_camera_pose;}
+
+
         /** \brief Gets the number of clusters.
          *  @return The clusters number.
          */
@@ -132,12 +187,6 @@ class Frame
         /** \brief Get 3D points relative to left camera.
          */
         inline std::vector<cv::Point3f> getLeftCameraPoints() const {return l_cam_pts_;}
-
-
-        /** \brief Set world-odom camera pose.
-         *  \param[in] odom_camera_pose World-odom camera pose when taking the image.
-         */
-        inline void setCameraPose(const tf::Transform& odom_camera_pose){odom_camera_pose_ = odom_camera_pose;}
 
 
         /** \brief Get world-odom camera pose.

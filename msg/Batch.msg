@@ -1,3 +1,16 @@
+# @file Batch.msg
+# @brief Personalised message to define a keypoint cluster.
+#
+# @author
+#        Bo Miquel Nordfeldt-Fiol (2024–2025)
+#
+# @copyright
+#        Copyright (c) 2025 Bo Miquel Nordfeldt-Fiol
+#
+# @license BSD-3-Clause
+#        This software is released under the BSD 3-Clause License.
+#        See the LICENSE file for full text.
+
 # Global cluster id.
 int32 global_id
 

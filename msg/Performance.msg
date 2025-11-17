@@ -1,6 +1,17 @@
-# Custom message to evaluate SLAMON execution times.
-# To avoid creating a message for each part of the 
-# system, this message is reused in all three threads.
+# @file Performance.msg
+# @brief Custom message to evaluate SLAMON execution times.
+#        To avoid creating a message for each part of the 
+#        system, this message is reused in all three threads.
+#
+# @author
+#        Bo Miquel Nordfeldt-Fiol (2024–2025)
+#
+# @copyright
+#        Copyright (c) 2025 Bo Miquel Nordfeldt-Fiol
+#
+# @license BSD-3-Clause
+#        This software is released under the BSD 3-Clause License.
+#        See the LICENSE file for full text.
 
 # Typical ROS message header
 Header header
@@ -17,7 +28,7 @@ float64 run_time_1      # Time needed for VO: Stereo matching, MM: Add vertex (c
 float64 run_time_2      # Time needed for VO: Triangulation, MM: Add co-framed edges to graph or LC: Search for candidates to close loops by hash.
 float64 run_time_3      # Time needed for VO: Clustering, MM: Add inter-frames edges to graph or LC: Read cluster candidates.
 float64 run_time_4      # Time needed for VO: Temporal matching, MM: Publish or LC: Loop detection.
-float64 run_time_5      # Time needed for VO: Bucketing, MM: Data write or LC: Close loop.
+float64 run_time_5      # Time needed for VO: Bucketing, MM: Data write or LC: Loop correction.
 float64 run_time_6      # Time needed for VO: Motion estimation, MM: Nothing or LC: Nothing.
 float64 run_time_7      # Time needed for VO: Keyframe insertion decision, MM: Nothing or LC: Nothing.
 float64 total_run_time  # Time needed for each thread to perform one iteration.

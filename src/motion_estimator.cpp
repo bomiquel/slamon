@@ -1,3 +1,18 @@
+/**
+ *  @file motion_estimator.cpp
+ *  @brief The MotionEstimtor class provides tools to compute the motion between stereo images.
+ *
+ *  @author
+ *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *
+ *  @copyright
+ *    Copyright (c) 2025 Bo Miquel Nordfeldt-Fiol
+ *
+ *  @license BSD-3-Clause
+ *    This software is released under the BSD 3-Clause License.
+ *    See the LICENSE file for full text.
+ */
+
 #include "motion_estimator.hpp"
 
 
@@ -312,16 +327,9 @@ void MotionEstimator::estimateMotion(const cv::Mat& l_proj_mat,
 
     // Estimate motion.
     std::vector<int> inliers;
-    if (motion_estimation_type_ == DUAL)
-    {
-        solveDualPnPRansac(2000, l_proj_mat, r_proj_mat, l_pts_0, r_pts_0, scene_pts_1, r_vec, t_vec, inliers);
-    }
-    else
-    {
-        const cv::Mat K = l_proj_mat(cv::Rect(0, 0, 3, 3));
-        cv::solvePnPRansac(scene_pts_1, l_pts_0, K, cv::noArray(), r_vec, t_vec, 
-                           false, 2000, 1.0, 0.99, inliers, motion_estimation_type_);
-    }
+    const cv::Mat K = l_proj_mat(cv::Rect(0, 0, 3, 3));
+    cv::solvePnPRansac(scene_pts_1, l_pts_0, K, cv::noArray(), r_vec, t_vec, 
+                       false, 2000, 1.0, 0.99, inliers, motion_estimation_type_);
 
     // Pre-allocates memory.
     const size_t inliers_size = inliers.size();
@@ -435,15 +443,8 @@ void MotionEstimator::estimateRefinedMotion(const cv::Mat& l_proj_mat,
     // Estimate motion.
     std::vector<int> inliers;
     const cv::Mat K = l_proj_mat(cv::Rect(0, 0, 3, 3));
-    if (motion_estimation_type_ == DUAL)
-    {
-        solveDualPnPRansac(2000, l_proj_mat, r_proj_mat, l_pts_0, r_pts_0, scene_pts_1, r_vec, t_vec, inliers);
-    }
-    else
-    {
-        cv::solvePnPRansac(scene_pts_1, l_pts_0, K, cv::noArray(), r_vec, t_vec, 
-                           false, 2000, 1.0, 0.99, inliers, motion_estimation_type_);
-    }
+    cv::solvePnPRansac(scene_pts_1, l_pts_0, K, cv::noArray(), r_vec, t_vec, 
+                       false, 2000, 1.0, 0.99, inliers, motion_estimation_type_);
 
     // Pre-allocates memory.
     const size_t inliers_size = inliers.size();
@@ -502,360 +503,9 @@ MotionEstimator::Type MotionEstimator::selectMotionEstimationType(const std::str
         return AP3P;
     else if (motion_estimation_type == "solvepnp_epnp" || motion_estimation_type == "epnp")
         return EPNP;
-    else if (motion_estimation_type == "solvepnp_dual" || motion_estimation_type == "dual")
-        return DUAL;
     else
     {
         std::cerr << "Unforseen motion estimation type" << std::endl;
         return AP3P;
     }
-}
-
-
-void MotionEstimator::solveDualPnPRansac(const int ransac_iter,
-                                         const cv::Mat& l_proj_mat,
-                                         const cv::Mat& r_proj_mat,
-                                         const std::vector<cv::Point2f>& l_pts_0,
-                                         const std::vector<cv::Point2f>& r_pts_0,
-                                         const std::vector<cv::Point3f>& scene_pts_1,
-                                         cv::Mat& r_vec,
-                                         cv::Mat& t_vec,
-                                         std::vector<int>& inliers)
-{
-    // Sanity check.
-    inliers.clear();
-    r_vec.release();
-    t_vec.release();
-
-    // Variable initialisation.
-    bool success = true;
-    int n = static_cast<int>(l_pts_0.size());
-    if (n < 6)
-        return;
-
-    // Matrix initialisation.
-    std::vector<double> tr_vec(6);
-    std::vector<double> c_tr_vec(6);
-    std::vector<double> J(4 * n * 6); // Jacobians.
-    std::vector<double> obs_pts(4 * n); // Observed 2d points. Current/query left/right keypoints.
-    std::vector<double> pre_pts(4 * n); // Predicted 2d points. Reprojected previous/candidates left/right keypoints.
-    std::vector<double> res_pts(4 * n); // Residuals. (res_pts = obs_pts - pre_pts).
-
-    // RANSAC
-    int iter;
-    DualResult result;
-    std::vector<int> c_idxs;
-    std::vector<int> c_inliers;
-    for (int i = 0; i < ransac_iter; i++)
-    {
-        // Gets random active indices.
-        c_idxs = getRandomIndices(n, 3);
-
-        // Clears current parameters.
-        for (size_t j = 0; j < c_tr_vec.size(); ++j)
-            c_tr_vec[j] = 0;
-
-        // Minimizes reprojection errors.
-        iter = 0;
-        result = UPDATED;
-        while (result == UPDATED)
-        {
-            result = updateDualParams(1e-6, 1, l_proj_mat, r_proj_mat, 
-                                      c_idxs, l_pts_0, r_pts_0, scene_pts_1, 
-                                      J, c_tr_vec, obs_pts, pre_pts, res_pts);
-            if (iter++ > 20 || result == CONVERGED)
-                break;
-        }
-
-        // Overwrite best parameters if there are more inliers.
-        if (result != FAILED)
-        {
-            c_inliers = getInliers(2.0, l_proj_mat, r_proj_mat, 
-                                   l_pts_0, r_pts_0, scene_pts_1, 
-                                   J, c_tr_vec, obs_pts, pre_pts, res_pts);
-            if (c_inliers.size() > inliers.size())
-            {
-                tr_vec = c_tr_vec;
-                inliers = c_inliers;
-            }
-        }
-    }
-
-    // Final optimization (refinement)
-    iter = 0;
-    result = UPDATED;
-    if (inliers.size() > 6)
-    {
-        while (result == UPDATED)
-        {
-            result = updateDualParams(1e-7, 1, l_proj_mat, r_proj_mat, 
-                                      inliers, l_pts_0, r_pts_0, scene_pts_1, 
-                                      J, tr_vec, obs_pts, pre_pts, res_pts);
-            if (iter++ > 100 || result == CONVERGED)
-                break;
-        }
-
-        if (result != CONVERGED)
-            success = false;
-    }
-    else
-    {
-        success = false;
-    }
-
-    // Parameter estimate succeeded?
-    if (success)
-    {
-        r_vec = cv::Mat(std::vector<double>{tr_vec[0], tr_vec[1], tr_vec[2]}, CV_32FC1);
-        t_vec = cv::Mat(std::vector<double>{tr_vec[3], tr_vec[4], tr_vec[5]}, CV_32FC1);
-    }
-}
-
-
-std::vector<int> MotionEstimator::getRandomIndices(const int size, 
-                                                   const int n_rand_idxs)
-{
-    if (n_rand_idxs > size)
-        std::cerr << "Requested more random indices than availabe." << std::endl;
-
-    // Creates full index vector.
-    std::vector<int> idxs(size);
-    std::iota(idxs.begin(), idxs.end(), 0);
-
-    // Initialises random number generator
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    // Shuffles all indices.
-    std::shuffle(idxs.begin(), idxs.end(), gen);
-
-    return std::vector<int>(idxs.begin(), idxs.begin() + n_rand_idxs);
-}
-
-
-MotionEstimator::DualResult MotionEstimator::updateDualParams(const double eps,
-                                                              const double step_size,
-                                                              const cv::Mat& l_proj_mat,
-                                                              const cv::Mat& r_proj_mat,
-                                                              const std::vector<int>& c_idxs,
-                                                              const std::vector<cv::Point2f>& l_pts_0,
-                                                              const std::vector<cv::Point2f>& r_pts_0,
-                                                              const std::vector<cv::Point3f>& scene_pts_1,
-                                                              std::vector<double>& J,
-                                                              std::vector<double>& tr,
-                                                              std::vector<double>& obs_pts,
-                                                              std::vector<double>& pre_pts,
-                                                              std::vector<double>& res_pts)
-{
-    // At least 3 observations are needed.
-    if (c_idxs.size() < 3)
-        return FAILED;
-
-    // Computes observations, predictions, residuals and Jacobians.
-    computeVectorsAndJacobians(l_proj_mat,
-                               r_proj_mat,
-                               c_idxs,
-                               l_pts_0,
-                               r_pts_0,
-                               scene_pts_1,
-                               J,
-                               tr,
-                               obs_pts,
-                               pre_pts,
-                               res_pts);
-
-    // Init.
-    cv::Mat A(cv::Size(6, 6), CV_64F);
-    cv::Mat B(cv::Size(1, 6), CV_64F);
-
-    // Fills A and B matrices.
-    double a = 0, b = 0;
-    for (int m = 0; m < 6; m++)
-    {
-        for (int n = 0; n < 6; n++)
-        {
-            a = 0;
-            for (int i = 0; i < 4 * (int)c_idxs.size(); i++)
-                a += J[i * 6 + m] * J[i * 6 + n];
-            A.at<double>(m, n) = a;
-        }
-            
-        b = 0;
-        for (int i = 0; i < 4 * (int)c_idxs.size(); i++)
-            b += J[i * 6 + m] * (res_pts[i]);
-        B.at<double>(0, m) = b;
-    }
-
-    // Performs elimination.
-    cv::Mat coeff;
-    bool converged = true;
-    if (cv::solve(A, B, coeff, cv::DECOMP_LU))
-    {
-        for (int m = 0; m < 6; m++)
-        {
-            tr[m] += step_size * coeff.at<double>(0, m);
-            if(fabs(coeff.at<double>(0, m) > eps))
-                converged = false; 
-        }
-        if (converged)
-            return CONVERGED;
-        else
-            return UPDATED;
-    }
-    else
-    {
-        return FAILED;
-    }
-}
-
-
-void MotionEstimator::computeVectorsAndJacobians(const cv::Mat& l_proj_mat,
-                                                 const cv::Mat& r_proj_mat,
-                                                 const std::vector<int>& c_idxs,
-                                                 const std::vector<cv::Point2f>& l_pts_0,
-                                                 const std::vector<cv::Point2f>& r_pts_0,
-                                                 const std::vector<cv::Point3f>& scene_pts_1,
-                                                 std::vector<double>& J,
-                                                 std::vector<double>& tr,
-                                                 std::vector<double>& obs_pts,
-                                                 std::vector<double>& pre_pts,
-                                                 std::vector<double>& res_pts)
-{
-    // Extracts motion parameters.
-    double rx = tr[0]; double ry = tr[1]; double rz = tr[2];
-    double tx = tr[3]; double ty = tr[4]; double tz = tr[5];
-
-    // Precomputes sine/cosine
-    double sx = sin(rx); double cx = cos(rx); double sy = sin(ry);
-    double cy = cos(ry); double sz = sin(rz); double cz = cos(rz);
-
-    // Computes rotation matrix and derivatives
-    double r00    = +cy*cz;          double r01    = -cy*sz;          double r02    = +sy;
-    double r10    = +sx*sy*cz+cx*sz; double r11    = -sx*sy*sz+cx*cz; double r12    = -sx*cy;
-    double r20    = -cx*sy*cz+sx*sz; double r21    = +cx*sy*sz+sx*cz; double r22    = +cx*cy;
-    double rdrx10 = +cx*sy*cz-sx*sz; double rdrx11 = -cx*sy*sz-sx*cz; double rdrx12 = -cx*cy;
-    double rdrx20 = +sx*sy*cz+cx*sz; double rdrx21 = -sx*sy*sz+cx*cz; double rdrx22 = -sx*cy;
-    double rdry00 = -sy*cz;          double rdry01 = +sy*sz;          double rdry02 = +cy;
-    double rdry10 = +sx*cy*cz;       double rdry11 = -sx*cy*sz;       double rdry12 = +sx*sy;
-    double rdry20 = -cx*cy*cz;       double rdry21 = +cx*cy*sz;       double rdry22 = -cx*sy;
-    double rdrz00 = -cy*sz;          double rdrz01 = -cy*cz;
-    double rdrz10 = -sx*sy*sz+cx*cz; double rdrz11 = -sx*sy*cz-cx*sz;
-    double rdrz20 = +cx*sy*sz+sx*cz; double rdrz21 = +cx*sy*cz-sx*sz;
-
-    cv::Point3f l_scene_pt_1; // Previous/candidate 3D point relative to previous left camera/world.
-    cv::Point3f l_scene_pt_1_tr_0; // Previous/candidate 3D point relative to current/query left camera.
-    cv::Point3f r_scene_pt_1_tr_0; // Previous/candidate 3D point relative to current/query right camera.
-    cv::Point3f l_scene_pt_1_tr_0_d; // Derived previous/candidate 3D point relative current/query left camera.
-
-    // Computes baseline.
-    double f_u = l_proj_mat.at<double>(0, 0);
-    double t_x = r_proj_mat.at<double>(0, 3);
-    double b = (t_x / -f_u);
-
-    // For all observations do
-    for (size_t i = 0; i < c_idxs.size(); i++)
-    {
-        // Sets ith observation
-        obs_pts[4 * i + 0] = l_pts_0[c_idxs[i]].x;
-        obs_pts[4 * i + 1] = l_pts_0[c_idxs[i]].y;
-        obs_pts[4 * i + 2] = r_pts_0[c_idxs[i]].x;
-        obs_pts[4 * i + 3] = r_pts_0[c_idxs[i]].y;
-
-        // Gets ith previous/candidate 3d camera point (respect left image).
-        l_scene_pt_1 = scene_pts_1[c_idxs[i]];
-
-        // Transforms to current/query left coordinate system.
-        l_scene_pt_1_tr_0.x = r00 * l_scene_pt_1.x + r01 * l_scene_pt_1.y + r02 * l_scene_pt_1.z + tx;
-        l_scene_pt_1_tr_0.y = r10 * l_scene_pt_1.x + r11 * l_scene_pt_1.y + r12 * l_scene_pt_1.z + ty;
-        l_scene_pt_1_tr_0.z = r20 * l_scene_pt_1.x + r21 * l_scene_pt_1.y + r22 * l_scene_pt_1.z + tz;
-
-        // Computes 3d point in current/query right coordinate system
-        r_scene_pt_1_tr_0 = l_scene_pt_1_tr_0;
-        r_scene_pt_1_tr_0.x = l_scene_pt_1_tr_0.x - b;
-
-        // For all paramters do
-        for (int32_t j=0; j<6; j++) 
-        {
-            // derivatives of 3d pt. in curr. left coordinates wrt. param j
-            switch (j) 
-            {
-                case 0: l_scene_pt_1_tr_0_d.x = 0;
-                        l_scene_pt_1_tr_0_d.y = rdrx10 * l_scene_pt_1.x + rdrx11 * l_scene_pt_1.y + rdrx12 * l_scene_pt_1.z;
-                        l_scene_pt_1_tr_0_d.z = rdrx20 * l_scene_pt_1.x + rdrx21 * l_scene_pt_1.y + rdrx22 * l_scene_pt_1.z;
-                        break;
-                case 1: l_scene_pt_1_tr_0_d.x = rdry00 * l_scene_pt_1.x + rdry01 * l_scene_pt_1.y + rdry02 * l_scene_pt_1.z;
-                        l_scene_pt_1_tr_0_d.y = rdry10 * l_scene_pt_1.x + rdry11 * l_scene_pt_1.y + rdry12 * l_scene_pt_1.z;
-                        l_scene_pt_1_tr_0_d.z = rdry20 * l_scene_pt_1.x + rdry21 * l_scene_pt_1.y + rdry22 * l_scene_pt_1.z;
-                        break;
-                case 2: l_scene_pt_1_tr_0_d.x = rdrz00 * l_scene_pt_1.x + rdrz01 * l_scene_pt_1.y;
-                        l_scene_pt_1_tr_0_d.y = rdrz10 * l_scene_pt_1.x + rdrz11 * l_scene_pt_1.y;
-                        l_scene_pt_1_tr_0_d.z = rdrz20 * l_scene_pt_1.x + rdrz21 * l_scene_pt_1.y;
-                        break;
-                case 3: l_scene_pt_1_tr_0_d.x = 1; l_scene_pt_1_tr_0_d.y = 0; l_scene_pt_1_tr_0_d.z = 0; break;
-                case 4: l_scene_pt_1_tr_0_d.x = 0; l_scene_pt_1_tr_0_d.y = 1; l_scene_pt_1_tr_0_d.z = 0; break;
-                case 5: l_scene_pt_1_tr_0_d.x = 0; l_scene_pt_1_tr_0_d.y = 0; l_scene_pt_1_tr_0_d.z = 1; break;
-            }
-
-            // Sets jacobian entries (project via K)
-            J[(4*i+0)*6+j] = l_proj_mat.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.x * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.x * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // left u'
-            J[(4*i+1)*6+j] = l_proj_mat.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.y * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.y * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // left v'
-            J[(4*i+2)*6+j] = l_proj_mat.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.x * l_scene_pt_1_tr_0.z - r_scene_pt_1_tr_0.x * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // right u'
-            J[(4*i+3)*6+j] = l_proj_mat.at<double>(0, 0) * (l_scene_pt_1_tr_0_d.y * l_scene_pt_1_tr_0.z - l_scene_pt_1_tr_0.y * l_scene_pt_1_tr_0_d.z) / (l_scene_pt_1_tr_0.z * l_scene_pt_1_tr_0.z); // right v'
-        }
-
-        // Sets prediction (project via K)
-        pre_pts[4*i+0] = l_proj_mat.at<double>(0, 0) * l_scene_pt_1_tr_0.x / l_scene_pt_1_tr_0.z + l_proj_mat.at<double>(0, 2); // left u
-        pre_pts[4*i+1] = l_proj_mat.at<double>(0, 0) * l_scene_pt_1_tr_0.y / l_scene_pt_1_tr_0.z + l_proj_mat.at<double>(1, 2); // left v
-        pre_pts[4*i+2] = l_proj_mat.at<double>(0, 0) * r_scene_pt_1_tr_0.x / l_scene_pt_1_tr_0.z + l_proj_mat.at<double>(0, 2); // right u
-        pre_pts[4*i+3] = l_proj_mat.at<double>(0, 0) * l_scene_pt_1_tr_0.y / l_scene_pt_1_tr_0.z + l_proj_mat.at<double>(1, 2); // right v
-
-        // Sets residuals
-        res_pts[4*i+0] = (obs_pts[4 * i + 0] - pre_pts[4 * i + 0]);
-        res_pts[4*i+1] = (obs_pts[4 * i + 1] - pre_pts[4 * i + 1]);
-        res_pts[4*i+2] = (obs_pts[4 * i + 2] - pre_pts[4 * i + 2]);
-        res_pts[4*i+3] = (obs_pts[4 * i + 3] - pre_pts[4 * i + 3]);
-    }
-}
-
-
-std::vector<int> MotionEstimator::getInliers(const double reproj_error,
-                                             const cv::Mat& l_proj_mat,
-                                             const cv::Mat& r_proj_mat,
-                                             const std::vector<cv::Point2f>& l_pts_0,
-                                             const std::vector<cv::Point2f>& r_pts_0,
-                                             const std::vector<cv::Point3f>& scene_pts_1,
-                                             std::vector<double>& J,
-                                             std::vector<double>& tr,
-                                             std::vector<double>& obs_pts,
-                                             std::vector<double>& pre_pts,
-                                             std::vector<double>& res_pts)
-{
-    // Marks all observations active
-    std::vector<int> c_idxs;
-    for (size_t i = 0; i < l_pts_0.size(); i++)
-        c_idxs.push_back(i);
-
-    // Computes observations, predictions, residuals and Jacobians.
-    computeVectorsAndJacobians(l_proj_mat,
-                               r_proj_mat,
-                               c_idxs,
-                               l_pts_0,
-                               r_pts_0,
-                               scene_pts_1,
-                               J,
-                               tr,
-                               obs_pts,
-                               pre_pts,
-                               res_pts);
-
-    // Computes inliers.
-    std::vector<int> inliers;
-    for (size_t i = 0; i < l_pts_0.size(); i++)
-    {
-        if ((pow(obs_pts[4 * i + 0] - pre_pts[4 * i + 0], 2) + pow(obs_pts[4 * i + 1] - pre_pts[4 * i + 1], 2) +
-             pow(obs_pts[4 * i + 2] - pre_pts[4 * i + 2], 2) + pow(obs_pts[4 * i + 3] - pre_pts[4 * i + 3], 2)) < (reproj_error * reproj_error))
-            inliers.push_back(i);
-    }
-
-    return inliers;
 }

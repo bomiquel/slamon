@@ -1,9 +1,58 @@
 /**
- *  @file
+ *  @file tools.hpp
  *  @brief Tools library.
- *  @author Pep Lluís Negre-Carrasco
- *  @date 2014-2016
- *  @modified Bo Miquel Nordfeldt-Fiol 2024-2025
+ *
+ *  This file contains modified portions of code derived from the original
+ *  stereo_slam project developed by the Systems, Robotics and Vision Group 
+ *  (srv.uib.es), University of the Balearic Islands. The original work is 
+ *  licensed under the BSD 4-Clause License (see below).
+ *
+ *  @author
+ *  Original: 
+ *    Pep Lluís Negre-Carrasco
+ *  Modified by: 
+ *    Bo Miquel Nordfeldt-Fiol
+ * 
+ *  @copyright
+ *  Original copyright holder:
+ *      Systems, Robotics and Vision Group (srv.uib.es)
+ *      University of the Balearic Islands
+ *      Copyright (c) 2013
+ *  Modified by:
+ *      Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *      Copyright (c) 2025
+ *      Released under the BSD 3-Clause License.
+ *
+ *  ---------------------------------------------------------------------------
+ *  Original BSD 4-Clause License Notice:
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * All advertising materials mentioning features or use of this software
+ *        must display the following acknowledgement:
+ *          "This product includes software developed by the
+ *           Systems, Robotics and Vision Group,
+ *           University of the Balearic Islands"
+ *      * Neither the name of the Systems, Robotics and Vision Group,
+ *        University of the Balearic Islands nor the names of its contributors
+ *        may be used to endorse or promote products derived from this software
+ *        without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+ *  ---------------------------------------------------------------------------
+ *
+ *  Additional license for modifications:
+ *      The modifications made by Bo Miquel Nordfeldt-Fiol are released under
+ *      the BSD 3-Clause License. See the top-level LICENSE file for details.
  */
 
 #ifndef TOOLS_HPP
