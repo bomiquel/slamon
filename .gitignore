@@ -1,15 +1,72 @@
-test/*
-haloc/*
-output*/*
-*/output*/*
-keyframes/*
-pointclouds/*
-loop_closures/*
-.vscode
+# =====================
+# IDEs / Editors
+# =====================
+.vscode/
+*/.vscode/
+
+# =====================
+# Backup / Swap files
+# =====================
+*~
+*.swp
+*.swo
+*.swk
+*.swj
+*.swh
+*.swg
+
+# =====================
+# Python bytecode / caches
+# =====================
+__pycache__/
+*.py[cod]
+*$py.class
+*pyc
+
+# =====================
+# Build / Dist
+# =====================
+*/build/
+*/bin/
+*/lib/
+dist/
+*.egg-info/
+
+# =====================
+# Conda / Environments
+# =====================
+*.conda
+*.env
+
+# =====================
+# ROS / Catkin
+# =====================
+devel/
+*.rosinstall
+*.log
+*.bag
+
+# =====================
+# Scripts temporary / private
+# =====================
+
+# =====================
+# OS-specific
+# =====================
+.DS_Store
+Thumbs.db
+
+# =====================
+# Outputs
+# =====================
+test/
+haloc/
+output*/
+keyframes/
+loop_closures/
+vo.txt
 odom.txt
 graph_edges.txt
 graph_vertices.txt
 keyframes_poses.txt
-__pycache__/
-*/__pycache__/
-*pyc
+loop_closure_edges.txt
