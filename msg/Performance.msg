@@ -2,6 +2,7 @@
 # @brief Custom message to evaluate SLAMON execution times.
 #        To avoid creating a message for each part of the 
 #        system, this message is reused in all three threads.
+# @package slamon
 #
 # @author
 #        Bo Miquel Nordfeldt-Fiol (2024–2025)

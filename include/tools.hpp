@@ -1,6 +1,7 @@
 /**
  *  @file tools.hpp
  *  @brief Tools library.
+ *  @package slamon
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group 

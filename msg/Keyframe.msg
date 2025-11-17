@@ -1,5 +1,6 @@
 # @file Keyframe.msg
 # @brief Personalised message to define a keyframe.
+# @package slamon
 #
 # @author
 #        Bo Miquel Nordfeldt-Fiol (2024–2025)

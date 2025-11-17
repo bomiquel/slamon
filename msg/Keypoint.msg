@@ -1,5 +1,6 @@
 # @file Keypoint.msg
 # @brief Personalised message to define a keypoint.
+# @package slamon
 #
 # @author
 #        Bo Miquel Nordfeldt-Fiol (2024–2025)

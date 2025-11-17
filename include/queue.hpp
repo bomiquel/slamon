@@ -2,6 +2,7 @@
  *  @file queue.hpp
  *  @brief Protected queue to be used as a shared resource between threads. 
  *         Implements a simple FIFO.
+ *  @package slamon
  *
  *  @author
  *    Bo Miquel Nordfeldt-Fiol (2024–2025)

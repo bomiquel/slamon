@@ -2,6 +2,7 @@
  *  @file keypoint_matcher.hpp
  *  @brief The KeypointMatcher class provides tools to match 
  *         keypoints and filter out outliers.
+ *  @package slamon
  *
  *  @author
  *    Bo Miquel Nordfeldt-Fiol (2024–2025)

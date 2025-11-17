@@ -1,6 +1,7 @@
 /**
  *  @file hash.hpp
  *  @brief Hash-based Loop Closure detection.
+ *  @package slamon
  *
  *  This file contains modified portions of code derived from the originals
  *  libhaloc and stereo_slam projects developed by the Systems, Robotics and

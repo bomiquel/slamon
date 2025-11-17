@@ -2,7 +2,7 @@
 <package format="2">
 
     <name>slamon</name>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <description>
        SLAMON is an improved and extended version of stereo_slam.
@@ -17,12 +17,12 @@
        3. A loop closer that detects revisited areas by proximity and hashes.
     </description>
 
-    <url type="website">https://github.com/bomiquel/slamon</url>
-    <url type="bugtracker">https://github.com/bomiquel/slamon/issues</url>
-    <url type="repository">https://github.com/bomiquel/slamon</url>
+    <url type = "website">https://github.com/bomiquel/slamon</url>
+    <url type = "bugtracker">https://github.com/bomiquel/slamon/issues</url>
+    <url type = "repository">https://github.com/bomiquel/slamon</url>
 
-    <author email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt-Fiol</author>
-    <maintainer email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt-Fiol</maintainer>
+    <author email = "bo-miquel.nordfeldt@uib.cat">Bo Miquel Nordfeldt-Fiol</author>
+    <maintainer email = "bo-miquel.nordfeldt@uib.cat">Bo Miquel Nordfeldt-Fiol</maintainer>
 
     <!--
         Licensing notice:

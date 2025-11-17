@@ -1,6 +1,7 @@
 /**
  *  @file map_node.hpp
  *  @brief Launch SLAMON's mapmaker and loop closer as a ROS node.
+ *  @package slamon
  *
  *  @author
  *    Bo Miquel Nordfeldt-Fiol (2024–2025)

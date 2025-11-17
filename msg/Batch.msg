@@ -1,5 +1,6 @@
 # @file Batch.msg
 # @brief Personalised message to define a keypoint cluster.
+# @package slamon
 #
 # @author
 #        Bo Miquel Nordfeldt-Fiol (2024–2025)

@@ -1,7 +1,8 @@
 /**
  *  @file loop_closer.cpp
  *  @brief The LoopCloser class detects and closes loops between keypoint 
- *         clusters from multiple keyframes. 
+ *         clusters from multiple keyframes.
+ *  @package slamon
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group 

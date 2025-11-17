@@ -1,6 +1,7 @@
 /**
  *  @file cluster.cpp
  *  @brief The Cluster class represents a grouping of keypoints extracted from a keyframe.
+ *  @package slamon
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group 

@@ -2,6 +2,7 @@
  *  @file publisher.cpp
  *  @brief The Publisher class is responsive to publish the image visualizations 
  *         for debugging purposes.
+ *  @package slamon
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group 

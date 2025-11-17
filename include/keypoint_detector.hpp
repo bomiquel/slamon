@@ -2,6 +2,7 @@
  *  @file keypoint_detector.hpp
  *  @brief The KeypointDetector class provides the necessary tools to 
  *         detect keypoints and calculate descriptors.
+ *  @package slamon
  *
  *  @author
  *    Bo Miquel Nordfeldt-Fiol (2024–2025)

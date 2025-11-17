@@ -2,6 +2,7 @@
  *  @file mapmaker.cpp
  *  @brief The Mapmaker constructs a topological map where nodes are clusters of keypoints 
  *         and edges are the relative movement between them and the number of keypoint matchings.
+ *  @package slamon
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group 

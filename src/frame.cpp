@@ -1,6 +1,7 @@
 /**
  *  @file frame.cpp
  *  @brief Frame class representing a stereo camera frame.
+ *  @package slamon
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group 

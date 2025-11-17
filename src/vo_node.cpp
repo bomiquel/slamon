@@ -1,6 +1,7 @@
 /**
  *  @file vo_node.hpp
  *  @brief Launch SLAMON's visual odometer as a ROS node.
+ *  @package slamon
  *
  *  @author
  *    Bo Miquel Nordfeldt-Fiol (2024–2025)
