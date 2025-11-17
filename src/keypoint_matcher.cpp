@@ -179,7 +179,7 @@ void KeypointMatcher::matchTemporalClusters(const cv::Mat& l_descs_0,
         {
             std::thread l_matcher(&KeypointMatcher::geometricalMatching, this, std::ref(l_descs_0), std::ref(l_descs_1), std::ref(l_cluster_ids_0), std::ref(l_cluster_ids_1),
                                   std::ref(l_kpts_0), std::ref(l_kpts_1), std::ref(l_scene_pts_0), std::ref(l_scene_pts_1), std::ref(f_l_descs_0), std::ref(f_l_descs_1), 
-                                  std::ref(h_f_l_cluster_ids_0), std::ref(h_f_l_cluster_ids_1), std::ref(h_f_l_kpts_0), std::ref(h_f_l_kpts_1), std::ref(h_f_l_scene_pts_0), std::ref(h_f_l_scene_pts_0));
+                                  std::ref(h_f_l_cluster_ids_0), std::ref(h_f_l_cluster_ids_1), std::ref(h_f_l_kpts_0), std::ref(h_f_l_kpts_1), std::ref(h_f_l_scene_pts_0), std::ref(h_f_l_scene_pts_1));
             std::thread r_matcher(&KeypointMatcher::geometricalMatching, this, std::ref(r_descs_0), std::ref(r_descs_1), std::ref(r_cluster_ids_0), std::ref(r_cluster_ids_1),
                                   std::ref(r_kpts_0), std::ref(r_kpts_1), std::ref(r_scene_pts_0), std::ref(r_scene_pts_1), std::ref(f_r_descs_0), std::ref(f_r_descs_1),
                                   std::ref(h_f_r_cluster_ids_0), std::ref(h_f_r_cluster_ids_1), std::ref(h_f_r_kpts_0), std::ref(h_f_r_kpts_1), std::ref(h_f_r_scene_pts_0), std::ref(h_f_r_scene_pts_1));

@@ -620,67 +620,75 @@ namespace slamon
                               keyframe_.getLeftKpts(), keyframe_.getRightKpts(), c_frame.getLeftCameraPoints(), keyframe_.getLeftCameraPoints(),
                               m_c_cluster_ids, m_k_cluster_ids, m_c_l_kpts, m_c_r_kpts, m_k_l_kpts, m_k_r_kpts, m_c_l_cam_pts, m_k_l_cam_pts);
 
-        // Estimates the motion.
-        cv::Mat camera_rotation, camera_translation;
-        std::vector<int> i_c_cluster_ids, i_k_cluster_ids;
-        std::vector<cv::Point3f> i_c_l_cam_pts, i_k_l_cam_pts;
-        std::vector<cv::KeyPoint> i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts; 
-        estimateMotion(l_proj_mat_, r_proj_mat_, 
-                       m_c_cluster_ids, m_k_cluster_ids, m_c_l_kpts, m_c_r_kpts, m_k_l_kpts, m_k_r_kpts, m_c_l_cam_pts, m_k_l_cam_pts,
-                       camera_rotation, camera_translation,
-                       i_c_cluster_ids, i_k_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts, i_c_l_cam_pts, i_k_l_cam_pts);
-
-        // Inliers debugging.
-        if (keyframe_inliers_img_pub_.getNumSubscribers() > 0)
-        {
-            if (matching_type_ == RATIO_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
-                publishImgMatches(true, c_frame.getLeftImg(), keyframe_.getLeftImg(), c_frame.getTimestamp(),
-                                  keyframe_inliers_img_pub_, i_c_l_kpts, i_k_l_kpts);
-            else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
-                publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), keyframe_.getLeftImg(), keyframe_.getRightImg(),
-                                          c_frame.getTimestamp(), keyframe_inliers_img_pub_, i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts);
-            else
-                ROS_ERROR_STREAM("[VO->Keyframe inserter debugger:] Unforeseen type of matching!");
-        }
-
-        // It does not insert keyframe.
-        if (static_cast<size_t>(1.10 * min_lc_inliers_) < i_c_l_kpts.size())
-        {
-            if (enable_debugging_)
-                ROS_INFO_STREAM("[VO->Keyframe inserter:] No keyframe is inserted because there is still too much overlap.");
-            run_times_.run_time_7 = ros::Time::now().toSec() - start_module_time; // Keyframe insertion decision run time.
-            return;
-        }
-
-        if (enable_debugging_)
-            ROS_INFO_STREAM("[VO->Keyframe inserter:] Sending keyframe to the map!");
-
-        // Gets inlier per cluster pair.
-        bool cluster_pair_found;
-        int c_cluster_id, k_cluster_id;
         std::vector<int> inliers_per_pair;
         std::vector<std::pair<int, int>> cluster_pairs; // c_cluster_id - k_cluster_id
-        for (size_t i = 0; i < i_c_cluster_ids.size(); ++i)
+        if (m_c_l_kpts.size() >= 4)
         {
-            c_cluster_id = i_c_cluster_ids[i];
-            k_cluster_id = i_k_cluster_ids[i];
+            // Estimates the motion.
+            cv::Mat camera_rotation, camera_translation;
+            std::vector<int> i_c_cluster_ids, i_k_cluster_ids;
+            std::vector<cv::Point3f> i_c_l_cam_pts, i_k_l_cam_pts;
+            std::vector<cv::KeyPoint> i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts; 
+            estimateMotion(l_proj_mat_, r_proj_mat_, 
+                        m_c_cluster_ids, m_k_cluster_ids, m_c_l_kpts, m_c_r_kpts, m_k_l_kpts, m_k_r_kpts, m_c_l_cam_pts, m_k_l_cam_pts,
+                        camera_rotation, camera_translation,
+                        i_c_cluster_ids, i_k_cluster_ids, i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts, i_c_l_cam_pts, i_k_l_cam_pts);
 
-            // Searches if this pair already exists.
-            cluster_pair_found = false;
-            for (size_t j = 0; j < cluster_pairs.size(); ++j)
+            // Inliers debugging.
+            if (keyframe_inliers_img_pub_.getNumSubscribers() > 0)
             {
-                if ((cluster_pairs[j].first == c_cluster_id) && (cluster_pairs[j].second == k_cluster_id))
+                if (matching_type_ == RATIO_MATCHING || matching_type_ == HOMOGRAPHY_MATCHING)
+                    publishImgMatches(true, c_frame.getLeftImg(), keyframe_.getLeftImg(), c_frame.getTimestamp(),
+                                    keyframe_inliers_img_pub_, i_c_l_kpts, i_k_l_kpts);
+                else if (matching_type_ == CIRCULAR_RATIO_MATCHING || matching_type_ == CIRCULAR_HOMOGRAPHY_MATCHING)
+                    publishImgCircularMatches(c_frame.getLeftImg(), c_frame.getRightImg(), keyframe_.getLeftImg(), keyframe_.getRightImg(),
+                                            c_frame.getTimestamp(), keyframe_inliers_img_pub_, i_c_l_kpts, i_c_r_kpts, i_k_l_kpts, i_k_r_kpts);
+                else
+                    ROS_ERROR_STREAM("[VO->Keyframe inserter debugger:] Unforeseen type of matching!");
+            }
+
+            // It does not insert keyframe.
+            if (static_cast<size_t>(1.50 * min_lc_inliers_) < i_c_l_kpts.size())
+            {
+                if (enable_debugging_)
+                    ROS_INFO_STREAM("[VO->Keyframe inserter:] No keyframe is inserted because there is still too much overlap.");
+                run_times_.run_time_7 = ros::Time::now().toSec() - start_module_time; // Keyframe insertion decision run time.
+                return;
+            }
+
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Keyframe inserter:] Sending keyframe to the map!");
+
+            // Gets inlier per cluster pair.
+            bool cluster_pair_found;
+            int c_cluster_id, k_cluster_id;
+            for (size_t i = 0; i < i_c_cluster_ids.size(); ++i)
+            {
+                c_cluster_id = i_c_cluster_ids[i];
+                k_cluster_id = i_k_cluster_ids[i];
+
+                // Searches if this pair already exists.
+                cluster_pair_found = false;
+                for (size_t j = 0; j < cluster_pairs.size(); ++j)
                 {
-                    inliers_per_pair[j]++;
-                    cluster_pair_found = true;
-                    break;
+                    if ((cluster_pairs[j].first == c_cluster_id) && (cluster_pairs[j].second == k_cluster_id))
+                    {
+                        inliers_per_pair[j]++;
+                        cluster_pair_found = true;
+                        break;
+                    }
+                }
+                if (!cluster_pair_found)
+                {
+                    cluster_pairs.emplace_back(c_cluster_id, k_cluster_id);
+                    inliers_per_pair.push_back(1);
                 }
             }
-            if (!cluster_pair_found)
-            {
-                cluster_pairs.emplace_back(c_cluster_id, k_cluster_id);
-                inliers_per_pair.push_back(1);
-            }
+        }
+        else
+        {
+            if (enable_debugging_)
+                ROS_INFO_STREAM("[VO->Keyframe inserter:] Extremely large visual change, sending keyframe!");
         }
 
         // Sends the new keyframe.
