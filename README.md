@@ -14,12 +14,12 @@ SLAMON runs three main threads:
 
 ## Dependencies
 
-- **ROS Noetic**
-- **OpenCV 4.2.0 + contrib**
-- **G2O**
-- **Eigen3**
-- **SuiteSparse**
-- **cmake_modules (ROS)**
+- ROS Noetic
+- OpenCV 4.2.0 + contrib
+- G2O
+- Eigen3
+- SuiteSparse
+- cmake_modules (ROS)
 
 
 ## Installation
