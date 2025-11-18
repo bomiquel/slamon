@@ -25,9 +25,9 @@
     <!-- 2024_07_02/experiment_0_g501_proc -->
     <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_02/experiment_0_g501_proc/2024-07-02-16-33-14.bag"/> -->
     <!-- 2024_07_03/experiment_0_square_1_proc -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_03/experiment_0_square_1_proc/2024-07-03-11-37-31.bag"/> -->
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_03/experiment_0_square_1_proc/2024-07-03-11-37-31.bag"/>
     <!-- 2024_07_04/experiment_0_square_2_proc -->
-    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_2_proc/2024-07-04-13-08-50.bag"/>
+    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_2_proc/2024-07-04-13-08-50.bag"/> -->
     <!-- 2024_07_04/experiment_0_square_3_g501_proc -->
     <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_3_g501_proc/2024-07-04-13-22-00.bag"/> -->
 
@@ -39,21 +39,21 @@
 
         <!-- Initial pose and orientation parameters -->  
         <!-- UJI 2024_07_03/experiment_0_square_1_proc -->
-        <!-- <arg name = "t_x" default = "-0.098869452"/> 
+        <arg name = "t_x" default = "-0.098869452"/> 
         <arg name = "t_y" default = "0.192996936"/> 
         <arg name = "t_z" default = "-1.778576607"/> 
         <arg name = "q_x" default = "-0.022258513"/>
         <arg name = "q_y" default = "0.021376555"/>
         <arg name = "q_z" default = "-0.052030298"/>
-        <arg name = "q_w" default = "0.998168548"/> -->
+        <arg name = "q_w" default = "0.998168548"/>
         <!-- UJI 2024_07_04/experiment_0_square_2_proc -->
-        <arg name = "t_x" default = "-0.037046177"/> 
+        <!-- <arg name = "t_x" default = "-0.037046177"/> 
         <arg name = "t_y" default = "0.269914678"/> 
         <arg name = "t_z" default = "-1.800492732"/> 
         <arg name = "q_x" default = "-0.029828077"/>
         <arg name = "q_y" default = "0.000048010"/>
         <arg name = "q_z" default = "-0.027061236"/>
-        <arg name = "q_w" default = "0.999188657"/>
+        <arg name = "q_w" default = "0.999188657"/> -->
 
         <!-- Sends initial pose -->
         <node pkg = "slamon" type = "initial_pose_server_params" name = "initial_pose_server_params" output = "screen">

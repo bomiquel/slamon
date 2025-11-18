@@ -143,7 +143,7 @@ roslaunch slamon launch_file_name.launch
 
 ## License
 
-This project is distributed under **BSD-4-Clause AND BSD-3-Clause**. 
+This project is distributed under **BSD-4-Clause**. 
 
 See the [LICENSE](LICENSE) file for the full license text.
 

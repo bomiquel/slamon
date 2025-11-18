@@ -1,3 +1,18 @@
+/**
+ *  @file initial_pose_server_params.cpp
+ *  @brief Obtain the initial pose from .launch or .yaml and publish it.
+ *  @package slamon
+ *  @project SLAMON
+ *
+ *  @author
+ *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *
+ *  @license BSD-4-Clause
+ *    This file is part of the SLAMON project and is released under
+ *    the BSD 4-Clause License. See the LICENSE file for details.
+ */
+
+ 
 #include <ros/ros.h>
 
 #include "slamon/GetTransform.h"

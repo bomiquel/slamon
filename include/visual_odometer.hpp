@@ -3,16 +3,14 @@
  *  @brief The Visual Odometer class is responsive to track consecutive 
  *         image frames and compute their motion.
  *  @package slamon
+ *  @project SLAMON
  *
  *  @author
  *    Bo Miquel Nordfeldt-Fiol (2024–2025)
  *
- *  @copyright
- *    Copyright (c) 2025 Bo Miquel Nordfeldt-Fiol
- *
- *  @license BSD-3-Clause
- *    This software is released under the BSD 3-Clause License.
- *    See the LICENSE file for full text.
+ *  @license BSD-4-Clause
+ *    This file is part of the SLAMON project and is released under
+ *    the BSD 4-Clause License. See the LICENSE file for details.
  */
 
 
