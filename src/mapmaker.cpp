@@ -97,7 +97,7 @@ namespace slamon
         sync->registerCallback(boost::bind(&Mapmaker::callback, this, _1, _2));
 
         // ROS timer.
-        timer_ = nh.createWallTimer(ros::WallDuration(30.0), &Mapmaker::timerCallback, this);
+        timer_ = nh.createWallTimer(ros::WallDuration(15.0), &Mapmaker::timerCallback, this);
 
         // Calls callback when synchronised messages arrive
         ros::spin();

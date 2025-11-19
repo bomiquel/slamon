@@ -141,15 +141,18 @@ Modify or create your own launch file based on the templates in launch/, then ru
 roslaunch slamon launch_file_name.launch
 ```
 
+
 ## License
 
 This project is distributed under **BSD-4-Clause**. 
 
 See the [LICENSE](LICENSE) file for the full license text.
 
+
 ## Acknowledgements
 
 Bo Miquel Nordfeldt-Fiol was supported by the Conselleria d'Educació i Universitats de les Illes Balears under the contract FPU-2024-006-C CAIB-2024.
+
 
 ## Contact
 
