@@ -98,9 +98,6 @@
 
     </group>
 
-    <!-- CPU/RAM memory monitor -->
-    <node pkg = "cpu_monitor" name = "cpu_monitor" type = "monitor.py" output = "screen" if = "$(eval enable_cpu_monitor == true)"/>
-
     <!-- Extend clok -->
     <node pkg = "ros_playground" type = "clock_extender" name = "clok_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
         <param name = "extra_time"   value = "16"/>
@@ -118,5 +115,8 @@
                                                                                                     /$(arg camera_name)/$(arg slave_camera_name)/image_raw"
                                                                                                     required = "true"
                                                                                                     if = "$(eval enable_extra_clock == false)"/>
+
+    <!-- CPU/RAM memory monitor -->
+    <node pkg = "cpu_monitor" name = "cpu_monitor" type = "monitor.py" output = "screen" if = "$(eval enable_cpu_monitor == true)"/>
 
 </launch>

@@ -65,6 +65,8 @@ namespace slamon
             lock_file = w_path + "loop_closure_edges.txt.lock";
             if (std::filesystem::exists(lock_file))
                 std::filesystem::remove(lock_file.c_str());
+
+            writeMapResults();
         }
     }
 
@@ -372,10 +374,13 @@ namespace slamon
 
     void Mapmaker::timerCallback(const ros::WallTimerEvent& event)
     {
-        ROS_WARN_STREAM("[MM->timerCallback:] Writing files!");
+        if (enable_debugging_)
+        {
+            ROS_WARN_STREAM("[MM->timerCallback:] Writing files!");
 
-        // Saves keyframe map poses and loop closure edges to files.
-        writeMapResults();
+            // Saves keyframe map poses and loop closure edges to files.
+            writeMapResults();
+        }
     }
 
 
