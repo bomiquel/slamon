@@ -2,7 +2,7 @@
 <package format="2">
 
     <name>slamon</name>
-    <version>1.0.2</version>
+    <version>1.0.7</version>
 
     <description>
        SLAMON is an improved and extended version of stereo_slam.
@@ -17,29 +17,32 @@
        3. A loop closer that detects revisited areas by proximity and hashes.
     </description>
 
-    <url type="website">https://github.com/bomiquel/slamon</url>
-    <url type="bugtracker">https://github.com/bomiquel/slamon/issues</url>
-    <url type="repository">https://github.com/bomiquel/slamon</url>
+    <url type = "website">https://github.com/bomiquel/slamon</url>
+    <url type = "bugtracker">https://github.com/bomiquel/slamon/issues</url>
+    <url type = "repository">https://github.com/bomiquel/slamon</url>
 
-    <author email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt-Fiol</author>
-    <maintainer email="bo-miquel.nordfeldt@uib.es">Bo Miquel Nordfeldt-Fiol</maintainer>
+    <author email = "bo-miquel.nordfeldt@uib.cat">Bo Miquel Nordfeldt-Fiol</author>
+    <maintainer email = "bo-miquel.nordfeldt@uib.cat">Bo Miquel Nordfeldt-Fiol</maintainer>
 
     <!--
         Licensing notice:
-        - The project includes original code from stereo_slam (2013) under BSD-4-Clause.
-        - All modifications by Bo Miquel Nordfeldt-Fiol are under BSD-3-Clause.
+        - The project includes original code from stereo_slam and libhaloc (2013) under BSD-4-Clause.
+        - All modifications by Bo Miquel Nordfeldt-Fiol are under BSD-4-Clause too.
     -->
-    <license>BSD-4-Clause AND BSD-3-Clause</license>
+    <license>BSD-4-Clause</license>
 
     <!-- Build tool -->
     <buildtool_depend>catkin</buildtool_depend>
 
     <!-- Build dependencies -->
+    <build_depend>tf</build_depend>
     <build_depend>roscpp</build_depend>
+    <build_depend>std_msgs</build_depend>
     <build_depend>nav_msgs</build_depend>
     <build_depend>cv_bridge</build_depend>
     <build_depend>sensor_msgs</build_depend>
     <build_depend>geometry_msgs</build_depend>
+    <build_depend>rosgraph_msgs</build_depend>
     <build_depend>cmake_modules</build_depend>
     <build_depend>image_geometry</build_depend>
     <build_depend>image_transport</build_depend>
@@ -47,11 +50,15 @@
     <build_depend>message_generation</build_depend>
 
     <!-- Exec dependencies -->
+    <exec_depend>tf</exec_depend>
     <exec_depend>roscpp</exec_depend>
+    <exec_depend>std_msgs</exec_depend>
     <exec_depend>nav_msgs</exec_depend>
     <exec_depend>cv_bridge</exec_depend>
     <exec_depend>sensor_msgs</exec_depend>
     <exec_depend>geometry_msgs</exec_depend>
+    <exec_depend>rosgraph_msgs</exec_depend>
+    <exec_depend>cmake_modules</exec_depend>
     <exec_depend>image_geometry</exec_depend>
     <exec_depend>image_transport</exec_depend>
     <exec_depend>message_filters</exec_depend>

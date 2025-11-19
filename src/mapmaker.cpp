@@ -2,60 +2,23 @@
  *  @file mapmaker.cpp
  *  @brief The Mapmaker constructs a topological map where nodes are clusters of keypoints 
  *         and edges are the relative movement between them and the number of keypoint matchings.
+ *  @package slamon
+ *  @project SLAMON
  *
  *  This file contains modified portions of code derived from the original
- *  stereo_slam project developed by the Systems, Robotics and Vision Group 
- *  (srv.uib.es), University of the Balearic Islands. The original work is 
- *  licensed under the BSD 4-Clause License (see below).
+ *  stereo_slam project developed by the Systems, Robotics and Vision Group
+ *  (srv.uib.es), University of the Balearic Islands.
  *
  *  @author
- *  Original: 
- *    Pep Lluís Negre-Carrasco
- *  Modified by: 
- *    Bo Miquel Nordfeldt-Fiol
- * 
- *  @copyright
- *  Original copyright holder:
- *      Systems, Robotics and Vision Group (srv.uib.es)
- *      University of the Balearic Islands
- *      Copyright (c) 2013
- *  Modified by:
- *      Bo Miquel Nordfeldt-Fiol (2024–2025)
- *      Copyright (c) 2025
- *      Released under the BSD 3-Clause License.
+ *    Original:  Pep Lluís Negre-Carrasco (2013)
+ *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2025)
  *
- *  ---------------------------------------------------------------------------
- *  Original BSD 4-Clause License Notice:
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions are met:
- *      * Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *      * Redistributions in binary form must reproduce the above copyright
- *        notice, this list of conditions and the following disclaimer in the
- *        documentation and/or other materials provided with the distribution.
- *      * All advertising materials mentioning features or use of this software
- *        must display the following acknowledgement:
- *          "This product includes software developed by the
- *           Systems, Robotics and Vision Group,
- *           University of the Balearic Islands"
- *      * Neither the name of the Systems, Robotics and Vision Group,
- *        University of the Balearic Islands nor the names of its contributors
- *        may be used to endorse or promote products derived from this software
- *        without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
- *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
- *  ---------------------------------------------------------------------------
- *
- *  Additional license for modifications:
- *      The modifications made by Bo Miquel Nordfeldt-Fiol are released under
- *      the BSD 3-Clause License. See the top-level LICENSE file for details.
+ *  @license BSD-4-Clause
+ *    Both the original work and the modifications are released under the
+ *    BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
+ 
 #include "mapmaker.hpp"
 
 
@@ -102,6 +65,8 @@ namespace slamon
             lock_file = w_path + "loop_closure_edges.txt.lock";
             if (std::filesystem::exists(lock_file))
                 std::filesystem::remove(lock_file.c_str());
+
+            writeMapResults();
         }
     }
 
@@ -137,7 +102,7 @@ namespace slamon
         sync->registerCallback(boost::bind(&Mapmaker::callback, this, _1, _2, _3));
 
         // ROS timer.
-        timer_ = nh.createWallTimer(ros::WallDuration(30.0), &Mapmaker::timerCallback, this);
+        timer_ = nh.createWallTimer(ros::WallDuration(15.0), &Mapmaker::timerCallback, this);
 
         // Calls callback when synchronised messages arrive
         ros::spin();
@@ -416,10 +381,13 @@ namespace slamon
 
     void Mapmaker::timerCallback(const ros::WallTimerEvent& event)
     {
-        ROS_WARN_STREAM("[MM->timerCallback:] Writing files!");
+        if (enable_debugging_)
+        {
+            ROS_WARN_STREAM("[MM->timerCallback:] Writing files!");
 
-        // Saves keyframe map poses and loop closure edges to files.
-        writeMapResults();
+            // Saves keyframe map poses and loop closure edges to files.
+            writeMapResults();
+        }
     }
 
 

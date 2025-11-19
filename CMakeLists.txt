@@ -40,6 +40,8 @@ find_package(
         cv_bridge
         sensor_msgs
         geometry_msgs
+        rosgraph_msgs
+        cmake_modules
         image_geometry
         image_transport
         message_filters
@@ -117,14 +119,8 @@ include_directories(include
 link_directories(${OpenCV_INCLUDE_DIRS})
 
 # Executables
-add_executable(slamon_vo
-               src/frame.cpp
-               src/vo_node.cpp
-               src/publisher.cpp
-               src/visual_odometer.cpp
-               src/motion_estimator.cpp
-               src/keypoint_matcher.cpp
-               src/keypoint_detector.cpp)
+add_executable(clock_extender src/clock_extender.cpp)
+add_executable(initial_pose_server_params src/initial_pose_server_params.cpp)
 add_executable(slamon_map
                src/map.cpp
                src/hash.cpp
@@ -136,14 +132,23 @@ add_executable(slamon_map
                src/loop_closer.cpp
                src/motion_estimator.cpp
                src/keypoint_matcher.cpp)
-add_executable(initial_pose_server_params src/initial_pose_server_params)
+add_executable(slamon_vo
+               src/frame.cpp
+               src/vo_node.cpp
+               src/publisher.cpp
+               src/visual_odometer.cpp
+               src/motion_estimator.cpp
+               src/keypoint_matcher.cpp
+               src/keypoint_detector.cpp)
 
 # Dependencies
-add_dependencies(slamon_vo ${catkin_EXPORTED_TARGETS})
-add_dependencies(slamon_map ${catkin_EXPORTED_TARGETS})
+add_dependencies(clock_extender ${catkin_EXPORTED_TARGETS})
 add_dependencies(initial_pose_server_params ${catkin_EXPORTED_TARGETS})
+add_dependencies(slamon_map ${catkin_EXPORTED_TARGETS})
+add_dependencies(slamon_vo ${catkin_EXPORTED_TARGETS})
 
 # Linking
+target_link_libraries(clock_extender ${catkin_LIBRARIES})
+target_link_libraries(initial_pose_server_params ${catkin_LIBRARIES})
 target_link_libraries(slamon_vo ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(slamon_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod)
-target_link_libraries(initial_pose_server_params ${catkin_LIBRARIES})

@@ -1,19 +1,19 @@
 /**
- *  @file keypoint_matcher.hpp
+ *  @file keypoint_matcher.cpp
  *  @brief The KeypointMatcher class provides tools to match 
  *         keypoints and filter out outliers.
+ *  @package slamon
+ *  @project SLAMON
  *
  *  @author
  *    Bo Miquel Nordfeldt-Fiol (2024–2025)
  *
- *  @copyright
- *    Copyright (c) 2025 Bo Miquel Nordfeldt-Fiol
- *
- *  @license BSD-3-Clause
- *    This software is released under the BSD 3-Clause License.
- *    See the LICENSE file for full text.
+ *  @license BSD-4-Clause
+ *    This file is part of the SLAMON project and is released under
+ *    the BSD 4-Clause License. See the LICENSE file for details.
  */
 
+ 
 #include "keypoint_matcher.hpp"
 
 
@@ -178,7 +178,7 @@ void KeypointMatcher::matchTemporalClusters(const cv::Mat& l_descs_0,
         {
             std::thread l_matcher(&KeypointMatcher::geometricalMatching, this, std::ref(l_descs_0), std::ref(l_descs_1), std::ref(l_cluster_ids_0), std::ref(l_cluster_ids_1),
                                   std::ref(l_kpts_0), std::ref(l_kpts_1), std::ref(l_scene_pts_0), std::ref(l_scene_pts_1), std::ref(f_l_descs_0), std::ref(f_l_descs_1), 
-                                  std::ref(h_f_l_cluster_ids_0), std::ref(h_f_l_cluster_ids_1), std::ref(h_f_l_kpts_0), std::ref(h_f_l_kpts_1), std::ref(h_f_l_scene_pts_0), std::ref(h_f_l_scene_pts_0));
+                                  std::ref(h_f_l_cluster_ids_0), std::ref(h_f_l_cluster_ids_1), std::ref(h_f_l_kpts_0), std::ref(h_f_l_kpts_1), std::ref(h_f_l_scene_pts_0), std::ref(h_f_l_scene_pts_1));
             std::thread r_matcher(&KeypointMatcher::geometricalMatching, this, std::ref(r_descs_0), std::ref(r_descs_1), std::ref(r_cluster_ids_0), std::ref(r_cluster_ids_1),
                                   std::ref(r_kpts_0), std::ref(r_kpts_1), std::ref(r_scene_pts_0), std::ref(r_scene_pts_1), std::ref(f_r_descs_0), std::ref(f_r_descs_1),
                                   std::ref(h_f_r_cluster_ids_0), std::ref(h_f_r_cluster_ids_1), std::ref(h_f_r_kpts_0), std::ref(h_f_r_kpts_1), std::ref(h_f_r_scene_pts_0), std::ref(h_f_r_scene_pts_1));
