@@ -114,7 +114,7 @@
     </group>
 
     <!-- Extend clok -->
-    <node pkg = "ros_playground" type = "clock_extender" name = "clok_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
+    <node pkg = "slamon" type = "clock_extender" name = "clok_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
         <param name = "extra_time"   value = "16"/>
     </node>
 
