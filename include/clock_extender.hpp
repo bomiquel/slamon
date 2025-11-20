@@ -45,6 +45,11 @@ class ClockExtender
         void timerCallback(const ros::WallTimerEvent& event);
 
 
+        /** \brief Extend clock.
+         */
+        void extendClock();
+
+
     private:
 
         double extra_time_; //!> The additional time you want to extend the clock.
@@ -57,7 +62,9 @@ class ClockExtender
     
         ros::WallTimer timer_; //!> Timer to extend the clock.
     
-        ros::Time last_clock_time_; //!> Last clock time.
+        ros::Time last_clock_time_; //!> Last ROS time.
+
+        std::chrono::high_resolution_clock::time_point last_msg_wall_time_; //!> Last PC time.
 
 };
 

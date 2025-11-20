@@ -23,7 +23,7 @@ ClockExtender::ClockExtender(): clock_received_{false}
 
     // Get param
     nhp.param<double>("extra_time", extra_time_, 1);
-    ROS_INFO_STREAM("Get " << extra_time_ << " seconds of extra time");
+    ROS_WARN_STREAM("Get " << extra_time_ << " seconds of extra time");
 
     // Publishers.
     pub_ = nh.advertise<rosgraph_msgs::Clock>("/clock", 10);
@@ -32,19 +32,17 @@ ClockExtender::ClockExtender(): clock_received_{false}
     sub_ = nh.subscribe("/clock", 10, &ClockExtender::clockCallback, this);
 
     // Timers.
-    timer_ = nh.createWallTimer(ros::WallDuration(1), &ClockExtender::timerCallback, this);
+    timer_ = nh.createWallTimer(ros::WallDuration(1.5), &ClockExtender::timerCallback, this);
 
-    // Calls callback when synchronised messages arrive
-    ros::spin();
+    last_msg_wall_time_ = std::chrono::high_resolution_clock::now();
 }
 
 
 void ClockExtender::clockCallback(const rosgraph_msgs::ClockConstPtr& msg)
 {
-    timer_.stop();
-    last_clock_time_ = msg->clock;
     clock_received_ = true;
-    timer_.start();
+    last_clock_time_ = msg->clock;
+    last_msg_wall_time_ = std::chrono::high_resolution_clock::now();
 }
 
 
@@ -52,10 +50,26 @@ void ClockExtender::timerCallback(const ros::WallTimerEvent& event)
 {
     timer_.stop();
 
+    std::chrono::duration<double> diff = std::chrono::high_resolution_clock::now() - last_msg_wall_time_;
+
+    if (diff.count() > 1)
+    {
+        extendClock();
+        ros::requestShutdown();
+    }
+    else
+    {
+        timer_.start();
+    }
+}
+
+
+void ClockExtender::extendClock()
+{
     if (!clock_received_)
     {
         ROS_WARN("[CE->timerCallback:] No /clock received. Nothing to extend.");
-        ros::requestShutdown();
+        return;
     }
 
     ROS_INFO_STREAM("Extending /clock for " << extra_time_ << " seconds ... ");
@@ -67,7 +81,6 @@ void ClockExtender::timerCallback(const ros::WallTimerEvent& event)
     double dt = 1.0 / 50;
 
     ros::Time t = last_clock_time_;
-
     std::chrono::high_resolution_clock::time_point end_wall = std::chrono::high_resolution_clock::now() + 
                                                               std::chrono::duration_cast<std::chrono::high_resolution_clock::duration>(std::chrono::duration<double>(extra_time_));
 
@@ -83,7 +96,6 @@ void ClockExtender::timerCallback(const ros::WallTimerEvent& event)
     }
 
     ROS_INFO("/clock extension finished.");
-    ros::requestShutdown();
 }
 
 
@@ -93,9 +105,7 @@ int main(int argc, char** argv)
 
     ClockExtender clock_extender;
 
-    ros::Rate r(10);
-    while (ros::ok())
-        r.sleep();
+    ros::spin();
 
     return 0;
 }
