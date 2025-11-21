@@ -35,6 +35,8 @@ ClockExtender::ClockExtender(): clock_received_{false}
     timer_ = nh.createWallTimer(ros::WallDuration(1.5), &ClockExtender::timerCallback, this);
 
     last_msg_wall_time_ = std::chrono::high_resolution_clock::now();
+
+    extending_ = false;
 }
 
 
@@ -48,18 +50,18 @@ void ClockExtender::clockCallback(const rosgraph_msgs::ClockConstPtr& msg)
 
 void ClockExtender::timerCallback(const ros::WallTimerEvent& event)
 {
-    timer_.stop();
+    ROS_WARN_STREAM("[CE->timerCallback:] extending: " << extending_);
 
+    if (extending_)
+        return; 
+    
     std::chrono::duration<double> diff = std::chrono::high_resolution_clock::now() - last_msg_wall_time_;
 
     if (diff.count() > 1)
     {
+        extending_ = true;
         extendClock();
         ros::requestShutdown();
-    }
-    else
-    {
-        timer_.start();
     }
 }
 
@@ -68,7 +70,7 @@ void ClockExtender::extendClock()
 {
     if (!clock_received_)
     {
-        ROS_WARN("[CE->timerCallback:] No /clock received. Nothing to extend.");
+        ROS_WARN("[CE->extendClock:] No /clock received. Nothing to extend.");
         return;
     }
 

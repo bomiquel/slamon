@@ -53,9 +53,11 @@ class ClockExtender
     private:
 
         double extra_time_; //!> The additional time you want to extend the clock.
+        
+        bool extending_; //!> The clock is extending right now?
 
         bool clock_received_; //!> Have I received any messages from the clock?
-    
+
         ros::Publisher pub_; //!> Clock publisher.
     
         ros::Subscriber sub_; //!> Clock subscriber.
