@@ -148,7 +148,7 @@ add_dependencies(slamon_map ${catkin_EXPORTED_TARGETS})
 add_dependencies(slamon_vo ${catkin_EXPORTED_TARGETS})
 
 # Linking
-target_link_libraries(clock_extender ${catkin_LIBRARIES})
+target_link_libraries(clock_extender ${catkin_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(initial_pose_server_params ${catkin_LIBRARIES})
 target_link_libraries(slamon_vo ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(slamon_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod)

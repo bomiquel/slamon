@@ -87,7 +87,9 @@
 
     <!-- Extend clok -->
     <node pkg = "slamon" type = "clock_extender" name = "clock_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
-        <param name = "extra_time"   value = "16"/>
+        <param name = "extra_time"       value = "16"/>
+        <param name = "gap_threshold"    value = "1.5"/>
+        <param name = "watch_interval"   value = "1.5"/>
     </node>
 
     <!-- Play bagfile -->
