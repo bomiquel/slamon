@@ -127,11 +127,12 @@ cd ..
 source devel/setup.bash
 ```
 
-**2. Copy and compile SLAMON**
+**2. Copy, compile, and prepare SLAMON**
 ```bash
 cd ~/catkin_ws/src
 git clone git@github.com:bomiquel/slamon.git
 catkin build slamon
+chmod +x slamon/scripts/rosbag_play_with_delay.sh
 ```
 
 

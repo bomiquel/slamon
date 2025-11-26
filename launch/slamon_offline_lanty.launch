@@ -105,20 +105,27 @@
         <param name = "watch_interval"   value = "1.5"/>
     </node>
 
-    <!-- Play bagfile -->
-    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/image_raw"
-                                                                                                    if = "$(eval enable_extra_clock == true)"/>
-    <node pkg = "rosbag" type = "play" name = "rosbag" args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                                                                    /$(arg camera_name)/$(arg slave_camera_name)/image_raw"
-                                                                                                    required = "true"
-                                                                                                    if = "$(eval enable_extra_clock == false)"/>
-
     <!-- CPU/RAM memory monitor -->
     <node pkg = "cpu_monitor" name = "cpu_monitor" type = "monitor.py" output = "screen" if = "$(eval enable_cpu_monitor == true)"/>
+
+    <!-- Play bagfile -->
+    <node pkg = "slamon" 
+          type = "rosbag_play_with_delay.sh" 
+          name = "rosbag" 
+          args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                       /$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                       /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                       /$(arg camera_name)/$(arg slave_camera_name)/image_raw"
+          if = "$(eval enable_extra_clock == true)"/>
+
+    <node pkg = "slamon" 
+          type = "rosbag_play_with_delay.sh" 
+          name = "rosbag" 
+          args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                       /$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                       /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                       /$(arg camera_name)/$(arg slave_camera_name)/image_raw"
+          required = "true"
+          if = "$(eval enable_extra_clock == false)"/>
 
 </launch>
