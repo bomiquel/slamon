@@ -134,9 +134,9 @@
 
     <!-- Extend clok -->
     <node pkg = "slamon" type = "clock_extender" name = "clock_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
-        <param name = "extra_time"       value = "16"/>
-        <param name = "gap_threshold"    value = "1.5"/>
-        <param name = "watch_interval"   value = "1.5"/>
+        <param name = "extra_time"       value = "7"/>
+        <param name = "gap_threshold"    value = "10"/>
+        <param name = "watch_interval"   value = "5"/>
     </node>
 
     <!-- CPU/RAM memory monitor -->
@@ -144,27 +144,27 @@
 
     <!-- Play bagfile -->
     <node pkg = "slamon" 
-          type = "rosbag_play_with_delay.sh" 
+          type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "-r 1 --clock $(arg bagfile) --topics /tf
-                                                       /tf_static
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
-                                                       /$(arg robot_name)/navigator/odometry"
+          args = "--delay 5 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
+                                                                                /tf_static
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
+                                                                                /$(arg robot_name)/navigator/odometry'"
           if = "$(eval enable_extra_clock == true)"/>
 
     <node pkg = "slamon" 
-          type = "rosbag_play_with_delay.sh" 
+          type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "-r 1 --clock $(arg bagfile) --topics /tf
-                                                       /tf_static
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
-                                                       /$(arg robot_name)/navigator/odometry"
+          args = "--delay 5 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
+                                                                                /tf_static
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
+                                                                                /$(arg robot_name)/navigator/odometry'"
           required = "true"
           if = "$(eval enable_extra_clock == false)"/>
 

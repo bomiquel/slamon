@@ -115,7 +115,8 @@ include_directories(include
                     ${OpenCV_INCLUDE_DIRS}
                     ${EIGEN3_INCLUDE_DIRS}
                     ${SUITESPARSE_INCLUDE_DIRS}
-                    ${G2O_INCLUDE_DIR})
+                    ${G2O_INCLUDE_DIR}
+                    )
 link_directories(${OpenCV_INCLUDE_DIRS})
 
 # Executables
@@ -131,7 +132,8 @@ add_executable(slamon_map
                src/publisher.cpp
                src/loop_closer.cpp
                src/motion_estimator.cpp
-               src/keypoint_matcher.cpp)
+               src/keypoint_matcher.cpp
+               )
 add_executable(slamon_vo
                src/frame.cpp
                src/vo_node.cpp
@@ -139,7 +141,8 @@ add_executable(slamon_vo
                src/visual_odometer.cpp
                src/motion_estimator.cpp
                src/keypoint_matcher.cpp
-               src/keypoint_detector.cpp)
+               src/keypoint_detector.cpp
+               )
 
 # Dependencies
 add_dependencies(clock_extender ${catkin_EXPORTED_TARGETS})
@@ -152,3 +155,22 @@ target_link_libraries(clock_extender ${catkin_LIBRARIES} ${CMAKE_THREAD_LIBS_INI
 target_link_libraries(initial_pose_server_params ${catkin_LIBRARIES})
 target_link_libraries(slamon_vo ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(slamon_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod)
+
+
+##################
+## Installation ##
+##################
+
+install(TARGETS
+        clock_extender
+        initial_pose_server_params
+        slamon_map
+        slamon_vo
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
+# Install scripts.
+install(PROGRAMS 
+        scripts/delayed_rosbag_play.sh
+        DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
