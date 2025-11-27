@@ -33,7 +33,8 @@ namespace slamon
                        Queue<Cluster>* cluster_queue,
                        const std::string& robot_frame_id):
                        initialised_map_{false}, enable_debugging_{enable_debugging}, 
-                       robot_frame_id_{robot_frame_id}, map_{map}, cluster_queue_{cluster_queue}
+                       robot_frame_id_{robot_frame_id}, map_{map}, cluster_queue_{cluster_queue},
+                       nh_{}, nhp_{"~"}
     {
         // Computes maximum inliers for edges.
         max_edge_inliers_ = min_lc_inliers * 2;
@@ -68,41 +69,39 @@ namespace slamon
 
             writeMapResults();
         }
+
+        // Client services.
+        robot2camera_client_ = nh_.serviceClient<slamon::GetTransform>("get_robot_to_camera_tf");
+
+        // Publishers.
+        robot_map_pub_ = nhp_.advertise<nav_msgs::Odometry>("robot_map", 1);
+        camera_map_pub_ = nhp_.advertise<nav_msgs::Odometry>("camera_map", 1);
+        run_times_pub_ = nhp_.advertise<slamon::Performance>("mapmaker_performance", 1);
+        keyframes_num_pub_ = nhp_.advertise<std_msgs::Int32>("keyframe_num", 1);
+        clustering_img_pub_ = nhp_.advertise<sensor_msgs::Image>("keypoints_clustering_img", 1);
+
+        // Subscribers.
+        odom_sub_.subscribe(nh_, "odom", 5);
+        keyframe_sub_.subscribe(nh_, "keyframe", 5);
+
+        // Message sync.
+        sync_.reset(new Sync_(SyncPolicy_(10), odom_sub_, keyframe_sub_));
+        sync_->registerCallback(boost::bind(&Mapmaker::callback, this, _1, _2));
+
+        // ROS timer.
+        timer_ = nh_.createWallTimer(ros::WallDuration(15.0), &Mapmaker::timerCallback, this);
     }
 
 
     void Mapmaker::run()
     {
-        // Create ROS node.
-        ros::NodeHandle nh;
-        ros::NodeHandle nhp("~");
-
-        // Client services.
-        robot2camera_client_ = nh.serviceClient<slamon::GetTransform>("get_robot_to_camera_tf");
-
-        // Publishers.
-        robot_map_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_map", 1);
-        camera_map_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_map", 1);
-        run_times_pub_ = nhp.advertise<slamon::Performance>("mapmaker_performance", 1);
-        keyframes_num_pub_ = nhp.advertise<std_msgs::Int32>("keyframe_num", 1);
-        clustering_img_pub_ = nhp.advertise<sensor_msgs::Image>("keypoints_clustering_img", 1);
-
-        // Subscribers.
-        message_filters::Subscriber<nav_msgs::Odometry> odom_sub;
-        message_filters::Subscriber<slamon::Keyframe> keyframe_sub;
-
-        // Message sync.
-        boost::shared_ptr<Sync_> sync;
-        odom_sub.subscribe(nh, "odom", 5);
-        keyframe_sub.subscribe(nh, "keyframe", 5);
-        sync.reset(new Sync_(SyncPolicy_(10), odom_sub, keyframe_sub));
-        sync->registerCallback(boost::bind(&Mapmaker::callback, this, _1, _2));
-
-        // ROS timer.
-        timer_ = nh.createWallTimer(ros::WallDuration(15.0), &Mapmaker::timerCallback, this);
-
-        // Calls callback when synchronised messages arrive
-        ros::spin();
+        ROS_INFO("Mapmaker started.");
+        while (ros::ok())
+        {
+            ros::spinOnce();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        ROS_INFO("Mapmaker stopped.");
     }
 
 

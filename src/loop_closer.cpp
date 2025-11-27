@@ -40,7 +40,8 @@ namespace slamon
                            MotionEstimator(motion_estimation_type),
                            enable_debugging_{enable_debugging}, init_loop_closer_{false}, lc_neighbors_{lc_neighbors},
                            lc_candidates_{lc_candidates}, min_lc_inliers_{min_lc_inliers}, lc_discard_window_{lc_discard_window},
-                           loop_closure_num_{0}, map_{map}, cluster_queue_{cluster_queue}
+                           loop_closure_num_{0}, map_{map}, cluster_queue_{cluster_queue},
+                           nh_{}, nhp_{"~"}
     {
         // Computes maximum inliers for edges.
         max_edge_inliers_ = min_lc_inliers * 2;
@@ -61,28 +62,23 @@ namespace slamon
                 std::filesystem::remove_all(lc_path_);
             std::filesystem::create_directory(lc_path_);
         }
+
+        // ROS client services.
+        proj_mat_client_ = nh_.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
+
+        // Publishers.
+        run_times_pub_ = nhp_.advertise<slamon::Performance>("loop_closer_performance", 1);
+        cluster_num_pub_ = nhp_.advertise<std_msgs::Int32>("cluster_num", 1);
+        loop_closure_num_pub_ = nhp_.advertise<std_msgs::Int32>("loop_closure_num", 1);
+        loop_closure_img_pub_ = nhp_.advertise<sensor_msgs::Image>("loop_closure_img", 1);
+        loop_closure_matches_num_pub_ = nhp_.advertise<std_msgs::Int32>("loop_closure_matches_num", 1);
+        loop_closure_inliers_num_pub_ = nhp_.advertise<std_msgs::Int32>("loop_closure_inliers_num", 1);
     }
 
 
     void LoopCloser::run()
-    {
-        // Create ROS node.
-        ros::NodeHandle nh;
-        ros::NodeHandle nhp("~");
-
-        // ROS client services.
-        proj_mat_client_ = nh.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
-
-        // Publishers.
-        run_times_pub_ = nhp.advertise<slamon::Performance>("loop_closer_performance", 1);
-        cluster_num_pub_ = nhp.advertise<std_msgs::Int32>("cluster_num", 1);
-        loop_closure_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_num", 1);
-        loop_closure_img_pub_ = nhp.advertise<sensor_msgs::Image>("loop_closure_img", 1);
-        loop_closure_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_matches_num", 1);
-        loop_closure_inliers_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_inliers_num", 1);
-
+    {   
         // Loop
-        ros::Rate r(10);
         Cluster q_cluster;
         int p_loop_closures_num;
         double start_module_time;
@@ -200,7 +196,7 @@ namespace slamon
                 if (run_times_pub_.getNumSubscribers() > 0)
                     publishPerformance(ros::Time::now(), loop_closure_num_ - p_loop_closures_num, run_times_, run_times_pub_);
             }
-            r.sleep();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 

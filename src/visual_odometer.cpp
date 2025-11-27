@@ -37,52 +37,51 @@ namespace slamon
                                    c_keyframe_id_{0}, c_cluster_id_{0}, min_inliers_{min_inliers}, min_lc_inliers_{min_lc_inliers}, 
                                    max_kpts_bucket_{max_kpts_bucket}, max_kpts_retained_{max_kpts_retained}, status_{UNINITIALISED}, 
                                    enable_debugging_{enable_debugging}, enable_bucketing_{enable_bucketing}, enable_enhacement_{enable_enhacement},
-                                   initialised_odom_{false}, robot_frame_id_{robot_frame_id}, feature_detector_name_{feature_detector_name} {}
+                                   initialised_odom_{false}, robot_frame_id_{robot_frame_id}, feature_detector_name_{feature_detector_name},
+                                   nh_{}, nhp_{"~"}, it_{nh_}
+    {
+        // Client services.
+        initial_odom_client_ = nhp_.serviceClient<slamon::GetTransform>("get_first_odom");
+
+        // Server servives.
+        robot2camera_server_ = nhp_.advertiseService("send_robot_to_camera_tf", &VisualOdometer::sendRobot2Camera, this);
+        proj_mat_server_ = nhp_.advertiseService("send_projection_matrices", &VisualOdometer::sendProjectionMatrices, this);
+
+        // Publishers.
+        keyframe_pub_ = nhp_.advertise<slamon::Keyframe>("keyframe", 1);
+        run_times_pub_ = nhp_.advertise<slamon::Performance>("vo_performance", 1);
+        robot_odom_pub_ = nhp_.advertise<nav_msgs::Odometry>("robot_odom", 1);
+        camera_odom_pub_ = nhp_.advertise<nav_msgs::Odometry>("camera_odom", 1);
+        inliers_num_pub_ = nhp_.advertise<std_msgs::Int32>("inliers_num", 1);
+        inliers_img_pub_ = nhp_.advertise<sensor_msgs::Image>("inliers_img", 1);
+        stereo_kpts_img_pub_ = nhp_.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
+        stereo_matches_num_pub_ = nhp_.advertise<std_msgs::Int32>("stereo_matches_num", 1);
+        stereo_matches_img_pub_ = nhp_.advertise<sensor_msgs::Image>("stereo_matches_img", 1);
+        temporal_matches_num_pub_ = nhp_.advertise<std_msgs::Int32>("temporal_matches_num", 1);
+        temporal_matches_img_pub_ = nhp_.advertise<sensor_msgs::Image>("temporal_matches_img", 1);
+        keyframe_inliers_img_pub_ = nhp_.advertise<sensor_msgs::Image>("keyframe_insertion_decision_img", 1);
+
+        // Subscribers.
+        l_img_sub_.subscribe(it_, "left_image_rect_color", 5);
+        r_img_sub_.subscribe(it_, "right_image_rect_color", 5);
+        l_info_sub_.subscribe(nh_, "left_camera_info", 5);
+        r_info_sub_.subscribe(nh_, "right_camera_info", 5);
+
+        // Message sync.
+        sync_ = std::make_shared<Sync_>(SyncPolicy_(10), l_img_sub_, r_img_sub_, l_info_sub_, r_info_sub_);
+        sync_->registerCallback(boost::bind(&VisualOdometer::callback, this, _1, _2, _3, _4));
+    }
 
 
     void VisualOdometer::run()
     {
-        // Create ROS node.
-        ros::NodeHandle nh;
-        ros::NodeHandle nhp("~");
-        image_transport::ImageTransport it(nh);
-
-        // Client services.
-        initial_odom_client_ = nhp.serviceClient<slamon::GetTransform>("get_first_odom");
-
-        // Server servives.
-        robot2camera_server_ = nhp.advertiseService("send_robot_to_camera_tf", &VisualOdometer::sendRobot2Camera, this);
-        proj_mat_server_ = nhp.advertiseService("send_projection_matrices", &VisualOdometer::sendProjectionMatrices, this);
-
-        // Publishers.
-        keyframe_pub_ = nhp.advertise<slamon::Keyframe>("keyframe", 1);
-        run_times_pub_ = nhp.advertise<slamon::Performance>("vo_performance", 1);
-        robot_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("robot_odom", 1);
-        camera_odom_pub_ = nhp.advertise<nav_msgs::Odometry>("camera_odom", 1);
-        inliers_num_pub_ = nhp.advertise<std_msgs::Int32>("inliers_num", 1);
-        inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("inliers_img", 1);
-        stereo_kpts_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_keypoints_img", 1);
-        stereo_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("stereo_matches_num", 1);
-        stereo_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("stereo_matches_img", 1);
-        temporal_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("temporal_matches_num", 1);
-        temporal_matches_img_pub_ = nhp.advertise<sensor_msgs::Image>("temporal_matches_img", 1);
-        keyframe_inliers_img_pub_ = nhp.advertise<sensor_msgs::Image>("keyframe_insertion_decision_img", 1);
-
-        // Subscribers.
-        image_transport::SubscriberFilter l_img_sub, r_img_sub;
-        message_filters::Subscriber<sensor_msgs::CameraInfo> l_info_sub, r_info_sub;
-
-        // Message sync.
-        boost::shared_ptr<Sync_> sync;
-        l_img_sub.subscribe(it, "left_image_rect_color", 5);
-        r_img_sub.subscribe(it, "right_image_rect_color", 5);
-        l_info_sub.subscribe(nh, "left_camera_info", 5);
-        r_info_sub.subscribe(nh, "right_camera_info", 5);
-        sync.reset(new Sync_(SyncPolicy_(10), l_img_sub, r_img_sub, l_info_sub, r_info_sub));
-        sync->registerCallback(boost::bind(&VisualOdometer::callback, this, _1, _2, _3, _4));
-        
-        // Calls callback when synchronised messages arrives.
-        ros::spin();
+        ROS_INFO("VisualOdometer started.");
+        while (ros::ok())
+        {
+            ros::spinOnce();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        ROS_INFO("VisualOdometer stopped.");
     }
 
 

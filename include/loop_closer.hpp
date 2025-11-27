@@ -285,6 +285,18 @@ namespace slamon
 
             std::vector<std::vector<Cluster>> p_cands_cluster_neighbours_; //!> Previous neighbours of the candidates.
 
+            Map* map_; //!> Map object pointer.
+
+            Queue<Cluster>* cluster_queue_; // Cluster queue pointer.
+
+            haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
+
+            RunTimes run_times_; //!> Internal loop closing execution times.
+
+            ros::NodeHandle nh_; //!> Public ROS node handle.
+            
+            ros::NodeHandle nhp_; //!> Private ROS node handle.
+
             ros::ServiceClient proj_mat_client_; //!> Service for requesting projection matrices.
             
             ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
@@ -299,13 +311,6 @@ namespace slamon
 
             ros::Publisher loop_closure_inliers_num_pub_; //!> Multi-cluster inliers number publisher.
 
-            Map* map_; //!> Map object pointer.
-
-            Queue<Cluster>* cluster_queue_; // Cluster queue pointer.
-
-            haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
-
-            RunTimes run_times_; //!> Internal loop closing execution times.
     };
 
 

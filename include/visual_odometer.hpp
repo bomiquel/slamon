@@ -256,11 +256,17 @@ namespace slamon
 
             std::string camera_frame_id_; //!> Camera odometry coordinate axis identficator.
 
+            std::string feature_detector_name_; //!> The name of the feature detector.
+
+            ros::NodeHandle nh_; //!> Public ROS node handle.
+            
+            ros::NodeHandle nhp_; //!> Private ROS node handle.
+
+            image_transport::ImageTransport it_; //!> Public image handle.
+
             tf::Transform c_robot_odom_; //!> Current robot odometry.
 
             tf::Transform c_camera_odom_; //!> Current camera odometry.
-
-            std::string feature_detector_name_; //!> The name of the feature detector.
 
             tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
@@ -296,6 +302,14 @@ namespace slamon
 
             ros::ServiceServer proj_mat_server_; //!> Service for sending projection matrices.
 
+            image_transport::SubscriberFilter l_img_sub_; //!> Left image subscriber.
+
+            image_transport::SubscriberFilter r_img_sub_; //!> Right image subscriber.
+
+            message_filters::Subscriber<sensor_msgs::CameraInfo> l_info_sub_; //!> Left camera info subscriber.
+
+            message_filters::Subscriber<sensor_msgs::CameraInfo> r_info_sub_; //!> Right camera info subscriber.
+
             RunTimes run_times_; //!> Internal visual odometer execution times.
 
             // Topic sync
@@ -305,6 +319,8 @@ namespace slamon
                                                                     sensor_msgs::CameraInfo> SyncPolicy_;
 
             typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
+            
+            std::shared_ptr<Sync_> sync_;
     };
 
 
