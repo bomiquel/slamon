@@ -30,9 +30,9 @@
     <!-- 2024_07_03/experiment_0_square_1_proc -->
     <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_03/experiment_0_square_1_proc/2024-07-03-11-37-31.bag"/> -->
     <!-- 2024_07_04/experiment_0_square_2_proc -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_2_proc/2024-07-04-13-08-50.bag"/> -->
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_2_proc/2024-07-04-13-08-50.bag"/>
     <!-- 2024_07_04/experiment_0_square_3_proc -->
-    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_3_proc/2024-07-04-13-22-00.bag"/>
+    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_3_proc/2024-07-04-13-22-00.bag"/> -->
 
     <!-- Static TF's -->
     <node pkg = "tf" type = "static_transform_publisher" name = "girona500_base_link_to_stereo_down" args = "0.57 -0.062 0.505 0.0 0.0 0.0 /girona500/base_link /girona500/stereo_down 30" />
@@ -51,28 +51,28 @@
         <arg name = "q_w" default = "0.038904031"/> -->
         <!-- UJI 2024_07_03/experiment_0_square_1_proc -->
         <!-- <arg name = "t_x" default = "-0.098869452"/> 
-        <arg name = "t_y" default = "0.192996936"/> 
+        <arg name = "t_y" default = "0.192996936"/>
         <arg name = "t_z" default = "-1.778576607"/> 
         <arg name = "q_x" default = "-0.022258513"/>
         <arg name = "q_y" default = "0.021376555"/>
         <arg name = "q_z" default = "-0.052030298"/>
         <arg name = "q_w" default = "0.998168548"/> -->
         <!-- UJI 2024_07_04/experiment_0_square_2_proc -->
-        <!-- <arg name = "t_x" default = "-0.037046177"/> 
+        <arg name = "t_x" default = "-0.037046177"/> 
         <arg name = "t_y" default = "0.269914678"/> 
         <arg name = "t_z" default = "-1.800492732"/> 
         <arg name = "q_x" default = "-0.029828077"/>
         <arg name = "q_y" default = "0.000048010"/>
         <arg name = "q_z" default = "-0.027061236"/>
-        <arg name = "q_w" default = "0.999188657"/> -->
+        <arg name = "q_w" default = "0.999188657"/>
         <!-- UJI 2024_07_04/experiment_0_square_3_proc -->
-        <arg name = "t_x" default = "1.000167367"/> 
+        <!-- <arg name = "t_x" default = "1.000167367"/> 
         <arg name = "t_y" default = "3.366724544"/> 
         <arg name = "t_z" default = "-1.801609401"/> 
         <arg name = "q_x" default = "0.032461234"/>
         <arg name = "q_y" default = "-0.013343311"/>
         <arg name = "q_z" default = "-0.264775157"/>
-        <arg name = "q_w" default = "0.963671283"/>
+        <arg name = "q_w" default = "0.963671283"/> -->
 
         <!-- Sends initial pose -->
         <node pkg = "slamon" type = "initial_pose_server_params" name = "initial_pose_server_params" output = "screen">
@@ -134,8 +134,8 @@
 
     <!-- Extend clok -->
     <node pkg = "slamon" type = "clock_extender" name = "clock_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
-        <param name = "extra_time"       value = "7"/>
-        <param name = "gap_threshold"    value = "10"/>
+        <param name = "extra_time"       value = "5"/>
+        <param name = "gap_threshold"    value = "100"/>
         <param name = "watch_interval"   value = "5"/>
     </node>
 
@@ -146,25 +146,25 @@
     <node pkg = "slamon" 
           type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "--delay 5 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
-                                                                                /tf_static
-                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
-                                                                                /$(arg robot_name)/navigator/odometry'"
+          args = "--delay 90 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
+                                                                                 /tf_static
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
+                                                                                 /$(arg robot_name)/navigator/odometry'"
           if = "$(eval enable_extra_clock == true)"/>
 
     <node pkg = "slamon" 
           type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "--delay 5 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
-                                                                                /tf_static
-                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
-                                                                                /$(arg robot_name)/navigator/odometry'"
+          args = "--delay 90 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
+                                                                                 /tf_static
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
+                                                                                 /$(arg robot_name)/navigator/odometry'"
           required = "true"
           if = "$(eval enable_extra_clock == false)"/>
 
