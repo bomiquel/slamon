@@ -47,7 +47,7 @@ void KeypointDetector::detectKeypoints(const cv::Mat& img,
     if (img.type() == CV_8UC3)
         cv::cvtColor(img, g_img, cv::COLOR_BGR2GRAY);
     else 
-        g_img = img;
+        g_img = img.clone();
 
     // Enhances the image using CLAHE.
     cv::Mat proc_img;

@@ -16,7 +16,7 @@
     <arg name = "enable_decimate_x8" default = "false"/>
 
     <!-- CPU/MEM monitor flag -->
-    <arg name = "enable_cpu_monitor" default = "false"/>
+    <arg name = "enable_cpu_monitor" default = "true"/>
 
     <!-- Clock extension -->
     <arg name = "enable_extra_clock" default = "true"/>
@@ -24,55 +24,67 @@
     <!-- Bagfiles parameters -->
     <param name = "/use_sim_time"    value = "true"/>
 
-    <!-- Andratx -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-36-48_0.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-39-17_1.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-40-17_2.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-41-16_3.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-42-16_4.bag"/> -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-15-11_0.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-18-02_1.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-19-01_2.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-20-02_3.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-21-02_4.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-22-01_5.bag"/> -->
-    <!-- Cabrera 2025/10/29 -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53/sparus2_stereo_camera_2025-10-29-11-56-53_0.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53/sparus2_stereo_camera_2025-10-29-11-59-11_1.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53/sparus2_stereo_camera_2025-10-29-12-01-12_2.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53/sparus2_stereo_camera_2025-10-29-12-03-12_3.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53/sparus2_stereo_camera_2025-10-29-12-05-12_4.bag"/> -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06/sparus2_stereo_camera_2025-10-29-15-24-06_0.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06/sparus2_stereo_camera_2025-10-29-15-26-29_1.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06/sparus2_stereo_camera_2025-10-29-15-28-31_2.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06/sparus2_stereo_camera_2025-10-29-15-30-33_3.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06/sparus2_stereo_camera_2025-10-29-15-32-36_4.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06/sparus2_stereo_camera_2025-10-29-15-34-40_5.bag"/> -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_51_29/sparus2_stereo_camera_2025-10-29-15-51-29_0.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_51_29/sparus2_stereo_camera_2025-10-29-15-53-49_1.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_51_29/sparus2_stereo_camera_2025-10-29-15-55-53_2.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_51_29/sparus2_stereo_camera_2025-10-29-15-57-56_3.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_51_29/sparus2_stereo_camera_2025-10-29-16-00-00_4.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_51_29/sparus2_stereo_camera_2025-10-29-16-02-04_5.bag"/> -->
     <!-- Cabrera 2025/02/04 -->
-    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-21-39_0.bag
+    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-21-39_0.bag
                                      /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-22-39_1.bag
                                      /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-23-39_2.bag
                                      /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-24-39_3.bag
-                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-25-39_4.bag"/>
-    <!-- Sant Elm -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/sant_elm/2025_04_09/10_56_29/sparus2_stereo_camera_2025-04-09-10-56-29_0.bag
-                                     /home/bomiquel/datasets/bagfiles/sant_elm/2025_04_09/10_56_29/sparus2_stereo_camera_2025-04-09-10-57-31_1.bag
-                                     /home/bomiquel/datasets/bagfiles/sant_elm/2025_04_09/10_56_29/sparus2_stereo_camera_2025-04-09-10-58-32_2.bag
-                                     /home/bomiquel/datasets/bagfiles/sant_elm/2025_04_09/10_56_29/sparus2_stereo_camera_2025-04-09-10-59-33_3.bag
-                                     /home/bomiquel/datasets/bagfiles/sant_elm/2025_04_09/10_56_29/sparus2_stereo_camera_2025-04-09-11-00-33_4.bag
-                                     /home/bomiquel/datasets/bagfiles/sant_elm/2025_04_09/10_56_29/sparus2_stereo_camera_2025-04-09-11-01-34_5.bag
-                                     /home/bomiquel/datasets/bagfiles/sant_elm/2025_04_09/10_56_29/sparus2_stereo_camera_2025-04-09-11-02-35_6.bag
-                                     /home/bomiquel/datasets/bagfiles/sant_elm/2025_04_09/10_56_29/sparus2_stereo_camera_2025-04-09-11-03-36_7.bag
-                                     /home/bomiquel/datasets/bagfiles/sant_elm/2025_04_09/10_56_29/sparus2_stereo_camera_2025-04-09-11-04-37_8.bag"/> -->
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-25-39_4.bag"/> -->
 
+    <!-- Cabrera 2025/10/29 -->
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_2/sparus2_stereo_camera_2025-10-29-11-56-53_0.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_2/sparus2_stereo_camera_2025-10-29-11-59-11_1.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_2/sparus2_stereo_camera_2025-10-29-12-01-12_2.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_2/sparus2_stereo_camera_2025-10-29-12-03-12_3.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_2/sparus2_stereo_camera_2025-10-29-12-05-12_4.bag"/>
+    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06_proc_3/sparus2_stereo_camera_2025-10-29-15-24-06_0.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06_proc_3/sparus2_stereo_camera_2025-10-29-15-26-29_1.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06_proc_3/sparus2_stereo_camera_2025-10-29-15-28-31_2.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06_proc_3/sparus2_stereo_camera_2025-10-29-15-30-33_3.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/15_24_06_proc_3/sparus2_stereo_camera_2025-10-29-15-32-36_4.bag"/> -->
+
+    <!-- Static TF's -->
+    <node pkg = "tf" type = "static_transform_publisher" name = "sparus2_base_link_to_left_optical" args = "0.422270 -0.065000 0.042600 1.570796 0.000000 0.000000 /sparus2/base_link /sparus2/camera_port 30" />
 
     <group ns = "$(arg robot_name)">
+
+        <!-- Initial pose and orientation parameters -->  
+        <!-- Cabrera 2025/02/04 -->
+        <!-- <arg name = "t_x" default = "28.824602333472"/> 
+        <arg name = "t_y" default = "58.9221115387944"/> 
+        <arg name = "t_z" default = "-2.90542054176331"/> 
+        <arg name = "q_x" default = "0.034667875632095"/>
+        <arg name = "q_y" default = "-0.062374205023327"/>
+        <arg name = "q_z" default = "-0.028935960660611"/>
+        <arg name = "q_w" default = "0.9970307453271"/> -->
+        <!-- Cabrera 2025/10/29 12:56:53 -->
+        <arg name = "t_x" default = "-1.92536965990555"/> 
+        <arg name = "t_y" default = "15.3987059658667"/> 
+        <arg name = "t_z" default = "-3.10928869247437"/> 
+        <arg name = "q_x" default = "0.0956055551598734"/>
+        <arg name = "q_y" default = "-0.056435766300204"/>
+        <arg name = "q_z" default = "0.719736834116661"/>
+        <arg name = "q_w" default = "0.685312681715731"/>
+        <!-- Cabrera 2025/10/29  15:24:06 -->
+        <!-- <arg name = "t_x" default = "2.06345780482089"/> 
+        <arg name = "t_y" default = "18.289379944199"/> 
+        <arg name = "t_z" default = "-3.10928869247437"/> 
+        <arg name = "q_x" default = "-0.0714615496615517"/>
+        <arg name = "q_y" default = "-0.0373212270885058"/>
+        <arg name = "q_z" default = "-0.963864534801749"/>
+        <arg name = "q_w" default = "0.253900633083075"/> -->
+
+        <!-- Sends initial pose -->
+        <node pkg = "slamon" type = "initial_pose_server_params" name = "initial_pose_server_params" output = "screen">
+            <param name = "tx"         value = "$(arg t_x)"/>
+            <param name = "ty"         value = "$(arg t_y)"/>
+            <param name = "tz"         value = "$(arg t_z)"/>
+            <param name = "qx"         value = "$(arg q_x)"/>
+            <param name = "qy"         value = "$(arg q_y)"/>
+            <param name = "qz"         value = "$(arg q_z)"/>
+            <param name = "qw"         value = "$(arg q_w)"/>
+            <remap from = "get_pose"   to    = "slamon_vo/get_first_odom"/>
+        </node>
 
         <!-- Processes stereo images -->
         <include file = "$(find slamon)/launch/stereo_processing/stereo_pipeline.launch">
@@ -134,24 +146,22 @@
     <node pkg = "slamon" 
           type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "--delay 0 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
-                                                                                 /tf_static
-                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+          args = "--delay 10 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
+                                                                                 /$(arg robot_name)/navigator/navigation
                                                                                  /$(arg robot_name)/navigator/odometry'"
           if = "$(eval enable_extra_clock == true)"/>
 
     <node pkg = "slamon" 
           type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "--delay 0 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
-                                                                                 /tf_static
-                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+          args = "--delay 10 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
+                                                                                 /$(arg robot_name)/navigator/navigation
                                                                                  /$(arg robot_name)/navigator/odometry'"
           required = "true"
           if = "$(eval enable_extra_clock == false)"/>
