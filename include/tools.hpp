@@ -34,7 +34,7 @@ namespace slamon
 
 
     /** \brief Converts cv::Mat into tf::Transform.
-     *  \param[in] r_vec cv::Mat containing the Euler angles.
+     *  \param[in] r_vec cv::Mat containing the Rodrigues angles.
      *  \param[in] t_vec cv::Mat containing the translation vector.
      *  \param[out] tf The resulting transform.
      *  @return whether the conversion could be done.
@@ -50,17 +50,28 @@ namespace slamon
             return false;
         }
 
-        // Build the quaternion of rotation
-        tf::Vector3 axis(r_vec.at<double>(0, 0),
-        r_vec.at<double>(1, 0),
-        r_vec.at<double>(2, 0));
+        // Get rotation components.
+        double rx = r_vec.at<double>(0);
+        double ry = r_vec.at<double>(1);
+        double rz = r_vec.at<double>(2);
+
+        // Get angle.
         double angle = norm(r_vec);
-        tf::Quaternion q(axis, angle);
+
+        // Build the quaternion.
+        tf::Quaternion q;
+        if (angle < 1e-9) 
+        {
+            q = tf::Quaternion::getIdentity();
+        }
+        else 
+        {
+            tf::Vector3 axis(rx / angle, ry / angle, rz / angle);
+            q.setRotation(axis, angle);
+        }
 
         // Build the vector of translation
-        tf::Vector3 t(t_vec.at<double>(0, 0),
-        t_vec.at<double>(1, 0),
-        t_vec.at<double>(2, 0));
+        tf::Vector3 t(t_vec.at<double>(0), t_vec.at<double>(1), t_vec.at<double>(2));
 
         // Build the coordinates transform
         tf.setRotation(q);
