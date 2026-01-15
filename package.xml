@@ -2,7 +2,7 @@
 <package format="2">
 
     <name>slamon</name>
-    <version>1.1.5</version>
+    <version>1.2.0</version>
 
     <description>
        SLAMON is an improved and extended version of stereo_slam.
@@ -34,34 +34,31 @@
     <!-- Build tool -->
     <buildtool_depend>catkin</buildtool_depend>
 
-    <!-- Build dependencies -->
-    <build_depend>tf</build_depend>
-    <build_depend>roscpp</build_depend>
-    <build_depend>std_msgs</build_depend>
-    <build_depend>nav_msgs</build_depend>
-    <build_depend>cv_bridge</build_depend>
-    <build_depend>sensor_msgs</build_depend>
-    <build_depend>geometry_msgs</build_depend>
-    <build_depend>rosgraph_msgs</build_depend>
+    <!-- System Dependencies -->
+    <depend>eigen</depend> 
+    <depend>libsuitesparse-dev</depend>
+
+    <!-- ROS Dependencies (Build + Exec) -->
+    <depend>tf2</depend>
+    <depend>roscpp</depend>
+    <depend>libg2o</depend>
+    <depend>tf2_ros</depend>
+    <depend>std_msgs</depend>
+    <depend>nav_msgs</depend>
+    <depend>cv_bridge</depend>
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>rosgraph_msgs</depend>
+    <depend>image_geometry</depend>
+    <depend>image_transport</depend>
+    <depend>message_filters</depend>
+    <depend>tf2_geometry_msgs</depend>
+
+    <!-- Only Build -->
     <build_depend>cmake_modules</build_depend>
-    <build_depend>image_geometry</build_depend>
-    <build_depend>image_transport</build_depend>
-    <build_depend>message_filters</build_depend>
     <build_depend>message_generation</build_depend>
 
-    <!-- Exec dependencies -->
-    <exec_depend>tf</exec_depend>
-    <exec_depend>roscpp</exec_depend>
-    <exec_depend>std_msgs</exec_depend>
-    <exec_depend>nav_msgs</exec_depend>
-    <exec_depend>cv_bridge</exec_depend>
-    <exec_depend>sensor_msgs</exec_depend>
-    <exec_depend>geometry_msgs</exec_depend>
-    <exec_depend>rosgraph_msgs</exec_depend>
-    <exec_depend>cmake_modules</exec_depend>
-    <exec_depend>image_geometry</exec_depend>
-    <exec_depend>image_transport</exec_depend>
-    <exec_depend>message_filters</exec_depend>
+    <!-- Only Exec -->
     <exec_depend>message_runtime</exec_depend>
 
     <export>

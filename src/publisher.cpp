@@ -299,7 +299,7 @@ void Publisher::writeImgLoopClosure(const std::string& o_path,
 
 
 void Publisher::publishPose(const ros::Time& c_stamp,
-                            const tf::Transform& c_pose,
+                            const tf2::Transform& c_pose,
                             const bool bad_pose_covariance,
                             const ros::Publisher& publisher,
                             const std::string& reference_frame_id)
@@ -316,8 +316,8 @@ void Publisher::publishPose(const ros::Time& c_stamp,
 
 void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
                                        const ros::Time& p_stamp,
-                                       const tf::Transform& c_pose,
-                                       const tf::Transform& c_motion,
+                                       const tf2::Transform& c_pose,
+                                       const tf2::Transform& c_motion,
                                        const bool bad_pose_covariance,
                                        const bool bad_twist_covariance,
                                        const ros::Publisher& publisher,
@@ -344,13 +344,25 @@ void Publisher::publishPoseAndVelocity(const ros::Time& c_stamp,
         msg.twist.twist.linear.x = c_motion.getOrigin().getX() / delta_t;
         msg.twist.twist.linear.y = c_motion.getOrigin().getY() / delta_t;
         msg.twist.twist.linear.z = c_motion.getOrigin().getZ() / delta_t;
-        tf::Quaternion delta_rot = c_motion.getRotation();
-        tfScalar angle = delta_rot.getAngle();
-        tf::Vector3 axis = delta_rot.getAxis();
-        tf::Vector3 angular_velocity = (axis * angle) / delta_t;
-        msg.twist.twist.angular.x = angular_velocity.x();
-        msg.twist.twist.angular.y = angular_velocity.y();
-        msg.twist.twist.angular.z = angular_velocity.z();
+
+        tf2::Quaternion delta_rot = c_motion.getRotation();
+        tf2Scalar angle = delta_rot.getAngle();
+        if (std::abs(angle) < 1e-6) 
+        {
+            msg.twist.twist.angular.x = 0.0;
+            msg.twist.twist.angular.y = 0.0;
+            msg.twist.twist.angular.z = 0.0;
+        }
+        else
+        {
+            tf2::Vector3 axis = delta_rot.getAxis();
+            tf2::Vector3 angular_velocity = (axis * angle) / delta_t;
+            
+            msg.twist.twist.angular.x = angular_velocity.x();
+            msg.twist.twist.angular.y = angular_velocity.y();
+            msg.twist.twist.angular.z = angular_velocity.z();
+        }
+        
         if (!bad_twist_covariance)
             msg.twist.covariance = GOOD_TWIST_COVARIANCE_;
     }
@@ -469,7 +481,7 @@ void Publisher::publishCounter(const int counter,
 
 void Publisher::writePoses(const std::string& o_path,
                            const std::vector<double>& stamps,
-                           const std::vector<tf::Transform>& poses)
+                           const std::vector<tf2::Transform>& poses)
 {
     std::string l_path = o_path + ".lock";
 
@@ -511,7 +523,7 @@ void Publisher::writePoses(const std::string& o_path,
 void Publisher::writeLoopClosureEdges(const std::string& o_path,
                                       const std::vector<double>& weights,
                                       const std::vector<std::pair<int, int>> edges_ids,
-                                      const std::vector<std::pair<tf::Transform, tf::Transform>>& edges_poses)
+                                      const std::vector<std::pair<tf2::Transform, tf2::Transform>>& edges_poses)
 {
     std::string l_path = o_path + ".lock";
 
@@ -560,16 +572,9 @@ void Publisher::writeLoopClosureEdges(const std::string& o_path,
 
 std::string Publisher::convertTo5Digits(int in)
 {
-    size_t val = static_cast<size_t>(in);
-    std::string output;
-    int digits = 5;
-    while (digits-- > 0) 
-    {
-        output += ('0' + val % 10);
-        val /= 10;
-    }
-    std::reverse(output.begin(), output.end());
-    return output;
+    std::stringstream ss;
+    ss << std::setw(5) << std::setfill('0') << in;
+    return ss.str();
 }
 
 
@@ -955,7 +960,7 @@ cv::Mat Publisher::drawImgLoopClosure(const int q_keyframe_id,
 
 
 nav_msgs::Odometry Publisher::buildPoseMsg(const ros::Time& c_stamp,
-                                           const tf::Transform& c_pose,
+                                           const tf2::Transform& c_pose,
                                            const bool bad_pose_covariance,
                                            const std::string& reference_frame_id)
 {
@@ -966,7 +971,7 @@ nav_msgs::Odometry Publisher::buildPoseMsg(const ros::Time& c_stamp,
     msg.header.frame_id = reference_frame_id;
 
     // Set pose
-    tf::poseTFToMsg(c_pose, msg.pose.pose);
+    tf2::toMsg(c_pose, msg.pose.pose);
 
     // Set covariances.
     if (bad_pose_covariance)

@@ -27,7 +27,7 @@
 #include <opencv2/core.hpp>
 
 #include <ros/ros.h>
-#include <tf/tf.h>
+#include <tf2/LinearMath/Transform.h>
 
 
 class Frame
@@ -96,7 +96,7 @@ class Frame
         /** \brief Set world-odom camera pose.
          *  \param[in] odom_camera_pose World-odom camera pose when taking the image.
          */
-        inline void setCameraPose(const tf::Transform& odom_camera_pose){odom_camera_pose_ = odom_camera_pose;}
+        inline void setCameraPose(const tf2::Transform& odom_camera_pose){odom_camera_pose_ = odom_camera_pose;}
 
 
         /** \brief Gets the number of clusters.
@@ -155,7 +155,7 @@ class Frame
         /** \brief Get world-odom camera pose.
          *  @return The world-odom camera pose when taking the image.
          */
-        inline tf::Transform getCameraPose() const {return odom_camera_pose_;}
+        inline tf2::Transform getCameraPose() const {return odom_camera_pose_;}
 
 
         /** \brief Get the cluster centroids.
@@ -223,7 +223,7 @@ class Frame
         cv::Mat l_descs_; //!> Left descriptors.
         cv::Mat r_descs_; //!> Right descriptors.
 
-        tf::Transform odom_camera_pose_; //!> World-odom camera pose for this frame.
+        tf2::Transform odom_camera_pose_; //!> World-odom camera pose for this frame.
 
         std::vector<int> cluster_ids_; //!> Relationship between the keypoint index and the cluster to which it belongs.
 

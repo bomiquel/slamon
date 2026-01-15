@@ -31,11 +31,12 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include <ros/ros.h>
-#include <tf/tf.h>
 #include <std_msgs/Int32.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include "slamon/Keypoint.h"
 #include "slamon/Keyframe.h"
@@ -383,7 +384,7 @@ class Publisher
          *  is relative.
          */
         void publishPose(const ros::Time& c_stamp,
-                         const tf::Transform& c_pose,
+                         const tf2::Transform& c_pose,
                          const bool bad_pose_covariance,
                          const ros::Publisher& publisher,
                          const std::string& reference_frame_id);
@@ -403,8 +404,8 @@ class Publisher
          */
         void publishPoseAndVelocity(const ros::Time& c_stamp,
                                     const ros::Time& p_stamp,
-                                    const tf::Transform& c_pose,
-                                    const tf::Transform& c_motion,
+                                    const tf2::Transform& c_pose,
+                                    const tf2::Transform& c_motion,
                                     const bool bad_pose_covariance,
                                     const bool bad_twist_covariance,
                                     const ros::Publisher& publisher,
@@ -502,7 +503,7 @@ class Publisher
          */
         void writePoses(const std::string& o_path,
                         const std::vector<double>& stamps,
-                        const std::vector<tf::Transform>& poses);
+                        const std::vector<tf2::Transform>& poses);
 
 
         /** \brief Writes a list of edges.
@@ -518,7 +519,7 @@ class Publisher
         void writeLoopClosureEdges(const std::string& o_path,
                                    const std::vector<double>& weights,
                                    const std::vector<std::pair<int, int>> edges_ids,
-                                   const std::vector<std::pair<tf::Transform, tf::Transform>>& edges_poses);
+                                   const std::vector<std::pair<tf2::Transform, tf2::Transform>>& edges_poses);
 
 
         /** \brief Converts an integer to a string containing a
@@ -690,7 +691,7 @@ class Publisher
          *  the current pose is relative.
          */
         nav_msgs::Odometry buildPoseMsg(const ros::Time& c_stamp,
-                                        const tf::Transform& c_pose,
+                                        const tf2::Transform& c_pose,
                                         const bool bad_pose_covariance,
                                         const std::string& reference_frame_id);
 

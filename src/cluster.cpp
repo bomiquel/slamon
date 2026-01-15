@@ -61,7 +61,7 @@ Cluster::Cluster(int global_id,
                  int keyframe_id,
                  cv::Mat l_descs,
                  cv::Mat r_descs,
-                 tf::Transform camera_map_pose,
+                 tf2::Transform camera_map_pose,
                  std::vector<cv::KeyPoint> l_kpts,
                  std::vector<cv::KeyPoint> r_kpts,
                  std::vector<cv::Point3f> l_cam_pts):
@@ -74,7 +74,7 @@ Cluster::Cluster(int global_id,
                  int keyframe_id,
                  cv::Mat l_descs,
                  cv::Mat r_descs,
-                 tf::Transform camera_map_pose,
+                 tf2::Transform camera_map_pose,
                  std::vector<cv::KeyPoint> l_kpts,
                  std::vector<cv::KeyPoint> r_kpts,
                  std::vector<cv::Point3f> l_cam_pts):
@@ -90,8 +90,8 @@ std::vector<cv::Point3f> Cluster::getWorldPoints()
     world_pts.reserve(size);
 
     // Translates 3D points to world frame.
-    tf::Vector3 l_cam_pt;
-    tf::Vector3 world_pt;
+    tf2::Vector3 l_cam_pt;
+    tf2::Vector3 world_pt;
     for (size_t i = 0; i < size; ++i)
     { 
         l_cam_pt.setX(l_cam_pts_[i].x);

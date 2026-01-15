@@ -25,15 +25,15 @@
 #include <opencv2/core.hpp>
 
 #include <ros/ros.h>
-#include <tf/tf.h>
 #include <cv_bridge/cv_bridge.h>
+#include <tf2/LinearMath/Transform.h>
 
 
 namespace slamon
 {
 
 
-    /** \brief Converts cv::Mat into tf::Transform.
+    /** \brief Converts cv::Mat into tf2::Transform.
      *  \param[in] r_vec cv::Mat containing the Rodrigues angles.
      *  \param[in] t_vec cv::Mat containing the translation vector.
      *  \param[out] tf The resulting transform.
@@ -41,7 +41,7 @@ namespace slamon
      */
     static inline bool fromMatToTf(const cv::Mat& r_vec,
                                    const cv::Mat& t_vec,
-                                   tf::Transform& tf)
+                                   tf2::Transform& tf)
     {
         // Sanity check
         if (r_vec.empty() || t_vec.empty())
@@ -49,29 +49,33 @@ namespace slamon
             ROS_ERROR_STREAM("[Caster:] Something is wrong, one or both of the movement matrices is empty.");
             return false;
         }
+        cv::Mat r_vec_d, t_vec_d;
+        r_vec.convertTo(r_vec_d, CV_64F);
+        t_vec.convertTo(t_vec_d, CV_64F);
 
         // Get rotation components.
-        double rx = r_vec.at<double>(0);
-        double ry = r_vec.at<double>(1);
-        double rz = r_vec.at<double>(2);
+        double rx = r_vec_d.at<double>(0);
+        double ry = r_vec_d.at<double>(1);
+        double rz = r_vec_d.at<double>(2);
 
         // Get angle.
-        double angle = norm(r_vec);
+        double angle = cv::norm(r_vec_d);
 
         // Build the quaternion.
-        tf::Quaternion q;
+        tf2::Quaternion q;
         if (angle < 1e-9) 
         {
-            q = tf::Quaternion::getIdentity();
+            q = tf2::Quaternion::getIdentity();
         }
         else 
         {
-            tf::Vector3 axis(rx / angle, ry / angle, rz / angle);
+            tf2::Vector3 axis(rx / angle, ry / angle, rz / angle);
             q.setRotation(axis, angle);
+            q.normalize(); // Just in case.
         }
 
         // Build the vector of translation
-        tf::Vector3 t(t_vec.at<double>(0), t_vec.at<double>(1), t_vec.at<double>(2));
+        tf2::Vector3 t(t_vec_d.at<double>(0), t_vec_d.at<double>(1), t_vec_d.at<double>(2));
 
         // Build the coordinates transform
         tf.setRotation(q);
@@ -86,10 +90,10 @@ namespace slamon
      *  \param[in] pose_1 transformation matrix of pose 1
      *  @return the norm between two poses
      */
-    static inline double poseDiff2D(const tf::Transform& pose_0, 
-                                    const tf::Transform& pose_1)
+    static inline double poseDiff2D(const tf2::Transform& pose_0, 
+                                    const tf2::Transform& pose_1)
     {
-        tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
+        tf2::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
         return sqrt(d.x()*d.x() + d.y()*d.y());
     }
 
@@ -99,10 +103,10 @@ namespace slamon
      *  \param[in] pose_1 transformation matrix of pose 1
      *  @return the norm between two poses
      */
-    static inline double poseDiff3D(const tf::Transform& pose_0,
-                                    const tf::Transform& pose_1)
+    static inline double poseDiff3D(const tf2::Transform& pose_0,
+                                    const tf2::Transform& pose_1)
     {
-        tf::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
+        tf2::Vector3 d = pose_0.getOrigin() - pose_1.getOrigin();
         return sqrt(d.x()*d.x() + d.y()*d.y() + d.z()*d.z());
     }
 

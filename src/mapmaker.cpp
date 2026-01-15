@@ -120,9 +120,9 @@ namespace slamon
         // Reset run times.
         run_times_.reset();
 
-        // From odom ROS msg to tf::Transform.
-        tf::Transform c_robot_odom;
-        tf::poseMsgToTF(odom_msg->pose.pose, c_robot_odom);
+        // From odom ROS msg to tf2::Transform.
+        tf2::Transform c_robot_odom;
+        tf2::fromMsg(odom_msg->pose.pose, c_robot_odom);
 
         // Gets current keyframe id.
         int keyframe_id = keyframe_msg->id;
@@ -135,20 +135,20 @@ namespace slamon
 
         // Updates pose.
         start_module_time = ros::Time::now().toSec();
-        tf::Transform c_camera_map_pose;
+        tf2::Transform c_camera_map_pose;
         if (initialised_map_)
         {
             // {wo}^T_{c_cam} = {wo}^T_{c_robot} * {robot}^T_{cam}.
-            tf::Transform c_camera_odom = c_robot_odom * robot2camera_;
+            tf2::Transform c_camera_odom = c_robot_odom * robot2camera_;
 
             // {wo}^T_{p_cam} = {wo}^T_{p_robot} * {robot}^T_{cam}.
-            tf::Transform p_camera_odom = p_robot_odom_ * robot2camera_;
+            tf2::Transform p_camera_odom = p_robot_odom_ * robot2camera_;
 
             // {p_cam}^T_{c_cam} = {p_cam}^T_{wo} * {wo}^T_{c_cam}.
-            tf::Transform camera_delta_odom = p_camera_odom.inverse() * c_camera_odom;
+            tf2::Transform camera_delta_odom = p_camera_odom.inverse() * c_camera_odom;
 
             // Gets {wm}^T_{p_cam}.
-            tf::Transform p_camera_map_pose = map_->getKeyframePose(keyframe_id - 1);
+            tf2::Transform p_camera_map_pose = map_->getKeyframePose(keyframe_id - 1);
 
             // {wm}^T_{c_cam} = {wm}^T_{p_cam} * {p_cam}^T_{c_cam}.
             c_camera_map_pose = p_camera_map_pose * camera_delta_odom;
@@ -174,7 +174,7 @@ namespace slamon
         start_module_time = ros::Time::now().toSec();
         int cluster_id;
         std::vector<int> c_clusters_ids;
-        tf::Transform local_cluster_pose, cluster_map_pose;
+        tf2::Transform local_cluster_pose, cluster_map_pose;
         std::vector<std::vector<cv::KeyPoint>> clustered_l_kpts;
         const size_t clusters_num = keyframe_msg->batches.size();
         c_clusters_ids.reserve(clusters_num);
@@ -186,9 +186,9 @@ namespace slamon
 
             // Gets {c_cam}^T_{c_cluster}.
             local_cluster_pose.setIdentity();
-            local_cluster_pose.setOrigin(tf::Vector3(keyframe_msg->batches[i].centroid.x,
-                                                     keyframe_msg->batches[i].centroid.y,
-                                                     keyframe_msg->batches[i].centroid.z));
+            local_cluster_pose.setOrigin(tf2::Vector3(keyframe_msg->batches[i].centroid.x,
+                                                      keyframe_msg->batches[i].centroid.y,
+                                                      keyframe_msg->batches[i].centroid.z));
 
             // {wm}^T_{c_cluster} = {wm}^T_{c_cam} * {c_cam}^T_{c_cluster}.
             cluster_map_pose = c_camera_map_pose * local_cluster_pose;
@@ -222,7 +222,7 @@ namespace slamon
             std::vector<std::vector<int>> combinations = createCombinations(c_clusters_ids.size(), 2);
 
             int cluster_0_id, cluster_1_id;
-            tf::Transform relative_movement, cluster_0_map_pose, cluster_1_map_pose;
+            tf2::Transform relative_movement, cluster_0_map_pose, cluster_1_map_pose;
             for (size_t i = 0; i < combinations.size(); ++i)
             {
                 cluster_0_id = c_clusters_ids[combinations[i][0]];
@@ -249,8 +249,8 @@ namespace slamon
                 
                 // Searches for the nearest clusters.
                 std::pair<int, int> closest_clusters;
-                tf::Transform c_cluster_map_pose, p_cluster_map_pose;
-                std::pair<tf::Transform, tf::Transform> closest_poses;
+                tf2::Transform c_cluster_map_pose, p_cluster_map_pose;
+                std::pair<tf2::Transform, tf2::Transform> closest_poses;
                 double dist, min_dist = std::numeric_limits<double>::max();
                 for (size_t i = 0; i < c_clusters_ids.size(); ++i)
                 {
@@ -290,7 +290,7 @@ namespace slamon
                 if (cluster_pairs.size() == inliers_per_pair.size() * 2)
                 {
                     int c_cluster_id, p_cluster_id;
-                    tf::Transform c_cluster_map_pose, p_cluster_map_pose;
+                    tf2::Transform c_cluster_map_pose, p_cluster_map_pose;
                     for (size_t i = 0; i < inliers_per_pair.size(); ++i)
                     {
                         // Gets clusters ids.
@@ -318,9 +318,9 @@ namespace slamon
         start_module_time = ros::Time::now().toSec();
 
         // Publishes updated pose.
-        tf::Transform updated_camera_map_pose = map_->getVertexCameraPose(map_->getCurrentVertexId(), true);
+        tf2::Transform updated_camera_map_pose = map_->getVertexCameraPose(map_->getCurrentVertexId(), true);
         publishPose(stamp, updated_camera_map_pose, false, camera_map_pub_, camera_frame_id_);
-        tf::Transform updated_robot_map_pose = updated_camera_map_pose * robot2camera_.inverse();
+        tf2::Transform updated_robot_map_pose = updated_camera_map_pose * robot2camera_.inverse();
         publishPose(stamp, updated_robot_map_pose, false, robot_map_pub_, robot_frame_id_);
 
         // Publishes clustered keyframe.
@@ -388,8 +388,8 @@ namespace slamon
         slamon::GetTransform srv;
         if (robot2camera_client_.call(srv))
         {
-            camera_frame_id_ = srv.response.tf.header.frame_id;
-            tf::poseMsgToTF(srv.response.tf.pose, robot2camera_);
+            camera_frame_id_ = srv.response.tf.child_frame_id;
+            tf2::fromMsg(srv.response.tf.transform, robot2camera_);
 
             ROS_WARN_STREAM("[MM->Static transform:] GetTransform service call successful. The robot2camera transform is as follows:" << std::endl <<
                             "tx: " << robot2camera_.getOrigin().getX() << std::endl << 
@@ -477,7 +477,7 @@ namespace slamon
     {
         // Saves keyframe map poses to file.
         std::vector<double> stamps;
-        std::vector<tf::Transform> keyframe_poses;
+        std::vector<tf2::Transform> keyframe_poses;
         map_->getKeyframePoses(stamps, keyframe_poses);
         for (size_t i = 0; i < keyframe_poses.size(); ++i)
             keyframe_poses[i] = keyframe_poses[i] * robot2camera_.inverse();
@@ -486,7 +486,7 @@ namespace slamon
         // Saves loop closure edges to file.
         std::vector<double> edges_weights;
         std::vector<std::pair<int, int>> edges_keyframe_ids;
-        std::vector<std::pair<tf::Transform, tf::Transform>> edges_keyframe_poses;
+        std::vector<std::pair<tf2::Transform, tf2::Transform>> edges_keyframe_poses;
         map_->getLoopClosureEdges(edges_weights, edges_keyframe_ids, edges_keyframe_poses);
         for (size_t i = 0; i < edges_keyframe_poses.size(); ++i)
         {
@@ -496,5 +496,5 @@ namespace slamon
         writeLoopClosureEdges(edges_file_, edges_weights, edges_keyframe_ids, edges_keyframe_poses);
     }
 
-    
+
 }

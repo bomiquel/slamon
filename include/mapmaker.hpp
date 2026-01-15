@@ -30,6 +30,8 @@
 #include <filesystem>
 
 #include <ros/ros.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -156,9 +158,9 @@ namespace slamon
 
             ros::WallTimer timer_; //!> Timer to write the last map update to disk.
 
-            tf::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
+            tf2::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
 
-            tf::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
+            tf2::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
 
             ros::Publisher robot_map_pub_; //!> Updated robot pose publisher.
             

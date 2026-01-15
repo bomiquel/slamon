@@ -133,7 +133,7 @@ namespace slamon
                 run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time); // Read cluster candidate run time.
 
                 // Loop over candidates.
-                tf::Transform estimated_motion;
+                tf2::Transform estimated_motion;
                 bool loop_detected = false, loop_closed = false;
                 std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
                 std::vector<cv::KeyPoint> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
@@ -368,7 +368,7 @@ namespace slamon
         fs.release();
 
         // Sets the properties of the cluster.
-        tf::Transform camera_map_pose = map_->getVertexCameraPose(id, true);
+        tf2::Transform camera_map_pose = map_->getVertexCameraPose(id, true);
         Cluster cluster(id, keyframe_id, l_descs, r_descs, camera_map_pose, l_kpts, r_kpts, l_cam_pts);
         return cluster;
     }
@@ -479,7 +479,7 @@ namespace slamon
 
     void LoopCloser::updateClusterPose(Cluster& cluster)
     {
-        tf::Transform camera_map_pose = map_->getVertexCameraPose(cluster.getGlobalId(), true);
+        tf2::Transform camera_map_pose = map_->getVertexCameraPose(cluster.getGlobalId(), true);
         cluster.updateCameraPose(camera_map_pose);
     }
 
@@ -487,7 +487,7 @@ namespace slamon
     bool LoopCloser::detectLoop(Cluster& q_cluster,
                                 Cluster& cand_cluster,
                                 std::vector<Cluster>& neighbours_cand_cluster,
-                                tf::Transform& estimated_motion,
+                                tf2::Transform& estimated_motion,
                                 std::vector<int>& i_q_cluster_ids,
                                 std::vector<int>& i_cand_cluster_ids,
                                 std::vector<cv::KeyPoint>& i_q_l_kpts,
@@ -690,7 +690,7 @@ namespace slamon
                 // Loop found!
                 if (i_q_l_kpts.size() >= static_cast<size_t>(min_lc_inliers_))
                 {
-                    // From cv::Mat to tf::Transform.
+                    // From cv::Mat to tf2::Transform.
                     fromMatToTf(estimated_rotation, estimated_translation, estimated_motion);
 
                     // From {q_cam}^T_{O} to {O}^T_{q_cam}.
@@ -707,7 +707,7 @@ namespace slamon
     bool LoopCloser::loopCorrection(const int q_keyframe_id,
                                     const int cand_keyframe_id,
                                     const std::string& search_method,
-                                    const tf::Transform& estimated_motion,
+                                    const tf2::Transform& estimated_motion,
                                     const std::vector<int>& i_q_cluster_ids,
                                     const std::vector<int>& i_cand_cluster_ids,
                                     const std::vector<cv::KeyPoint>& i_q_l_kpts,
@@ -730,7 +730,7 @@ namespace slamon
 
         // Adds the corresponding edges.
         bool lc_already_exists, some_edge_added = false;
-        tf::Transform relative_movement, cand_cluster_map_pose, q_cluster_camera_pose;
+        tf2::Transform relative_movement, cand_cluster_map_pose, q_cluster_camera_pose;
         for (size_t i = 0; i < inliers_per_pair_size; ++i)
         {
             if (inliers_per_pair[i] >= static_cast<int>(max_edge_inliers_ * 0.1))

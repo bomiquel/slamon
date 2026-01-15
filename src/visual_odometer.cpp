@@ -38,7 +38,7 @@ namespace slamon
                                    max_kpts_bucket_{max_kpts_bucket}, max_kpts_retained_{max_kpts_retained}, status_{UNINITIALISED}, 
                                    enable_debugging_{enable_debugging}, enable_bucketing_{enable_bucketing}, enable_enhacement_{enable_enhacement},
                                    initialised_odom_{false}, robot_frame_id_{robot_frame_id}, feature_detector_name_{feature_detector_name},
-                                   nh_{}, nhp_{"~"}, it_{nh_}
+                                   nh_{}, nhp_{"~"}, it_{nh_}, tf_listener_{tf_buffer_}
     {
         // Client services.
         initial_odom_client_ = nhp_.serviceClient<slamon::GetTransform>("get_first_odom");
@@ -88,8 +88,9 @@ namespace slamon
     bool VisualOdometer::sendRobot2Camera(slamon::GetTransform::Request& req,
                                           slamon::GetTransform::Response& res)
     {
-        res.tf.header.frame_id = camera_frame_id_;
-        tf::poseTFToMsg(robot2camera_, res.tf.pose);
+        res.tf.header.frame_id = robot_frame_id_;
+        res.tf.child_frame_id = camera_frame_id_;
+        res.tf.transform = tf2::toMsg(robot2camera_);
         return true;
     }
 
@@ -168,7 +169,7 @@ namespace slamon
                     status_ = BOOTSTRAPPING;
                     break;
                 }
-                tf::Transform camera_delta_odom;
+                tf2::Transform camera_delta_odom;
                 valid_motion = computeOdometry(c_frame, camera_delta_odom);
                 if (!valid_motion)
                     break;
@@ -211,7 +212,7 @@ namespace slamon
                     status_ = BOOTSTRAPPING;
                     break;
                 }
-                tf::Transform camera_delta_odom;
+                tf2::Transform camera_delta_odom;
                 valid_motion = computeOdometry(c_frame, camera_delta_odom);
                 if (!valid_motion)
                 {
@@ -249,17 +250,19 @@ namespace slamon
     {
         // Gets the static transformation between robot frame (base link) and camera frame.
         robot2camera_.setIdentity();
+        geometry_msgs::TransformStamped tf_msg;
         try
         {
             camera_frame_id_ = l_info_msg->header.frame_id;
-            tf_listener_.lookupTransform(robot_frame_id_, camera_frame_id_, ros::Time(0), robot2camera_);
+            tf_msg = tf_buffer_.lookupTransform(robot_frame_id_, camera_frame_id_, ros::Time(0));
+            tf2::fromMsg(tf_msg.transform, robot2camera_);
         }
-        catch (const tf::LookupException& e)
+        catch (const tf2::LookupException& e)
         {
             ROS_WARN_STREAM("[VO->Initialiser:] TF listener exception: " << e.what());
             ROS_WARN_STREAM("[VO->Initialiser:] The transform between the robot and the camera has not been found, and therefore robot2camera_ is equal to the identity.");
         }
-        catch (const tf::TransformException& e)
+        catch (const tf2::TransformException& e)
         {
             ROS_WARN_STREAM("[VO->Initialiser:] TF listener exception: " << e.what());
             return false;
@@ -423,7 +426,7 @@ namespace slamon
 
 
     bool VisualOdometer::computeOdometry(const Frame& c_frame,
-                                         tf::Transform& camera_delta_odom)
+                                         tf2::Transform& camera_delta_odom)
     {
         // Auxilary variable to set the start time of a module.
         double start_module_time;
@@ -535,7 +538,7 @@ namespace slamon
         slamon::GetTransform srv;
         if (initial_odom_client_.call(srv))
         {
-            tf::poseMsgToTF(srv.response.tf.pose, c_robot_odom_);
+            tf2::fromMsg(srv.response.tf.transform, c_robot_odom_);
             ROS_WARN_STREAM("[VO->Initial odom:] GetTransform service call successful. The initial odometry is as follows:" << std::endl <<
                             "tx: " << c_robot_odom_.getOrigin().getX() << std::endl << 
                             "ty: " << c_robot_odom_.getOrigin().getY() << std::endl << 
@@ -580,7 +583,7 @@ namespace slamon
 
 
     void VisualOdometer::integrateAndPublish(const Frame& c_frame,
-                                             tf::Transform& camera_delta_odom)
+                                             tf2::Transform& camera_delta_odom)
     {
         // From {c_cam}^T_{p_cam} to {p_cam}^T_{c_cam}.
         camera_delta_odom = camera_delta_odom.inverse();
@@ -591,7 +594,7 @@ namespace slamon
 
         // Changes the coordinate axis of the movement. From camera to robot. 
         // {p_robot}^T_{c_robot} = {robot}^T_{cam} * {p_cam}^T_{c_cam} * {cam}^T_{robot}.
-        tf::Transform robot_delta_odom = robot2camera_ * camera_delta_odom * robot2camera_.inverse();
+        tf2::Transform robot_delta_odom = robot2camera_ * camera_delta_odom * robot2camera_.inverse();
 
         // Calculates the robot's current odometry by accumulating its movement.
         // {wo}^T_{c_robot} = {wo}^T_{p_robot} * {p_robot}^T_{c_robot}.

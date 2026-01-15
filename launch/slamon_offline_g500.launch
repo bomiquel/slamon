@@ -75,15 +75,17 @@
         <arg name = "q_w" default = "0.963671283"/> -->
 
         <!-- Sends initial pose -->
-        <node pkg = "slamon" type = "initial_pose_server_params" name = "initial_pose_server_params" output = "screen">
-            <param name = "tx"         value = "$(arg t_x)"/>
-            <param name = "ty"         value = "$(arg t_y)"/>
-            <param name = "tz"         value = "$(arg t_z)"/>
-            <param name = "qx"         value = "$(arg q_x)"/>
-            <param name = "qy"         value = "$(arg q_y)"/>
-            <param name = "qz"         value = "$(arg q_z)"/>
-            <param name = "qw"         value = "$(arg q_w)"/>
-            <remap from = "get_pose"   to    = "slamon_vo/get_first_odom"/>
+        <node pkg = "slamon" type = "initial_pose_server_node" name = "initial_pose_server_node" output = "screen">
+            <param name = "tx"          value = "$(arg t_x)"/>
+            <param name = "ty"          value = "$(arg t_y)"/>
+            <param name = "tz"          value = "$(arg t_z)"/>
+            <param name = "qx"          value = "$(arg q_x)"/>
+            <param name = "qy"          value = "$(arg q_y)"/>
+            <param name = "qz"          value = "$(arg q_z)"/>
+            <param name = "qw"          value = "$(arg q_w)"/>
+            <param name = "world_frame" value = "wold_ned"/>
+            <param name = "robot_frame" value = "base_link"/>
+            <remap from = "get_pose"    to    = "slamon_vo/get_first_odom"/>
         </node>
 
         <!-- Processes stereo images -->
@@ -146,9 +148,7 @@
     <node pkg = "slamon" 
           type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "--delay 90 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
-                                                                                 /tf_static
-                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+          args = "--delay 90 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
@@ -158,9 +158,7 @@
     <node pkg = "slamon" 
           type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "--delay 90 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /tf
-                                                                                 /tf_static
-                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+          args = "--delay 90 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
                                                                                  /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw

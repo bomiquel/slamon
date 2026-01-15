@@ -12,6 +12,8 @@
 #   the BSD 4-Clause License. See the LICENSE file for details.
 
 
-
+# Request
+time timestamp
 ---
-geometry_msgs/PoseStamped tf
+# Response
+geometry_msgs/TransformStamped tf
