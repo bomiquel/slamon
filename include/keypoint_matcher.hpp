@@ -241,6 +241,34 @@ class KeypointMatcher
     private:
 
 
+        /** \brief Custom hash function for cv::Point2f to be used in unordered associative containers.
+         *  It combines the hash values of the x and y coordinates using a bitwise XOR and shift
+         *  to minimize collisions.
+         */
+        struct PointHash
+        {
+            std::size_t operator()(const cv::Point2f& p) const
+            {
+                std::size_t h0 = std::hash<float>{}(p.x);
+                std::size_t h1 = std::hash<float>{}(p.y);
+                return h0 ^ (h1 << 1);
+            }
+        };
+
+
+        /** \brief Equality comparator for cv::Point2f.
+         *  Required by std::unordered_map to handle cases where different points 
+         *  might produce the same hash value (collisions).
+         */
+        struct PointEqual
+        {
+            bool operator()(const cv::Point2f& a, const cv::Point2f& b) const
+            {
+                return a.x == b.x && a.y == b.y;
+            }
+        };
+
+
         /** \brief Matches visual keypoints.
          *  \param[in] descs_0 Descriptors of the first set.
          *  \param[in] descs_1 Descriptors of the second set.

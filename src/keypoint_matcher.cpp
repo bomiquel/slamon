@@ -448,43 +448,67 @@ void KeypointMatcher::assembleCircularMatchings(const std::vector<cv::KeyPoint>&
     // If there are no clusters, the filtered clusters vectors must not be filled.
     const bool fill_clusters = !temporal_cluster_ids_0.empty();
 
-    // Assembles
-    size_t j, k, l;
+    // Indexing Phase-
+    // Build hash maps for O(1) average lookup time.
+    // This reduces the overall complexity from O(N^4) to O(N).
+    std::unordered_map<cv::Point2f, size_t, PointHash, PointEqual> map_stereo_1_lowest;
+    for (size_t j = 0; j < stereo_kpts_1_lowest.size(); ++j)
+        map_stereo_1_lowest[stereo_kpts_1_lowest[j].pt] = j;
+
+    std::unordered_map<cv::Point2f, size_t, PointHash, PointEqual> map_temporal_1_highest;
+    for (size_t k = 0; k < temporal_kpts_1_highest.size(); ++k)
+        map_temporal_1_highest[temporal_kpts_1_highest[k].pt] = k;
+
+    std::unordered_map<cv::Point2f, size_t, PointHash, PointEqual> map_stereo_0_highest;
+    for (size_t l = 0; l < stereo_kpts_0_highest.size(); ++l)
+        map_stereo_0_highest[stereo_kpts_0_highest[l].pt] = l;
+
+    // Pre-allocates memory.
+    f_kpts_0_lowest.reserve(temporal_kpts_0_lowest.size());
+    f_kpts_0_highest.reserve(temporal_kpts_0_highest.size());
+    f_kpts_1_lowest.reserve(temporal_kpts_1_lowest.size());
+    f_kpts_1_highest.reserve(temporal_kpts_1_highest.size());
+    f_scene_pts_0.reserve(temporal_scene_pts_0.size());
+    f_scene_pts_1.reserve(temporal_scene_pts_1.size());
+    if (fill_clusters)
+    {
+        f_cluster_ids_0.reserve(temporal_cluster_ids_0.size());
+        f_cluster_ids_1.reserve(temporal_cluster_ids_1.size());
+    }
+
+    // Matching Phase.
+    // Iterate through the temporal matches and verify the circular consistency-
     for (size_t i = 0; i < temporal_kpts_1_lowest.size(); ++i)
     {
-        for (j = 0; j < stereo_kpts_1_lowest.size(); ++j)
+        const cv::Point2f& tp1l = temporal_kpts_1_lowest[i].pt;
+        const cv::Point2f& tp0l = temporal_kpts_0_lowest[i].pt;
+
+        std::unordered_map<cv::Point2f, size_t, PointHash, PointEqual>::iterator it_j = map_stereo_1_lowest.find(tp1l);
+        if (it_j == map_stereo_1_lowest.end()) continue;
+        size_t j = it_j->second;
+
+        const cv::Point2f& sp1h = stereo_kpts_1_highest[j].pt;
+        std::unordered_map<cv::Point2f, size_t, PointHash, PointEqual>::iterator it_k = map_temporal_1_highest.find(sp1h);
+        if (it_k == map_temporal_1_highest.end()) continue;
+        size_t k = it_k->second;
+
+        const cv::Point2f& tp0h = temporal_kpts_0_highest[k].pt;
+        std::unordered_map<cv::Point2f, size_t, PointHash, PointEqual>::iterator it_l = map_stereo_0_highest.find(tp0h);
+        if (it_l == map_stereo_0_highest.end()) continue;
+        size_t l = it_l->second;
+
+        if (stereo_kpts_0_lowest[l].pt == tp0l)
         {
-            if (temporal_kpts_1_lowest[i].pt == stereo_kpts_1_lowest[j].pt)
+            f_kpts_0_lowest.emplace_back(temporal_kpts_0_lowest[i]);
+            f_kpts_0_highest.emplace_back(temporal_kpts_0_highest[k]);
+            f_kpts_1_lowest.emplace_back(temporal_kpts_1_lowest[i]);
+            f_kpts_1_highest.emplace_back(temporal_kpts_1_highest[k]);
+            f_scene_pts_0.emplace_back(temporal_scene_pts_0[i]);
+            f_scene_pts_1.emplace_back(temporal_scene_pts_1[i]);
+            if (fill_clusters)
             {
-                for (k = 0; k < temporal_kpts_1_highest.size(); ++k)
-                {
-                    if (stereo_kpts_1_highest[j].pt == temporal_kpts_1_highest[k].pt)
-                    {
-                        for (l = 0; l < stereo_kpts_0_highest.size(); ++l)
-                        {
-                            if (temporal_kpts_0_highest[k].pt == stereo_kpts_0_highest[l].pt)
-                            {
-                                if (stereo_kpts_0_lowest[l].pt == temporal_kpts_0_lowest[i].pt)
-                                {
-                                    f_kpts_0_lowest.emplace_back(temporal_kpts_0_lowest[i]);
-                                    f_kpts_0_highest.emplace_back(temporal_kpts_0_highest[k]);
-                                    f_kpts_1_lowest.emplace_back(temporal_kpts_1_lowest[i]);
-                                    f_kpts_1_highest.emplace_back(temporal_kpts_1_highest[k]);
-                                    f_scene_pts_0.emplace_back(temporal_scene_pts_0[i]);
-                                    f_scene_pts_1.emplace_back(temporal_scene_pts_1[i]);
-                                    if (fill_clusters)
-                                    {
-                                        f_cluster_ids_0.emplace_back(temporal_cluster_ids_0[i]);
-                                        f_cluster_ids_1.emplace_back(temporal_cluster_ids_1[i]);
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        break;
-                    }
-                }
-                break;
+                f_cluster_ids_0.emplace_back(temporal_cluster_ids_0[i]);
+                f_cluster_ids_1.emplace_back(temporal_cluster_ids_1[i]);
             }
         }
     }
