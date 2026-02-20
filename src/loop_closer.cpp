@@ -201,6 +201,13 @@ namespace slamon
     }
 
 
+    void LoopCloser::finalise()
+    {
+        if (std::filesystem::is_directory(execution_path_))
+            std::filesystem::remove_all(execution_path_);
+    }
+
+
     void LoopCloser::getProjectionMatrices(cv::Mat& l_proj_mat,
                                            cv::Mat& r_proj_mat)
     {

@@ -164,5 +164,7 @@ int main(int argc, char **argv)
     // ROS wait.
     ros::waitForShutdown();
 
+    loop_closer.finalise();
+
     return 0;
 }

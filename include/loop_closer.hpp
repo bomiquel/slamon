@@ -80,6 +80,12 @@ namespace slamon
             void run();
 
 
+            /** \brief Finishes the loop closer.
+             *  Deletes haloc directory.
+             */
+            void finalise();
+
+
         private:
 
 
