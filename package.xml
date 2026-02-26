@@ -2,7 +2,7 @@
 <package format="2">
 
     <name>slamon</name>
-    <version>1.2.2</version>
+    <version>1.2.3</version>
 
     <description>
        SLAMON is an improved and extended version of stereo_slam.

@@ -158,11 +158,11 @@
     <node pkg = "slamon" 
           type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "--delay 90 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
-                                                                                 /$(arg robot_name)/navigator/odometry'"
+          args = "--delay 0 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
+                                                                                /$(arg robot_name)/navigator/odometry'"
           required = "true"
           if = "$(eval enable_extra_clock == false)"/>
 
