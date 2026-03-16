@@ -1,0 +1,188 @@
+<launch>
+
+    <!-- Robots parameters -->
+    <arg name = "robot_name"         default = "sparus2"/>
+
+    <!-- Camera parameters -->
+    <arg name = "camera_name"        default = "flir_spinnaker_stereo_camera"/>
+    <arg name = "resolution"         default = "full"/>
+    <arg name = "slave_camera_name"  default = "starboard"/>
+    <arg name = "master_camera_name" default = "port"/>
+
+    <!-- Image flags -->
+    <arg name = "enable_decimate_x1" default = "false"/>
+    <arg name = "enable_decimate_x2" default = "false"/>
+    <arg name = "enable_decimate_x4" default = "true"/>
+    <arg name = "enable_decimate_x8" default = "false"/>
+
+    <!-- CPU/MEM monitor flag -->
+    <arg name = "enable_cpu_monitor" default = "true"/>
+
+    <!-- Clock extension -->
+    <arg name = "enable_extra_clock" default = "true"/>
+
+    <!-- Bagfiles parameters -->
+    <param name = "/use_sim_time"    value = "true"/>
+
+    <!-- Cabrera 2025/02/04 -->
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc_compressed/sparus2_stereo_camera_2025-02-04-14-21-39_0_compressed.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc_compressed/sparus2_stereo_camera_2025-02-04-14-22-39_1_compressed.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc_compressed/sparus2_stereo_camera_2025-02-04-14-23-39_2_compressed.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc_compressed/sparus2_stereo_camera_2025-02-04-14-24-39_3_compressed.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc_compressed/sparus2_stereo_camera_2025-02-04-14-25-39_4_compressed.bag"/>
+
+    <!-- Cabrera 2025/10/29 -->
+    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3_compressed/sparus2_stereo_camera_2025-10-29-11-56-53_0_compressed.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3_compressed/sparus2_stereo_camera_2025-10-29-11-59-11_1_compressed.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3_compressed/sparus2_stereo_camera_2025-10-29-12-01-12_2_compressed.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3_compressed/sparus2_stereo_camera_2025-10-29-12-03-12_3_compressed.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3_compressed/sparus2_stereo_camera_2025-10-29-12-05-12_4_compressed.bag"/> -->
+
+    <!-- Static TF's -->
+    <node pkg = "tf" type = "static_transform_publisher" name = "sparus2_base_link_to_left_optical" args = "0.422270 -0.065000 0.042600 1.570796 0.000000 0.000000 /sparus2/base_link /sparus2/camera_port 30" />
+
+    <group ns = "$(arg robot_name)">
+
+        <!-- Initial pose and orientation parameters -->  
+        <!-- Cabrera 2025/02/04 -->
+        <arg name = "t_x" default = "28.824602333472"/> 
+        <arg name = "t_y" default = "58.9221115387944"/> 
+        <arg name = "t_z" default = "-2.90542054176331"/> 
+        <arg name = "q_x" default = "0.034667875632095"/>
+        <arg name = "q_y" default = "-0.062374205023327"/>
+        <arg name = "q_z" default = "-0.028935960660611"/>
+        <arg name = "q_w" default = "0.9970307453271"/>
+        <!-- Cabrera 2025/10/29 12:56:53 -->
+        <!-- <arg name = "t_x" default = "-1.887629119"/> 
+        <arg name = "t_y" default = "14.933912181"/> 
+        <arg name = "t_z" default = "2.347713096"/> 
+        <arg name = "q_x" default = "0.089764679"/>
+        <arg name = "q_y" default = "-0.065461730"/>
+        <arg name = "q_z" default = "0.721156554"/>
+        <arg name = "q_w" default = "0.683805740"/> -->
+
+        <!-- Sends initial pose -->
+        <node pkg = "slamon" type = "initial_pose_server_node" name = "initial_pose_server_node" output = "screen">
+            <param name = "tx"          value = "$(arg t_x)"/>
+            <param name = "ty"          value = "$(arg t_y)"/>
+            <param name = "tz"          value = "$(arg t_z)"/>
+            <param name = "qx"          value = "$(arg q_x)"/>
+            <param name = "qy"          value = "$(arg q_y)"/>
+            <param name = "qz"          value = "$(arg q_z)"/>
+            <param name = "qw"          value = "$(arg q_w)"/>
+            <param name = "world_frame" value = "wold_ned"/>
+            <param name = "robot_frame" value = "base_link"/>
+            <remap from = "get_pose"    to    = "slamon_vo/get_first_odom"/>
+        </node>
+
+        <!-- Decompress images -->
+        <node pkg = "image_transport" type = "republish" name = "master_camera_decompressor" args = "compressed raw">
+            <remap from = "in"  to = "$(arg camera_name)/$(arg master_camera_name)/image_raw"/>
+            <remap from = "out" to = "$(arg camera_name)/$(arg master_camera_name)/image_raw"/>
+        </node>
+        <node pkg = "image_transport" type = "republish" name = "slave_camera_decompressor" args = "compressed raw">
+            <remap from = "in"  to = "$(arg camera_name)/$(arg slave_camera_name)/image_raw"/>
+            <remap from = "out" to = "$(arg camera_name)/$(arg slave_camera_name)/image_raw"/>
+        </node>
+
+        <!-- Processes stereo images -->
+        <include file = "$(find slamon)/launch/stereo_processing/stereo_pipeline.launch">
+            <arg name = "stereo"             value = "$(arg camera_name)"/>
+            <arg name = "resolution"         value = "$(arg resolution)"/>
+            <arg name = "slave_camera_name"  value = "$(arg slave_camera_name)"/>
+            <arg name = "master_camera_name" value = "$(arg master_camera_name)"/>
+            <arg name = "enable_decimate_x1" value = "$(arg enable_decimate_x1)"/>
+            <arg name = "enable_decimate_x2" value = "$(arg enable_decimate_x2)"/>
+            <arg name = "enable_decimate_x4" value = "$(arg enable_decimate_x4)"/>
+            <arg name = "enable_decimate_x8" value = "$(arg enable_decimate_x8)"/>
+        </include>
+
+        <include file="$(find slamon)/launch/stereo_processing/voxel_grid.launch">
+            <arg name="input_topic" value="/$(arg robot_name)/slamon_map/keycloud"/>
+            <arg name="output_topic" value="/$(arg robot_name)/slamon_map/keycloud_filtered"/>
+        </include>
+
+        <!-- VO SLAMON -->
+        <rosparam command = "load" file = "$(find slamon)/config/offline_params.yaml"/>
+        <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x1 == true)">
+            <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
+            <remap from = "left_camera_info"            to = "$(arg camera_name)/$(arg master_camera_name)/camera_info"/>
+            <remap from = "right_camera_info"           to = "$(arg camera_name)/$(arg slave_camera_name)/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "$(arg camera_name)/$(arg master_camera_name)/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "$(arg camera_name)/$(arg slave_camera_name)/image_rect_color"/> 
+        </node>
+        <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x2 == true)">
+            <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
+            <remap from = "left_camera_info"            to = "$(arg camera_name)/scaled_x2/$(arg master_camera_name)/camera_info"/>
+            <remap from = "right_camera_info"           to = "$(arg camera_name)/scaled_x2/$(arg slave_camera_name)/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "$(arg camera_name)/scaled_x2/$(arg master_camera_name)/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "$(arg camera_name)/scaled_x2/$(arg slave_camera_name)/image_rect_color"/> 
+        </node>
+        <node pkg = "slamon" type = "slamon_vo" name = "slamon_vo" output = "screen" if = "$(eval enable_decimate_x4 == true)">
+            <remap from = "get_first_odom"              to = "slamon_vo/get_first_odom"/>
+            <remap from = "left_camera_info"            to = "$(arg camera_name)/scaled_x4/$(arg master_camera_name)/camera_info"/>
+            <remap from = "right_camera_info"           to = "$(arg camera_name)/scaled_x4/$(arg slave_camera_name)/camera_info"/>
+            <remap from = "left_image_rect_color"       to = "$(arg camera_name)/scaled_x4/$(arg master_camera_name)/image_rect_color"/>
+            <remap from = "right_image_rect_color"      to = "$(arg camera_name)/scaled_x4/$(arg slave_camera_name)/image_rect_color"/> 
+        </node>
+
+        <!-- MAP SLAMON -->
+        <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen" if = "$(eval enable_decimate_x1 == true)">
+            <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
+            <remap from = "points2"                     to = "$(arg camera_name)/points2"/>
+            <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
+            <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
+            <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
+        </node>
+        <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen" if = "$(eval enable_decimate_x2 == true)">
+            <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
+            <remap from = "points2"                     to = "$(arg camera_name)/scaled_x2/points2"/>
+            <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
+            <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
+            <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
+        </node>
+        <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen" if = "$(eval enable_decimate_x4 == true)">
+            <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
+            <remap from = "points2"                     to = "$(arg camera_name)/scaled_x4/points2"/>
+            <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
+            <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
+            <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
+        </node>
+
+    </group>
+
+    <!-- Extend clok -->
+    <node pkg = "slamon" type = "clock_extender" name = "clock_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
+        <param name = "extra_time"       value = "5"/>
+        <param name = "gap_threshold"    value = "15"/>
+        <param name = "watch_interval"   value = "5"/>
+    </node>
+
+    <!-- CPU/RAM memory monitor -->
+    <node pkg = "cpu_monitor" name = "cpu_monitor" type = "monitor.py" output = "screen" if = "$(eval enable_cpu_monitor == true)"/>
+
+    <!-- Play bagfile -->
+    <node pkg = "slamon" 
+          type = "delayed_rosbag_play.sh" 
+          name = "rosbag" 
+          args = "--delay 10 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw/compressed
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw/compressed
+                                                                                 /$(arg robot_name)/navigator/navigation
+                                                                                 /$(arg robot_name)/navigator/odometry'"
+          if = "$(eval enable_extra_clock == true)"/>
+
+    <node pkg = "slamon" 
+          type = "delayed_rosbag_play.sh" 
+          name = "rosbag" 
+          args = "--delay 0 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw/compressed
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw/compressed
+                                                                                /$(arg robot_name)/navigator/navigation
+                                                                                /$(arg robot_name)/navigator/odometry'"
+          required = "true"
+          if = "$(eval enable_extra_clock == false)"/>
+
+</launch>

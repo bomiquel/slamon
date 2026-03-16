@@ -71,12 +71,12 @@ namespace slamon
     }
 
 
-    tf::Transform Map::getVertexPose(const int vertex_id, 
-                                     const bool use_lock)
+    tf2::Transform Map::getVertexPose(const int vertex_id, 
+                                      const bool use_lock)
     {
         // Inits variables.
         g2o::VertexSE3* vertex;
-        tf::Transform vertex_pose;
+        tf2::Transform vertex_pose;
         vertex_pose.setIdentity();
 
         // Sanity check.
@@ -106,7 +106,7 @@ namespace slamon
 
     void Map::getVertexPoses(std::vector<int>& ids,
                              std::vector<double>& stamps,
-                             std::vector<tf::Transform>& vertex_poses)
+                             std::vector<tf2::Transform>& vertex_poses)
     {
         // Sanity check
         ids.clear();
@@ -141,17 +141,17 @@ namespace slamon
     }
 
 
-    tf::Transform Map::getVertexPoseRelativeToCamera(const int vertex_id)
+    tf2::Transform Map::getVertexPoseRelativeToCamera(const int vertex_id)
     {
         std::scoped_lock lock(mutex_local_cluster_poses_);
         return local_cluster_poses_[vertex_id];
     }
 
 
-    tf::Transform Map::getVertexCameraPose(const int vertex_id, 
-                                           const bool use_lock)
+    tf2::Transform Map::getVertexCameraPose(const int vertex_id, 
+                                            const bool use_lock)
     {
-        tf::Transform vertex_pose = getVertexPose(vertex_id, use_lock);
+        tf2::Transform vertex_pose = getVertexPose(vertex_id, use_lock);
 
         std::scoped_lock lock(mutex_local_cluster_poses_);
         return vertex_pose * local_cluster_poses_[vertex_id].inverse();
@@ -172,7 +172,7 @@ namespace slamon
     }
 
 
-    tf::Transform Map::getKeyframePose(const int keyframe_id)
+    tf2::Transform Map::getKeyframePose(const int keyframe_id)
     {
         std::vector<int> keyframe_vertices;
         getKeyframeVertices(keyframe_id, keyframe_vertices);
@@ -181,7 +181,7 @@ namespace slamon
 
 
     void Map::getKeyframePoses(std::vector<double>& stamps,
-                               std::vector<tf::Transform>& keyframe_poses)
+                               std::vector<tf2::Transform>& keyframe_poses)
     {
         // Sanity check
         stamps.clear();
@@ -219,7 +219,7 @@ namespace slamon
 
     void Map::getLoopClosureEdges(std::vector<double>& weights,
                                   std::vector<std::pair<int, int>>& keyframe_ids,
-                                  std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses)
+                                  std::vector<std::pair<tf2::Transform, tf2::Transform>>& keyframe_poses)
     {
         // Locks map.
         std::scoped_lock lock(mutex_graph_);
@@ -232,7 +232,7 @@ namespace slamon
         // Gets loop closure edges.
         g2o::EdgeSE3* edge;
         int keyframe_0, keyframe_1;
-        tf::Transform pose_0, pose_1;
+        tf2::Transform pose_0, pose_1;
         for (g2o::OptimizableGraph::EdgeSet::iterator it = graph_.edges().begin(); it != graph_.edges().end(); ++it)
         {
             edge = dynamic_cast<g2o::EdgeSE3*> (*it);
@@ -274,13 +274,13 @@ namespace slamon
         closest_neighbors.clear();
 
         // Gets query vertex pose.
-        tf::Transform q_vertex_pose = getVertexPose(q_vertex_id, false);
+        tf2::Transform q_vertex_pose = getVertexPose(q_vertex_id, false);
 
         // Loop thought all the other nodes.
         double dist;
         int vertex_id;
         g2o::VertexSE3* vertex;
-        tf::Transform neighbor_vertex_pose;
+        tf2::Transform neighbor_vertex_pose;
         std::vector<std::pair<int, double>> neighbors;
         const int lower_limit = critical_vertex_id - security_window;
         const int upper_limit = critical_vertex_id + security_window;
@@ -330,7 +330,7 @@ namespace slamon
     }
 
 
-    void Map::addLocalClusterPose(const tf::Transform& local_cluster_pose)
+    void Map::addLocalClusterPose(const tf2::Transform& local_cluster_pose)
     {
         std::scoped_lock lock(mutex_local_cluster_poses_);
         local_cluster_poses_.emplace_back(local_cluster_pose);
@@ -345,7 +345,7 @@ namespace slamon
 
 
     void Map::addVertex(const int id,
-                        const tf::Transform& pose)
+                        const tf2::Transform& pose)
     {
         // Locks map.
         std::scoped_lock lock(mutex_graph_);
@@ -370,7 +370,7 @@ namespace slamon
     void Map::addEdge(const int vertex_0_id,
                       const int vertex_1_id,
                       const double confidence,
-                      const tf::Transform& relative_movement)
+                      const tf2::Transform& relative_movement)
     {
         // Locks map.
         std::scoped_lock lock(mutex_graph_);
@@ -413,38 +413,36 @@ namespace slamon
     }
 
 
-    Eigen::Isometry3d Map::fromTfToIsometry(const tf::Transform& tf)
+    Eigen::Isometry3d Map::fromTfToIsometry(const tf2::Transform& tf)
     {
-        tf::Vector3 t_in = tf.getOrigin();
-        tf::Quaternion q_in = tf.getRotation();
-        Eigen::Vector3d t_out(t_in.getX(), t_in.getY(), t_in.getZ());
-        Eigen::Quaterniond q_out;
-        q_out.setIdentity();
-        q_out.x() = q_in.getX();
-        q_out.y() = q_in.getY();
-        q_out.z() = q_in.getZ();
-        q_out.w() = q_in.getW();
-        Eigen::Isometry3d out = (Eigen::Isometry3d)q_out;
-        out.translation() = t_out;
+        Eigen::Isometry3d out = Eigen::Isometry3d::Identity();
+        // Translation.
+        const tf2::Vector3& t = tf.getOrigin();
+        out.translation() << t.x(), t.y(), t.z();
+        // Rotation.
+        const tf2::Quaternion& q = tf.getRotation();
+        Eigen::Quaterniond q_eigen(q.w(), q.x(), q.y(), q.z()); // (w, x, y, z)!!!!
+        out.linear() = q_eigen.toRotationMatrix();
         return out;
     }
 
 
-    tf::Transform Map::fromIsometryToTf(const Eigen::Isometry3d& iso)
+    tf2::Transform Map::fromIsometryToTf(const Eigen::Isometry3d& iso)
     {
-        Eigen::Vector3d t_in = iso.translation();
-        Eigen::Quaterniond q_in = (Eigen::Quaterniond)iso.rotation();
-        tf::Vector3 t_out(t_in.x(), t_in.y(), t_in.z());
-        tf::Quaternion q_out(q_in.x(), q_in.y(), q_in.z(), q_in.w());
-        tf::Transform out(q_out, t_out);
-        return out;
+        // Translation.
+        const Eigen::Vector3d& t = iso.translation();
+        tf2::Vector3 t_tf(t.x(), t.y(), t.z());
+        // Rotation.
+        Eigen::Quaterniond q(iso.rotation()); 
+        tf2::Quaternion q_tf(q.x(), q.y(), q.z(), q.w()); // (x, y, z, w)!!!!
+        return tf2::Transform(q_tf, t_tf);
     }
 
 
-    tf::Transform Map::fromVertexToTf(const g2o::VertexSE3* vertex)
+    tf2::Transform Map::fromVertexToTf(const g2o::VertexSE3* vertex)
     {
         Eigen::Isometry3d iso = vertex->estimate();
-        tf::Transform tf = fromIsometryToTf(iso);
+        tf2::Transform tf = fromIsometryToTf(iso);
         return tf;
     }
 

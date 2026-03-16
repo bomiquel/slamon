@@ -134,12 +134,8 @@ int main(int argc, char **argv)
     // Launch threads.
     std::thread visual_odometer_thread(&slamon::VisualOdometer::run, &visual_odometer);
 
-    // ROS wait
-    ros::Rate r(10);
-    while (ros::ok())
-    {
-        r.sleep();
-    }
+    // ROS wait.
+    ros::waitForShutdown();
 
     return 0;
 }

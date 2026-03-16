@@ -80,6 +80,12 @@ namespace slamon
             void run();
 
 
+            /** \brief Finishes the loop closer.
+             *  Deletes haloc directory.
+             */
+            void finalise();
+
+
         private:
 
 
@@ -181,7 +187,7 @@ namespace slamon
             bool detectLoop(Cluster& q_cluster,
                             Cluster& cand_cluster,
                             std::vector<Cluster>& neighbours_cand_cluster,
-                            tf::Transform& estimated_motion,
+                            tf2::Transform& estimated_motion,
                             std::vector<int>& i_q_cluster_ids,
                             std::vector<int>& i_cand_cluster_ids,
                             std::vector<cv::KeyPoint>& i_q_l_kpts,
@@ -216,7 +222,7 @@ namespace slamon
             bool loopCorrection(const int q_keyframe_id,
                                 const int cand_keyframe_id,
                                 const std::string& search_method,
-                                const tf::Transform& estimated_motion,
+                                const tf2::Transform& estimated_motion,
                                 const std::vector<int>& i_q_cluster_ids,
                                 const std::vector<int>& i_cand_cluster_ids,
                                 const std::vector<cv::KeyPoint>& i_q_l_kpts,
@@ -285,6 +291,18 @@ namespace slamon
 
             std::vector<std::vector<Cluster>> p_cands_cluster_neighbours_; //!> Previous neighbours of the candidates.
 
+            Map* map_; //!> Map object pointer.
+
+            Queue<Cluster>* cluster_queue_; // Cluster queue pointer.
+
+            haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
+
+            RunTimes run_times_; //!> Internal loop closing execution times.
+
+            ros::NodeHandle nh_; //!> Public ROS node handle.
+            
+            ros::NodeHandle nhp_; //!> Private ROS node handle.
+
             ros::ServiceClient proj_mat_client_; //!> Service for requesting projection matrices.
             
             ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
@@ -299,13 +317,6 @@ namespace slamon
 
             ros::Publisher loop_closure_inliers_num_pub_; //!> Multi-cluster inliers number publisher.
 
-            Map* map_; //!> Map object pointer.
-
-            Queue<Cluster>* cluster_queue_; // Cluster queue pointer.
-
-            haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
-
-            RunTimes run_times_; //!> Internal loop closing execution times.
     };
 
 

@@ -161,12 +161,10 @@ int main(int argc, char **argv)
     std::thread map_thread(&slamon::Mapmaker::run, &mapmaker);
     std::thread loop_closer_thread(&slamon::LoopCloser::run, &loop_closer);
 
-    // ROS wait
-    ros::Rate r(10);
-    while (ros::ok())
-    {
-        r.sleep();
-    }
+    // ROS wait.
+    ros::waitForShutdown();
+
+    loop_closer.finalise();
 
     return 0;
 }

@@ -27,7 +27,7 @@
 #include <opencv2/core.hpp>
 
 #include <ros/ros.h>
-#include <tf/tf.h>
+#include <tf2/LinearMath/Transform.h>
 
 
 class Cluster
@@ -91,7 +91,7 @@ class Cluster
                 int keyframe_id,
                 cv::Mat l_descs,
                 cv::Mat r_descs,
-                tf::Transform camera_map_pose,
+                tf2::Transform camera_map_pose,
                 std::vector<cv::KeyPoint> l_kpts,
                 std::vector<cv::KeyPoint> r_kpts,
                 std::vector<cv::Point3f> l_cam_pts);
@@ -113,7 +113,7 @@ class Cluster
                 int keyframe_id,
                 cv::Mat l_descs,
                 cv::Mat r_descs,
-                tf::Transform camera_map_pose,
+                tf2::Transform camera_map_pose,
                 std::vector<cv::KeyPoint> l_kpts,
                 std::vector<cv::KeyPoint> r_kpts,
                 std::vector<cv::Point3f> l_cam_pts);
@@ -158,7 +158,7 @@ class Cluster
         /** \brief Get camera world-map pose.
          *  @return The camera world-map pose.
          */
-        inline tf::Transform getCameraPose() const {return camera_map_pose_;}
+        inline tf2::Transform getCameraPose() const {return camera_map_pose_;}
 
 
         /** \brief Get cluster right keypoints.
@@ -183,7 +183,7 @@ class Cluster
         /** \brief Set a new world-map camera pose.
          *  \param[in] camera_map_pose New world-map camera pose.
          */
-        inline void updateCameraPose(const tf::Transform camera_map_pose) {camera_map_pose_ = camera_map_pose;}
+        inline void updateCameraPose(const tf2::Transform camera_map_pose) {camera_map_pose_ = camera_map_pose;}
     
 
     private:
@@ -200,7 +200,7 @@ class Cluster
 
         cv::Mat r_descs_; //!> Cluster right descriptors.
 
-        tf::Transform camera_map_pose_; //!> World-map camera pose when the cluster was obtained.
+        tf2::Transform camera_map_pose_; //!> World-map camera pose when the cluster was obtained.
 
         std::vector<cv::KeyPoint> l_kpts_; //!> Cluster left keypoints.
 

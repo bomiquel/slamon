@@ -26,9 +26,12 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <thread>
 #include <filesystem>
 
 #include <ros/ros.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -141,15 +144,25 @@ namespace slamon
 
             std::string clusters_path_; //!> Path to store keypoints clustering with debugging purpose.
 
-            tf::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
-
             std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
 
             std::string camera_frame_id_; //!> Camera coordinate axis identficator.
 
+            Map* map_; //!> Map pointer.
+
+            Queue<Cluster>* cluster_queue_; //!> Cluster queue pointer.
+
+            RunTimes run_times_; //!> Internal map execution times.
+
+            ros::NodeHandle nh_; //!> Public ROS node handle.
+            
+            ros::NodeHandle nhp_; //!> Private ROS node handle.
+
             ros::WallTimer timer_; //!> Timer to write the last map update to disk.
 
-            tf::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
+            tf2::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
+
+            tf2::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
 
             ros::Publisher keycloud_pub_; //!> Pointcloud publisher.
 
@@ -165,16 +178,18 @@ namespace slamon
 
             ros::ServiceClient robot2camera_client_; //!> Service for requesting robot2camera static transform.
 
-            Map* map_; //!> Map pointer.
+            message_filters::Subscriber<nav_msgs::Odometry> odom_sub_; //!> Odometry subscriber.
 
-            Queue<Cluster>* cluster_queue_; //!> Cluster queue pointer.
+            message_filters::Subscriber<slamon::Keyframe> keyframe_sub_; //!> Keyframe subscriber.
 
-            RunTimes run_times_; //!> Internal map execution times.
+            message_filters::Subscriber<sensor_msgs::PointCloud2> keycloud_sub_; //!> Pointcloud subscriber.
 
             // Topic sync
             typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, slamon::Keyframe, sensor_msgs::PointCloud2> SyncPolicy_;
 
             typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
+
+            std::shared_ptr<Sync_> sync_;
 
     };
 

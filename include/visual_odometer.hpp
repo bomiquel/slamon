@@ -22,7 +22,11 @@
 #include <filesystem>
 
 #include <ros/ros.h>
-#include <tf/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -160,7 +164,7 @@ namespace slamon
              *  @return Whether it was possible to match keypoints, filter outliers and estimate movement. 
              */ 
             bool computeOdometry(const Frame& c_frame,
-                                 tf::Transform& camera_delta_odom);
+                                 tf2::Transform& camera_delta_odom);
 
 
             /** \brief Initialises the robot odometry relative to the robot coordinate axis. To do this,
@@ -185,7 +189,7 @@ namespace slamon
              *  camera coordinate axis.
              */
             void integrateAndPublish(const Frame& c_frame,
-                                     tf::Transform& camera_delta_odom);
+                                     tf2::Transform& camera_delta_odom);
 
 
             /** \brief Sends a keyframe if the map needs it
@@ -256,15 +260,23 @@ namespace slamon
 
             std::string camera_frame_id_; //!> Camera odometry coordinate axis identficator.
 
-            tf::Transform c_robot_odom_; //!> Current robot odometry.
-
-            tf::Transform c_camera_odom_; //!> Current camera odometry.
-
             std::string feature_detector_name_; //!> The name of the feature detector.
 
-            tf::StampedTransform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
+            ros::NodeHandle nh_; //!> Public ROS node handle.
+            
+            ros::NodeHandle nhp_; //!> Private ROS node handle.
 
-            tf::TransformListener tf_listener_; //!> Listen for tf between robot and camera.
+            image_transport::ImageTransport it_; //!> Public image handle.
+
+            tf2::Transform c_robot_odom_; //!> Current robot odometry.
+
+            tf2::Transform c_camera_odom_; //!> Current camera odometry.
+
+            tf2::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
+
+            tf2_ros::Buffer tf_buffer_; //!> ROS transforms buffer.
+
+            tf2_ros::TransformListener tf_listener_; //!> ROS transform listener.
 
             ros::Publisher keyframe_pub_; //!> Publisher for the current keyframe.
             
@@ -296,6 +308,14 @@ namespace slamon
 
             ros::ServiceServer proj_mat_server_; //!> Service for sending projection matrices.
 
+            image_transport::SubscriberFilter l_img_sub_; //!> Left image subscriber.
+
+            image_transport::SubscriberFilter r_img_sub_; //!> Right image subscriber.
+
+            message_filters::Subscriber<sensor_msgs::CameraInfo> l_info_sub_; //!> Left camera info subscriber.
+
+            message_filters::Subscriber<sensor_msgs::CameraInfo> r_info_sub_; //!> Right camera info subscriber.
+
             RunTimes run_times_; //!> Internal visual odometer execution times.
 
             // Topic sync
@@ -305,6 +325,8 @@ namespace slamon
                                                                     sensor_msgs::CameraInfo> SyncPolicy_;
 
             typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
+            
+            std::shared_ptr<Sync_> sync_;
     };
 
 

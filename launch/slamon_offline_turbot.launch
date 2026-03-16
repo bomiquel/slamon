@@ -50,15 +50,17 @@
         <arg name = "q_w" default = "0.813480331628928"/>
 
         <!-- Sends initial pose -->
-        <node pkg = "slamon" type = "initial_pose_server_params" name = "initial_pose_server_params" output = "screen">
-            <param name = "tx"         value = "$(arg t_x)"/>
-            <param name = "ty"         value = "$(arg t_y)"/>
-            <param name = "tz"         value = "$(arg t_z)"/>
-            <param name = "qx"         value = "$(arg q_x)"/>
-            <param name = "qy"         value = "$(arg q_y)"/>
-            <param name = "qz"         value = "$(arg q_z)"/>
-            <param name = "qw"         value = "$(arg q_w)"/>
-            <remap from = "get_pose"   to    = "slamon_vo/get_first_odom"/>
+        <node pkg = "slamon" type = "initial_pose_server_node" name = "initial_pose_server_node" output = "screen">
+            <param name = "tx"          value = "$(arg t_x)"/>
+            <param name = "ty"          value = "$(arg t_y)"/>
+            <param name = "tz"          value = "$(arg t_z)"/>
+            <param name = "qx"          value = "$(arg q_x)"/>
+            <param name = "qy"          value = "$(arg q_y)"/>
+            <param name = "qz"          value = "$(arg q_z)"/>
+            <param name = "qw"          value = "$(arg q_w)"/>
+            <param name = "world_frame" value = "wold_ned"/>
+            <param name = "robot_frame" value = "base_link"/>
+            <remap from = "get_pose"    to    = "slamon_vo/get_first_odom"/>
         </node>
 
         <!-- Processes stereo images -->
@@ -124,9 +126,9 @@
 
     <!-- Extend clok -->
     <node pkg = "slamon" type = "clock_extender" name = "clock_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
-        <param name = "extra_time"       value = "16"/>
-        <param name = "gap_threshold"    value = "1.5"/>
-        <param name = "watch_interval"   value = "1.5"/>
+        <param name = "extra_time"       value = "7"/>
+        <param name = "gap_threshold"    value = "10"/>
+        <param name = "watch_interval"   value = "5"/>
     </node>
 
     <!-- CPU/RAM memory monitor -->
@@ -134,21 +136,21 @@
 
     <!-- Play bagfile -->
     <node pkg = "slamon" 
-          type = "rosbag_play_with_delay.sh" 
+          type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                       /$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                       /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                       /$(arg camera_name)/$(arg slave_camera_name)/image_raw"
+          args = "--delay 5 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                /$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                /$(arg camera_name)/$(arg slave_camera_name)/image_raw'"
           if = "$(eval enable_extra_clock == true)"/>
 
     <node pkg = "slamon" 
-          type = "rosbag_play_with_delay.sh" 
+          type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                       /$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                       /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                       /$(arg camera_name)/$(arg slave_camera_name)/image_raw"
+          args = "--delay 5 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg camera_name)/$(arg master_camera_name)/camera_info 
+                                                                                /$(arg camera_name)/$(arg master_camera_name)/image_raw 
+                                                                                /$(arg camera_name)/$(arg slave_camera_name)/camera_info 
+                                                                                /$(arg camera_name)/$(arg slave_camera_name)/image_raw'"
           required = "true"
           if = "$(eval enable_extra_clock == false)"/>
 

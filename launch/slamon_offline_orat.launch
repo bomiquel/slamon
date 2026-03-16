@@ -24,20 +24,56 @@
     <!-- Bagfiles parameters -->
     <param name = "/use_sim_time"    value = "true"/>
 
-    <!-- Andratx -->
-    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-36-48_0.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-39-17_1.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-40-17_2.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-41-16_3.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_36_48_cut/sparus2_stereo_camera_2025-06-25-10-42-16_4.bag"/>
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-15-11_0.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-18-02_1.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-19-01_2.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-20-02_3.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-21-02_4.bag
-                                     /home/bomiquel/datasets/bagfiles/andratx/2025_06_25/10_15_11_cut_sparus3/sparus2_stereo_camera_2025-06-25-10-22-01_5.bag"/> -->
+    <!-- Cabrera 2025/02/04 -->
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-21-39_0.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-22-39_1.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-23-39_2.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-24-39_3.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-25-39_4.bag"/>
+
+    <!-- Cabrera 2025/10/29 -->
+    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3/sparus2_stereo_camera_2025-10-29-11-56-53_0.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3/sparus2_stereo_camera_2025-10-29-11-59-11_1.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3/sparus2_stereo_camera_2025-10-29-12-01-12_2.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3/sparus2_stereo_camera_2025-10-29-12-03-12_3.bag
+                                     /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3/sparus2_stereo_camera_2025-10-29-12-05-12_4.bag"/> -->
+
+    <!-- Static TF's -->
+    <node pkg = "tf" type = "static_transform_publisher" name = "sparus2_base_link_to_left_optical" args = "0.422270 -0.065000 0.042600 1.570796 0.000000 0.000000 /sparus2/base_link /sparus2/camera_port 30" />
 
     <group ns = "$(arg robot_name)">
+
+        <!-- Initial pose and orientation parameters -->  
+        <!-- Cabrera 2025/02/04 -->
+        <arg name = "t_x" default = "28.824602333472"/> 
+        <arg name = "t_y" default = "58.9221115387944"/> 
+        <arg name = "t_z" default = "-2.90542054176331"/> 
+        <arg name = "q_x" default = "0.034667875632095"/>
+        <arg name = "q_y" default = "-0.062374205023327"/>
+        <arg name = "q_z" default = "-0.028935960660611"/>
+        <arg name = "q_w" default = "0.9970307453271"/>
+        <!-- Cabrera 2025/10/29 12:56:53 -->
+        <!-- <arg name = "t_x" default = "-1.887629119"/> 
+        <arg name = "t_y" default = "14.933912181"/> 
+        <arg name = "t_z" default = "2.347713096"/> 
+        <arg name = "q_x" default = "0.089764679"/>
+        <arg name = "q_y" default = "-0.065461730"/>
+        <arg name = "q_z" default = "0.721156554"/>
+        <arg name = "q_w" default = "0.683805740"/> -->
+
+        <!-- Sends initial pose -->
+        <node pkg = "slamon" type = "initial_pose_server_node" name = "initial_pose_server_node" output = "screen">
+            <param name = "tx"          value = "$(arg t_x)"/>
+            <param name = "ty"          value = "$(arg t_y)"/>
+            <param name = "tz"          value = "$(arg t_z)"/>
+            <param name = "qx"          value = "$(arg q_x)"/>
+            <param name = "qy"          value = "$(arg q_y)"/>
+            <param name = "qz"          value = "$(arg q_z)"/>
+            <param name = "qw"          value = "$(arg q_w)"/>
+            <param name = "world_frame" value = "wold_ned"/>
+            <param name = "robot_frame" value = "base_link"/>
+            <remap from = "get_pose"    to    = "slamon_vo/get_first_odom"/>
+        </node>
 
         <!-- Processes stereo images -->
         <include file = "$(find slamon)/launch/stereo_processing/stereo_pipeline.launch">
@@ -51,7 +87,7 @@
             <arg name = "enable_decimate_x8" value = "$(arg enable_decimate_x8)"/>
         </include>
 
-        <include file="$(find slamon)/launch/marine_stereo_processing/voxel_grid.launch">
+        <include file="$(find slamon)/launch/stereo_processing/voxel_grid.launch">
             <arg name="input_topic" value="/$(arg robot_name)/slamon_map/keycloud"/>
             <arg name="output_topic" value="/$(arg robot_name)/slamon_map/keycloud_filtered"/>
         </include>
@@ -107,9 +143,9 @@
 
     <!-- Extend clok -->
     <node pkg = "slamon" type = "clock_extender" name = "clock_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
-        <param name = "extra_time"       value = "16"/>
-        <param name = "gap_threshold"    value = "1.5"/>
-        <param name = "watch_interval"   value = "1.5"/>
+        <param name = "extra_time"       value = "5"/>
+        <param name = "gap_threshold"    value = "15"/>
+        <param name = "watch_interval"   value = "5"/>
     </node>
 
     <!-- CPU/RAM memory monitor -->
@@ -117,23 +153,25 @@
 
     <!-- Play bagfile -->
     <node pkg = "slamon" 
-          type = "rosbag_play_with_delay.sh" 
+          type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
-                                                       /$(arg robot_name)/navigator/odometry"
+          args = "--delay 10 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info
+                                                                                 /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
+                                                                                 /$(arg robot_name)/navigator/navigation
+                                                                                 /$(arg robot_name)/navigator/odometry'"
           if = "$(eval enable_extra_clock == true)"/>
 
     <node pkg = "slamon" 
-          type = "rosbag_play_with_delay.sh" 
+          type = "delayed_rosbag_play.sh" 
           name = "rosbag" 
-          args = "-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info 
-                                                       /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
-                                                       /$(arg robot_name)/navigator/odometry"
+          args = "--delay 0 --rosbag-args '-r 1 --clock $(arg bagfile) --topics /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/camera_info
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg master_camera_name)/image_raw
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/camera_info
+                                                                                /$(arg robot_name)/$(arg camera_name)/$(arg slave_camera_name)/image_raw
+                                                                                /$(arg robot_name)/navigator/navigation
+                                                                                /$(arg robot_name)/navigator/odometry'"
           required = "true"
           if = "$(eval enable_extra_clock == false)"/>
 

@@ -40,7 +40,8 @@ namespace slamon
                            MotionEstimator(motion_estimation_type),
                            enable_debugging_{enable_debugging}, init_loop_closer_{false}, lc_neighbors_{lc_neighbors},
                            lc_candidates_{lc_candidates}, min_lc_inliers_{min_lc_inliers}, lc_discard_window_{lc_discard_window},
-                           loop_closure_num_{0}, map_{map}, cluster_queue_{cluster_queue}
+                           loop_closure_num_{0}, map_{map}, cluster_queue_{cluster_queue},
+                           nh_{}, nhp_{"~"}
     {
         // Computes maximum inliers for edges.
         max_edge_inliers_ = min_lc_inliers * 2;
@@ -61,28 +62,23 @@ namespace slamon
                 std::filesystem::remove_all(lc_path_);
             std::filesystem::create_directory(lc_path_);
         }
+
+        // ROS client services.
+        proj_mat_client_ = nh_.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
+
+        // Publishers.
+        run_times_pub_ = nhp_.advertise<slamon::Performance>("loop_closer_performance", 1);
+        cluster_num_pub_ = nhp_.advertise<std_msgs::Int32>("cluster_num", 1);
+        loop_closure_num_pub_ = nhp_.advertise<std_msgs::Int32>("loop_closure_num", 1);
+        loop_closure_img_pub_ = nhp_.advertise<sensor_msgs::Image>("loop_closure_img", 1);
+        loop_closure_matches_num_pub_ = nhp_.advertise<std_msgs::Int32>("loop_closure_matches_num", 1);
+        loop_closure_inliers_num_pub_ = nhp_.advertise<std_msgs::Int32>("loop_closure_inliers_num", 1);
     }
 
 
     void LoopCloser::run()
-    {
-        // Create ROS node.
-        ros::NodeHandle nh;
-        ros::NodeHandle nhp("~");
-
-        // ROS client services.
-        proj_mat_client_ = nh.serviceClient<slamon::GetProjectionMatrices>("get_projection_matrices");
-
-        // Publishers.
-        run_times_pub_ = nhp.advertise<slamon::Performance>("loop_closer_performance", 1);
-        cluster_num_pub_ = nhp.advertise<std_msgs::Int32>("cluster_num", 1);
-        loop_closure_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_num", 1);
-        loop_closure_img_pub_ = nhp.advertise<sensor_msgs::Image>("loop_closure_img", 1);
-        loop_closure_matches_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_matches_num", 1);
-        loop_closure_inliers_num_pub_ = nhp.advertise<std_msgs::Int32>("loop_closure_inliers_num", 1);
-
+    {   
         // Loop
-        ros::Rate r(10);
         Cluster q_cluster;
         int p_loop_closures_num;
         double start_module_time;
@@ -137,7 +133,7 @@ namespace slamon
                 run_times_.run_time_3 += (ros::Time::now().toSec() - start_module_time); // Read cluster candidate run time.
 
                 // Loop over candidates.
-                tf::Transform estimated_motion;
+                tf2::Transform estimated_motion;
                 bool loop_detected = false, loop_closed = false;
                 std::vector<int> i_q_cluster_ids, i_cand_cluster_ids;
                 std::vector<cv::KeyPoint> i_q_l_kpts, i_q_r_kpts, i_cand_l_kpts, i_cand_r_kpts;
@@ -200,8 +196,15 @@ namespace slamon
                 if (run_times_pub_.getNumSubscribers() > 0)
                     publishPerformance(ros::Time::now(), loop_closure_num_ - p_loop_closures_num, run_times_, run_times_pub_);
             }
-            r.sleep();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+    }
+
+
+    void LoopCloser::finalise()
+    {
+        if (std::filesystem::is_directory(execution_path_))
+            std::filesystem::remove_all(execution_path_);
     }
 
 
@@ -372,7 +375,7 @@ namespace slamon
         fs.release();
 
         // Sets the properties of the cluster.
-        tf::Transform camera_map_pose = map_->getVertexCameraPose(id, true);
+        tf2::Transform camera_map_pose = map_->getVertexCameraPose(id, true);
         Cluster cluster(id, keyframe_id, l_descs, r_descs, camera_map_pose, l_kpts, r_kpts, l_cam_pts);
         return cluster;
     }
@@ -483,7 +486,7 @@ namespace slamon
 
     void LoopCloser::updateClusterPose(Cluster& cluster)
     {
-        tf::Transform camera_map_pose = map_->getVertexCameraPose(cluster.getGlobalId(), true);
+        tf2::Transform camera_map_pose = map_->getVertexCameraPose(cluster.getGlobalId(), true);
         cluster.updateCameraPose(camera_map_pose);
     }
 
@@ -491,7 +494,7 @@ namespace slamon
     bool LoopCloser::detectLoop(Cluster& q_cluster,
                                 Cluster& cand_cluster,
                                 std::vector<Cluster>& neighbours_cand_cluster,
-                                tf::Transform& estimated_motion,
+                                tf2::Transform& estimated_motion,
                                 std::vector<int>& i_q_cluster_ids,
                                 std::vector<int>& i_cand_cluster_ids,
                                 std::vector<cv::KeyPoint>& i_q_l_kpts,
@@ -694,7 +697,7 @@ namespace slamon
                 // Loop found!
                 if (i_q_l_kpts.size() >= static_cast<size_t>(min_lc_inliers_))
                 {
-                    // From cv::Mat to tf::Transform.
+                    // From cv::Mat to tf2::Transform.
                     fromMatToTf(estimated_rotation, estimated_translation, estimated_motion);
 
                     // From {q_cam}^T_{O} to {O}^T_{q_cam}.
@@ -711,7 +714,7 @@ namespace slamon
     bool LoopCloser::loopCorrection(const int q_keyframe_id,
                                     const int cand_keyframe_id,
                                     const std::string& search_method,
-                                    const tf::Transform& estimated_motion,
+                                    const tf2::Transform& estimated_motion,
                                     const std::vector<int>& i_q_cluster_ids,
                                     const std::vector<int>& i_cand_cluster_ids,
                                     const std::vector<cv::KeyPoint>& i_q_l_kpts,
@@ -734,7 +737,7 @@ namespace slamon
 
         // Adds the corresponding edges.
         bool lc_already_exists, some_edge_added = false;
-        tf::Transform relative_movement, cand_cluster_map_pose, q_cluster_camera_pose;
+        tf2::Transform relative_movement, cand_cluster_map_pose, q_cluster_camera_pose;
         for (size_t i = 0; i < inliers_per_pair_size; ++i)
         {
             if (inliers_per_pair[i] >= static_cast<int>(max_edge_inliers_ * 0.1))

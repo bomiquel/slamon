@@ -27,7 +27,7 @@
 #include <unordered_set>
 
 #include <ros/ros.h>
-#include <tf/tf.h>
+#include <tf2/LinearMath/Transform.h>
 
 #include <g2o/core/block_solver.h>
 #include <g2o/core/sparse_optimizer.h>
@@ -78,8 +78,8 @@ namespace slamon
              *  \param[in] use_lock Set to true if map locking is required
              *  @return Tf with world-map vertex pose.
              */
-            tf::Transform getVertexPose(const int vertex_id, 
-                                        const bool use_lock);
+            tf2::Transform getVertexPose(const int vertex_id, 
+                                         const bool use_lock);
 
 
             /** \brief Gets the poses of each vertex in the graph.
@@ -89,14 +89,14 @@ namespace slamon
              */
             void getVertexPoses(std::vector<int>& ids,
                                 std::vector<double>& stamps,
-                                std::vector<tf::Transform>& vertex_poses);
+                                std::vector<tf2::Transform>& vertex_poses);
 
 
             /** \brief Get the graph vertex pose relative to camera.
              *  \param[in] vertex_id The id of the vertex for which the pose is desired.
              *  @return Tf with vertex pose relative to camera.
              */
-            tf::Transform getVertexPoseRelativeToCamera(const int vertex_id);
+            tf2::Transform getVertexPoseRelativeToCamera(const int vertex_id);
 
 
             /** \brief Get the world-map camera pose of some specific vertex.
@@ -104,8 +104,8 @@ namespace slamon
              *  \param[in] lock Set to true if map locking is required.
              *  @return Tf with the world-map camera pose.
              */
-            tf::Transform getVertexCameraPose(const int vertex_id, 
-                                              const bool use_lock);
+            tf2::Transform getVertexCameraPose(const int vertex_id, 
+                                               const bool use_lock);
 
 
             /** \brief Retrieve the list of the vertices/clusters of a corresponding keyframe.
@@ -120,7 +120,7 @@ namespace slamon
              *  \param[in] keyframe_id The id of the keyframe for which the pose is desired.
              *  @return Tf with the world-map camera pose.
              */
-            tf::Transform getKeyframePose(const int keyframe_id);
+            tf2::Transform getKeyframePose(const int keyframe_id);
 
 
             /** \brief Gets the poses of each keyframe in the graph.
@@ -128,7 +128,7 @@ namespace slamon
              *  \param[out] keyframe_poses A list containing the poses of each keyframe.
              */
             void getKeyframePoses(std::vector<double>& stamps,
-                                  std::vector<tf::Transform>& keyframe_poses);
+                                  std::vector<tf2::Transform>& keyframe_poses);
 
 
             /** \brief Gets all loop closure edge information.
@@ -138,7 +138,7 @@ namespace slamon
              */
             void getLoopClosureEdges(std::vector<double>& weights,
                                      std::vector<std::pair<int, int>>& keyframe_ids,
-                                     std::vector<std::pair<tf::Transform, tf::Transform>>& keyframe_poses);
+                                     std::vector<std::pair<tf2::Transform, tf2::Transform>>& keyframe_poses);
 
 
             /** \brief Gets nearest neighbour vertices by distance.
@@ -164,7 +164,7 @@ namespace slamon
             /** \brief Adds local cluster pose to the vector.
              *  \param[in] local_cluster_pose Cluster pose relative to camera frame.
              */
-            void addLocalClusterPose(const tf::Transform& local_cluster_pose);
+            void addLocalClusterPose(const tf2::Transform& local_cluster_pose);
 
 
             /** \brief Adds cluster-keyframe relation.
@@ -178,7 +178,7 @@ namespace slamon
              *  \param[in] pose Vertex pose.
              */
             void addVertex(const int id,
-                           const tf::Transform& pose);
+                           const tf2::Transform& pose);
 
 
             /** \brief Adds an edge to the graph.
@@ -190,7 +190,7 @@ namespace slamon
             void addEdge(const int vertex_0_id, 
                          const int vertex_1_id,
                          const double confidence,
-                         const tf::Transform& relative_movement);
+                         const tf2::Transform& relative_movement);
 
 
             /** \brief Performs a Pose-Graph Optimisation.
@@ -213,25 +213,25 @@ namespace slamon
             }
 
             
-            /** \brief Convert a tf::Transform to Eigen::Isometry3d
-             *  \param[in] tf The tf::Transform.
+            /** \brief Convert a tf2::Transform to Eigen::Isometry3d
+             *  \param[in] tf The tf2::Transform.
              *  @return The Eigen::Isometry3d matrix.
              */
-            Eigen::Isometry3d fromTfToIsometry(const tf::Transform& tf);
+            Eigen::Isometry3d fromTfToIsometry(const tf2::Transform& tf);
 
 
-            /** \brief Convert an Eigen::Isometry3d to tf::Transform.
+            /** \brief Convert an Eigen::Isometry3d to tf2::Transform.
              *  \param[in] iso The Eigen::Isometry3d matrix.
-             *  @return The tf::Transform.
+             *  @return The tf2::Transform.
              */
-            tf::Transform fromIsometryToTf(const Eigen::Isometry3d& iso);
+            tf2::Transform fromIsometryToTf(const Eigen::Isometry3d& iso);
 
 
-            /** \brief Convert g2o::VertexSE3 to tf::Transform.
+            /** \brief Convert g2o::VertexSE3 to tf2::Transform.
              *  \param[in] vertex The g2o::VertexSE3.
-             *  @return The tf::Transform.
+             *  @return The tf2::Transform.
              */ 
-            tf::Transform fromVertexToTf(const g2o::VertexSE3* vertex);
+            tf2::Transform fromVertexToTf(const g2o::VertexSE3* vertex);
 
 
             /** \brief Sorts graph vertices by index in ascending order.
@@ -254,7 +254,7 @@ namespace slamon
 
             std::vector<double> keyframe_stamps_; //> Stores the keyframe timestamps.
 
-            std::vector<tf::Transform> local_cluster_poses_; //!> Stores the cluster poses relative to camera frame.
+            std::vector<tf2::Transform> local_cluster_poses_; //!> Stores the cluster poses relative to camera frame.
 
             std::vector<std::pair<int, int>> cluster_keyframe_relations_; //!> Stores the cluster-keyframe relations (cluster_id, frame_id).
 

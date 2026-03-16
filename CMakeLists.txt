@@ -1,30 +1,20 @@
 cmake_minimum_required(VERSION 3.0.2)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules/")
 project(slamon)
+
+# Add custom cmake modules path only for SuiteSparse if needed.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules")
 
 
 ##############
 ## Compiler ##
 ##############
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
+# C++17 Standard.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Check C++20 or C++17 support
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++20" COMPILER_SUPPORTS_CXX20)
-CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
-if(COMPILER_SUPPORTS_CXX20)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
-    add_definitions(-DCOMPILEDWITHC20)
-    message(" Using flag -std=c++20.")
-elseif(COMPILER_SUPPORTS_CXX17)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-    add_definitions(-DCOMPILEDWITHC17)
-    message(" Using flag -std=c++17.")
-else()
-    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++20 or C++17 support. SLAMON needs at least C++17 support. Please use a different C++ compiler.")
-endif()
+# Compiler flags.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
 
 
 #######################
@@ -33,8 +23,9 @@ endif()
 
 find_package(
     catkin REQUIRED COMPONENTS
-        tf
+        tf2
         roscpp
+        tf2_ros
         std_msgs
         nav_msgs
         cv_bridge
@@ -45,6 +36,7 @@ find_package(
         image_geometry
         image_transport
         message_filters
+        tf2_geometry_msgs
         message_generation
 )
 
@@ -54,7 +46,8 @@ find_package(
 find_package(G2O REQUIRED)
 
 # Dependencies - OpenCV:
-find_package(OpenCV REQUIRED)
+set(OpenCV_DIR "/usr/local/lib/cmake/opencv4") # Change path if OpenCV-4.2.0 with the contributors module is installed in another location.
+find_package(OpenCV 4.2.0 REQUIRED)
 
 # Dependencies - Eigen:
 find_package(Eigen3 REQUIRED)
@@ -72,37 +65,32 @@ find_package(SuiteSparse REQUIRED)
 
 # Declare custom ROS messages
 add_message_files(
-    DIRECTORY 
-        msg 
-    FILES
-        Batch.msg
-        Keyframe.msg
-        Keypoint.msg
-        Performance.msg
+    DIRECTORY msg 
+    FILES Batch.msg Keyframe.msg Keypoint.msg Performance.msg
 )
 
 # Declare custom ROS services
 add_service_files(
-    DIRECTORY
-        srv
-    FILES
-        GetTransform.srv
-        GetProjectionMatrices.srv
+    DIRECTORY srv
+    FILES GetTransform.srv GetProjectionMatrices.srv
 )
 
 # Generate custom ROS messages & services                    
 generate_messages(
-    DEPENDENCIES
-        std_msgs
-        sensor_msgs
-        geometry_msgs
+    DEPENDENCIES std_msgs sensor_msgs geometry_msgs
 )
 
 catkin_package(
     INCLUDE_DIRS 
         include
     CATKIN_DEPENDS
+        roscpp
+        tf2_ros
+        std_msgs 
+        cv_bridge 
         message_runtime
+        image_transport
+        tf2_geometry_msgs 
 )
 
 
@@ -115,12 +103,14 @@ include_directories(include
                     ${OpenCV_INCLUDE_DIRS}
                     ${EIGEN3_INCLUDE_DIRS}
                     ${SUITESPARSE_INCLUDE_DIRS}
-                    ${G2O_INCLUDE_DIR})
-link_directories(${OpenCV_INCLUDE_DIRS})
+                    ${G2O_INCLUDE_DIR}
+                    )
 
 # Executables
 add_executable(clock_extender src/clock_extender.cpp)
-add_executable(initial_pose_server_params src/initial_pose_server_params.cpp)
+add_executable(initial_pose_server_node 
+               src/initial_pose_server.cpp
+               src/initial_pose_server_node.cpp)
 add_executable(slamon_map
                src/map.cpp
                src/hash.cpp
@@ -131,7 +121,8 @@ add_executable(slamon_map
                src/publisher.cpp
                src/loop_closer.cpp
                src/motion_estimator.cpp
-               src/keypoint_matcher.cpp)
+               src/keypoint_matcher.cpp
+               )
 add_executable(slamon_vo
                src/frame.cpp
                src/vo_node.cpp
@@ -139,16 +130,49 @@ add_executable(slamon_vo
                src/visual_odometer.cpp
                src/motion_estimator.cpp
                src/keypoint_matcher.cpp
-               src/keypoint_detector.cpp)
+               src/keypoint_detector.cpp
+               )
 
 # Dependencies
 add_dependencies(clock_extender ${catkin_EXPORTED_TARGETS})
-add_dependencies(initial_pose_server_params ${catkin_EXPORTED_TARGETS})
-add_dependencies(slamon_map ${catkin_EXPORTED_TARGETS})
-add_dependencies(slamon_vo ${catkin_EXPORTED_TARGETS})
+add_dependencies(initial_pose_server_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(slamon_map ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(slamon_vo ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
 # Linking
 target_link_libraries(clock_extender ${catkin_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(initial_pose_server_params ${catkin_LIBRARIES})
-target_link_libraries(slamon_vo ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${EIGEN3_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(slamon_map ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${EIGEN3_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} cholmod)
+target_link_libraries(initial_pose_server_node ${catkin_LIBRARIES})
+target_link_libraries(slamon_vo 
+                      ${OpenCV_LIBRARIES} 
+                      ${catkin_LIBRARIES} 
+                      ${EIGEN3_LIBRARIES} 
+                      ${CMAKE_THREAD_LIBS_INIT}
+                     )
+target_link_libraries(slamon_map 
+                      ${OpenCV_LIBRARIES} 
+                      ${catkin_LIBRARIES} 
+                      ${EIGEN3_LIBRARIES}
+                      ${CMAKE_THREAD_LIBS_INIT}
+                      ${G2O_LIBRARIES}
+                      ${SUITESPARSE_LIBRARIES} 
+                      cholmod
+                     )
+
+
+##################
+## Installation ##
+##################
+
+install(TARGETS
+        clock_extender
+        initial_pose_server_node
+        slamon_map
+        slamon_vo
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
+# Install scripts.
+install(PROGRAMS 
+        scripts/delayed_rosbag_play.sh
+        DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
