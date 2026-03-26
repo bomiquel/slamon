@@ -137,21 +137,21 @@
         <!-- MAP SLAMON -->
         <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen" if = "$(eval enable_decimate_x1 == true)">
             <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
-            <remap from = "points2"                     to = "/$(arg camera_name)/points2"/>
+            <remap from = "points2"                     to = "$(arg camera_name)/points2"/>
             <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
             <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
             <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
         </node>
         <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen" if = "$(eval enable_decimate_x2 == true)">
             <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
-            <remap from = "points2"                     to = "/$(arg camera_name)/scaled_x2/points2"/>
+            <remap from = "points2"                     to = "$(arg camera_name)/scaled_x2/points2"/>
             <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
             <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
             <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
         </node>
         <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen" if = "$(eval enable_decimate_x4 == true)">
             <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
-            <remap from = "points2"                     to = "/$(arg camera_name)/scaled_x4/points2"/>
+            <remap from = "points2"                     to = "$(arg camera_name)/scaled_x4/points2"/>
             <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
             <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
             <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
@@ -168,6 +168,9 @@
 
     <!-- CPU/RAM memory monitor -->
     <node pkg = "cpu_monitor" name = "cpu_monitor" type = "monitor.py" output = "screen" if = "$(eval enable_cpu_monitor == true)"/>
+
+    <!-- Pipe detector -->
+    <node pkg = "slamon" name = "seg_pc" type = "pipe_detector.sh"/>
 
     <!-- Play bagfile -->
     <node pkg = "slamon" 

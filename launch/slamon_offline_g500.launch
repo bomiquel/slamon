@@ -30,9 +30,9 @@
     <!-- 2024_07_03/experiment_0_square_1_proc -->
     <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_03/experiment_0_square_1_proc/2024-07-03-11-37-31.bag"/> -->
     <!-- 2024_07_04/experiment_0_square_2_proc -->
-    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_2_proc/2024-07-04-13-08-50.bag"/>
+    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_2_proc/2024-07-04-13-08-50.bag"/> -->
     <!-- 2024_07_04/experiment_0_square_3_proc -->
-    <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_3_proc/2024-07-04-13-22-00.bag"/> -->
+    <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_3_proc/2024-07-04-13-22-00.bag"/>
 
     <!-- Static TF's -->
     <node pkg = "tf" type = "static_transform_publisher" name = "girona500_base_link_to_stereo_down" args = "0.57 -0.062 0.505 0.0 0.0 0.0 /girona500/base_link /girona500/stereo_down 30" />
@@ -58,21 +58,21 @@
         <arg name = "q_z" default = "-0.052030298"/>
         <arg name = "q_w" default = "0.998168548"/> -->
         <!-- UJI 2024_07_04/experiment_0_square_2_proc -->
-        <arg name = "t_x" default = "-0.037046177"/> 
+        <!-- <arg name = "t_x" default = "-0.037046177"/> 
         <arg name = "t_y" default = "0.269914678"/> 
         <arg name = "t_z" default = "-1.800492732"/> 
         <arg name = "q_x" default = "-0.029828077"/>
         <arg name = "q_y" default = "0.000048010"/>
         <arg name = "q_z" default = "-0.027061236"/>
-        <arg name = "q_w" default = "0.999188657"/>
+        <arg name = "q_w" default = "0.999188657"/> -->
         <!-- UJI 2024_07_04/experiment_0_square_3_proc -->
-        <!-- <arg name = "t_x" default = "1.000167367"/> 
+        <arg name = "t_x" default = "1.000167367"/> 
         <arg name = "t_y" default = "3.366724544"/> 
         <arg name = "t_z" default = "-1.801609401"/> 
         <arg name = "q_x" default = "0.032461234"/>
         <arg name = "q_y" default = "-0.013343311"/>
         <arg name = "q_z" default = "-0.264775157"/>
-        <arg name = "q_w" default = "0.963671283"/> -->
+        <arg name = "q_w" default = "0.963671283"/>
 
         <!-- Sends initial pose -->
         <node pkg = "slamon" type = "initial_pose_server_node" name = "initial_pose_server_node" output = "screen">
@@ -127,21 +127,21 @@
         <!-- MAP SLAMON -->
         <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen" if = "$(eval enable_decimate_x1 == true)">
             <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
-            <remap from = "points2"                     to = "/$(arg camera_name)/points2"/>
+            <remap from = "points2"                     to = "$(arg camera_name)/points2"/>
             <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
             <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
             <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
         </node>
         <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen" if = "$(eval enable_decimate_x2 == true)">
             <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
-            <remap from = "points2"                     to = "/$(arg camera_name)/scaled_x2/points2"/>
+            <remap from = "points2"                     to = "$(arg camera_name)/scaled_x2/points2"/>
             <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
             <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
             <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
         </node>
         <node pkg = "slamon" type = "slamon_map" name = "slamon_map" output = "screen" if = "$(eval enable_decimate_x4 == true)">
             <remap from = "odom"                        to = "slamon_vo/robot_odom"/>
-            <remap from = "points2"                     to = "/$(arg camera_name)/scaled_x4/points2"/>
+            <remap from = "points2"                     to = "$(arg camera_name)/scaled_x4/points2"/>
             <remap from = "keyframe"                    to = "slamon_vo/keyframe"/>
             <remap from = "get_robot_to_camera_tf"      to = "slamon_vo/send_robot_to_camera_tf"/>
             <remap from = "get_projection_matrices"     to = "slamon_vo/send_projection_matrices"/>
@@ -158,6 +158,9 @@
 
     <!-- CPU/RAM memory monitor -->
     <node pkg = "cpu_monitor" name = "cpu_monitor" type = "monitor.py" output = "screen" if = "$(eval enable_cpu_monitor == true)"/>
+
+    <!-- Pipe detector -->
+    <node pkg = "slamon" name = "seg_pc" type = "pipe_detector.sh"/>
 
     <!-- Play bagfile -->
     <node pkg = "slamon" 

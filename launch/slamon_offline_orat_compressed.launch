@@ -161,6 +161,9 @@
     <!-- CPU/RAM memory monitor -->
     <node pkg = "cpu_monitor" name = "cpu_monitor" type = "monitor.py" output = "screen" if = "$(eval enable_cpu_monitor == true)"/>
 
+    <!-- Pipe detector -->
+    <node pkg = "slamon" name = "seg_pc" type = "pipe_detector.sh"/>
+
     <!-- Play bagfile -->
     <node pkg = "slamon" 
           type = "delayed_rosbag_play.sh" 
