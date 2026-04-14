@@ -51,24 +51,25 @@ namespace slamon
             if (std::filesystem::exists(clusters_path_))
                 std::filesystem::remove_all(clusters_path_);
             std::filesystem::create_directory(clusters_path_);
-
-            poses_file_ = w_path + "keyframes_poses.txt";
-            if (std::filesystem::exists(poses_file_))
-                std::filesystem::remove(poses_file_.c_str());
-
-            edges_file_ = w_path + "loop_closure_edges.txt";
-            if (std::filesystem::exists(edges_file_))
-                std::filesystem::remove(edges_file_.c_str());
-
-            std::string lock_file = w_path + "keyframes_poses.txt.lock";
-            if (std::filesystem::exists(lock_file))
-                std::filesystem::remove(lock_file.c_str());
-            lock_file = w_path + "loop_closure_edges.txt.lock";
-            if (std::filesystem::exists(lock_file))
-                std::filesystem::remove(lock_file.c_str());
-
-            writeMapResults();
         }
+
+        poses_file_ = w_path + "keyframes_poses.txt";
+        if (std::filesystem::exists(poses_file_))
+            std::filesystem::remove(poses_file_.c_str());
+
+        edges_file_ = w_path + "loop_closure_edges.txt";
+        if (std::filesystem::exists(edges_file_))
+            std::filesystem::remove(edges_file_.c_str());
+
+        std::string lock_file = w_path + "keyframes_poses.txt.lock";
+        if (std::filesystem::exists(lock_file))
+            std::filesystem::remove(lock_file.c_str());
+            
+        lock_file = w_path + "loop_closure_edges.txt.lock";
+        if (std::filesystem::exists(lock_file))
+            std::filesystem::remove(lock_file.c_str());
+
+        writeMapResults();
 
         // Client services.
         robot2camera_client_ = nh_.serviceClient<slamon::GetTransform>("get_robot_to_camera_tf");
@@ -325,15 +326,19 @@ namespace slamon
 
         // Publishes clustered keyframe.
         cv::Mat l_img, r_img;
-        sensor_msgs::ImageConstPtr img_msg;
-        img_msg = boost::make_shared<const sensor_msgs::Image>(keyframe_msg->l_img);
-        bool l_img_ok = fromImgMsgToMat(img_msg, l_img);
-        img_msg = boost::make_shared<const sensor_msgs::Image>(keyframe_msg->r_img);
-        bool r_img_ok = fromImgMsgToMat(img_msg, r_img);
-        if (clustering_img_pub_.getNumSubscribers() > 0)
+        bool l_img_ok = false, r_img_ok = false;
+        if (enable_debugging_)
         {
-            if (l_img_ok && r_img_ok)
-                publishImgKeypointsClustering(l_img, stamp, clustering_img_pub_, clustered_l_kpts);
+            sensor_msgs::ImageConstPtr img_msg;
+            img_msg = boost::make_shared<const sensor_msgs::Image>(keyframe_msg->l_img);
+            l_img_ok = fromImgMsgToMat(img_msg, l_img);
+            img_msg = boost::make_shared<const sensor_msgs::Image>(keyframe_msg->r_img);
+            r_img_ok = fromImgMsgToMat(img_msg, r_img);
+            if (clustering_img_pub_.getNumSubscribers() > 0)
+            {
+                if (l_img_ok && r_img_ok)
+                    publishImgKeypointsClustering(l_img, stamp, clustering_img_pub_, clustered_l_kpts);
+            }
         }
 
         // Publishes number of keyframes.
@@ -343,11 +348,12 @@ namespace slamon
 
         // Writes data to disk.
         start_module_time = ros::Time::now().toSec();
+        
+        // Saves keyframe map poses and loop closure edges to files.
+        writeMapResults();
+
         if (enable_debugging_)
         {
-            // Saves keyframe map poses and loop closure edges to files.
-            writeMapResults();
-
             if (l_img_ok && r_img_ok)
             {
                 std::string keyframe_name = convertTo5Digits(keyframe_id);
@@ -373,13 +379,10 @@ namespace slamon
 
     void Mapmaker::timerCallback(const ros::WallTimerEvent& event)
     {
-        if (enable_debugging_)
-        {
-            ROS_WARN_STREAM("[MM->timerCallback:] Writing files!");
-
-            // Saves keyframe map poses and loop closure edges to files.
-            writeMapResults();
-        }
+        ROS_WARN_STREAM("[MM->timerCallback:] Writing files!");
+                
+        // Saves keyframe map poses and loop closure edges to files.
+        writeMapResults();
     }
 
 
