@@ -340,11 +340,10 @@ namespace slamon
         bool l_result, r_result;
         cv::Mat l_img, r_img, l_descs, r_descs;
         std::vector<cv::KeyPoint> l_kpts, r_kpts;
-        std::thread l_detector([&] {l_result = detectROSKeypoints(max_kpts_retained_, enable_enhacement_, feature_detector_name_, 
-                                                                  std::ref(l_img_msg), std::ref(l_img), std::ref(l_descs), std::ref(l_kpts));});
         std::thread r_detector([&] {r_result = detectROSKeypoints(max_kpts_retained_, enable_enhacement_, feature_detector_name_, 
                                                                   std::ref(r_img_msg), std::ref(r_img), std::ref(r_descs), std::ref(r_kpts));});
-        l_detector.join();
+        l_result = detectROSKeypoints(max_kpts_retained_, enable_enhacement_, feature_detector_name_, 
+                                      l_img_msg, l_img, l_descs, l_kpts);
         r_detector.join();
         run_times_.run_time_0 = ros::Time::now().toSec() - start_module_time; // Feature extraction run time.
 

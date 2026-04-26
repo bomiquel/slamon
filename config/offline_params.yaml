@@ -1,6 +1,6 @@
 slamon:
   enable_bucketing: false
-  enable_debugging: true
+  enable_debugging: false
   enable_enhacement: true
   feature_detector_name: sift
   lc_candidates: 3
@@ -11,6 +11,6 @@ slamon:
   max_kpts_retained: 1500
   min_inliers: 40
   min_lc_inliers: 80
-  motion_estimation_type: p3p
-  robot_frame_id: sparus2/base_link
-  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/cabrera/2025_02_04/14_21_39/ratio_matching/p3p/execution_1
+  motion_estimation_type: ap3p
+  robot_frame_id: girona500/base_link
+  working_path: /home/bomiquel/Documents/recerca/slam/single_slam/data/slamon/uji/raw/naive/2024_07_02/experiment_0_v3/ratio_matching/ap3p/execution_0
