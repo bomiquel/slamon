@@ -16,7 +16,7 @@
     <arg name = "enable_decimate_x8" default = "false"/>
 
     <!-- CPU/MEM monitor flag -->
-    <arg name = "enable_cpu_monitor" default = "true"/>
+    <arg name = "enable_monitor" default = "true"/>
 
     <!-- Clock extension -->
     <arg name = "enable_extra_clock" default = "true"/>
@@ -100,7 +100,7 @@
 
     </group>
 
-    <!-- Extend clok -->
+    <!-- Extend clock -->
     <node pkg = "slamon" type = "clock_extender" name = "clock_extender" required = "true" output = "screen" if = "$(eval enable_extra_clock == true)">
         <param name = "extra_time"       value = "7"/>
         <param name = "gap_threshold"    value = "10"/>
@@ -108,7 +108,7 @@
     </node>
 
     <!-- CPU/RAM memory monitor -->
-    <node pkg = "cpu_monitor" name = "cpu_monitor" type = "monitor.py" output = "screen" if = "$(eval enable_cpu_monitor == true)"/>
+    <node pkg = "slamon" name = "resource_logger" type = "cpu_mem_io_logger.sh" output = "screen" if = "$(eval enable_monitor == true)"/>
 
     <!-- Play bagfile -->
     <node pkg = "slamon" 
