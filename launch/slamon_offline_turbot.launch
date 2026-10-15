@@ -116,8 +116,8 @@
         <param name = "watch_interval"   value = "5"/>
     </node>
 
-    <!-- CPU/RAM memory monitor -->
-    <node pkg = "slamon" name = "resource_logger" type = "cpu_mem_io_logger.sh" output = "screen" if = "$(eval enable_monitor == true)"/>
+    <!-- RAM memory monitor -->
+    <node pkg = "slamon" name = "resource_logger" type = "mem_logger.sh" output = "screen" if = "$(eval enable_monitor == true)"/>
 
     <!-- Play bagfile -->
     <node pkg = "slamon" 

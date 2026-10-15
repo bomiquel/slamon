@@ -14,8 +14,6 @@
 #   the BSD 4-Clause License. See the LICENSE file for details.
 
 
-#!/bin/bash
-
 # ================= CONFIGURATION =================
 # Array of nodes to monitor. To make it scalable, simply add your new nodes here.
 NODES_TO_MONITOR=("slamon_vo" "slamon_map")

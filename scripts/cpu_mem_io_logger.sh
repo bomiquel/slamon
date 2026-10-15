@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# @file cpu_mem_logger.sh
+# @brief Script to monitor CPU, RAM and I/O usage.
+#
+# @package slamon
+# @project SLAMON
+#
+# @author
+#   Bo Miquel Nordfeldt-Fiol (2026)
+#
+# @license BSD-4-Clause
+#   This file is part of the SLAMON project and is released under
+#   the BSD 4-Clause License. See the LICENSE file for details.
+
+
 # ================= CONFIGURATION =================
 NODES_TO_MONITOR=("slamon_vo" "slamon_map")
 INTERVAL_SECONDS=1
