@@ -148,11 +148,11 @@
         <param name = "watch_interval"   value = "5"/>
     </node>
 
-    <!-- RAM memory monitor -->
-    <node pkg = "slamon" name = "resource_logger" type = "mem_logger.sh" output = "screen" if = "$(eval enable_monitor == true)"/>
-
     <!-- Pipe detector -->
     <node pkg = "slamon" name = "seg_pc" type = "pipe_detector.sh"/>
+
+    <!-- RAM memory monitor -->
+    <node pkg = "slamon" name = "resource_logger" type = "mem_logger.sh" output = "screen" if = "$(eval enable_monitor == true)"/>
 
     <!-- Play bagfile -->
     <node pkg = "slamon" 

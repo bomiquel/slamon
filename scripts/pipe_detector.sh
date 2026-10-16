@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# @file pipe_detector.sh
+# @brief Script to launch pipe detector
+#
+# @package slamon
+# @project SLAMON
+#
+# @author
+#   Bo Miquel Nordfeldt-Fiol (2026)
+#
+# @license BSD-4-Clause
+#   This file is part of the SLAMON project and is released under
+#   the BSD 4-Clause License. See the LICENSE file for details.
+
+
 source ~/miniconda3/etc/profile.d/conda.sh
 
 if [ ! -z "$CONDA_DEFAULT_ENV" ]; then

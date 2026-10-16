@@ -15,7 +15,7 @@
 
 
 # ================= CONFIGURATION =================
-NODES_TO_MONITOR=("slamon_vo" "slamon_map")
+NODES_TO_MONITOR=("slamon_vo" "slamon_map" "seg_pc")
 INTERVAL_SECONDS=1
 # =================================================
 
