@@ -10,7 +10,7 @@
  *
  *  @author
  *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
  *  @license BSD-4-Clause
  *    Both the original work and the modifications are released under the

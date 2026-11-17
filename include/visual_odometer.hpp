@@ -6,7 +6,7 @@
  *  @project SLAMON
  *
  *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *    Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
  *  @license BSD-4-Clause
  *    This file is part of the SLAMON project and is released under
