@@ -1,5 +1,19 @@
-This project includes original code from:
-"stereo_slam" (2013)
-Systems, Robotics and Vision Group (srv.uib.es)
-University of the Balearic Islands
-Released under the BSD-4-Clause License.
+SLAMON Project
+Copyright (c) 2024-2026 Bo Miquel Nordfeldt-Fiol
+
+This project contains original and modified code from the following third-party sources:
+
+1. stereo_slam (2013)
+   Copyright (c) 2013, Systems, Robotics and Vision Group (srv.uib.es)
+   University of the Balearic Islands.
+   Included portions are released under the BSD-4-Clause License.
+
+2. libhaloc (2013)
+   Copyright (c) 2013, Systems, Robotics and Vision Group (srv.uib.es)
+   University of the Balearic Islands.
+   Included portions are released under the BSD-4-Clause License.
+
+3. CMake Modules (FindG2O.cmake, FindSuiteSparse.cmake)
+   Originally developed and provided by the open-source community (including g2o developers).
+   These files are distributed under their respective permissive open-source licenses (BSD/MIT).
+   Modifications to these files within this repository are released under the BSD-4-Clause License.

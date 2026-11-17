@@ -1,3 +1,18 @@
+# \file FindSuiteSparse.cmake
+# \brief CMake module to locate the SuiteSparse library collection.
+#
+# This module defines SUITESPARSE_FOUND, SUITESPARSE_INCLUDE_DIRS, 
+# and SUITESPARSE_LIBRARIES. 
+#
+# \author Original: Open-source community
+# \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
+#
+# \copyright
+# The original script is provided by the open-source community under its 
+# respective permissive license (BSD/MIT). Modifications are part of the 
+# SLAMON project (package: slamon) and are released under the BSD 4-Clause 
+# License. See the top-level LICENSE file for details.
+
 # - Try to find SUITESPARSE
 # Once done this will define
 #  

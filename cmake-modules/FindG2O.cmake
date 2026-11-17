@@ -1,10 +1,17 @@
-# Locate the g2o libraries
-# A general framework for graph optimization.
+# \file FindG2O.cmake
+# \brief CMake module to locate the g2o (General Graph Optimization) libraries.
 #
-# This module defines
-# G2O_FOUND, if false, do not try to link against g2o
-# G2O_LIBRARIES, path to the libg2o
-# G2O_INCLUDE_DIR, where to find the g2o header files
+# This module defines G2O_FOUND, G2O_LIBRARIES, and G2O_INCLUDE_DIR.
+#
+# \author Original: g2o Developers / Open-source community
+# \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
+#
+# \copyright
+# The original script is provided by the open-source community under its 
+# respective permissive license (BSD/MIT). Modifications are part of the 
+# SLAMON project (package: slamon) and are released under the BSD 4-Clause 
+# License. See the top-level LICENSE file for details.
+
 
 IF(UNIX)
 
