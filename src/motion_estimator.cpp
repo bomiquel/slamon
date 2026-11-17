@@ -1,15 +1,12 @@
 /**
- *  @file motion_estimator.cpp
- *  @brief The MotionEstimtor class provides tools to compute the motion between stereo images.
- *  @package slamon
- *  @project SLAMON
+ *  \file motion_estimator.cpp
+ *  \brief The MotionEstimator class provides tools to compute 3D points and 6-DoF motion between stereo images.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
  
@@ -497,15 +494,15 @@ MotionEstimator::Type MotionEstimator::selectMotionEstimationType(const std::str
     std::string lower_motion_estimation_type = motion_estimation_type;
     std::transform(lower_motion_estimation_type.begin(), lower_motion_estimation_type.end(), lower_motion_estimation_type.begin(), ::tolower);
 
-    if (motion_estimation_type == "solvepnp_p3p" || motion_estimation_type == "p3p")
+    if (lower_motion_estimation_type == "solvepnp_p3p" || lower_motion_estimation_type == "p3p")
         return P3P;
-    else if (motion_estimation_type == "solvepnp_ap3p" || motion_estimation_type == "ap3p")
+    else if (lower_motion_estimation_type == "solvepnp_ap3p" || lower_motion_estimation_type == "ap3p")
         return AP3P;
-    else if (motion_estimation_type == "solvepnp_epnp" || motion_estimation_type == "epnp")
+    else if (lower_motion_estimation_type == "solvepnp_epnp" || lower_motion_estimation_type == "epnp")
         return EPNP;
     else
     {
-        std::cerr << "Unforseen motion estimation type" << std::endl;
+        std::cerr << "Unforeseen motion estimation type" << std::endl;
         return AP3P;
     }
 }

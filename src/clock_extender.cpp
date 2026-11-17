@@ -1,15 +1,12 @@
 /**
- *  @file clock_extender.cpp
- *  @brief Extend the ROS clock by a few seconds after a bagfile has finished.
- *  @package slamon
- *  @project SLAMON
+ *  \file clock_extender.cpp
+ *  \brief Extend the ROS clock by a few seconds after a bagfile has finished.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
 

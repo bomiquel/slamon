@@ -1,16 +1,12 @@
 /**
- *  @file keypoint_matcher.cpp
- *  @brief The KeypointMatcher class provides tools to match 
- *         keypoints and filter out outliers.
- *  @package slamon
- *  @project SLAMON
+ *  \file keypoint_matcher.cpp
+ *  \brief The KeypointMatcher class provides tools for visual keypoint matching and outlier rejection.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
  
@@ -24,17 +20,17 @@ KeypointMatcher::KeypointMatcher(const std::string& matching_type)
     std::transform(lower_matching_type.begin(), lower_matching_type.end(), lower_matching_type.begin(), ::tolower);
 
     // Gets matching type.
-    if (matching_type == "ratio_matching")
+    if (lower_matching_type == "ratio_matching")
         matching_type_ = RATIO_MATCHING;
-    else if (matching_type == "homography_matching")
+    else if (lower_matching_type == "homography_matching")
         matching_type_ = HOMOGRAPHY_MATCHING;
-    else if (matching_type == "circular_ratio_matching")
+    else if (lower_matching_type == "circular_ratio_matching")
         matching_type_ = CIRCULAR_RATIO_MATCHING;
-    else if (matching_type == "circular_homography_matching")
+    else if (lower_matching_type == "circular_homography_matching")
         matching_type_ = CIRCULAR_HOMOGRAPHY_MATCHING;
     else
     {
-        std::cerr << "Unforseen matching type" << std::endl;
+        std::cerr << "Unforeseen matching type" << std::endl;
         matching_type_ = RATIO_MATCHING;
     }
 }

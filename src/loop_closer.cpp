@@ -1,21 +1,19 @@
 /**
- *  @file loop_closer.cpp
- *  @brief The LoopCloser class detects and closes loops between keypoint 
+ *  \file loop_closer.cpp
+ *  \brief The LoopCloser class detects and closes loops between keypoint 
  *         clusters from multiple keyframes. 
- *  @package slamon
- *  @project SLAMON
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group
  *  (srv.uib.es), University of the Balearic Islands.
  *
- *  @author
- *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Original: Pep Lluís Negre-Carrasco (2013)
+ *  \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    Both the original work and the modifications are released under the
- *    BSD 4-Clause License. See the top-level LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon). Both the original 
+ *  work and the modifications are released under the BSD 4-Clause License. 
+ *  See the top-level LICENSE file for details.
  */
 
  

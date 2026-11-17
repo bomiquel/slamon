@@ -1,16 +1,13 @@
 /**
- *  @file initial_pose_server.hpp
- *  @brief Obtain the initial pose from .launch, .yaml or tfs 
- *         and sends it to the node that requests it.
- *  @package slamon
- *  @project SLAMON
+ *  \file initial_pose_server.hpp
+ *  \brief Obtains the initial robot pose from the TF tree or ROS parameters 
+ *         and provides it via a ROS service.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
 
@@ -28,38 +25,61 @@
 #include "slamon/GetTransform.h"
 
 
+/** \class InitialPoseServer
+ *  \brief ROS service server that provides the initial 6-DoF pose of the robot.
+ *  
+ *  This class advertises the `"get_pose"` service. When a request is received, it first
+ *  attempts to look up the transformation between the world frame and the robot frame 
+ *  in the TF2 tree at the requested timestamp. If the TF lookup fails, it falls back 
+ *  to returning a static pose loaded from the ROS parameter server (`.launch` or `.yaml`).
+ */
 class InitialPoseServer
 {
 
-
     public:
 
+        /** \brief Default class constructor. Loads ROS parameters, builds the fallback 
+         *         transform, and advertises the initial pose service.
+         */
         InitialPoseServer();
 
 
     protected:
 
+        /** \brief Service callback that retrieves the initial robot pose.
+         *  \param[in] req Service request containing the target query timestamp.
+         *  \param[out] res Service response populated with the resulting stamped transform.
+         *  \return `true` once the response transform has been populated (via TF2 or parameter fallback).
+         */
         bool getInitialPose(slamon::GetTransform::Request& req,
                             slamon::GetTransform::Response& res);
 
 
     private:
 
-        std::string world_frame_; //!> World frame name.
+        /** \brief Name of the reference world coordinate frame (e.g., `"world_ned"`). */
+        std::string world_frame_;
 
-        std::string robot_frame_; //!> Base link frame name.
+        /** \brief Name of the robot base coordinate frame (e.g., `"base_link"`). */
+        std::string robot_frame_;
 
-        ros::NodeHandle nh_; //!> Public ROS node handle.
+        /** \brief Public ROS node handle. */
+        ros::NodeHandle nh_;
 
-        ros::NodeHandle nhp_; //!> Private ROS node handle.
+        /** \brief Private ROS node handle (`"~"`). */
+        ros::NodeHandle nhp_;
 
-        ros::ServiceServer i_pose_server_; //!> Initial pose server.
+        /** \brief ROS service server for providing the initial pose. */
+        ros::ServiceServer i_pose_server_;
 
-        geometry_msgs::TransformStamped param_tf_; //!> Transform derived from the parameters.
+        /** \brief Fallback static transform constructed from ROS parameters. */
+        geometry_msgs::TransformStamped param_tf_;
 
-        tf2_ros::Buffer tf_buffer_; //!> ROS transforms buffer.
+        /** \brief TF2 buffer used to store and look up coordinate frame transforms. */
+        tf2_ros::Buffer tf_buffer_;
 
-        tf2_ros::TransformListener tf_listener_; //!> ROS transform listener.
+        /** \brief TF2 transform listener that populates the transform buffer. */
+        tf2_ros::TransformListener tf_listener_;
 };
 
 

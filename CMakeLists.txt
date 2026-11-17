@@ -1,3 +1,12 @@
+# \file CMakeLists.txt
+# \brief CMake build script for the SLAMON package.
+#
+# \author Bo Miquel Nordfeldt-Fiol (2024–2026)
+#
+# \copyright BSD-4-Clause
+# This file is part of the SLAMON project (package: slamon) and is released under
+# the BSD 4-Clause License. See the top-level LICENSE file for details.
+
 cmake_minimum_required(VERSION 3.0.2)
 project(slamon)
 
@@ -46,7 +55,10 @@ find_package(
 find_package(G2O REQUIRED)
 
 # Dependencies - OpenCV:
-set(OpenCV_DIR "/usr/local/lib/cmake/opencv4") # Change path if OpenCV-4.2.0 with the contributors module is installed in another location.
+# If OpenCV_DIR is not provided via command line, default to local custom installation.
+if(NOT OpenCV_DIR)
+    set(OpenCV_DIR "/usr/local/lib/cmake/opencv4") # Change path if OpenCV-4.2.0 with the contributors module is installed in another location.
+endif()
 find_package(OpenCV 4.2.0 REQUIRED)
 
 # Dependencies - Eigen:
@@ -173,6 +185,9 @@ install(TARGETS
 
 # Install scripts.
 install(PROGRAMS 
+        scripts/cpu_mem_io_logger.sh
+        scripts/cpu_mem_logger.sh
         scripts/delayed_rosbag_play.sh
+        scripts/mem_logger.sh
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
         )

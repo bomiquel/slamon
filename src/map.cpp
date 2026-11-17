@@ -1,22 +1,19 @@
 /**
- *  @file map.hpp
- *  @brief Map class based on a topological map where nodes are clusters of keypoints
- *         and edges are the relative movement between them and the number of keypoint 
- *         matchings. g2o graph wrapper.
- *  @package slamon
- *  @project SLAMON
+ *  \file map.cpp
+ *  \brief Topological pose-graph map wrapper around g2o, where vertices represent keypoint 
+ *         clusters and edges represent relative 6-DoF transformations.
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group
  *  (srv.uib.es), University of the Balearic Islands.
  *
- *  @author
- *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Original: Pep Lluís Negre-Carrasco (2013)
+ *  \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    Both the original work and the modifications are released under the
- *    BSD 4-Clause License. See the top-level LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon). Both the original 
+ *  work and the modifications are released under the BSD 4-Clause License. 
+ *  See the top-level LICENSE file for details.
  */
 
  

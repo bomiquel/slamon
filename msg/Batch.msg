@@ -1,25 +1,22 @@
-# @file Batch.msg
-# @brief Personalised message to define a keypoint cluster.
-# @package slamon
-# @project SLAMON
+# \file Batch.msg
+# \brief Custom ROS message representing a spatial keypoint cluster within a keyframe.
 #
-# @author
-#   Bo Miquel Nordfeldt-Fiol (2024–2026)
+# \author Bo Miquel Nordfeldt-Fiol (2024–2026)
 #
-# @license BSD-4-Clause
-#   This file is part of the SLAMON project and is released under
-#   the BSD 4-Clause License. See the LICENSE file for details.
+# \copyright BSD-4-Clause
+# This file is part of the SLAMON project (package: slamon) and is released under
+# the BSD 4-Clause License. See the top-level LICENSE file for details.
 
 
-# Global cluster id.
+# Global cluster ID.
 int32 global_id
 
-# Left and right Keypoints.
+# Left and right stereo 2D keypoints and descriptors.
 Keypoint[] l_kpts
 Keypoint[] r_kpts
 
-# 3D camera points.
+# Triangulated 3D points relative to the left camera coordinate frame.
 geometry_msgs/Point[] l_cam_pts
 
-# 3D centroid
+# 3D geometric centroid of the cluster in the left camera coordinate frame.
 geometry_msgs/Point centroid

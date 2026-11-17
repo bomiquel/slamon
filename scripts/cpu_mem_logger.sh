@@ -1,17 +1,13 @@
 #!/bin/bash
 
-# @file cpu_mem_logger.sh
-# @brief Script to monitor CPU and RAM usage.
+# \file cpu_mem_logger.sh
+# \brief Script to monitor CPU and RAM usage.
 #
-# @package slamon
-# @project SLAMON
+# \author Bo Miquel Nordfeldt-Fiol (2026)
 #
-# @author
-#   Bo Miquel Nordfeldt-Fiol (2026)
-#
-# @license BSD-4-Clause
-#   This file is part of the SLAMON project and is released under
-#   the BSD 4-Clause License. See the LICENSE file for details.
+# \copyright BSD-4-Clause
+# This file is part of the SLAMON project (package: slamon) and is released under
+# the BSD 4-Clause License. See the top-level LICENSE file for details.
 
 
 # ================= CONFIGURATION =================

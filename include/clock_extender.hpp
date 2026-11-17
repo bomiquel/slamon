@@ -1,15 +1,12 @@
 /**
- *  @file clock_extender.hpp
- *  @brief Extend the ROS clock by a few seconds after a bagfile has finished.
- *  @package slamon
- *  @project SLAMON
+ *  \file clock_extender.hpp
+ *  \brief Extend the ROS clock by a few seconds after a bagfile has finished.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
 
@@ -25,76 +22,102 @@
 #include <rosgraph_msgs/Clock.h>
 
 
+/** \class ClockExtender
+ *  \brief Monitors the `/clock` topic and continues publishing simulated time 
+ *         for a set duration after a rosbag playback ends.
+ *  
+ *  This is particularly useful in SLAM pipelines to allow pending backend optimizations,
+ *  loop closures, or map-saving routines to finish gracefully once the sensor stream stops.
+ */
 class ClockExtender
 {
     public:
 
-        /** \brief Class constructor.
+        /** \brief Class constructor. Initializes ROS handles, parameters, and the watchdog timer.
          */
         ClockExtender();
 
 
-        /** \brief Class destructor.
-         * 
+        /** \brief Class destructor. Ensures the worker thread is safely joined before shutdown.
          */
         ~ClockExtender();
 
 
     protected:
 
-        /** \brief Clock callback.
-         *  \param[in] msg ROS clock message.
+        /** \brief Callback for the `/clock` topic subscriber.
+         *  \param[in] msg Incoming ROS clock message.
          */
         void clockCallback(const rosgraph_msgs::ClockConstPtr& msg);
 
 
-        /** \brief Callback that is called when the timer is triggered.
-         *  \param[in] event ros::VallTimerEvent.
+        /** \brief Watchdog callback triggered periodically to check if the clock has stalled.
+         *  \param[in] event The wall-clock timer event structure (`ros::WallTimerEvent`).
          */
         void timerCallback(const ros::WallTimerEvent& event);
 
 
-        /** \brief Extend clock using a worker thread.
+        /** \brief Worker thread routine that artificially publishes and extends the ROS clock.
          */
         void extendClockWorker();
 
 
-        /** \brief Avoid launching a worker if one is already launched.
-         *  @return If it is possible to launch the worker.
-        */    
+        /** \brief Safely checks and launches the clock-extension worker thread if none is currently active.
+         *  \return `true` if a new worker thread was successfully launched, `false` otherwise.
+         */    
         bool launchWorkerIfNeeded();
 
 
     private:
     
-        // ROS handles.
-        ros::Publisher pub_; //!> Clock publisher.
+        // --- ROS Handles ---
 
-        ros::Subscriber sub_; //!> Clock subscriber.
+        /** \brief Publisher for the extended `/clock` topic. */
+        ros::Publisher pub_;
 
-        ros::WallTimer timer_; //!> Timer to extend the clock.
+        /** \brief Subscriber to monitor the active `/clock` topic. */
+        ros::Subscriber sub_;
 
-        // Params.
-        double extra_time_; //!> The additional time you want to extend the clock in seconds.
+        /** \brief Wall-time timer used to periodically check for clock inactivity. */
+        ros::WallTimer timer_; 
 
-        double gap_threshold_; //!> Threshold to consider bag finished.
 
-        double watch_interval_; //!> Timer interval.
+        // --- Configuration Parameters ---
 
-        // Time.
-        ros::Time last_clock_time_; //!> Last ROS time.
+        /** \brief Additional duration to extend the simulated clock [s]. */
+        double extra_time_; 
 
+        /** \brief Time threshold of inactivity required to consider the bagfile finished [s]. */
+        double gap_threshold_; 
+
+        /** \brief Period of the watchdog timer [s]. */
+        double watch_interval_;
+
+
+        // --- Time Tracking ---
+
+        /** \brief Timestamp of the last received ROS clock message. */
+        ros::Time last_clock_time_; 
+
+        /** \brief System wall-clock timestamp of when the last `/clock` message was received. */
         std::chrono::steady_clock::time_point last_msg_wall_time_;
 
-        // Multi-thread.
-        std::mutex clock_mutex_; //!> Mutex for last_clock_time_.
 
-        std::thread worker_thread_; //!> The thread that will extend the clock.
+        // --- Multi-threading & Synchronization ---
 
-        std::atomic<bool> extending_; //!> The clock is extending right now?
+        /** \brief Mutex protecting access to `last_clock_time_` and `last_msg_wall_time_`. */
+        std::mutex clock_mutex_;
 
-        std::atomic<bool> clock_received_; //!> Have I received any messages from the clock?
+        /** \brief Worker thread responsible for publishing the extended clock. */
+        std::thread worker_thread_;
 
+        /** \brief Flag indicating whether the clock is currently being extended. */
+        std::atomic<bool> extending_;
+
+        /** \brief Flag indicating whether at least one `/clock` message has been received. */
+        std::atomic<bool> clock_received_;
+
+        /** \brief Flag to signal the worker thread to abort execution prematurely. */
         std::atomic<bool> worker_stop_requested_;
 
 };

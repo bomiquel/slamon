@@ -1,20 +1,18 @@
 /**
- *  @file frame.hpp
- *  @brief Frame class representing a stereo camera frame.
- *  @package slamon
- *  @project SLAMON
+ *  \file frame.hpp
+ *  \brief Frame class representing a stereo camera frame.
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group
  *  (srv.uib.es), University of the Balearic Islands.
  *
- *  @author
- *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Original: Pep Lluís Negre-Carrasco (2013)
+ *  \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    Both the original work and the modifications are released under the
- *    BSD 4-Clause License. See the top-level LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon). Both the original 
+ *  work and the modifications are released under the BSD 4-Clause License. 
+ *  See the top-level LICENSE file for details.
  */
 
  
@@ -30,22 +28,28 @@
 #include <tf2/LinearMath/Transform.h>
 
 
+/** \class Frame
+ *  \brief Represents a stereo camera frame along with its extracted visual features and 3D geometry.
+ *  
+ *  This class stores the stereo images, 2D keypoints, feature descriptors, triangulated 3D points,
+ *  and odometry pose. It also provides spatial clustering routines to group keypoints.
+ */
 class Frame
 {
     public:
 
-        /** \brief Empty class constructor
+        /** \brief Default class constructor.
          */
-        Frame() {};
+        Frame() {}
 
 
-        /** \brief Class constructor without images.
-         *  \param[in] l_descs Left descriptors.
-         *  \param[in] r_descs Right descriptors.
-         *  \param[in] stamp Time stamp in which the frame was obtained.
-         *  \param[in] l_kpts Left keypoints.
-         *  \param[in] r_kpts Right keypoints.
-         *  \param[in] l_cam_pts 3D points relative to left camera.
+        /** \brief Parameterized constructor (without stereo images).
+         *  \param[in] l_descs Matrix of left image feature descriptors.
+         *  \param[in] r_descs Matrix of right image feature descriptors.
+         *  \param[in] stamp Timestamp at which the frame was captured.
+         *  \param[in] l_kpts Vector of left image 2D keypoints.
+         *  \param[in] r_kpts Vector of right image 2D keypoints.
+         *  \param[in] l_cam_pts Triangulated 3D points relative to the left camera frame.
          */
         Frame(cv::Mat l_descs,
               cv::Mat r_descs,
@@ -55,15 +59,15 @@ class Frame
               std::vector<cv::Point3f> l_cam_pts);
 
 
-        /** \brief Full class constructor
-         *  \param[in] l_img Left image.
-         *  \param[in] r_img Right image.
-         *  \param[in] l_descs Left descriptors.
-         *  \param[in] r_descs Right descriptors.
-         *  \param[in] stamp Time stamp in which the frame was obtained.
-         *  \param[in] l_kpts Left keypoints.
-         *  \param[in] r_kpts Right keypoints.
-         *  \param[in] l_cam_pts 3D points relative to left camera.
+        /** \brief Full parameterized constructor (including stereo images).
+         *  \param[in] l_img Left stereo image.
+         *  \param[in] r_img Right stereo image.
+         *  \param[in] l_descs Matrix of left image feature descriptors.
+         *  \param[in] r_descs Matrix of right image feature descriptors.
+         *  \param[in] stamp Timestamp at which the frame was captured.
+         *  \param[in] l_kpts Vector of left image 2D keypoints.
+         *  \param[in] r_kpts Vector of right image 2D keypoints.
+         *  \param[in] l_cam_pts Triangulated 3D points relative to the left camera frame.
          */
         Frame(cv::Mat l_img,
               cv::Mat r_img,
@@ -75,115 +79,116 @@ class Frame
               std::vector<cv::Point3f> l_cam_pts);
 
 
-        /** \brief Set keyframe timestamp.
-         *  \param[in] stamp Keyframe timestamp.
+        /** \brief Sets the frame timestamp.
+         *  \param[in] stamp Frame capture timestamp.
          */
-        inline void setTimestamp(const ros::Time stamp) {stamp_ = stamp;}
+        inline void setTimestamp(const ros::Time& stamp) {stamp_ = stamp;}
 
 
-        /** \brief Set left image.
+        /** \brief Sets the left image of the stereo pair.
          *  \param[in] l_img Left image.
          */
-        inline void setLeftImg(const cv::Mat l_img) {l_img_ = l_img;}
+        inline void setLeftImg(const cv::Mat& l_img) {l_img_ = l_img;}
 
 
-        /** \brief Set right image.
+        /** \brief Sets the right image of the stereo pair.
          *  \param[in] r_img Right image.
          */
-        inline void setRightImg(const cv::Mat r_img) {r_img_ = r_img;}
+        inline void setRightImg(const cv::Mat& r_img) {r_img_ = r_img;}
 
 
-        /** \brief Set world-odom camera pose.
-         *  \param[in] odom_camera_pose World-odom camera pose when taking the image.
+        /** \brief Sets the world-odometry camera pose.
+         *  \param[in] odom_camera_pose World-odometry camera pose when capturing the frame.
          */
-        inline void setCameraPose(const tf2::Transform& odom_camera_pose){odom_camera_pose_ = odom_camera_pose;}
+        inline void setCameraPose(const tf2::Transform& odom_camera_pose) {odom_camera_pose_ = odom_camera_pose;}
 
 
-        /** \brief Gets the number of clusters.
-         *  @return The clusters number.
+        /** \brief Gets the number of clusters in the frame.
+         *  \return The total number of clusters.
          */
         inline int getClustersNumber() const {return clusters_num_;}
 
 
-        /** \brief Get keyframe timestamp.
-         *  @return The time stamp when taking the image.
+        /** \brief Gets the frame timestamp.
+         *  \return The timestamp when the frame was captured.
          */
-        inline ros::Time getTimestamp() const {return stamp_;}
+        inline const ros::Time& getTimestamp() const {return stamp_;}
 
 
-        /** \brief Get left image.
-         *  @return The left image of the stereo pair
+        /** \brief Gets the left image.
+         *  \return The left image of the stereo pair.
          */
         inline cv::Mat getLeftImg() const {return l_img_;}
 
 
-        /** \brief Get right image.
-         *  @return The right image of the stereo pair
+        /** \brief Gets the right image.
+         *  \return The right image of the stereo pair.
          */
         inline cv::Mat getRightImg() const {return r_img_;}
 
 
-        /** \brief Get left descriptors.
-         *  @return Left descriptors.
+        /** \brief Gets the left feature descriptors.
+         *  \return Matrix containing the left descriptors.
          */
         inline cv::Mat getLeftDescs() const {return l_descs_;}
 
 
-        /** \brief Get right descriptors.
-         *  @return Right descriptors.
+        /** \brief Gets the right feature descriptors.
+         *  \return Matrix containing the right descriptors.
          */
         inline cv::Mat getRightDescs() const {return r_descs_;}
 
 
-        /** \brief Get left keypoints.
-         *  @return Left keypoints.
+        /** \brief Gets the left 2D keypoints.
+         *  \return Vector of left keypoints.
          */
-        inline std::vector<cv::KeyPoint> getLeftKpts() const {return l_kpts_;}
+        inline const std::vector<cv::KeyPoint>& getLeftKpts() const {return l_kpts_;}
 
 
-        /** \brief Get right keypoints.
-         *  @return Right keypoints.
+        /** \brief Gets the right 2D keypoints.
+         *  \return Vector of right keypoints.
          */
-        inline std::vector<cv::KeyPoint> getRightKpts() const {return r_kpts_;}
+        inline const std::vector<cv::KeyPoint>& getRightKpts() const {return r_kpts_;}
         
 
-        /** \brief Get 3D points relative to left camera.
+        /** \brief Gets the 3D points relative to the left camera.
+         *  \return Vector of 3D points in the left camera coordinate frame.
          */
-        inline std::vector<cv::Point3f> getLeftCameraPoints() const {return l_cam_pts_;}
+        inline const std::vector<cv::Point3f>& getLeftCameraPoints() const {return l_cam_pts_;}
 
 
-        /** \brief Get world-odom camera pose.
-         *  @return The world-odom camera pose when taking the image.
+        /** \brief Gets the world-odometry camera pose.
+         *  \return The world-odometry camera pose when the frame was captured.
          */
-        inline tf2::Transform getCameraPose() const {return odom_camera_pose_;}
+        inline const tf2::Transform& getCameraPose() const {return odom_camera_pose_;}
 
 
-        /** \brief Get the cluster centroids.
-         *  @return The centroids.
+        /** \brief Gets the 3D centroids of all clusters in the frame.
+         *  \return Vector containing the 3D centroids of the clusters.
          */
-        inline std::vector<cv::Point3f> getClustersCentroids() const {return cluster_centroids_;}
+        inline const std::vector<cv::Point3f>& getClustersCentroids() const {return cluster_centroids_;}
 
 
-        /** \brief Does the frame have clusters?
-         *  @return if it contains clusters.
+        /** \brief Checks whether the frame contains any clusters.
+         *  \return `true` if the frame contains clusters, `false` otherwise.
          */
         inline bool hasClusters() const {return !cluster_centroids_.empty();}
 
 
-        /** \brief Get the relationship between the keypoint index and the cluster to which it belongs.
-         *  @return Cluster ids.
+        /** \brief Gets the mapping between each keypoint index and its assigned cluster ID.
+         *  \return Vector of cluster IDs corresponding to each keypoint.
          */
-        inline std::vector<int> getClusterIds() const {return cluster_ids_;}
+        inline const std::vector<int>& getClusterIds() const {return cluster_ids_;}
 
 
-        /** \brief Clustering keypoints.
-         *  \param[in] c_global_cluster_id
+        /** \brief Groups the frame keypoints into spatial clusters.
+         *  \param[in] c_global_cluster_id Starting global cluster ID to assign to new clusters.
          */
         void regionClustering(int c_global_cluster_id);
 
 
-        /** \brief Increases all cluster identifiers by a given value.
-         *  \param[in] increase The value to add to each cluster identifier.
+        /** \brief Increments all cluster identifiers in the frame by a given offset.
+         *  \param[in] increase The offset value to add to each cluster ID.
          */
         void increaseClustersIds(int increase);
 
@@ -191,48 +196,61 @@ class Frame
     protected:
 
 
-        /** \brief Search keypoints into region
-         *  \param[in] eps maximum distance to considerate a keypoint into the region.
-         *  \param[in] keypoint query keypoint.
-         *  \param[in] keypoints list of keypoints.
-         *  @return the list of keypoints into a certain region
+        /** \brief Searches for neighboring keypoints within a given radius around a query keypoint.
+         *  \param[in] eps Maximum Euclidean distance to consider a keypoint within the region [px].
+         *  \param[in] keypoint Pointer to the query keypoint.
+         *  \param[in] keypoints Pointer to the complete list of candidate keypoints.
+         *  \return Vector of indices of the keypoints found within the region.
          */
         std::vector<int> regionQuery(float eps, 
                                      cv::KeyPoint *keypoint, 
                                      std::vector<cv::KeyPoint> *keypoints);
 
 
-        /** \brief Given a 3D point vector, calculate its centroid.
-         *  \param[in] pts The 3D points.
-         *  @return The 3D centroid.
+        /** \brief Computes the 3D geometric centroid of a given set of 3D points.
+         *  \param[in] pts Vector of 3D points.
+         *  \return The computed 3D centroid point.
          */
         cv::Point3f compute3DCentroid(const std::vector<cv::Point3f>& pts);
 
 
     private:
 
-        // Attributes:
+        /** \brief Total number of clusters in the frame. */
+        int clusters_num_;
 
-        int clusters_num_; //!> Stores the number of clusters.
+        /** \brief Frame capture timestamp. */
+        ros::Time stamp_;
 
-        ros::Time stamp_; //!> Store the frame timestamp.
+        /** \brief Left stereo image. */
+        cv::Mat l_img_;
 
-        cv::Mat l_img_; //!> Left image.
-        cv::Mat r_img_; //!> Right image.
+        /** \brief Right stereo image. */
+        cv::Mat r_img_;
 
-        cv::Mat l_descs_; //!> Left descriptors.
-        cv::Mat r_descs_; //!> Right descriptors.
+        /** \brief Matrix of left image feature descriptors. */
+        cv::Mat l_descs_;
 
-        tf2::Transform odom_camera_pose_; //!> World-odom camera pose for this frame.
+        /** \brief Matrix of right image feature descriptors. */
+        cv::Mat r_descs_;
 
-        std::vector<int> cluster_ids_; //!> Relationship between the keypoint index and the cluster to which it belongs.
+        /** \brief World-odometry camera pose for this frame. */
+        tf2::Transform odom_camera_pose_;
 
-        std::vector<cv::KeyPoint> l_kpts_; //!> Left keypoints.
-        std::vector<cv::KeyPoint> r_kpts_; //!> Right keypoints.
+        /** \brief Mapping between each keypoint index and the cluster ID to which it belongs. */
+        std::vector<int> cluster_ids_;
 
-        std::vector<cv::Point3f> l_cam_pts_; //!> Stereo 3D points relative to left camera.
+        /** \brief Vector of left image 2D keypoints. */
+        std::vector<cv::KeyPoint> l_kpts_;
 
-        std::vector<cv::Point3f> cluster_centroids_; //!> Central point for every cluster.
+        /** \brief Vector of right image 2D keypoints. */
+        std::vector<cv::KeyPoint> r_kpts_;
+
+        /** \brief Triangulated stereo 3D points relative to the left camera coordinate frame. */
+        std::vector<cv::Point3f> l_cam_pts_;
+
+        /** \brief 3D centroid point for each cluster in the frame. */
+        std::vector<cv::Point3f> cluster_centroids_;
 };
 
 

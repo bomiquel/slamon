@@ -1,23 +1,21 @@
 /**
- *  @file frame.cpp
- *  @brief Frame class representing a stereo camera frame.
- *  @package slamon
- *  @project SLAMON
+ *  \file frame.cpp
+ *  \brief Frame class representing a stereo camera frame.
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group
  *  (srv.uib.es), University of the Balearic Islands.
  *
- *  @author
- *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Original: Pep Lluís Negre-Carrasco (2013)
+ *  \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    Both the original work and the modifications are released under the
- *    BSD 4-Clause License. See the top-level LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon). Both the original 
+ *  work and the modifications are released under the BSD 4-Clause License. 
+ *  See the top-level LICENSE file for details.
  */
 
- 
+
 #include "frame.hpp"
 
 

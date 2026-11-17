@@ -1,18 +1,14 @@
 /**
- *  @file visual_odometer.cpp
- *  @brief The Visual Odometer class is responsive to track consecutive 
- *         image frames and compute their motion.
- *  @package slamon
- *  @project SLAMON
+ *  \file visual_odometer.cpp
+ *  \brief The VisualOdometer class is responsible for tracking consecutive stereo 
+ *         image frames and computing the 6-DoF camera and robot odometry.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2026)
+ *  \author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
-
 
 #include "visual_odometer.hpp"
 
@@ -434,7 +430,7 @@ namespace slamon
         start_module_time = ros::Time::now().toSec();
         std::vector<cv::Point3f> m_c_l_cam_pts, m_p_l_cam_pts;
         std::vector<cv::KeyPoint> m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts;
-        matchTemporalKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getLeftDescs(), 
+        matchTemporalKeypoints(c_frame.getLeftDescs(), c_frame.getRightDescs(), p_frame_.getLeftDescs(), p_frame_.getRightDescs(), 
                                c_frame.getLeftKpts(), c_frame.getRightKpts(), p_frame_.getLeftKpts(), p_frame_.getRightKpts(), 
                                c_frame.getLeftCameraPoints(), p_frame_.getLeftCameraPoints(),
                                m_c_l_kpts, m_c_r_kpts, m_p_l_kpts, m_p_r_kpts, m_c_l_cam_pts, m_p_l_cam_pts);
