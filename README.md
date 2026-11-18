@@ -65,6 +65,7 @@ To keep the codebase modular and easy to integrate, this repository is divided i
 ```text
 slamon/
 ├── .gitignore       # Git untracked files and build artifacts to ignore
+├── .vscode/         # Visual Studio Code workspace configuration
 ├── assets/          # Documentation figures
 ├── CMakeLists.txt   # CMake build configuration
 ├── cmake-modules/   # Custom CMake modules for finding external libraries (e.g., G2O)
