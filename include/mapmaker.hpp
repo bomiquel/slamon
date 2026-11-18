@@ -65,7 +65,7 @@ namespace slamon
             /** \brief Parameterized class constructor.
              *  \param[in] map Pointer to the global SLAM map object.
              *  \param[in] min_lc_inliers Minimum number of inliers required for loop closure.
-             *  \param[in] w_path Working directory path for storing map outputs and debug data.
+             *  \param[in] w_path Working directory path for storing outputs and debug data.
              *  \param[in] enable_debugging If `true`, enables debugging outputs and image saving.
              *  \param[in] cluster_queue Pointer to the thread-safe queue of clusters for the loop closer.
              *  \param[in] robot_frame_id Name of the robot base coordinate frame (e.g., `"base_link"`).
@@ -188,7 +188,7 @@ namespace slamon
             /** \brief ROS publisher for the map-corrected camera pose. */
             ros::Publisher camera_map_pub_;
 
-            /** \brief ROS publisher for per-iteration mapmaking execution times. */
+            /** \brief ROS publisher for per-iteration mapmaker execution times. */
             ros::Publisher run_times_pub_;
 
             /** \brief ROS publisher for the total number of inserted keyframes. */

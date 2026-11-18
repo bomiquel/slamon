@@ -7,15 +7,17 @@
     <description>
        SLAMON is a redesigned stereo visual SLAM (V-SLAM) framework tailored for 
        improved precision and robustness in underwater environments. Built upon the 
-       foundations of stereo_slam, SLAMON operates across three main parallel threads:
+       foundations of stereo_slam, SLAMON employs SIFT features across all tasks and
+       operates across three main parallel threads:
        1. A configurable stereo visual odometer featuring CLAHE image enhancement, 
-          spatial keypoint clustering, plain/circular temporal matching, grid bucketing, 
-          and RANSAC-based 3D-to-2D motion estimation (P3P, AP3P, EPnP).
+          spatial keypoint clustering, 4 outlier rejection methods, and 3 motion 
+          estimators (P3P, AP3P, EPnP), resulting in 12 possible system versions.
        2. A topological-metric pose-graph mapmaker (wrapped around g2o) where vertices 
           represent keypoint clusters and edges encode 6-DoF relative motion constraints 
           weighted by inlier counts.
        3. A multi-cluster loop closer that detects revisited underwater areas using 
-          spatial proximity and HALOC hash signatures.
+          spatial proximity and HALOC hash signatures. It performs Pose-Graph 
+          Optimisation (PGO) to globally correct the map.
     </description>
 
     <url type="website">https://github.com/bomiquel/slamon</url>

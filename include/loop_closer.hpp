@@ -244,10 +244,10 @@ namespace slamon
             /** \brief Flag indicating whether the loop closer has been initialized. */
             bool init_loop_closer_;
 
-            /** \brief Number of neighboring clusters to retrieve to increase loop closure probability. */
+            /** \brief Number of candidates neighboring clusters to retrieve to increase loop closure probability. */
             int lc_neighbors_;
 
-            /** \brief Number of candidate clusters to evaluate for loop closure. */
+            /** \brief Number of candidate clusters to compare with the query cluster for loop closure. */
             int lc_candidates_;
 
             /** \brief Minimum number of inliers required to accept a loop closure. */
