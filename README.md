@@ -1,13 +1,13 @@
 <p align="center">
-  <picture>
+  <picture class="logo-goib">
     <source media="(prefers-color-scheme: dark)" srcset="assets/logo_goib_dark.png">
     <img src="assets/logo_goib_light.png" width="30%" alt="GOIB" />
   </picture>
-  <picture>
+  <picture class="logo-uib">
     <source media="(prefers-color-scheme: dark)" srcset="assets/logo_uib_dark.png">
     <img src="assets/logo_uib_light.png" width="30%" alt="UIB" />
   </picture>
-  <picture>
+  <picture class="logo-srv">
     <source media="(prefers-color-scheme: dark)" srcset="assets/logo_srv_dark.png">
     <img src="assets/logo_srv_light.png" width="30%" alt="SRV" />
   </picture>

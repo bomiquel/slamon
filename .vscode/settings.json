@@ -1,4 +1,3 @@
-
 {
     "files.associations": {
         "ostream": "cpp",
@@ -70,5 +69,8 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "bit": "cpp"
-    }
+    },
+    "markdown.styles": [
+        "vscode_preview.css"
+    ]
 }
