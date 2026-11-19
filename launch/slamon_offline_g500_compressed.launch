@@ -58,13 +58,13 @@
         <arg name = "q_z" default = "-0.052030298"/>
         <arg name = "q_w" default = "0.998168548"/> -->
         <!-- UJI 2024_07_04/experiment_0_square_2_proc -->
-        <arg name = "t_x" default = "-0.037046177"/> 
+        <!-- <arg name = "t_x" default = "-0.037046177"/> 
         <arg name = "t_y" default = "0.269914678"/> 
         <arg name = "t_z" default = "-1.800492732"/> 
         <arg name = "q_x" default = "-0.029828077"/>
         <arg name = "q_y" default = "0.000048010"/>
         <arg name = "q_z" default = "-0.027061236"/>
-        <arg name = "q_w" default = "0.999188657"/>
+        <arg name = "q_w" default = "0.999188657"/> -->
         <!-- UJI 2024_07_04/experiment_0_square_3_proc -->
         <!-- <arg name = "t_x" default = "1.000167367"/> 
         <arg name = "t_y" default = "3.366724544"/> 

@@ -26,8 +26,9 @@
 </p>
 
 <div align="center">
-  <a href=""><img src="https://img.shields.io/badge/Read-Paper-green"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href=""><img src="https://img.shields.io/badge/Dataset-Zenodo-blue"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="#"><img src="https://img.shields.io/badge/Read-Paper-green"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="#"><img src="https://img.shields.io/badge/Dataset-Zenodo-blue"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="#"><img src="https://img.shields.io/badge/Code-Pipe_detector-yellow"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="https://github.com/bomiquel/slamon/blob/noetic/LICENSE"><img src="https://img.shields.io/badge/License-BSD_4--Clause-orange"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="https://www.youtube.com/watch?v=G6NhKJ459Rw&t=1s"><img src="https://img.shields.io/badge/YouTube-Video-red"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <br>
@@ -79,6 +80,7 @@ slamon/
 ├── CMakeLists.txt   # CMake build configuration
 ├── cmake-modules/   # Custom CMake modules for finding external libraries (e.g., G2O)
 ├── config/          # YAML configuration files for SLAMON parameters
+├── envs/            # Conda environment file for the pipe detector (pipes2.yml)
 ├── include/         # C++ header files (.hpp)
 ├── launch/          # ROS 1 launch files
 ├── LICENSE          # BSD 4-Clause License
@@ -86,7 +88,7 @@ slamon/
 ├── NOTICE           # Copyright and attribution notices for third-party/legacy code
 ├── package.xml      # ROS 1 package metadata and dependencies
 ├── README.md        # Project documentation
-├── scripts/         # Bash scripts for profiling
+├── scripts/         # Bash scripts for profiling and launch pipe detector
 ├── src/             # C++ source files (.cpp)
 └── srv/             # Custom ROS 1 services definitions
 ```
@@ -103,6 +105,9 @@ To run SLAMON, you will need a system running **Ubuntu 20.04** with the followin
 * SuiteSparse
 * cmake_modules (ROS)
 
+To run the pipe detector (dgcnn), you will need a system running **Ubuntu 20.04** with the following libraries:
+* Miniconda
+* Pipes2 environment
 
 ### Installation 
 
@@ -194,6 +199,42 @@ sudo make install # Optional
 sudo ldconfig # Only needed if sudo make install
 ```
 
+**MINICONDA:**
+```bash
+# 0. Keep ubuntu or debian up to date
+sudo apt -y update
+sudo apt -y upgrade
+
+# 1. Download the Miniconda installation script.
+cd ~/Downloads
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+
+# 2. Run installation script.
+bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda3
+
+# 3. Initialise Conda permanently (all new terminals).
+"$HOME/miniconda3/bin/conda" init bash
+
+# 4. Initialise Conda for the current (non-interactive) shell.
+eval "$($HOME/miniconda3/bin/conda shell.bash hook)"
+
+# 5. Accept Terms of Service for default channels
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+# 6. Configure conda.
+conda config --remove-key auto_activate_base 2>/dev/null || true
+conda config --remove-key auto_activate 2>/dev/null || true
+conda config --set auto_activate false
+
+# 7. Update conda.
+conda update -n base -c defaults conda -y
+
+# 8. Remove installator
+cd ~/Downloads
+rm -rf Miniconda3-latest-Linux-x86_64.sh
+```
+
 **G2O, SUITESPARSE & CMAKE-MODULES:**
 ```bash
 sudo apt install ros-noetic-libg2o ros-noetic-cmake-modules libsuitesparse-dev
@@ -212,9 +253,21 @@ source devel/setup.bash
 #### 2. Clone and compile SLAMON
 ```bash
 cd ~/catkin_ws/src
-git clone -b noetic https://github.com/bomiquel/slamon.git # Clone the pure V-SLAM branch (use -b noetic-pipes for the detector integration branch)
+git clone -b noetic-pipes https://github.com/bomiquel/slamon.git # Clone the V-SLAM with the pipe detector integration branch (use -b noetic for the pure V-SLAM branch)
 catkin build slamon
 source ~/catkin_ws/devel/setup.bash
+```
+
+#### 3. Clone pipe detector
+```bash
+cd ~/catkin_ws/src
+git clone -b ros_uji https://github.com/mmabadal/dgcnn.git 
+```
+
+#### 4. Setup conda environment
+```bash
+cd ~/catkin_ws/src/slamon/envs # or cd ~/catkin_ws/src/dgcnn/envs
+conda create --file pipes2.yml
 ```
 
 ## Datasets
@@ -257,7 +310,7 @@ It is recommended not to modify the remaining parameters and constants.
 
 ### Usage
 
-The provided launch files in `launch/` are self-contained and handle the entire execution pipeline, including playing the ROS bagfiles, setting `frame_id`s, publishing static `tf` transforms between the robot and the stereo camera, defining initial poses, loading the parameter files from `config/`, and launching the SLAMON ROS nodes.
+The provided launch files in `launch/` are self-contained and handle the entire execution pipeline, including playing the ROS bagfiles, setting `frame_id`s, publishing static `tf` transforms between the robot and the stereo camera, defining initial poses, loading the parameter files from `config/`, launching the SLAMON ROS nodes, setting up the `pipes2` conda environment, and launching the Python 3 pipe detector script.
 
 Simply update the bagfile path inside your desired launch file (based on the templates in `launch/`) and run:
 
@@ -278,6 +331,14 @@ roslaunch slamon launch_file_name.launch
 
 * `keyframe` (ROS topic) - Selected keyframe data published by the VO node.
 * `odom` (ROS topic) - Visual odometry estimate published by the VO node.
+* `points2` (ROS topic) - Point cloud from the selected keyframe.
+
+#### Pipe detector node
+
+* `keycloud` (ROS topic) - Point cloud from the selected keyframe.
+* `loop_closure_num` (ROS topic) - Total number of accepted loop closures.
+* `robot_map` (ROS topic) - Map-corrected 6-DoF robot pose.
+* `keyframes_poses` (Text file) - List of stamped 6-DoF keyframe poses.
 
 ### Outputs
 
@@ -299,6 +360,7 @@ roslaunch slamon launch_file_name.launch
 #### Map node — Mapmaker thread
 
 * `camera_map` (ROS topic) - Map-corrected 6-DoF camera pose.
+* `keycloud` (ROS topic) - Pointcloud from the selected keyframe.
 * `keyframe_num` (ROS topic) - Total number of keyframes currently in the map.
 * `keypoints_clustering_img` (ROS topic) - Image displaying the spatially clustered keypoints of a keyframe *(debugging mode only)*.
 * `mapmaker_performance` (ROS topic) - Per-iteration mapmaker execution times.
@@ -318,6 +380,16 @@ roslaunch slamon launch_file_name.launch
 * `loop_closure_num` (ROS topic) - Total number of accepted loop closures.
 * `haloc` (Temporary folder) - Working directory where the algorithm stores each cluster data 
 * `loop_closures` (Image folder) - Directory where the algorithm saves images with visual representations of each accepted loop closure *(debugging mode only)*.
+
+#### Pipe detector node
+
+* `points2_base` (ROS topic) - Raw point cloud referenced to the camera frame.
+* `points2_seg` (ROS topic) - Segmented point cloud referenced to the camera frame.
+* `points2_inst` (ROS topic) - Instance point cloud referenced to the camera frame.
+* `points2_info` (ROS topic) - Info point cloud referenced to the camera frame.
+* `points2_info_world` (ROS topic) - Info point cloud referenced to the world frame (computed using visual odometry/local estimates).
+* `points2_info_slam_map` (ROS topic) - Info point cloud referenced to the world frame (computed using global optimized SLAM map information).
+* `pipes` (Point cloud folder) - Directory where the algorithm saves the output point clouds containing the detected pipes/valves (`.obj`, `.npy`, `.ply`). Files ending in `_info_local.ply` store `points2_info_world` data, while files ending in `_global.ply` store `points2_info_slam_map` data.
 
 ## Citation
 
