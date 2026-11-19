@@ -1,0 +1,17 @@
+body.vscode-dark .logo-goib img,
+body.vscode-high-contrast .logo-goib img 
+{
+    content: url("assets/logo_goib_dark.png");
+}
+
+body.vscode-dark .logo-uib img,
+body.vscode-high-contrast .logo-uib img 
+{
+    content: url("assets/logo_uib_dark.png");
+}
+
+body.vscode-dark .logo-srv img,
+body.vscode-high-contrast .logo-srv img 
+{
+    content: url("assets/logo_srv_dark.png");
+}

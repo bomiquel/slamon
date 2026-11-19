@@ -1,16 +1,12 @@
 /**
- *  @file keypoint_detector.cpp
- *  @brief The KeypointDetector class provides the necessary tools to 
- *         detect keypoints and calculate descriptors.
- *  @package slamon
- *  @project SLAMON
+ *  \file keypoint_detector.cpp
+ *  \brief The KeypointDetector class provides tools for 2D keypoint detection and feature descriptor extraction.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  @author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
  

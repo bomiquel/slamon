@@ -2,32 +2,36 @@
 <package format="2">
 
     <name>slamon</name>
-    <version>1.2.5</version>
+    <version>2.0.0</version>
 
     <description>
-       SLAMON is an improved and extended version of stereo_slam.
-       Like the original project, it implements a stereo visual SLAM 
-       system designed for underwater environments.
-
-       SLAMON runs three main threads:
-       1. A robust visual odometer for underwater environments.
-       2. A topological map creator where the nodes are clusters 
-          of keypoints and the edges are the number of matches 
-          and the relative movement between nodes.
-       3. A loop closer that detects revisited areas by proximity and hashes.
+       SLAMON is a redesigned stereo visual SLAM (V-SLAM) framework tailored for 
+       improved precision and robustness in underwater environments. Built upon the 
+       foundations of stereo_slam, SLAMON employs SIFT features across all tasks and
+       operates across three main parallel threads:
+       1. A configurable stereo visual odometer featuring CLAHE image enhancement, 
+          spatial keypoint clustering, 4 outlier rejection methods, and 3 motion 
+          estimators (P3P, AP3P, EPnP), resulting in 12 possible system versions.
+       2. A topological-metric pose-graph mapmaker (wrapped around g2o) where vertices 
+          represent keypoint clusters and edges encode 6-DoF relative motion constraints 
+          weighted by inlier counts.
+       3. A multi-cluster loop closer that detects revisited underwater areas using 
+          spatial proximity and HALOC hash signatures. It performs Pose-Graph 
+          Optimisation (PGO) to globally correct the map.
     </description>
 
-    <url type = "website">https://github.com/bomiquel/slamon</url>
-    <url type = "bugtracker">https://github.com/bomiquel/slamon/issues</url>
-    <url type = "repository">https://github.com/bomiquel/slamon</url>
+    <url type="website">https://github.com/bomiquel/slamon</url>
+    <url type="bugtracker">https://github.com/bomiquel/slamon/issues</url>
+    <url type="repository">https://github.com/bomiquel/slamon</url>
 
-    <author email = "bo-miquel.nordfeldt@uib.cat">Bo Miquel Nordfeldt-Fiol</author>
-    <maintainer email = "bo-miquel.nordfeldt@uib.cat">Bo Miquel Nordfeldt-Fiol</maintainer>
+    <author email="bo-miquel.nordfeldt@uib.cat">Bo Miquel Nordfeldt-Fiol</author>
+    <author>Pep Lluís Negre-Carrasco</author>
+    <maintainer email="bo-miquel.nordfeldt@uib.cat">Bo Miquel Nordfeldt-Fiol</maintainer>
 
     <!--
         Licensing notice:
         - The project includes original code from stereo_slam and libhaloc (2013) under BSD-4-Clause.
-        - All modifications by Bo Miquel Nordfeldt-Fiol are under BSD-4-Clause too.
+        - All modifications and extensions by Bo Miquel Nordfeldt-Fiol (2024-2026) are released under BSD-4-Clause.
     -->
     <license>BSD-4-Clause</license>
 

@@ -1,16 +1,13 @@
 /**
- *  @file initial_pose_server.cpp
- *  @brief Obtain the initial pose from .launch, .yaml or tfs 
- *         and sends it to the node that requests it.
- *  @package slamon
- *  @project SLAMON
+ *  \file initial_pose_server.cpp
+ *  \brief Obtains the initial robot pose from the TF tree or ROS parameters 
+ *         and provides it via a ROS service.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  \author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
 

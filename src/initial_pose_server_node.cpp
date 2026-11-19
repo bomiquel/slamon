@@ -1,15 +1,12 @@
 /**
- *  @file initial_pose_server_node.cpp
- *  @brief Launch the initial_pose_server
- *  @package slamon
- *  @project SLAMON
+ *  \file initial_pose_server_node.cpp
+ *  \brief Launch the initial_pose_server
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  \author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
  

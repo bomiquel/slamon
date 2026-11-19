@@ -1,24 +1,22 @@
 /**
- *  @file publisher.cpp
- *  @brief The Publisher class is responsive to publish the image visualizations 
- *         for debugging purposes.
- *  @package slamon
- *  @project SLAMON
+ *  \file publisher.cpp
+ *  \brief The Publisher class is responsible for publishing ROS messages and saving 
+ *         image visualizations and trajectory results for debugging and evaluation.
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group
  *  (srv.uib.es), University of the Balearic Islands.
  *
- *  @author
- *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  \author Original: Pep Lluís Negre-Carrasco (2013)
+ *  \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    Both the original work and the modifications are released under the
- *    BSD 4-Clause License. See the top-level LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon). Both the original 
+ *  work and the modifications are released under the BSD 4-Clause License. 
+ *  See the top-level LICENSE file for details.
  */
 
- 
+
 #include "publisher.hpp"
 
 
@@ -529,7 +527,7 @@ void Publisher::writePoses(const std::string& o_path,
 
 void Publisher::writeLoopClosureEdges(const std::string& o_path,
                                       const std::vector<double>& weights,
-                                      const std::vector<std::pair<int, int>> edges_ids,
+                                      const std::vector<std::pair<int, int>>& edges_ids,
                                       const std::vector<std::pair<tf2::Transform, tf2::Transform>>& edges_poses)
 {
     std::string l_path = o_path + ".lock";

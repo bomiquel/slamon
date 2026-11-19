@@ -1,20 +1,19 @@
 /**
- *  @file tools.hpp
- *  @brief Tools library.
- *  @package slamon
- *  @project SLAMON
+ *  \file tools.hpp
+ *  \brief Utility functions for coordinate conversions, pose distance calculations, 
+ *         and ROS image message handling.
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group
  *  (srv.uib.es), University of the Balearic Islands.
  *
- *  @author
- *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  \author Original: Pep Lluís Negre-Carrasco (2013)
+ *  \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    Both the original work and the modifications are released under the
- *    BSD 4-Clause License. See the top-level LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon). Both the original 
+ *  work and the modifications are released under the BSD 4-Clause License. 
+ *  See the top-level LICENSE file for details.
  */
 
  
@@ -29,15 +28,18 @@
 #include <tf2/LinearMath/Transform.h>
 
 
+/** \namespace slamon
+ *  \brief Main namespace for the SLAMON stereo visual SLAM system.
+ */
 namespace slamon
 {
 
 
-    /** \brief Converts cv::Mat into tf2::Transform.
-     *  \param[in] r_vec cv::Mat containing the Rodrigues angles.
-     *  \param[in] t_vec cv::Mat containing the translation vector.
-     *  \param[out] tf The resulting transform.
-     *  @return whether the conversion could be done.
+    /** \brief Converts OpenCV rotation and translation vectors into a `tf2::Transform`.
+     *  \param[in] r_vec 3x1 `cv::Mat` containing the Rodrigues rotation vector.
+     *  \param[in] t_vec 3x1 `cv::Mat` containing the translation vector.
+     *  \param[out] tf Output `tf2::Transform` representing the 6-DoF transformation.
+     *  \return `true` if the conversion was successful, `false` if either input matrix is empty.
      */
     static inline bool fromMatToTf(const cv::Mat& r_vec,
                                    const cv::Mat& t_vec,
@@ -85,10 +87,10 @@ namespace slamon
     }
 
 
-    /** \brief Computes the absolute diference between 2 poses (omitting z).
-     *  \param[in] pose_0 transformation matrix of pose 0
-     *  \param[in] pose_1 transformation matrix of pose 1
-     *  @return the norm between two poses
+    /** \brief Computes the 2D Euclidean translational distance between two poses (omitting the z-axis).
+     *  \param[in] pose_0 First 6-DoF pose (`tf2::Transform`).
+     *  \param[in] pose_1 Second 6-DoF pose (`tf2::Transform`).
+     *  \return The 2D Euclidean distance between the two pose origins in the XY plane.
      */
     static inline double poseDiff2D(const tf2::Transform& pose_0, 
                                     const tf2::Transform& pose_1)
@@ -98,10 +100,10 @@ namespace slamon
     }
 
 
-    /** \brief Computes the absolute diference between 2 poses.
-     *  \param[in] pose_0 transformation matrix of pose 0
-     *  \param[in] pose_1 transformation matrix of pose 1
-     *  @return the norm between two poses
+    /** \brief Computes the 3D Euclidean translational distance between two poses.
+     *  \param[in] pose_0 First 6-DoF pose (`tf2::Transform`).
+     *  \param[in] pose_1 Second 6-DoF pose (`tf2::Transform`).
+     *  \return The 3D Euclidean distance between the two pose origins.
      */
     static inline double poseDiff3D(const tf2::Transform& pose_0,
                                     const tf2::Transform& pose_1)
@@ -111,10 +113,10 @@ namespace slamon
     }
 
 
-    /** \brief Non-linear normalisation.
-     *  \param[in] max The maximum expected value.
-     *  \param[in] value The current value to standardize.
-     *  @return Normalised value.
+    /** \brief Performs bounded non-linear normalization of a scalar value (e.g., for edge confidence weighting).
+     *  \param[in] max Maximum expected reference value.
+     *  \param[in] value Input scalar value to normalize.
+     *  \return Normalized value clamped to the range `[0.05, 1.0]`.
      */
     static inline double normalisation(const double max,
                                        const double value)
@@ -132,10 +134,10 @@ namespace slamon
     }
 
 
-    /** \brief Convert ROS image message to cv::Mat
-     *  \param[in] msg ROS message containing an img.
-     *  \param[out] img Will contain the image in cv::Mat type.
-     *  @return If the conversion has been possible.
+    /** \brief Converts a ROS `sensor_msgs::Image` message into an OpenCV `cv::Mat` (BGR8 encoding).
+     *  \param[in] msg Incoming ROS image message pointer.
+     *  \param[out] img Output OpenCV `cv::Mat` image.
+     *  \return `true` if the conversion succeeded, `false` if a `cv_bridge` exception occurred.
      */
     static inline bool fromImgMsgToMat(const sensor_msgs::ImageConstPtr& msg,
                                        cv::Mat& img)
@@ -160,7 +162,7 @@ namespace slamon
     }
 
 
-}   // End namespace
+} // namespace slamon
 
 
 #endif // TOOLS_HPP

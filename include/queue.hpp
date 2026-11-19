@@ -1,16 +1,12 @@
 /**
- *  @file queue.hpp
- *  @brief Protected queue to be used as a shared resource between threads. 
- *         Implements a simple FIFO.
- *  @package slamon
- *  @project SLAMON
+ *  \file queue.hpp
+ *  \brief Thread-safe FIFO queue to be used as a shared resource between threads.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  \author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
  
@@ -22,43 +18,53 @@
 #include <mutex>
 
 
+/** \namespace slamon
+ *  \brief Main namespace for the SLAMON stereo visual SLAM system.
+ */
 namespace slamon
 {
 
 
+    /** \class Queue
+     *  \brief Thread-safe First-In-First-Out (FIFO) queue wrapper around `std::deque`.
+     *  \tparam T Type of the elements stored in the queue.
+     *  
+     *  This template class provides mutex-protected operations to safely share data 
+     *  (such as `Cluster` objects) between producer and consumer threads.
+     */
     template<typename T>
     class Queue
     {
         public:
 
 
-            /** \brief Empty class constructor.
+            /** \brief Default class constructor.
              */
             Queue() {}
 
 
-            /** \brief Adds an item to the end of the queue.
+            /** \brief Appends an item to the back of the queue (copy insertion).
              *  \param[in] item The item to be inserted.
              */
-            inline void pushBack(T item)
+            inline void pushBack(const T& item)
             {
                 std::scoped_lock lock(mutex_queue_);
                 queue_.push_back(item);
             }
 
 
-            /** \brief Adds an item to the end of the queue.
+            /** \brief Appends an item to the back of the queue (in-place construction).
              *  \param[in] item The item to be inserted.
              */
-            inline void emplaceBack(T item)
+            inline void emplaceBack(const T& item)
             {
                 std::scoped_lock lock(mutex_queue_);
                 queue_.emplace_back(item);
             }
 
 
-            /** \brief Checks if there are items in the queue.
-             *  @return True if queue is empty.
+            /** \brief Checks whether the queue is currently empty.
+             *  \return `true` if the queue contains no elements, `false` otherwise.
              */
             inline bool isEmpty()
             {
@@ -67,8 +73,8 @@ namespace slamon
             }
 
 
-            /** \brief Gets the first element of the queue.
-             *  @return First element.
+            /** \brief Retrieves and removes the first element from the front of the queue.
+             *  \return The element removed from the front of the queue.
              */
             inline T getFront()
             {
@@ -82,17 +88,17 @@ namespace slamon
         private:
 
 
-            // Attributes:
+            /** \brief Underlying double-ended queue container storing the elements. */
+            std::deque<T> queue_;
 
-            std::deque<T> queue_; //!> The queue in question.
+            /** \brief Mutex protecting concurrent access to the queue. */
+            std::mutex mutex_queue_;
 
-            std::mutex mutex_queue_; //!> Mutex for queue manipulation.
 
-            
     };
 
 
-}  // End namespace
+} // namespace slamon
 
 
 #endif // QUEUE_HPP

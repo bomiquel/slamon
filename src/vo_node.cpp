@@ -1,16 +1,12 @@
 /**
- *  @file vo_node.cpp
- *  @brief Launch SLAMON's visual odometer as a ROS node.
- *         image frames and compute their motion.
- *  @package slamon
- *  @project SLAMON
+ *  \file vo_node.cpp
+ *  \brief Launch SLAMON's visual odometer as a ROS node.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  @author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
 

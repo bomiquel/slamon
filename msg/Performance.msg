@@ -1,34 +1,31 @@
-# @file Performance.msg
-# @brief Custom message to evaluate SLAMON execution times.
-#        To avoid creating a message for each part of the 
-#        system, this message is reused in all three threads.
-# @package slamon
-# @project SLAMON
+# \file Performance.msg
+# \brief Custom ROS message for reporting per-stage execution runtimes across SLAMON modules.
+#        To avoid defining a separate message for each subsystem, this message is shared and 
+#        reused across all three main threads: Visual Odometry (VO), Mapmaker (MM), and Loop Closer (LC).
 #
-# @author
-#   Bo Miquel Nordfeldt-Fiol (2024–2025)
+# \author Bo Miquel Nordfeldt-Fiol (2024–2026)
 #
-# @license BSD-4-Clause
-#   This file is part of the SLAMON project and is released under
-#   the BSD 4-Clause License. See the LICENSE file for details.
+# \copyright BSD-4-Clause
+# This file is part of the SLAMON project (package: slamon) and is released under
+# the BSD 4-Clause License. See the top-level LICENSE file for details.
 
 
-# Typical ROS message header
+# Standard ROS message header (timestamp and coordinate frame).
 Header header
 
-# Successes in the last iteration of the thread in question.
-# VO: If it has achieved a valid estimate of the movement 
-# between images (bool), MM: If it has included a keyframe
-# on the map (bool) and LC: Number of closed loops
+# Number of successful operations in the last iteration of the thread:
+# - VO: Valid frame-to-frame motion estimation achieved (0 or 1).
+# - MM: New keyframe inserted into the map (0 or 1).
+# - LC: Number of loop closures detected in the current iteration.
 int16 successes_num
 
-# Run times.
-float64 run_time_0      # Time needed for VO: Feature extraction, MM: Pose update or LC: Process current cluster.
-float64 run_time_1      # Time needed for VO: Stereo matching, MM: Add vertex (cluster) to graph or LC: Search for candidates to close loops by proximity.
-float64 run_time_2      # Time needed for VO: Triangulation, MM: Add co-framed edges to graph or LC: Search for candidates to close loops by hash.
-float64 run_time_3      # Time needed for VO: Clustering, MM: Add inter-frames edges to graph or LC: Read cluster candidates.
-float64 run_time_4      # Time needed for VO: Temporal matching, MM: Publish or LC: Loop detection.
-float64 run_time_5      # Time needed for VO: Bucketing, MM: Data write or LC: Loop correction.
-float64 run_time_6      # Time needed for VO: Motion estimation, MM: Nothing or LC: Nothing.
-float64 run_time_7      # Time needed for VO: Keyframe insertion decision, MM: Nothing or LC: Nothing.
-float64 total_run_time  # Time needed for each thread to perform one iteration.
+# Per-stage execution runtimes [s].
+float64 run_time_0      # Execution time for stage 0 (VO: Feature extraction | MM: Pose update | LC: Process current cluster) [s].
+float64 run_time_1      # Execution time for stage 1 (VO: Stereo matching | MM: Add vertex to graph | LC: Proximity candidate search) [s].
+float64 run_time_2      # Execution time for stage 2 (VO: Triangulation | MM: Add intra-keyframe edges | LC: Hash candidate search) [s].
+float64 run_time_3      # Execution time for stage 3 (VO: Clustering | MM: Add inter-frame edges | LC: Read candidate clusters) [s].
+float64 run_time_4      # Execution time for stage 4 (VO: Temporal matching | MM: Publish messages | LC: Loop detection) [s].
+float64 run_time_5      # Execution time for stage 5 (VO: Keypoint bucketing | MM: Write map data to disk | LC: Loop correction) [s].
+float64 run_time_6      # Execution time for stage 6 (VO: Motion estimation | MM: Unused | LC: Unused) [s].
+float64 run_time_7      # Execution time for stage 7 (VO: Keyframe insertion decision | MM: Unused | LC: Unused) [s].
+float64 total_run_time  # Total execution time required by the thread to complete one full iteration [s].

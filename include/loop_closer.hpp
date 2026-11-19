@@ -1,21 +1,19 @@
 /**
- *  @file loop_closer.hpp
- *  @brief The LoopCloser class detects and closes loops between keypoint 
+ *  \file loop_closer.hpp
+ *  \brief The LoopCloser class detects and closes loops between keypoint 
  *         clusters from multiple keyframes. 
- *  @package slamon
- *  @project SLAMON
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group
  *  (srv.uib.es), University of the Balearic Islands.
  *
- *  @author
- *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  \author Original: Pep Lluís Negre-Carrasco (2013)
+ *  \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    Both the original work and the modifications are released under the
- *    BSD 4-Clause License. See the top-level LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon). Both the original 
+ *  work and the modifications are released under the BSD 4-Clause License. 
+ *  See the top-level LICENSE file for details.
  */
 
  
@@ -41,27 +39,37 @@
 #include "slamon/GetProjectionMatrices.h"
 
 
+/** \namespace slamon
+ *  \brief Main namespace for the SLAMON stereo visual SLAM system.
+ */
 namespace slamon
 {
 
 
+    /** \class LoopCloser
+     *  \brief Detects and validates loop closures between spatial keypoint clusters 
+     *         from different keyframes.
+     *  
+     *  This class retrieves loop closure candidates via spatial proximity and HALOC 
+     *  hash matching, performs multi-cluster feature matching and 6-DoF motion estimation, 
+     *  and adds loop closure constraints (edges) to the pose-graph map for global optimization.
+     */
     class LoopCloser: protected KeypointMatcher, protected MotionEstimator, protected Publisher
     {
         public:
 
 
-            /** \brief Class constructor
-             *  \param[in] map Map object pointer.
-             *  \param[in] lc_neighbors Number of neighbours to recover in order to 
-             *  increase the possibility of closing a loop.
-             *  \param[in] lc_candidates Number of candidates to close a loop.
-             *  \param[in] min_lc_inliers Minimum number of inliers for loop closure.
-             *  \param[in] lc_discard_window Window size of discarded graph vertices.
-             *  \param[in] enable_debugging Enabling or disabling debugging.
-             *  \param[in] cluster_queue Cluster queue pointer.
-             *  \param[in] w_path Working path.
-             *  \param[in] matching_type Desired matching type name.
-             *  \param[in] motion_estimation_type Desired motion type name.
+            /** \brief Parameterized class constructor.
+             *  \param[in] map Pointer to the global SLAM map object.
+             *  \param[in] lc_neighbors Number of neighboring clusters to retrieve to increase loop closure recall.
+             *  \param[in] lc_candidates Number of candidate clusters to evaluate for loop closure.
+             *  \param[in] min_lc_inliers Minimum number of geometrical inliers required to accept a loop closure.
+             *  \param[in] lc_discard_window Window size of recent graph vertices (clusters) to ignore during candidate search.
+             *  \param[in] enable_debugging If `true`, enables debugging outputs and image saving.
+             *  \param[in] cluster_queue Pointer to the thread-safe queue of incoming clusters.
+             *  \param[in] w_path Working directory path for storing temporary and debug data.
+             *  \param[in] matching_type String identifier of the desired keypoint matching strategy.
+             *  \param[in] motion_estimation_type String identifier of the desired motion estimation strategy.
              */
             LoopCloser(Map* map,
                        const int lc_neighbors,
@@ -75,13 +83,12 @@ namespace slamon
                        const std::string& motion_estimation_type);
 
 
-            /** \brief Starts loop closer.
+            /** \brief Starts the main loop closer processing loop.
              */
             void run();
 
 
-            /** \brief Finishes the loop closer.
-             *  Deletes haloc directory.
+            /** \brief Finalizes the loop closer execution and removes temporary HALOC files from disk.
              */
             void finalise();
 
@@ -89,27 +96,25 @@ namespace slamon
         private:
 
 
-            /** \brief Obtains, from the VO through a service, 
-             *  the stereo camera projection matrices. 
-             *  \param[out] l_proj_mat Left projection matrix.
-             *  \param[out] r_proj_mat Right projection matrix.
+            /** \brief Requests the stereo camera projection matrices from the visual odometry node via a ROS service.
+             *  \param[out] l_proj_mat Left camera 3x4 projection matrix.
+             *  \param[out] r_proj_mat Right camera 3x4 projection matrix.
              */
             void getProjectionMatrices(cv::Mat& l_proj_mat,
                                        cv::Mat& r_proj_mat);
 
 
-            /** \brief Processes the new cluster.
-             *  \param[in] q_cluster The query cluster.
+            /** \brief Processes a newly received cluster to update the hash table and search for loop closures.
+             *  \param[in] q_cluster The incoming query cluster.
              */
             void processNewCluster(const Cluster& q_cluster);
 
 
-            /** \brief Get the best candidates to close a loop by hash.
-             *  \param[in] q_cluster_id The query cluster id.
-             *  \param[in] cand_num The number of best candidates to be retrieved.
-             *  \param[in] no_cand Clusters list, outside the discard window, that cannot be
-             *  candidates for closing loop.
-             *  \param[out] closest_cand The list of best candidates.
+            /** \brief Retrieves the best loop closure candidate clusters based on HALOC hash distance.
+             *  \param[in] q_cluster_id Global ID of the query cluster.
+             *  \param[in] cand_num Number of top candidates to retrieve.
+             *  \param[in] no_cand List of cluster IDs (outside the discard window) excluded from being candidates.
+             *  \param[out] closest_cand Output list of the best candidate cluster IDs.
              */
             void getHashCandidates(const int q_cluster_id, 
                                    const size_t cand_num,
@@ -117,32 +122,30 @@ namespace slamon
                                    std::vector<int>& closest_cand);
 
 
-            /** \brief Returns whether the second element of the first
-             *  std::pair is less than the second element of the second std::pair.
-             *  \param[in] d_0 First pair.
-             *  \param[in] d_1 Second pair.
-             *  @return true if first pair is smaller than second pair.
+            /** \brief Comparator function to sort pairs of (cluster ID, hash distance) in ascending order of distance.
+             *  \param[in] d_0 First pair (ID, distance).
+             *  \param[in] d_1 Second pair (ID, distance).
+             *  \return `true` if the distance of `d_0` is strictly less than that of `d_1`, `false` otherwise.
              */
-            static inline bool sortByMatching(const std::pair<int, float> d_0, const std::pair<int, float> d_1)
+            static inline bool sortByMatching(const std::pair<int, float>& d_0, const std::pair<int, float>& d_1)
             {
                 return (d_0.second < d_1.second);
             }
 
 
-            /** \brief Reads cluster data from file.
-             *  \param[in] id Cluster id.
-             *  @return The cluster.
+            /** \brief Reads a cluster's data from disk given its global ID.
+             *  \param[in] id Global cluster ID.
+             *  \return The loaded `Cluster` object.
              */
             Cluster readCluster(const int id);
 
 
-            /** \brief Checks if the current cluster was already read from disk in
-             *  the last iteration, if it was already read it retrieves it, otherwise 
-             *  it reads it from disk.
-             *  \param[in] search_type Type of search used (proximity or hash).
-             *  \param[in] cand_cluster_ids Identifiers of the candidate clusters.
-             *  \param[out] cand_clusters The candidate clusters.
-             *  \param[out] neighbours_cand_clusters The neighbors of the candidate clusters.
+            /** \brief Retrieves candidate clusters and their neighbors, reusing cached data from the previous 
+             *         iteration if available or reading from disk otherwise.
+             *  \param[in] search_type Type of candidate search used (`"proximity"` or `"hash"`).
+             *  \param[in] cand_cluster_ids Global IDs of the candidate clusters.
+             *  \param[out] cand_clusters Vector of pairs containing the loaded candidate clusters and their search type.
+             *  \param[out] neighbours_cand_clusters Vector containing the neighboring clusters for each candidate.
              */
             void readCandidateClusters(const std::string& search_type,
                                        const std::vector<int>& cand_cluster_ids,
@@ -150,39 +153,35 @@ namespace slamon
                                        std::vector<std::vector<Cluster>>& neighbours_cand_clusters);
 
 
-            /** \brief Checks if the neighboring cluster was already read from disk in
-             *  the last iteration, if it was already read it retrieves it, otherwise
-             *  it reads it from disk.
-             *  \param[in] neighbor_id Neighbor identifier.
-             *  \param[in] neighbours_cand_cluster Neighbors of the candidate group.
-             *  @return The candidate neighbor cluster.
+            /** \brief Retrieves a neighboring cluster of a candidate, reusing cached data from the previous 
+             *         iteration if available or reading from disk otherwise.
+             *  \param[in] neighbor_id Global ID of the neighboring cluster.
+             *  \param[in] neighbours_cand_cluster Cached neighboring clusters from the candidate group.
+             *  \return The retrieved neighbor `Cluster` object.
              */
             Cluster readCandidateNeighborsClusters(const int neighbor_id,
                                                    std::vector<Cluster>& neighbours_cand_cluster);
 
 
-            /** \brief Updates the pose of a cluster.
-             *  \param[in out] cluster to be upgraded.
+            /** \brief Updates the world-map camera pose of a given cluster using the latest pose-graph estimate.
+             *  \param[in,out] cluster Cluster whose camera pose is to be updated.
              */
             void updateClusterPose(Cluster& cluster);
 
 
-            /** \brief It tries to detect a loop closure between the query cluster
-             *  and the candidate.
+            /** \brief Attempts to detect and geometrically validate a loop closure between the query cluster 
+             *         and a candidate cluster (including their respective neighbors).
              *  \param[in] q_cluster Query cluster.
              *  \param[in] cand_cluster Candidate cluster.
-             *  \param[in] neighbours_cand_cluster Neighbors of the candidate cluster.
-             *  \param[out] estimated_motion Little transform between query and candidate
-             *  cluster, if there is loop closure.
-             *  \param[out] i_q_cluster_ids Cluster ids inliers from query cluster and its 
-             *  neighbors.
-             *  \param[out] i_cand_cluster_ids Cluster ids inliers from candidate cluster and its
-             *  neighbors.
-             *  \param[out] i_q_l_kpts Left keypoints inliers from query cluster and its neighbors.
-             *  \param[out] i_q_r_kpts Right keypoints inliers from query cluster and its neighbors.
-             *  \param[out] i_cand_l_kpts Left keypoints inliers from candidate cluster and its neighbors.
-             *  \param[out] i_cand_r_kpts Right keypoints inliers from candidate cluster and its neighbors.
-             *  @return True if there is a loop closure.
+             *  \param[in] neighbours_cand_cluster Neighboring clusters of the candidate cluster.
+             *  \param[out] estimated_motion Estimated relative 6-DoF transformation between the query and candidate clusters.
+             *  \param[out] i_q_cluster_ids Inlier cluster IDs from the query cluster and its neighbors.
+             *  \param[out] i_cand_cluster_ids Inlier cluster IDs from the candidate cluster and its neighbors.
+             *  \param[out] i_q_l_kpts Inlier left keypoints from the query cluster and its neighbors.
+             *  \param[out] i_q_r_kpts Inlier right keypoints from the query cluster and its neighbors.
+             *  \param[out] i_cand_l_kpts Inlier left keypoints from the candidate cluster and its neighbors.
+             *  \param[out] i_cand_r_kpts Inlier right keypoints from the candidate cluster and its neighbors.
+             *  \return `true` if a valid loop closure is detected, `false` otherwise.
              */
             bool detectLoop(Cluster& q_cluster,
                             Cluster& cand_cluster,
@@ -196,28 +195,18 @@ namespace slamon
                             std::vector<cv::KeyPoint>& i_cand_r_kpts);
 
 
-            /** \brief Add constrains to the map (edge(s) to the graph) and
-             *  performs a pose-graph optimisation.
-             *  \param[in] q_keyframe_id Identifier of the keyframe to which
-             *  the query cluster belongs.
-             *  \param[in] cand_keyframe_id Identifier of the keyframe to which
-             *  the candidate cluster belongs.
-             *  \param[in] search_method Type of search used: proximity or hash.
-             *  \param[in] estimated_motion Little transform between query and 
-             *  candidate cluster.
-             *  \param[in] i_q_cluster_ids Cluster ids inliers from query cluster
-             *  and its neighbors.
-             *  \param[in] i_cand_cluster_ids Cluster ids inliers from candidate 
-             *  cluster and its neighbors.
-             *  \param[in] i_q_l_kpts Left keypoints inliers from query cluster 
-             *  and its neighbors.
-             *  \param[in] i_q_r_kpts Right keypoints inliers from query cluster
-             *  and its neighbors.
-             *  \param[in] i_cand_l_kpts Left keypoints inliers from candidate 
-             *  cluster and its neighbors.
-             *  \param[in] i_cand_r_kpts Right keypoints inliers from candidate
-             *  cluster and its neighbors.
-             *  @return If some edge has been added.
+            /** \brief Adds loop closure constraints (edges) to the pose-graph map and triggers global pose-graph optimization.
+             *  \param[in] q_keyframe_id ID of the keyframe to which the query cluster belongs.
+             *  \param[in] cand_keyframe_id ID of the keyframe to which the candidate cluster belongs.
+             *  \param[in] search_method Candidate search method used (`"proximity"` or `"hash"`).
+             *  \param[in] estimated_motion Estimated relative 6-DoF transformation between the query and candidate clusters.
+             *  \param[in] i_q_cluster_ids Inlier cluster IDs from the query cluster and its neighbors.
+             *  \param[in] i_cand_cluster_ids Inlier cluster IDs from the candidate cluster and its neighbors.
+             *  \param[in] i_q_l_kpts Inlier left keypoints from the query cluster and its neighbors.
+             *  \param[in] i_q_r_kpts Inlier right keypoints from the query cluster and its neighbors.
+             *  \param[in] i_cand_l_kpts Inlier left keypoints from the candidate cluster and its neighbors.
+             *  \param[in] i_cand_r_kpts Inlier right keypoints from the candidate cluster and its neighbors.
+             *  \return `true` if at least one loop closure edge was added to the graph, `false` otherwise.
              */
             bool loopCorrection(const int q_keyframe_id,
                                 const int cand_keyframe_id,
@@ -231,18 +220,14 @@ namespace slamon
                                 const std::vector<cv::KeyPoint>& i_cand_r_kpts);
 
 
-            /** \brief Gets the inliers per cluster pair.
-             *  \param[in] i_q_cluster_ids Cluster ids inliers from query cluster and its 
-             *  neighbors.
-             *  \param[in] i_cand_cluster_ids Cluster ids inliers from candidate cluster and its
-             *  neighbors.
-             *  \param[in] i_q_l_kpts Left keypoints inliers from query cluster and its neighbors.
-             *  \param[out] inliers_per_pair Number of inliers per cluster pair.
-             *  \param[out] cand_keyframe_ids Identifiers of keyframes containing candidate 
-             *  clusters that have closed loops.
-             *  \param[out] cluster_pairs Cluster pairs vector (q_cluster_id - cand_cluster_id).
-             *  \param[out] cand_cluster_keyframe_relations Stores the candidate cluster-keyframe
-             *  relations (cand_cluster_id, cand_keyframe_id).
+            /** \brief Counts the number of inliers per individual cluster pair involved in a loop closure.
+             *  \param[in] i_q_cluster_ids Inlier cluster IDs from the query cluster and its neighbors.
+             *  \param[in] i_cand_cluster_ids Inlier cluster IDs from the candidate cluster and its neighbors.
+             *  \param[in] i_q_l_kpts Inlier left keypoints from the query cluster and its neighbors.
+             *  \param[out] inliers_per_pair Number of matched inliers for each unique cluster pair.
+             *  \param[out] cand_keyframe_ids IDs of the keyframes containing candidate clusters that closed a loop.
+             *  \param[out] cluster_pairs Vector of matched cluster ID pairs (`q_cluster_id`, `cand_cluster_id`).
+             *  \param[out] cand_cluster_keyframe_relations Vector of pairs mapping candidate cluster IDs to their keyframe IDs (`cand_cluster_id`, `cand_keyframe_id`).
              */
             void getInliersPerClusterPair(const std::vector<int>& i_q_cluster_ids,
                                           const std::vector<int>& i_cand_cluster_ids,
@@ -253,73 +238,102 @@ namespace slamon
                                           std::vector<std::pair<int, int>>& cand_cluster_keyframe_relations);
 
 
-            // Attributes:
+            /** \brief Flag to enable or disable debugging outputs and image saving. */
+            bool enable_debugging_;
+
+            /** \brief Flag indicating whether the loop closer has been initialized. */
+            bool init_loop_closer_;
+
+            /** \brief Number of candidates neighboring clusters to retrieve to increase loop closure probability. */
+            int lc_neighbors_;
+
+            /** \brief Number of candidate clusters to compare with the query cluster for loop closure. */
+            int lc_candidates_;
+
+            /** \brief Minimum number of inliers required to accept a loop closure. */
+            int min_lc_inliers_;
+
+            /** \brief Maximum number of inliers recorded for a single loop closure edge. */
+            int max_edge_inliers_;
+
+            /** \brief Window size of recent graph vertices (clusters) discarded from candidate search. */
+            int lc_discard_window_;
             
-            bool enable_debugging_; //!> Enabling or disabling debugging messages.
+            /** \brief Total number of detected loop closures. */
+            int loop_closure_num_;
 
-            bool init_loop_closer_; //!> Loop closer state.
+            /** \brief Left stereo camera 3x4 projection matrix. */
+            cv::Mat l_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1);
 
-            int lc_neighbors_; //!> Number of neighbours to recover in order to increase the possibility of closing the loop.
+            /** \brief Right stereo camera 3x4 projection matrix. */
+            cv::Mat r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1);
 
-            int lc_candidates_; //!> Number of candidates to close a loop.
+            /** \brief Directory path to store loop closure debug images. */
+            std::string lc_path_;
 
-            int min_lc_inliers_; //!> Minimum number of inliers to close a loop.
+            /** \brief Directory path to store keyframe debug data. */
+            std::string keyframe_path_;
 
-            int max_edge_inliers_; //!> Maximum number of inliers for an edge.
+            /** \brief Directory path to store serialized cluster data during execution. */
+            std::string execution_path_;
 
-            int lc_discard_window_; //!> Window size of discarded graph vertices (clusters).
+            /** \brief Pairs of cluster IDs that have already closed a loop, stored to prevent duplicate loop closures. */
+            std::vector<std::pair<int, int>> cluster_lc_found_;
+
+            /** \brief Hash table storing the global ID and HALOC hash vector for every cluster (grows linearly with trajectory length). */
+            std::vector<std::pair<int, std::vector<float>>> hash_table_;
             
-            int loop_closure_num_; //!> Stores the number of loop closures.
+            /** \brief Cached neighboring clusters of the previous query cluster. */
+            std::vector<Cluster> p_q_cluster_neighbours_;
 
-            cv::Mat l_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Left projection matrix.
+            /** \brief Cached candidate clusters from the previous iteration along with their search method. */
+            std::vector<std::pair<Cluster, std::string>> p_cand_clusters_;
 
-            cv::Mat r_proj_mat_ = cv::Mat::eye(3, 4, CV_64FC1); //!> Right projection matrix.
+            /** \brief Cached neighboring clusters of the previous candidate clusters. */
+            std::vector<std::vector<Cluster>> p_cands_cluster_neighbours_;
 
-            std::string lc_path_; //!> Path to store loop closures images with debugging purpose.
+            /** \brief Pointer to the global SLAM map object. */
+            Map* map_;
 
-            std::string keyframe_path_; //!> Path to keyframes directories with debugging purpose.
+            /** \brief Pointer to the thread-safe queue of incoming clusters. */
+            Queue<Cluster>* cluster_queue_;
 
-            std::string execution_path_; //!> Path to store cluster data with execution purpose.
+            /** \brief HAsh-based LOop Closure (HALOC) hash generator and matcher instance. */
+            haloc::Hash haloc_;
 
-            std::vector<std::pair<int, int>> cluster_lc_found_; //!> Stores all the loop closures (between clusters) found in order to do not repeat them.
+            /** \brief Execution time profiler for internal loop closing stages. */
+            RunTimes run_times_;
 
-            std::vector<std::pair<int, std::vector<float>>> hash_table_; //!> Hash table: stores a hash for every cluster. This is the unique variable that grows with the robot trajectory.
+            /** \brief Public ROS node handle. */
+            ros::NodeHandle nh_;
             
-            std::vector<Cluster> p_q_cluster_neighbours_; //!> Previous neighbours of the query cluster.
+            /** \brief Private ROS node handle (`"~"`). */
+            ros::NodeHandle nhp_;
 
-            std::vector<std::pair<Cluster, std::string>> p_cand_clusters_; //!> Previous candidate clusters.
-
-            std::vector<std::vector<Cluster>> p_cands_cluster_neighbours_; //!> Previous neighbours of the candidates.
-
-            Map* map_; //!> Map object pointer.
-
-            Queue<Cluster>* cluster_queue_; // Cluster queue pointer.
-
-            haloc::Hash haloc_; //!> HAsh-based LOop Closure object.
-
-            RunTimes run_times_; //!> Internal loop closing execution times.
-
-            ros::NodeHandle nh_; //!> Public ROS node handle.
+            /** \brief ROS service client for requesting stereo projection matrices. */
+            ros::ServiceClient proj_mat_client_;
             
-            ros::NodeHandle nhp_; //!> Private ROS node handle.
+            /** \brief ROS publisher for per-iteration loop closing execution times. */
+            ros::Publisher run_times_pub_;
 
-            ros::ServiceClient proj_mat_client_; //!> Service for requesting projection matrices.
+            /** \brief ROS publisher for the total number of processed clusters. */
+            ros::Publisher cluster_num_pub_;
+
+            /** \brief ROS publisher for the total number of detected loop closures. */
+            ros::Publisher loop_closure_num_pub_;
             
-            ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
+            /** \brief ROS publisher for loop closure visualization images. */
+            ros::Publisher loop_closure_img_pub_;
 
-            ros::Publisher cluster_num_pub_; //!> Cluster number publisher.
+            /** \brief ROS publisher for the number of multi-cluster feature matches. */
+            ros::Publisher loop_closure_matches_num_pub_;
 
-            ros::Publisher loop_closure_num_pub_; //!> Loop closing number publisher.
-
-            ros::Publisher loop_closure_img_pub_; //!> Loop closure image publisher.
-
-            ros::Publisher loop_closure_matches_num_pub_; //!> Multi-cluster matches number publisher.
-
-            ros::Publisher loop_closure_inliers_num_pub_; //!> Multi-cluster inliers number publisher.
+            /** \brief ROS publisher for the number of multi-cluster geometrical inliers. */
+            ros::Publisher loop_closure_inliers_num_pub_;
 
     };
 
 
-} // End namespace
+} // namespace slamon
 
 #endif // LOOP_CLOSER_HPP

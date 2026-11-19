@@ -1,21 +1,18 @@
 /**
- *  @file mapmaker.hpp
- *  @brief The Mapmaker constructs a topological map where nodes are clusters of keypoints 
- *         and edges are the relative movement between them and the number of keypoint matchings.
- *  @package slamon
- *  @project SLAMON
+ *  \file mapmaker.hpp
+ *  \brief The Mapmaker class constructs and updates the topological pose-graph map from incoming keyframes and odometry.
  *
  *  This file contains modified portions of code derived from the original
  *  stereo_slam project developed by the Systems, Robotics and Vision Group
  *  (srv.uib.es), University of the Balearic Islands.
  *
- *  @author
- *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  \author Original: Pep Lluís Negre-Carrasco (2013)
+ *  \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    Both the original work and the modifications are released under the
- *    BSD 4-Clause License. See the top-level LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon). Both the original 
+ *  work and the modifications are released under the BSD 4-Clause License. 
+ *  See the top-level LICENSE file for details.
  */
 
  
@@ -46,22 +43,32 @@
 #include "slamon/GetTransform.h"
 
 
+/** \namespace slamon
+ *  \brief Main namespace for the SLAMON stereo visual SLAM system.
+ */
 namespace slamon
 {
 
 
+    /** \class Mapmaker
+     *  \brief Incrementally builds the pose-graph map by synchronizing incoming keyframes and odometry.
+     *  
+     *  This class subscribes to synchronized robot odometry and keyframe messages, unpacks the 
+     *  spatial keypoint clusters, inserts them as vertices and odometry/intra-keyframe edges 
+     *  into the global `Map`, and pushes new clusters into the thread-safe queue for loop closure detection.
+     */
     class Mapmaker: protected Publisher
     {
         public:
 
 
-            /** \brief Class constructor
-             *  \param[in] map Map object pointer.
-             *  \param[in] min_lc_inliers Minimum number of inliers for loop closure.
-             *  \param[in] w_path Working path for debugging purpose.
-             *  \param[in] enable_debugging Enabling or disabling debugging.
-             *  \param[in] cluster_queue Cluster queue pointer.
-             *  \param[in] robot_frame_id Robot coordinate axis identficator (base link).
+            /** \brief Parameterized class constructor.
+             *  \param[in] map Pointer to the global SLAM map object.
+             *  \param[in] min_lc_inliers Minimum number of inliers required for loop closure.
+             *  \param[in] w_path Working directory path for storing outputs and debug data.
+             *  \param[in] enable_debugging If `true`, enables debugging outputs and image saving.
+             *  \param[in] cluster_queue Pointer to the thread-safe queue of clusters for the loop closer.
+             *  \param[in] robot_frame_id Name of the robot base coordinate frame (e.g., `"base_link"`).
              */
             Mapmaker(Map* map,
                      const int min_lc_inliers,
@@ -71,7 +78,7 @@ namespace slamon
                      const std::string& robot_frame_id);
 
 
-            /** \brief Starts mapmaker.
+            /** \brief Starts the mapmaker node execution loop.
              */
             void run();
 
@@ -79,122 +86,147 @@ namespace slamon
         private:
 
 
-            /** \brief Messages callback. This function is called when synchronized stereo
-             *  data and odom messages are received.
-             *  \param[in] odom_msg ROS message containing current robot odometry.
-             *  \param[in] keyframe_msg Custom ROS message containing a keyframe.
-             *  \param[in] keycloud_msg ROS message containing the pointcloud of the scene.
+            /** \brief Synchronized message callback triggered when odometry and keyframe messages arrive.
+             *  \param[in] odom_msg Incoming ROS message containing the current robot odometry.
+             *  \param[in] keyframe_msg Incoming custom ROS message containing a processed keyframe and its clusters.
+             *  \param[in] keycloud_msg Incomming ROS message containing the pointcloud of the keyframe.
              */  
             void callback(const nav_msgs::OdometryConstPtr& odom_msg,
                           const slamon::KeyframeConstPtr& keyframe_msg,
                           const sensor_msgs::PointCloud2ConstPtr& keycloud_msg);
 
 
-            /** \brief Callback that is called when the timer is triggered.
-             *  \param[in] event ros::WallTimerEvent.
+            /** \brief Periodic wall-timer callback triggered to save the latest map results to disk.
+             *  \param[in] event The wall-clock timer event structure (`ros::WallTimerEvent`).
              */
             void timerCallback(const ros::WallTimerEvent& event);
 
 
-            /** \brief Obtains, from the VO and through a service, the transformation
-             *  between the centre of the robot (base_link) and the sensor (camera).
+            /** \brief Requests the static transformation between the robot base frame (`base_link`) 
+             *         and the camera sensor frame from the visual odometry node via a ROS service.
              */
             void getRobot2Camera();
 
 
-            /** \brief Cast a batch custom ROS message to a cluster object.
-             *  \param[in] keyframe_id Identifier of the keyframe to which the cluster belongs.
-             *  \param[in] cluster_local_id Cluster identifier within the keyframe.
-             *  \param[in] batch_msg Batch custom ROS message.
-             *  @return A cluster object.
+            /** \brief Converts a custom `slamon::Batch` ROS message into a `Cluster` object.
+             *  \param[in] keyframe_id ID of the keyframe to which the cluster belongs.
+             *  \param[in] cluster_local_id Local ID of the cluster within the keyframe.
+             *  \param[in] batch_msg Custom `slamon::Batch` ROS message containing serialized cluster data.
+             *  \return The constructed `Cluster` object.
              */
             Cluster fromBatchToCluster(const int keyframe_id,
                                        const int cluster_local_id,
                                        const slamon::Batch& batch_msg);
 
 
-            /** \brief Given a set of n elements, returns a vector with all possible
-             *  combinations of r elements.
-             *  \param[in] n Total number of elements.
+            /** \brief Generates all possible combinations of `r` elements from a set of `n` elements.
+             *  \param[in] n Total number of elements in the set.
              *  \param[in] r Number of elements in each combination.
-             *  @return the list of combinations.
+             *  \return Vector containing all generated index combinations.
              */
             std::vector<std::vector<int>> createCombinations(const size_t n,
                                                              const size_t r);
 
 
-            /** \brief Writes the keyframe poses and the loop closure edges to disk.
+            /** \brief Writes the keyframe poses and loop closure edges to disk.
              */
             void writeMapResults();
 
-
-            // Attributes:
-
-            bool initialised_map_; //!> Map status.
-
-            bool enable_debugging_; //!> Enabling or disabling debugging messages.
-
-            int max_edge_inliers_; //!> Maximum number of inliers for an edge.
-
-            std::string poses_file_; //!> Path to the file where the keyframes positions are stored.
-
-            std::string edges_file_; //!> Path to the file where the loop closure edges are stored.
-
-            std::string keyframe_path_; //!> Path to store keyframes with debugging purpose.
-
-            std::string clusters_path_; //!> Path to store keypoints clustering with debugging purpose.
-
-            std::string robot_frame_id_; //!> Robot coordinate axis identficator (base link).
-
-            std::string camera_frame_id_; //!> Camera coordinate axis identficator.
-
-            Map* map_; //!> Map pointer.
-
-            Queue<Cluster>* cluster_queue_; //!> Cluster queue pointer.
-
-            RunTimes run_times_; //!> Internal map execution times.
-
-            ros::NodeHandle nh_; //!> Public ROS node handle.
             
-            ros::NodeHandle nhp_; //!> Private ROS node handle.
+            /** \brief Flag indicating map status. */
+            bool initialised_map_;
 
-            ros::WallTimer timer_; //!> Timer to write the last map update to disk.
+            /** \brief Flag to enable or disable debugging outputs and image saving. */
+            bool enable_debugging_;
 
-            tf2::Transform robot2camera_; //!> Transformation between robot frame (base link) and camera frame.
+            /** \brief Maximum number of inliers for a graph edge. */
+            int max_edge_inliers_;
 
-            tf2::Transform p_robot_odom_; //!> The robot's odometry the last time a keyframe was inserted.
+            /** \brief File path where the keyframe poses are saved. */
+            std::string poses_file_;
 
-            ros::Publisher keycloud_pub_; //!> Pointcloud publisher.
+            /** \brief File path where the loop closure edges are saved. */
+            std::string edges_file_;
 
-            ros::Publisher robot_map_pub_; //!> Updated robot pose publisher.
+            /** \brief Directory path to store keyframe debug data. */
+            std::string keyframe_path_;
+
+            /** \brief Directory path to store keypoint clustering debug data. */
+            std::string clusters_path_;
+
+            /** \brief Robot base coordinate frame ID (e.g., `"base_link"`). */
+            std::string robot_frame_id_;
+
+            /** \brief Camera sensor coordinate frame ID. */
+            std::string camera_frame_id_;
+
+            /** \brief Pointer to the global SLAM map object. */
+            Map* map_;
+
+            /** \brief Pointer to the thread-safe queue of clusters shared with the loop closer. */
+            Queue<Cluster>* cluster_queue_;
+
+            /** \brief Execution time profiler for internal mapmaking stages. */
+            RunTimes run_times_;
+
+            /** \brief Public ROS node handle. */
+            ros::NodeHandle nh_;
             
-            ros::Publisher camera_map_pub_; //!> Updated camera pose publisher.
+            /** \brief Private ROS node handle (`"~"`). */
+            ros::NodeHandle nhp_;
 
-            ros::Publisher run_times_pub_; //!> Last iteration performance publisher.
+            /** \brief Wall-time timer used to periodically write the latest map update to disk. */
+            ros::WallTimer timer_;
 
-            ros::Publisher keyframes_num_pub_; // Publisher for the number of keyframes.
+            /** \brief Static transformation between the robot base frame (`base_link`) and the camera frame. */
+            tf2::Transform robot2camera_;
 
-            ros::Publisher clustering_img_pub_; //!> Publisher for the frame clustering.
+            /** \brief Robot odometry pose recorded when the previous keyframe was inserted. */
+            tf2::Transform p_robot_odom_;
 
-            ros::ServiceClient robot2camera_client_; //!> Service for requesting robot2camera static transform.
+            /** \brief ROS publisher for the keyframe point cloud. */
+            ros::Publisher keycloud_pub_;
+            
+            /** \brief ROS publisher for the map-corrected robot pose. */
+            ros::Publisher robot_map_pub_;
+            
+            /** \brief ROS publisher for the map-corrected camera pose. */
+            ros::Publisher camera_map_pub_;
 
-            message_filters::Subscriber<nav_msgs::Odometry> odom_sub_; //!> Odometry subscriber.
+            /** \brief ROS publisher for per-iteration mapmaker execution times. */
+            ros::Publisher run_times_pub_;
 
-            message_filters::Subscriber<slamon::Keyframe> keyframe_sub_; //!> Keyframe subscriber.
+            /** \brief ROS publisher for the total number of inserted keyframes. */
+            ros::Publisher keyframes_num_pub_;
 
-            message_filters::Subscriber<sensor_msgs::PointCloud2> keycloud_sub_; //!> Pointcloud subscriber.
+            /** \brief ROS publisher for keyframe spatial clustering visualization images. */
+            ros::Publisher clustering_img_pub_;
 
-            // Topic sync
+            /** \brief ROS service client for requesting the static robot-to-camera transformation. */
+            ros::ServiceClient robot2camera_client_;
+
+            /** \brief Message filter subscriber for incoming robot odometry messages. */
+            message_filters::Subscriber<nav_msgs::Odometry> odom_sub_;
+
+            /** \brief Message filter subscriber for incoming keyframe messages. */
+            message_filters::Subscriber<slamon::Keyframe> keyframe_sub_;
+
+            /** \brief Message filter subscriber for incoming keyframe pointcloud messages. */
+            message_filters::Subscriber<sensor_msgs::PointCloud2> keycloud_sub_;
+
+            /** \brief Approximate-time synchronization policy for odometry and keyframe messages. */
             typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, slamon::Keyframe, sensor_msgs::PointCloud2> SyncPolicy_;
 
+            /** \brief Message filter synchronizer type using `SyncPolicy_`. */
             typedef message_filters::Synchronizer<SyncPolicy_> Sync_;
 
+            /** \brief Shared pointer to the active message filter synchronizer instance. */
             std::shared_ptr<Sync_> sync_;
 
     };
 
     
-} // End namespace
+} // namespace slamon
 
 
 #endif // MAPMAKER_HPP

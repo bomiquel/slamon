@@ -1,16 +1,12 @@
 /**
- *  @file keypoint_detector.hpp
- *  @brief The KeypointDetector class provides the necessary tools to 
- *         detect keypoints and calculate descriptors.
- *  @package slamon
- *  @project SLAMON
+ *  \file keypoint_detector.hpp
+ *  \brief The KeypointDetector class provides tools for 2D keypoint detection and feature descriptor extraction.
  *
- *  @author
- *    Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  @author Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    This file is part of the SLAMON project and is released under
- *    the BSD 4-Clause License. See the LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon) and is released under
+ *  the BSD 4-Clause License. See the top-level LICENSE file for details.
  */
 
  
@@ -28,26 +24,31 @@
 #include <opencv2/xfeatures2d.hpp>
 
 
+/** \class KeypointDetector
+ *  \brief Detects 2D visual keypoints and computes feature descriptors from single or stereo images.
+ *  
+ *  This class supports multiple feature detector/descriptor algorithms, optional image 
+ *  contrast enhancement via CLAHE (Contrast Limited Adaptive Histogram Equalization), 
+ *  and parallelized processing for stereo image pairs.
+ */
 class KeypointDetector
 {
 
     public:
 
 
-        /** \brief Empty class constructor.
-         * 
+        /** \brief Default class constructor.
          */
         KeypointDetector() {};
 
 
-        /** \brief Detects keypoints of an image.
-         *  \param[in] img The image.
-         *  \param[in] max_kpts Maximum number of keypoints to be detected.
-         *  \param[in] enable_enhacement If true, the image is enhanced using CLAHE.
-         *  \param[in] detector_name String containing the name of the desired detector for
-         *  detecting image keypoints.
-         *  \param[out] descs The image keypoints descriptors.
-         *  \param[out] kpts The image keypoints.
+        /** \brief Detects 2D keypoints and computes descriptors for a single image.
+         *  \param[in] img Input image.
+         *  \param[in] max_kpts Maximum number of keypoints to retain.
+         *  \param[in] enable_enhacement If `true`, the input image is pre-processed using CLAHE.
+         *  \param[in] detector_name Name of the feature detector/descriptor algorithm to use (e.g., `"ORB"`, `"SIFT"`).
+         *  \param[out] descs Output matrix containing the computed keypoint descriptors.
+         *  \param[out] kpts Output vector containing the detected 2D keypoints.
          */
         void detectKeypoints(const cv::Mat& img,
                              const int max_kpts,
@@ -57,17 +58,16 @@ class KeypointDetector
                              std::vector<cv::KeyPoint>& kpts);
 
 
-        /** \brief Parallelizes stereo image keypoint detection.
-         *  \param[in] l_img The left image.
-         *  \param[in] r_img The right image.
-         *  \param[in] max_kpts Maximum number of keypoints to be detected.
-         *  \param[in] enable_enhacement If true, the image is enhanced using CLAHE.
-         *  \param[in] detector_name String containing the name of the desired detector for 
-         *  detecting image keypoints.
-         *  \param[out] l_descs The left image keypoints descriptors.
-         *  \param[out] r_descs The right image keypoints descriptors.
-         *  \param[out] l_kpts The left image keypoints.
-         *  \param[out] r_kpts The right image keypoints.
+        /** \brief Detects 2D keypoints and computes descriptors for a stereo image pair in parallel.
+         *  \param[in] l_img Left input stereo image.
+         *  \param[in] r_img Right input stereo image.
+         *  \param[in] max_kpts Maximum number of keypoints to retain per image.
+         *  \param[in] enable_enhacement If `true`, the stereo images are pre-processed using CLAHE.
+         *  \param[in] detector_name Name of the feature detector/descriptor algorithm to use (e.g., `"ORB"`, `"SIFT"`).
+         *  \param[out] l_descs Output matrix containing the left image keypoint descriptors.
+         *  \param[out] r_descs Output matrix containing the right image keypoint descriptors.
+         *  \param[out] l_kpts Output vector containing the detected left image 2D keypoints.
+         *  \param[out] r_kpts Output vector containing the detected right image 2D keypoints.
          */
         void detectStereoKeypoints(const cv::Mat& l_img,
                                    const cv::Mat& r_img,

@@ -1,20 +1,18 @@
 /**
- *  @file hash.cpp
- *  @brief Hash-based Loop Closure detection.
- *  @package slamon
- *  @project SLAMON
+ *  \file hash.hpp
+ *  \brief HAsh-based LOop Closure detection.
  *
- *  This file contains modified portions of code derived from the originals
+ *  This file contains modified portions of code derived from the original
  *  libhaloc and stereo_slam projects developed by the Systems, Robotics and
  *  Vision Group (srv.uib.es), University of the Balearic Islands.
  *
- *  @author
- *    Original:  Pep Lluís Negre-Carrasco (2013)
- *    Modified:  Bo Miquel Nordfeldt-Fiol (2024–2025)
+ *  \author Original: Pep Lluís Negre-Carrasco (2013)
+ *  \author Modified: Bo Miquel Nordfeldt-Fiol (2024–2026)
  *
- *  @license BSD-4-Clause
- *    Both the original work and the modifications are released under the
- *    BSD 4-Clause License. See the top-level LICENSE file for details.
+ *  \copyright BSD-4-Clause
+ *  This file is part of the SLAMON project (package: slamon). Both the original 
+ *  work and the modifications are released under the BSD 4-Clause License. 
+ *  See the top-level LICENSE file for details.
  */
 
  
