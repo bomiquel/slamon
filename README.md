@@ -36,7 +36,7 @@
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=G6NhKJ459Rw&t=1s">
-    <img src="assets/slamon_demo.gif" width="60%" alt="SLAMON Underwater Demo"/>
+    <img src="assets/slamon_demo.gif" width="80%" alt="SLAMON Underwater Demo"/>
   </a>
   <br>
   <em>Click on the GIF to watch the full video execution on YouTube.</em>
