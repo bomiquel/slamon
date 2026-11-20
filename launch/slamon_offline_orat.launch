@@ -24,14 +24,14 @@
     <!-- Bagfiles parameters -->
     <param name = "/use_sim_time"    value = "true"/>
 
-    <!-- Cabrera 2025/02/04 -->
+    <!-- Cabrera-0 -->
     <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-21-39_0.bag
                                      /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-22-39_1.bag
                                      /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-23-39_2.bag
                                      /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-24-39_3.bag
                                      /home/bomiquel/datasets/bagfiles/cabrera/2025_02_04/14_21_39_proc/sparus2_stereo_camera_2025-02-04-14-25-39_4.bag"/>
 
-    <!-- Cabrera 2025/10/29 -->
+    <!-- Cabrera-1 -->
     <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3/sparus2_stereo_camera_2025-10-29-11-56-53_0.bag
                                      /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3/sparus2_stereo_camera_2025-10-29-11-59-11_1.bag
                                      /home/bomiquel/datasets/bagfiles/cabrera/2025_10_29/12_56_53_proc_3/sparus2_stereo_camera_2025-10-29-12-01-12_2.bag
@@ -44,7 +44,7 @@
     <group ns = "$(arg robot_name)">
 
         <!-- Initial pose and orientation parameters -->  
-        <!-- Cabrera 2025/02/04 -->
+        <!-- Cabrera-0 -->
         <arg name = "t_x" default = "28.824602333472"/> 
         <arg name = "t_y" default = "58.9221115387944"/> 
         <arg name = "t_z" default = "-2.90542054176331"/> 
@@ -52,7 +52,7 @@
         <arg name = "q_y" default = "-0.062374205023327"/>
         <arg name = "q_z" default = "-0.028935960660611"/>
         <arg name = "q_w" default = "0.9970307453271"/>
-        <!-- Cabrera 2025/10/29 12:56:53 -->
+        <!-- Cabrera-1 -->
         <!-- <arg name = "t_x" default = "-1.887629119"/> 
         <arg name = "t_y" default = "14.933912181"/> 
         <arg name = "t_z" default = "2.347713096"/> 

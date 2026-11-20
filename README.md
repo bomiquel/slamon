@@ -102,7 +102,7 @@ To run SLAMON, you will need a system running **Ubuntu 20.04** with the followin
 * G2O
 * Eigen3
 * SuiteSparse
-* cmake_modules (ROS)
+* CMake-Modules (ROS)
 
 
 ### Installation 
@@ -110,7 +110,7 @@ To run SLAMON, you will need a system running **Ubuntu 20.04** with the followin
 #### 0. Install dependencies
 
 <details>
-<summary> Click here to expand full installation instructions for OpenCV and ROS dependencies </summary>
+<summary> Click here to expand full installation instructions for ROS, OpenCV, G2O, SuiteSparse & CMake-Modules dependencies </summary>
 <br>
 
 **ROS NOETIC:**
