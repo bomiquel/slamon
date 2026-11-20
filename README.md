@@ -114,7 +114,7 @@ To run the pipe detector (dgcnn), you will need a system running **Ubuntu 20.04*
 #### 0. Install dependencies
 
 <details>
-<summary> Click here to expand full installation instructions for ROS, OpenCV, G2O, SuiteSparse & CMake-Modules dependencies </summary>
+<summary> Click here to expand full installation instructions for ROS, OpenCV, Miniconda, G2O, SuiteSparse & CMake-Modules dependencies </summary>
 <br>
 
 **ROS NOETIC:**
