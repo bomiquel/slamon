@@ -36,7 +36,7 @@
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=G6NhKJ459Rw&t=1s">
-    <img src="assets/slamon_demo.gif" width="90%" alt="SLAMON Underwater Demo"/>
+    <img src="assets/slamon_demo.gif" width="80%" alt="SLAMON Underwater Demo"/>
   </a>
   <br>
   <em>Click on the GIF to watch the full video execution on YouTube.</em>
@@ -276,33 +276,33 @@ roslaunch slamon launch_file_name.launch
 
 #### Map node
 
-* `keyframe` (ROS topic) - Selected keyframe data published by the VO node.
-* `odom` (ROS topic) - Visual odometry estimate published by the VO node.
+* `slamon_vo/keyframe` (ROS topic) - Selected keyframe data published by the VO node.
+* `slamon_vo/odom` (ROS topic) - Visual odometry estimate published by the VO node.
 
 ### Outputs
 
 #### VO node
 
-* `camera_odom` (ROS topic) - Accumulated 6-DoF camera odometry pose and velocity twist.
-* `inliers_img` (ROS topic) - Image displaying the motion estimation inliers *(debugging mode only)*.
-* `inliers_num` (ROS topic) - Number of motion estimation inliers at the current frame.
-* `keyframe` (ROS topic) - Newly selected keyframe data sent to the Map node.
-* `keyframe_insertion_decision_img` (ROS topic) - Image displaying the inliers between the last keyframe and the current frame *(debugging mode only)*.
-* `robot_odom` (ROS topic) - Accumulated 6-DoF robot odometry pose and velocity twist.
-* `stereo_keypoints_img` (ROS topic) - Image displaying the detected stereo keypoints *(debugging mode only)*.
-* `stereo_matches_img` (ROS topic) - Image displaying the stereo keypoint matches *(debugging mode only)*.
-* `stereo_matches_num` (ROS topic) - Number of stereo matches at the current frame.
-* `temporal_matches_img` (ROS topic) - Image displaying the temporal matches between consecutive frames *(debugging mode only)*.
-* `temporal_matches_num` (ROS topic) - Number of temporal matches at the current frame.
-* `vo_performance` (ROS topic) - Per-iteration visual odometry execution times.
+* `slamon_vo/camera_odom` (ROS topic) - Accumulated 6-DoF camera odometry pose and velocity twist.
+* `slamon_vo/inliers_img` (ROS topic) - Image displaying the motion estimation inliers *(debugging mode only)*.
+* `slamon_vo/inliers_num` (ROS topic) - Number of motion estimation inliers at the current frame.
+* `slamon_vo/keyframe` (ROS topic) - Newly selected keyframe data sent to the Map node.
+* `slamon_vo/keyframe_insertion_decision_img` (ROS topic) - Image displaying the inliers between the last keyframe and the current frame *(debugging mode only)*.
+* `slamon_vo/robot_odom` (ROS topic) - Accumulated 6-DoF robot odometry pose and velocity twist.
+* `slamon_vo/stereo_keypoints_img` (ROS topic) - Image displaying the detected stereo keypoints *(debugging mode only)*.
+* `slamon_vo/stereo_matches_img` (ROS topic) - Image displaying the stereo keypoint matches *(debugging mode only)*.
+* `slamon_vo/stereo_matches_num` (ROS topic) - Number of stereo matches at the current frame.
+* `slamon_vo/temporal_matches_img` (ROS topic) - Image displaying the temporal matches between consecutive frames *(debugging mode only)*.
+* `slamon_vo/temporal_matches_num` (ROS topic) - Number of temporal matches at the current frame.
+* `slamon_vo/vo_performance` (ROS topic) - Per-iteration visual odometry execution times.
 
 #### Map node — Mapmaker thread
 
-* `camera_map` (ROS topic) - Map-corrected 6-DoF camera pose.
-* `keyframe_num` (ROS topic) - Total number of keyframes currently in the map.
-* `keypoints_clustering_img` (ROS topic) - Image displaying the spatially clustered keypoints of a keyframe *(debugging mode only)*.
-* `mapmaker_performance` (ROS topic) - Per-iteration mapmaker execution times.
-* `robot_map` (ROS topic) - Map-corrected 6-DoF robot pose.
+* `slamon_map/camera_map` (ROS topic) - Map-corrected 6-DoF camera pose.
+* `slamon_map/keyframe_num` (ROS topic) - Total number of keyframes currently in the map.
+* `slamon_map/keypoints_clustering_img` (ROS topic) - Image displaying the spatially clustered keypoints of a keyframe *(debugging mode only)*.
+* `slamon_map/mapmaker_performance` (ROS topic) - Per-iteration mapmaker execution times.
+* `slamon_map/robot_map` (ROS topic) - Map-corrected 6-DoF robot pose.
 * `clusters` (Image folder) - Directory where the algorithm saves each keyframe image with its clustered keypoints *(debugging mode only)*.
 * `keyframes` (Image folder) - Directory where the algorithm saves each raw keyframe image *(debugging mode only)*.
 * `keyframes_poses` (Text file) - Output log containing the list of stamped 6-DoF keyframe poses.
@@ -310,12 +310,12 @@ roslaunch slamon launch_file_name.launch
 
 #### Map node — Loop Closer thread
 
-* `cluster_num` (ROS topic) - Total number of keypoint clusters in the pose graph.
-* `loop_closer_performance` (ROS topic) - Per-iteration loop closer execution times.
-* `loop_closure_img` (ROS topic) - Image displaying a detected loop closure and its matched features *(debugging mode only)*.
-* `loop_closure_inliers_num` (ROS topic) - Number of geometric inliers between the query and candidate clusters for loop closure.
-* `loop_closure_matches_num` (ROS topic) - Number of descriptor matches between the query and candidate clusters for loop closure.
-* `loop_closure_num` (ROS topic) - Total number of accepted loop closures.
+* `slamon_map/cluster_num` (ROS topic) - Total number of keypoint clusters in the pose graph.
+* `slamon_map/loop_closer_performance` (ROS topic) - Per-iteration loop closer execution times.
+* `slamon_map/loop_closure_img` (ROS topic) - Image displaying a detected loop closure and its matched features *(debugging mode only)*.
+* `slamon_map/loop_closure_inliers_num` (ROS topic) - Number of geometric inliers between the query and candidate clusters for loop closure.
+* `slamon_map/loop_closure_matches_num` (ROS topic) - Number of descriptor matches between the query and candidate clusters for loop closure.
+* `slamon_map/loop_closure_num` (ROS topic) - Total number of accepted loop closures.
 * `haloc` (Temporary folder) - Working directory where the algorithm stores each cluster data 
 * `loop_closures` (Image folder) - Directory where the algorithm saves images with visual representations of each accepted loop closure *(debugging mode only)*.
 
