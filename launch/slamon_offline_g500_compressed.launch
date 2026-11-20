@@ -24,14 +24,13 @@
     <!-- Bagfiles parameters -->
     <param name = "/use_sim_time"    value = "true"/>
 
-    <!-- UJI -->
-    <!-- 2024_07_02/experiment_0_proc -->
+    <!-- UJI-0 -->
     <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_02/experiment_0_proc_compressed/2024-07-02-16-33-14_compressed.bag"/>
-    <!-- 2024_07_03/experiment_0_square_1_proc -->
+    <!-- UJI-1 -->
     <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_03/experiment_0_square_1_proc_compressed/2024-07-03-11-37-31_compressed.bag"/> -->
-    <!-- 2024_07_04/experiment_0_square_2_proc -->
+    <!-- UJI-2 -->
     <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_2_proc_compressed/2024-07-04-13-08-50_compressed.bag"/> -->
-    <!-- 2024_07_04/experiment_0_square_3_proc -->
+    <!-- UJI-3 -->
     <!-- <arg name = "bagfile" default = "/home/bomiquel/datasets/bagfiles/uji/2024_07_04/experiment_0_square_3_proc_compressed/2024-07-04-13-22-00_compressed.bag"/> -->
 
     <!-- Static TF's -->
@@ -41,7 +40,7 @@
     <group ns = "$(arg robot_name)">
 
         <!-- Initial pose and orientation parameters -->  
-        <!-- UJI 2024_07_02/experiment_0_proc -->
+        <!-- UJI-0 -->
         <arg name = "t_x" default = "7.256682862"/> 
         <arg name = "t_y" default = "0.605927856"/> 
         <arg name = "t_z" default = "-1.758014793"/> 
@@ -49,7 +48,7 @@
         <arg name = "q_y" default = "0.030017629"/>
         <arg name = "q_z" default = "0.998787796"/>
         <arg name = "q_w" default = "0.038904031"/>
-        <!-- UJI 2024_07_03/experiment_0_square_1_proc -->
+        <!-- UJI-1 -->
         <!-- <arg name = "t_x" default = "-0.098869452"/> 
         <arg name = "t_y" default = "0.192996936"/>
         <arg name = "t_z" default = "-1.778576607"/> 
@@ -57,7 +56,7 @@
         <arg name = "q_y" default = "0.021376555"/>
         <arg name = "q_z" default = "-0.052030298"/>
         <arg name = "q_w" default = "0.998168548"/> -->
-        <!-- UJI 2024_07_04/experiment_0_square_2_proc -->
+        <!-- UJI-2 -->
         <!-- <arg name = "t_x" default = "-0.037046177"/> 
         <arg name = "t_y" default = "0.269914678"/> 
         <arg name = "t_z" default = "-1.800492732"/> 
@@ -65,7 +64,7 @@
         <arg name = "q_y" default = "0.000048010"/>
         <arg name = "q_z" default = "-0.027061236"/>
         <arg name = "q_w" default = "0.999188657"/> -->
-        <!-- UJI 2024_07_04/experiment_0_square_3_proc -->
+        <!-- UJI-3 -->
         <!-- <arg name = "t_x" default = "1.000167367"/> 
         <arg name = "t_y" default = "3.366724544"/> 
         <arg name = "t_z" default = "-1.801609401"/> 
