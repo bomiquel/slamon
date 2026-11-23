@@ -20,17 +20,17 @@
   <a href="https://scholar.google.com/citations?user=WhE_DS8AAAAJ&hl=es">Miguel Martin-Abadal</a><sup>1</sup>,
   <a href="https://scholar.google.com/citations?user=RgPwmD4AAAAJ&hl=es">Francisco Bonin-Font</a><sup>1</sup>
   <br><br>
-  <sup>1</sup> Systems, Robotics & Vision Group (SRV), Departament de Ciències Matemàtiques i Informàtica<br>
+  <sup>1</sup> Systems, Robotics & Vision Group (SRV), Departament de Ciències Matemàtiques i Informàtica,<br>
   Universitat de les Illes Balears, Spain
   <br>
 </p>
 
 <div align="center">
-  <a href="#"><img src="https://img.shields.io/badge/Read-Paper-green"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="#"><img src="https://img.shields.io/badge/Dataset-Zenodo-blue"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="#"><img src="https://img.shields.io/badge/Code-Pipe_detector-yellow"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://github.com/bomiquel/slamon/blob/noetic/LICENSE"><img src="https://img.shields.io/badge/License-BSD_4--Clause-orange"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://www.youtube.com/watch?v=G6NhKJ459Rw&t=1s"><img src="https://img.shields.io/badge/YouTube-Video-red"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="#"><img src="https://img.shields.io/badge/Paper-Applied_ocean_research-green" alt="Paper Applied ocean research"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://doi.org/10.5281/zenodo.24461447"><img src="https://img.shields.io/badge/Dataset-Zenodo-blue" alt="Dataset Zenodo"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://github.com/mmabadal/dgcnn/tree/ros_uji"><img src="https://img.shields.io/badge/Code-Pipe_detector-yellow?logo=github" alt="Pipe Detector"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://github.com/bomiquel/slamon/blob/noetic/LICENSE"><img src="https://img.shields.io/badge/License-BSD_4--Clause-orange" alt="License"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://www.youtube.com/watch?v=G6NhKJ459Rw&t=1s"><img src="https://img.shields.io/badge/YouTube-Video-red" alt="YouTube Video"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <br>
   <br>
 </div>
@@ -220,7 +220,7 @@ source ~/catkin_ws/devel/setup.bash
 
 ## Datasets
 
-To evaluate the system, we publicly release six underwater stereo datasets recorded in both controlled water tank (UJI datasets) and real shallow-sea (Cabrera datasets) scenarios. The datasets are provided as ROS bagfiles (`.bag`) and can be downloaded from **[Zenodo Link - TBA]**.
+To evaluate the system, we publicly release six underwater stereo datasets recorded in both controlled water tank (UJI datasets) and real shallow-sea (Cabrera datasets) scenarios. The datasets are provided as ROS bagfiles (`.bag`) and can be downloaded from [**`Zenodo`**](https://doi.org/10.5281/zenodo.24461447).
 
 Depending on the scenario, three types of ground-truth (GT) references are provided:
 - **Trajectory GT - UJI datasets:** A large seafloor poster with known dimensions was placed at the bottom of the water tank, allowing full 2D trajectory ground-truth generation, by image registration, to compute the Absolute Trajectory RMSE (ATRMSE).
@@ -317,7 +317,7 @@ roslaunch slamon launch_file_name.launch
 * `slamon_map/loop_closure_inliers_num` (ROS topic) - Number of geometric inliers between the query and candidate clusters for loop closure.
 * `slamon_map/loop_closure_matches_num` (ROS topic) - Number of descriptor matches between the query and candidate clusters for loop closure.
 * `slamon_map/loop_closure_num` (ROS topic) - Total number of accepted loop closures.
-* `haloc` (Temporary folder) - Working directory where the algorithm stores each cluster data 
+* `haloc` (Temporary folder) - Working directory where the algorithm stores each cluster data.
 * `loop_closures` (Image folder) - Directory where the algorithm saves images with visual representations of each accepted loop closure *(debugging mode only)*.
 
 ## Citation
