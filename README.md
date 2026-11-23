@@ -267,7 +267,7 @@ git clone -b ros_uji https://github.com/mmabadal/dgcnn.git
 #### 4. Setup conda environment
 ```bash
 cd ~/catkin_ws/src/slamon/envs # or cd ~/catkin_ws/src/dgcnn/envs
-conda create --file pipes2.yml
+conda env create -f pipes2.yml
 ```
 
 ## Datasets
@@ -360,7 +360,7 @@ roslaunch slamon launch_file_name.launch
 #### Map node — Mapmaker thread
 
 * `slamon_map/camera_map` (ROS topic) - Map-corrected 6-DoF camera pose.
-* `slamon_map/keycloud` (ROS topic) - Pointcloud from the selected keyframe.
+* `slamon_map/keycloud` (ROS topic) - Point cloud from the selected keyframe.
 * `slamon_map/keyframe_num` (ROS topic) - Total number of keyframes currently in the map.
 * `slamon_map/keypoints_clustering_img` (ROS topic) - Image displaying the spatially clustered keypoints of a keyframe *(debugging mode only)*.
 * `slamon_map/mapmaker_performance` (ROS topic) - Per-iteration mapmaker execution times.
