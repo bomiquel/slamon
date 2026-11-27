@@ -26,11 +26,11 @@
 </p>
 
 <div align="center">
-<a href="#"><img src="https://img.shields.io/badge/Paper-Applied_ocean_research-green" alt="Paper Applied ocean research"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://doi.org/10.1016/j.apor.2026.105362"><img src="https://img.shields.io/badge/Paper-Applied_Ocean_Research-green" alt="Paper Applied Ocean Research"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://doi.org/10.5281/zenodo.24461447"><img src="https://img.shields.io/badge/Dataset-Zenodo-blue" alt="Dataset Zenodo"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://github.com/mmabadal/dgcnn/tree/ros_uji"><img src="https://img.shields.io/badge/Code-Pipe_detector-yellow?logo=github" alt="Pipe Detector"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://github.com/bomiquel/slamon/blob/noetic/LICENSE"><img src="https://img.shields.io/badge/License-BSD_4--Clause-orange" alt="License"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://www.youtube.com/watch?v=G6NhKJ459Rw&t=1s"><img src="https://img.shields.io/badge/YouTube-Video-red" alt="YouTube Video"></a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://www.youtube.com/watch?v=G6NhKJ459Rw"><img src="https://img.shields.io/badge/YouTube-Video-red" alt="YouTube Video"></a>
   <br>
   <br>
 </div>
@@ -398,11 +398,11 @@ If you use SLAMON or our underwater stereo datasets in your academic work, pleas
 ```bibtex
 @article{NordfeldtFiol2026,
   author  = {Nordfeldt-Fiol, Bo Miquel and Martin-Abadal, Miguel and Bonin-Font, Francisco},
-  title   = {SLAMON: a precise and robust stereo Visual SLAM for inspection tasks in underwater environments},
+  title   = {{SLAMON}: a precise and robust stereo {Visual SLAM} for inspection tasks in underwater environments},
   journal = {Applied Ocean Research},
   year    = {2026},
   note    = {In Press},
-  doi     = {TBA}
+  doi     = {10.1016/j.apor.2026.105362}
 }
 ```
 
