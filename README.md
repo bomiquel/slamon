@@ -327,10 +327,11 @@ If you use SLAMON or our underwater stereo datasets in your academic work, pleas
 ```bibtex
 @article{NordfeldtFiol2026,
   author  = {Nordfeldt-Fiol, Bo Miquel and Martin-Abadal, Miguel and Bonin-Font, Francisco},
-  title   = {{SLAMON}: a precise and robust stereo {Visual SLAM} for inspection tasks in underwater environments},
+  title   = {{SLAMON}: A precise and robust stereo {Visual SLAM} for inspection tasks in underwater environments},
   journal = {Applied Ocean Research},
+  volume  = {177},
+  pages   = {105362},
   year    = {2026},
-  note    = {In Press},
   doi     = {10.1016/j.apor.2026.105362}
 }
 ```
